@@ -1,0 +1,143 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * وزیرمتن — فونت متغیر، لوکال، بدون هیچ CDN خارجی.
+ * یک فایل ۱۰۹KB برای همه‌ی وزن‌ها؛ ارزان‌تر از هفت فایل ایستا.
+ */
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('/fonts/vazirmatn-variable.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  :root {
+    --background: 40 20% 98%;
+    --foreground: 24 10% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 24 10% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 24 10% 10%;
+
+    --muted: 40 12% 94%;
+    --muted-foreground: 25 6% 38%;
+
+    --primary: 38 95% 28%;
+    --primary-foreground: 40 30% 98%;
+
+    --secondary: 40 15% 92%;
+    --secondary-foreground: 24 10% 15%;
+
+    --accent: 40 15% 92%;
+    --accent-foreground: 24 10% 15%;
+
+    --destructive: 0 72% 38%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 35 12% 88%;
+    --input: 35 12% 85%;
+    --ring: 38 92% 40%;
+
+    /* معنایی دامنه */
+    --credit: 152 60% 26%;
+    --debit: 0 72% 38%;
+    --gold: 38 95% 28%;
+
+    --radius: 0.75rem;
+
+    /*
+     * ارتفاع نوارهای ثابت پایین صفحه.
+     * تنها منبع حقیقت — هم خود نوارها از این می‌خوانند، هم فاصله‌ی
+     * پایین محتوا. اگر عدد در دو جا نوشته شود، یکی‌شان دیر یا زود
+     * عقب می‌ماند و محتوا زیر نوار پنهان می‌شود.
+     */
+    --app-nav-h: 3.75rem;
+    --app-action-h: 5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    /* جلوگیری از بزرگ‌نمایی خودکار متن در چرخش صفحه‌ی اندروید */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    /* محصول لمسی است — انتخاب متن تصادفی هنگام تپ آزاردهنده است */
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+  }
+
+  /*
+   * ارقام جدولی به‌صورت سراسری.
+   * بدون این، ستون ارقام موقع تغییر مظنه می‌لرزد — قاعده‌ی ۱۰ BOOTSTRAP.
+   */
+  body,
+  input,
+  button,
+  select,
+  textarea {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
+
+  /* حالت فوکوس همیشه دیده شود — ناوبری با کیبورد روی تبلت و دسکتاپ */
+  :focus-visible {
+    @apply outline-ring outline-2 outline-offset-2;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  /* فاصله‌ی امن پایین صفحه روی گوشی‌های دارای نوار خانه */
+  .pb-safe {
+    padding-block-end: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* فاصله‌ی محتوا از نوار ناوبری ثابت */
+  .pb-nav {
+    padding-block-end: calc(var(--app-nav-h) + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* فاصله‌ی اضافی برای صفحاتی که نوار اقدام اصلی هم دارند */
+  .pb-action {
+    padding-block-end: var(--app-action-h);
+  }
+
+  /* نشاندن نوار اقدام دقیقاً بالای نوار ناوبری، نه رویش */
+  .bottom-above-nav {
+    inset-block-end: calc(var(--app-nav-h) + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* از ۱۰۲۴px به بالا ناوبری سایدبار است و هیچ‌کدام از این‌ها لازم نیست */
+  @media (min-width: 1024px) {
+    .pb-nav,
+    .pb-action {
+      padding-block-end: 0;
+    }
+
+    .bottom-above-nav {
+      inset-block-end: 0;
+    }
+  }
+}

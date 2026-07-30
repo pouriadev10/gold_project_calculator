@@ -68,9 +68,14 @@ export function formatMesghal(mesghalX1e4: bigint): string {
   return formatScaled(mesghalX1e4, MESGHAL_DECIMALS);
 }
 
-/** تعداد سکه — عدد صحیح شمارشی. */
-export function formatCoinCount(count: number): string {
+/** هر شمارش صحیحی — تعداد نفرات، تعداد اقلام، شماره‌ی ردیف. */
+export function formatCount(count: number): string {
   return INT_FORMAT.format(BigInt(count));
+}
+
+/** تعداد سکه — عدد صحیح شمارشی، هرگز به گرم تبدیل نمی‌شود. */
+export function formatCoinCount(count: number): string {
+  return formatCount(count);
 }
 
 /** عیار — همیشه سه‌رقمی و بدون گروه‌بندی: ۷۵۰، ۹۹۵، ۹۲۵. */

@@ -3,6 +3,7 @@ import {
   GRAM_DECIMALS,
   MESGHAL_DECIMALS,
   formatCoinCount,
+  formatCount,
   formatGram,
   formatKarat,
   formatMesghal,
@@ -70,6 +71,13 @@ describe('formatScaled', () => {
 describe('formatCoinCount و formatKarat', () => {
   it('تعداد سکه عدد صحیح شمارشی است', () => {
     expect(toLatinDigits(formatCoinCount(12))).toBe('12');
+  });
+
+  it('formatCount هر شمارشی را با ارقام فارسی می‌دهد', () => {
+    expect(formatCount(14)).toBe('۱۴');
+    // گروه‌بندی سه‌رقمی با جداکننده‌ی فارسی انجام می‌شود
+    expect(toLatinDigits(formatCount(1234)).replace(/\D/gu, '')).toBe('1234');
+    expect(formatCount(1234)).not.toMatch(/[0-9]/u);
   });
 
   it('عیار بدون گروه‌بندی نمایش داده می‌شود', () => {
