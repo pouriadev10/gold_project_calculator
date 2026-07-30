@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+# دروازه‌ی merge — هیچ‌کدام از این مراحل اختیاری نیست.
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: بررسی نوع
+        run: pnpm typecheck
+
+      - name: قواعد lint — گرد کردن، جهت، رنگ خام
+        run: pnpm lint
+
+      - name: تست‌ها + پوشش ۱۰۰٪ core-calc
+        run: pnpm test
+
+      - run: pnpm build
+
+      # بودجه‌ی بسته: زیر ۲۰۰KB فشرده. به کروم نیاز ندارد، پس همیشه اجرا می‌شود.
+      - name: بودجه‌ی بسته‌ی اولیه
+        run: pnpm size
+
+      # دروازه‌ی کارایی: LCP < 2.5s روی 3G شبیه‌سازی‌شده، TBT < 200ms
+      - name: Lighthouse CI
+        run: pnpm lhci
+
+      - name: بارگذاری گزارش Lighthouse
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: apps/web/.lighthouseci/
+          if-no-files-found: ignore

@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['fonts/vazirmatn-variable.woff2', 'icons/*.png', 'icons/*.svg'],
+      includeAssets: ['fonts/vazirmatn-fa.woff2', 'icons/*.png', 'icons/*.svg'],
       manifest: {
         name: 'حساب طلا',
         short_name: 'حساب طلا',
@@ -55,14 +55,18 @@ export default defineConfig({
     target: 'es2022',
     cssCodeSplit: true,
     reportCompressedSize: true,
-    rollupOptions: {
-      output: {
-        // ECharts فقط در گزارش‌ها لازم است — از بسته‌ی اولیه بیرون بماند
-        manualChunks: {
-          echarts: ['echarts', 'echarts-for-react'],
-        },
-      },
-    },
+    /*
+     * عمداً بدون `manualChunks`.
+     *
+     * قبلاً یک چانک دستی به نام `echarts` تعریف شده بود، ولی ECharts در
+     * بیلد production اصلاً وارد درخت وابستگی نمی‌شود (فقط صفحه‌ی دودِ
+     * توسعه از آن استفاده می‌کند). نتیجه یک چانک بود که نامش echarts بود
+     * ولی محتوایش React — و چون modulepreload می‌شد، در بسته‌ی اولیه
+     * حساب می‌آمد.
+     *
+     * وقتی گزارش‌ها ساخته شدند، ECharts را با `import()` پویا صدا بزن؛
+     * Rollup خودش چانک درست را می‌سازد و نامش هم راست می‌گوید.
+     */
   },
 
   test: {

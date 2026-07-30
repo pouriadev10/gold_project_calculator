@@ -2,6 +2,7 @@ import { Wifi, WifiOff } from 'lucide-react';
 import { RateDisplay } from '@/components/common/AmountDisplay';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatJalaliDistance } from '@/lib/date';
+
 import { cn } from '@/lib/utils';
 import { useMazneh } from './useMazneh';
 

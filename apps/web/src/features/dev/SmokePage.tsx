@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { format as jalaliFormat } from 'date-fns-jalali';
 import Dexie, { type EntityTable } from 'dexie';
 import * as echarts from 'echarts';
 import { useForm } from 'react-hook-form';
@@ -24,7 +25,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { formatJalali } from '@/lib/date';
+import { formatJalaliFullDate } from '@/lib/date';
 
 /**
  * صفحه‌ی دود — **فقط در حالت توسعه**.
@@ -330,10 +331,27 @@ function ChartCheck() {
   );
 }
 
+/**
+ * هر دو مسیر تاریخ آزموده می‌شوند:
+ *
+ * - `date-fns-jalali` — پکیجی که BOOTSTRAP خواسته نصب و تأیید شود.
+ * - `Intl` بومی — همان چیزی که در production واقعاً استفاده می‌شود.
+ *
+ * production از Intl استفاده می‌کند چون هم ارقام را فارسی می‌دهد (کاری که
+ * date-fns-jalali نمی‌کند) و هم صفر بایت به مسیر بحرانی اضافه می‌کند.
+ */
 function JalaliCheck() {
+  const now = new Date();
   return (
     <Section title="date-fns-jalali" status="تاریخ شمسی">
-      <p className="tabular-nums">امروز: {formatJalali(new Date(), 'EEEE d MMMM yyyy')}</p>
+      <p className="tabular-nums">
+        <span className="text-muted-foreground">date-fns-jalali: </span>
+        {jalaliFormat(now, 'EEEE d MMMM yyyy')}
+      </p>
+      <p className="tabular-nums">
+        <span className="text-muted-foreground">Intl بومی (production): </span>
+        {formatJalaliFullDate(now)}
+      </p>
     </Section>
   );
 }

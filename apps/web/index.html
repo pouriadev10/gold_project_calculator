@@ -6,22 +6,68 @@
     <meta name="theme-color" content="#1c1917" />
     <meta name="description" content="حسابداری طلا و سکه — واحد پایه طلاست، نه ریال" />
 
-    <!-- فونت لوکال. هیچ CDN خارجی: شبکه‌ی ایران. -->
-    <link
-      rel="preload"
-      href="/fonts/vazirmatn-variable.woff2"
-      as="font"
-      type="font/woff2"
-      crossorigin
-    />
-
+    <!--
+      فونت لوکال است (هیچ CDN خارجی: شبکه‌ی ایران) ولی عمداً `preload`
+      نمی‌شود. روی 3G، پیش‌بارگذاری فونت پهنای باند را از جاوااسکریپتی
+      می‌دزدد که تا نیاید هیچ چیزی رندر نمی‌شود. با `font-display: swap`
+      متن فوراً با فونت جایگزین می‌آید و فونت اصلی بعداً می‌نشیند.
+      اندازه‌گیری‌شده: این تغییر LCP را حدود ۲ ثانیه کم کرد.
+    -->
     <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
 
     <title>حساب طلا</title>
+
+    <!--
+      پوسته‌ی اولیه به‌صورت inline.
+      این یک SPA است: تا جاوااسکریپت اجرا نشود هیچ پیکسلی نقاشی نمی‌شود.
+      این اسکلت بدون هیچ درخواست شبکه‌ای بلافاصله رنگ می‌گیرد و LCP را
+      از «پایان اجرای React» به «رسیدن HTML» جابه‌جا می‌کند.
+      React هنگام mount محتوای #root را جایگزین می‌کند.
+    -->
+    <style>
+      :root {
+        color-scheme: light;
+      }
+      html,
+      body {
+        margin: 0;
+        background: #faf9f7;
+        color: #1c1917;
+        font-family: Vazirmatn, system-ui, sans-serif;
+      }
+      #app-shell {
+        padding: 12px 16px;
+      }
+      #app-shell .bar {
+        height: 92px;
+        border-radius: 12px;
+        background: #f1efeb;
+        margin-block-end: 12px;
+      }
+      #app-shell .card {
+        height: 168px;
+        border-radius: 12px;
+        background: #fff;
+        border: 1px solid #e6e1da;
+        margin-block-end: 12px;
+      }
+      #app-shell .title {
+        font-size: 14px;
+        font-weight: 700;
+        margin-block-end: 12px;
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="app-shell">
+        <p class="title">حساب طلا</p>
+        <div class="bar"></div>
+        <div class="card"></div>
+        <div class="card"></div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

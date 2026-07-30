@@ -35,9 +35,16 @@ const noFloatMath = [
   },
 ];
 
-/** ۳ — کلاس‌های جهت‌دار Tailwind. باید ms-/me-/ps-/pe-/start-/end- باشند. */
-const DIRECTIONAL_CLASS =
-  /(^|[\s"'`])(-?(ml|mr|pl|pr|left|right|border-l|border-r|rounded-l|rounded-r|inset-l|inset-r)-|text-(left|right)(\s|$|["'`]))/;
+/**
+ * ۳ — کلاس‌های جهت‌دار Tailwind. باید ms-/me-/ps-/pe-/start-/end- باشند.
+ *
+ * مرز ابتدای کلاس شامل `:` هم هست، وگرنه واریانت‌ها از تور رد می‌شوند:
+ * `sm:text-left` و `lg:ml-4` هم باید بگیرند، نه فقط شکل بی‌پیشوند.
+ */
+const CLASS_BOUNDARY = `(^|[\\s"'\`:])`;
+const DIRECTIONAL_CLASS = new RegExp(
+  `${CLASS_BOUNDARY}(-?(ml|mr|pl|pr|left|right|border-l|border-r|rounded-l|rounded-r|inset-l|inset-r)-|text-(left|right)(\\s|$|["'\`]))`,
+);
 
 /** ۴ — رنگ hex خام. */
 const RAW_HEX = /#[0-9a-fA-F]{3,8}\b/;
@@ -112,6 +119,21 @@ export default tseslint.config(
   // استثنای واحد: خانه‌ی رسمی گرد کردن
   {
     files: ['packages/core-calc/src/rounding.ts'],
+    rules: {
+      'no-restricted-syntax': 'off',
+    },
+  },
+
+  /*
+   * ابزارهای بیلد.
+   *
+   * این‌ها هرگز به مقدار دامنه (پول، وزن، عیار) دست نمی‌زنند — فقط
+   * کیلوبایت را برای چاپ در ترمینال گرد می‌کنند. ممنوعیت `toFixed`
+   * برای جلوگیری از قالب‌بندی شناور مبالغ است، نه برای گزارش حجم فایل.
+   * دامنه‌ی استثنا عمداً به `scripts/` محدود است و شامل هیچ کد اپلیکیشنی نمی‌شود.
+   */
+  {
+    files: ['scripts/**/*.{mjs,js}'],
     rules: {
       'no-restricted-syntax': 'off',
     },

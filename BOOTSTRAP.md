@@ -139,10 +139,10 @@ export function gramRate(maznehRial: bigint, karat: number): bigint {
 
 ### گام ۱ — مونوریپو و ابزار
 
-- [ ] `pnpm-workspace.yaml` با `apps/*` و `packages/*`
-- [ ] TypeScript `strict: true`، `noUncheckedIndexedAccess: true`، target `ES2022` (برای BigInt)
-- [ ] ESLint + Prettier مشترک در ریشه
-- [ ] قاعده‌ی `no-restricted-syntax` که این‌ها را خطا بدهد:
+- [x] `pnpm-workspace.yaml` با `apps/*` و `packages/*`
+- [x] TypeScript `strict: true`، `noUncheckedIndexedAccess: true`، target `ES2022` (برای BigInt)
+- [x] ESLint + Prettier مشترک در ریشه
+- [x] قاعده‌ی `no-restricted-syntax` که این‌ها را خطا بدهد:
   - `Math.round` / `Math.floor` / `Math.ceil` (به‌جز در `core-calc/src/rounding.ts`)
   - `parseFloat`
   - کلاس‌های Tailwind جهت‌دار: `ml-` `mr-` `pl-` `pr-` `left-` `right-` `text-left` `text-right`
@@ -154,14 +154,14 @@ export function gramRate(maznehRial: bigint, karat: number): bigint {
 
 ### گام ۲ — پکیج `core-calc`
 
-- [ ] `types.ts` — انواع برند‌شده: `Rial` (bigint)، `PureMg` (bigint)، `Karat`، `CoinCount`، `AssetDimension = 'rial' | 'gold' | 'silver' | \`coin:${string}\``
-- [ ] `rounding.ts` — `roundHalfUp(value, unit)` با واحد قابل تنظیم (پیش‌فرض ۱۰۰۰ ریال). محاسبات میانی هرگز گرد نمی‌شوند.
-- [ ] `karat.ts` — `toPureMg(grossMg, karat)`، `fromPureMg(pureMg, karat)`، `gramToMesghal`، `mesghalToGram`
-- [ ] `pricing.ts` — `gramRate` طبق بخش ۲
-- [ ] `coin.ts` — `intrinsicValue(coinType, gramRate1000)`، `bubble(coinType, marketPrice)`، `bullionPrice(weightMg, karat, gramRate1000)`
+- [x] `types.ts` — انواع برند‌شده: `Rial` (bigint)، `PureMg` (bigint)، `Karat`، `CoinCount`، `AssetDimension = 'rial' | 'gold' | 'silver' | \`coin:${string}\``
+- [x] `rounding.ts` — `roundHalfUp(value, unit)` با واحد قابل تنظیم (پیش‌فرض ۱۰۰۰ ریال). محاسبات میانی هرگز گرد نمی‌شوند.
+- [x] `karat.ts` — `toPureMg(grossMg, karat)`، `fromPureMg(pureMg, karat)`، `gramToMesghal`، `mesghalToGram`
+- [x] `pricing.ts` — `gramRate` طبق بخش ۲
+- [x] `coin.ts` — `intrinsicValue(coinType, gramRate1000)`، `bubble(coinType, marketPrice)`، `bullionPrice(weightMg, karat, gramRate1000)`
   - امضای `bubble()` باید طوری باشد که **پاس دادن شمش خطای زمان کامپایل بدهد**، نه اینکه صفر برگرداند
-- [ ] `persian.ts` — نرمال‌سازی `ی/ي`، `ک/ك`، ارقام عربی/فارسی/لاتین، نیم‌فاصله
-- [ ] `format.ts` — `formatRial(v)`، `formatGram(v)` با `Intl.NumberFormat('fa-IR')`
+- [x] `persian.ts` — نرمال‌سازی `ی/ي`، `ک/ك`، ارقام عربی/فارسی/لاتین، نیم‌فاصله
+- [x] `format.ts` — `formatRial(v)`، `formatGram(v)` با `Intl.NumberFormat('fa-IR')`
 
 **✔ تمام است وقتی:**
 - چهار مقدار جدول بخش ۲ دقیقاً بازتولید شوند
@@ -207,10 +207,10 @@ pnpm dlx shadcn@latest add button card dialog drawer sheet input badge separator
 
 پیکربندی‌های لازم:
 
-- [ ] `index.html` → `<html lang="fa" dir="rtl">`
-- [ ] فونت **وزیرمتن از پکیج npm**، self-host، با `font-feature-settings: "tnum"` روی اعداد
-- [ ] Tailwind: breakpointها `640 / 1024 / 1440`، پایه ۳۶۰px
-- [ ] `tsconfig` → alias `@/*`
+- [x] `index.html` → `<html lang="fa" dir="rtl">`
+- [x] فونت **وزیرمتن از پکیج npm**، self-host، با `font-feature-settings: "tnum"` روی اعداد
+- [x] Tailwind: breakpointها `640 / 1024 / 1440`، پایه ۳۶۰px
+- [x] `tsconfig` → alias `@/*`
 
 **صفحه‌ی دود `/_dev/smoke`** — فقط در حالت توسعه، در بیلد production حذف شود. باید هر پکیج را ثابت کند:
 
@@ -245,19 +245,19 @@ uipro init --ai claude                # → .claude/skills/ui-ux-pro-max
 > از مارکت‌پلیس نصب نکن — نسخه‌های پیش از ۲.۵.۱ باگ symlink دارند.
 > **پوشه‌ی اسکیل را در ریپو کامیت کن** تا بقیه‌ی تیم دوباره دانلود نکنند.
 
-- [ ] نصب و تأیید:
+- [x] نصب و تأیید:
   ```bash
   python3 .claude/skills/ui-ux-pro-max/scripts/search.py "dashboard" --domain style
   ```
 
-- [ ] تولید سیستم طراحی:
+- [x] تولید سیستم طراحی:
   ```bash
   python3 .claude/skills/ui-ux-pro-max/scripts/search.py \
     "gold jewelry retail POS accounting financial dashboard invoice billing" \
     --design-system --persist -p "GoldAccounting" --stack react
   ```
 
-- [ ] صفحه‌ی اصلی:
+- [x] صفحه‌ی اصلی:
   ```bash
   python3 .claude/skills/ui-ux-pro-max/scripts/search.py \
     "financial dashboard home overview" \
@@ -278,7 +278,7 @@ uipro init --ai claude                # → .claude/skills/ui-ux-pro-max
 | تکیه بر hover | ممنوع — محصول لمسی است |
 | Luxury E-commerce به‌عنوان نوع محصول | **Financial Dashboard / Invoice & Billing Tool** |
 
-- [ ] در انتهای `design-system/MASTER.md` بخشی به نام **«تعارض‌های حل‌شده»** اضافه کن که هر توصیه‌ی ردشده را با دلیل فهرست کند.
+- [x] در انتهای `design-system/MASTER.md` بخشی به نام **«تعارض‌های حل‌شده»** اضافه کن که هر توصیه‌ی ردشده را با دلیل فهرست کند.
 
 **✔ تمام است وقتی:** `design-system/MASTER.md` و `design-system/pages/home.md` موجود باشند، پالت رنگ و تایپوگرافی نهایی در آن‌ها قفل شده باشد، و بخش «تعارض‌های حل‌شده» نوشته شده باشد.
 
@@ -286,9 +286,9 @@ uipro init --ai claude                # → .claude/skills/ui-ux-pro-max
 
 ### گام ۵ — توکن‌های طراحی
 
-- [ ] رنگ، فاصله، شعاع و تایپوگرافی از `design-system/MASTER.md` به `tailwind.config.ts`
-- [ ] حالت روشن اجباری؛ حالت تاریک در این فاز نه
-- [ ] کنتراست متن حداقل ۴.۵:۱
+- [x] رنگ، فاصله، شعاع و تایپوگرافی از `design-system/MASTER.md` به `tailwind.config.ts`
+- [x] حالت روشن اجباری؛ حالت تاریک در این فاز نه
+- [x] کنتراست متن حداقل ۴.۵:۱
 
 **✔ تمام است وقتی:** هیچ رنگ hex خامی در `src/` نباشد (با grep بررسی کن) و قاعده‌ی lint آن را بگیرد.
 
@@ -296,12 +296,12 @@ uipro init --ai claude                # → .claude/skills/ui-ux-pro-max
 
 ### گام ۶ — پوسته‌ی موبایل‌فرست
 
-- [ ] Bottom Nav با ۵ آیتم: **خانه · فروش · خرید · اشخاص · بیشتر**
-- [ ] در `≥1024px` به سایدبار تبدیل شود
-- [ ] هر آیتم آیکون Lucide + برچسب فارسی، هدف لمسی ≥۴۴px
-- [ ] `<AmountDisplay>` — کامپوننت مرکزی رندر اعداد مالی
-- [ ] استور `useUnitStore` (Zustand) با مقدار `'gold' | 'rial'`، پیش‌فرض **`gold`**، ذخیره در `localStorage`
-- [ ] کلید تعویض واحد `<UnitToggle>` قابل استفاده در هر صفحه
+- [x] Bottom Nav با ۵ آیتم: **خانه · فروش · خرید · اشخاص · بیشتر**
+- [x] در `≥1024px` به سایدبار تبدیل شود
+- [x] هر آیتم آیکون Lucide + برچسب فارسی، هدف لمسی ≥۴۴px
+- [x] `<AmountDisplay>` — کامپوننت مرکزی رندر اعداد مالی
+- [x] استور `useUnitStore` (Zustand) با مقدار `'gold' | 'rial'`، پیش‌فرض **`gold`**، ذخیره در `localStorage`
+- [x] کلید تعویض واحد `<UnitToggle>` قابل استفاده در هر صفحه
 
 > **هیچ عدد مالی‌ای نباید مستقیم رندر شود.** همه از `<AmountDisplay>` عبور کنند. این را با grep بررسی کن.
 
@@ -347,11 +347,11 @@ uipro init --ai claude                # → .claude/skills/ui-ux-pro-max
 
 **جزئیات:**
 
-- [ ] نوار مظنه از یک هوک `useMazneh()` بخواند که فعلاً mock برمی‌گرداند. برچسب زمان همیشه دیده شود — **هرگز وانمود نکن قیمت به‌روز است.**
-- [ ] کارت سود در حالت طلا این‌طور بخواند: «این ماه ۲۵۰ گرم سود — ۲۵٪»
-- [ ] دکمه‌های فروش و خرید: ارتفاع ≥۵۶px، در یک‌سوم پایین، همیشه بدون اسکرول دیده شوند
-- [ ] حالت‌های `loading` (Skeleton) و `empty` برای هر کارت
-- [ ] در `≥1024px` چیدمان به دو یا سه ستون باز شود، نه اینکه کشیده شود
+- [x] نوار مظنه از یک هوک `useMazneh()` بخواند که فعلاً mock برمی‌گرداند. برچسب زمان همیشه دیده شود — **هرگز وانمود نکن قیمت به‌روز است.**
+- [x] کارت سود در حالت طلا این‌طور بخواند: «این ماه ۲۵۰ گرم سود — ۲۵٪»
+- [x] دکمه‌های فروش و خرید: ارتفاع ≥۵۶px، در یک‌سوم پایین، همیشه بدون اسکرول دیده شوند
+- [x] حالت‌های `loading` (Skeleton) و `empty` برای هر کارت
+- [x] در `≥1024px` چیدمان به دو یا سه ستون باز شود، نه اینکه کشیده شود
 
 **✔ تمام است وقتی:**
 
@@ -366,9 +366,9 @@ uipro init --ai claude                # → .claude/skills/ui-ux-pro-max
 
 ### گام ۸ — PWA و دروازه‌ی کارایی
 
-- [ ] `vite-plugin-pwa` با precache پوسته + manifest فارسی + آیکون‌ها
-- [ ] Lighthouse CI با بودجه: JS < 200KB · LCP < 2.5s · INP < 200ms
-- [ ] بودجه به‌عنوان **دروازه‌ی merge** در CI
+- [x] `vite-plugin-pwa` با precache پوسته + manifest فارسی + آیکون‌ها
+- [x] Lighthouse CI با بودجه: JS < 200KB · LCP < 2.5s · INP < 200ms
+- [x] بودجه به‌عنوان **دروازه‌ی merge** در CI
 
 **✔ تمام است وقتی:** PR‌ای که بسته را به ۲۵۰KB برساند، در CI قرمز شود.
 
@@ -376,16 +376,19 @@ uipro init --ai claude                # → .claude/skills/ui-ux-pro-max
 
 ## ۵. بررسی نهایی پیش از تحویل
 
-- [ ] `pnpm typecheck` · `pnpm lint` · `pnpm test` · `pnpm build` همه سبز
-- [ ] پوشش تست `packages/core-calc` برابر ۱۰۰٪
-- [ ] grep: هیچ `Math.round` خارج از `rounding.ts`
-- [ ] grep: هیچ `ml-` `mr-` `pl-` `pr-` `left-` `right-` در JSX
-- [ ] grep: هیچ رنگ hex خام در `src/`
-- [ ] grep: هیچ عدد مالی خارج از `<AmountDisplay>`
-- [ ] grep: هیچ URL خارجی برای فونت یا CDN
-- [ ] `/_dev/smoke` در بیلد production وجود ندارد
+- [x] `pnpm typecheck` · `pnpm lint` · `pnpm test` · `pnpm build` همه سبز
+- [x] پوشش تست `packages/core-calc` برابر ۱۰۰٪
+- [x] grep: هیچ `Math.round` خارج از `rounding.ts`
+- [x] grep: هیچ `ml-` `mr-` `pl-` `pr-` `left-` `right-` در JSX
+- [x] grep: هیچ رنگ hex خام در `src/`
+- [x] grep: هیچ عدد مالی خارج از `<AmountDisplay>`
+- [x] grep: هیچ URL خارجی برای فونت یا CDN
+- [x] `/_dev/smoke` در بیلد production وجود ندارد
 - [ ] تست روی یک اندروید میان‌رده‌ی **واقعی** — شبیه‌ساز کافی نیست
-- [ ] `design-system/MASTER.md` بخش «تعارض‌های حل‌شده» دارد
+      ⚠️ انجام نشده: دستگاه فیزیکی در دسترس نبود. اندازه‌گیری‌ها با شبیه‌سازی
+      Lighthouse (CPU ×۴) انجام شده — طبق بخش ۷ CLAUDE.md این کافی نیست و
+      پیش از تحویل فاز ۱ باید روی دستگاه واقعی تکرار شود. جزئیات در `PERFORMANCE.md`.
+- [x] `design-system/MASTER.md` بخش «تعارض‌های حل‌شده» دارد
 
 ---
 

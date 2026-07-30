@@ -2,7 +2,7 @@ import { ArrowDownLeft, ArrowUpRight, Coins, Recycle } from 'lucide-react';
 import { AmountDisplay } from '@/components/common/AmountDisplay';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatJalali } from '@/lib/date';
+import { formatJalaliDateTime } from '@/lib/date';
 import type { RecentTransaction, TransactionKind } from '@/mocks/dashboard';
 
 /**
@@ -55,7 +55,7 @@ export function RecentTransactions({ items }: { items: readonly RecentTransactio
                       {label} · {item.title}
                     </p>
                     <p className="text-[0.6875rem] text-muted-foreground">
-                      {formatJalali(item.occurredAt, 'd MMMM — HH:mm')}
+                      {formatJalaliDateTime(item.occurredAt)}
                     </p>
                   </div>
 

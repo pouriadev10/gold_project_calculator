@@ -4,14 +4,24 @@
 
 /*
  * وزیرمتن — فونت متغیر، لوکال، بدون هیچ CDN خارجی.
- * یک فایل ۱۰۹KB برای همه‌ی وزن‌ها؛ ارزان‌تر از هفت فایل ایستا.
+ *
+ * نسخه‌ی **بدون لاتین** (۴۷KB به‌جای ۱۰۹KB). کل رابط کاربری فارسی است و
+ * ارقام هم فارسی نمایش داده می‌شوند، پس گلیف‌های لاتین ۶۲ کیلوبایت وزن
+ * بی‌مصرف روی مسیر بحرانی بودند. هر نویسه‌ی لاتین پراکنده‌ای به فونت
+ * سیستم برمی‌گردد — که رفتار عادی fallback است، نه خطا.
+ *
+ * `unicode-range` باعث می‌شود مرورگر این فایل را فقط وقتی بگیرد که
+ * واقعاً نویسه‌ی عربی/فارسی روی صفحه باشد.
  */
 @font-face {
   font-family: 'Vazirmatn';
-  src: url('/fonts/vazirmatn-variable.woff2') format('woff2-variations');
+  src: url('/fonts/vazirmatn-fa.woff2') format('woff2-variations');
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
+  unicode-range:
+    U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200F,
+    U+2212, U+00AB, U+00BB, U+060C, U+061B, U+061F;
 }
 
 @layer base {
