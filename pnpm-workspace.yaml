@@ -1,0 +1,6 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+allowBuilds:
+  # esbuild باینری بومی پلتفرم را در نصب لینک می‌کند — بدون این، vite و vitest بالا نمی‌آیند
+  esbuild: true

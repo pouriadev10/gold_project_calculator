@@ -1,0 +1,30 @@
+node_modules/
+dist/
+dist-ssr/
+build/
+coverage/
+.turbo/
+*.local
+
+# editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# env
+.env
+.env.*
+!.env.example
+
+# lighthouse
+.lighthouseci/
+
+# pwa generated
+apps/web/dev-dist/
