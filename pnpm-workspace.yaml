@@ -4,3 +4,6 @@ packages:
 allowBuilds:
   # esbuild باینری بومی پلتفرم را در نصب لینک می‌کند — بدون این، vite و vitest بالا نمی‌آیند
   esbuild: true
+  # msw فایل سرویس‌ورکر را با نسخه‌ی نصب‌شده هم‌گام نگه می‌دارد؛
+  # نسخه‌ی کهنه‌ی mockServiceWorker.js خطاهای گیج‌کننده می‌سازد
+  msw: true

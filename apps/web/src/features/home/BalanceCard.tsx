@@ -5,7 +5,7 @@ import { AmountDisplay } from '@/components/common/AmountDisplay';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { BalanceSummary } from '@/mocks/dashboard';
+import type { PartyBalanceSummary } from '@/api/contracts';
 
 /**
  * کارت مانده — بستانکار و بدهکار.
@@ -14,7 +14,7 @@ import type { BalanceSummary } from '@/mocks/dashboard';
  * بین گرم و ریال جابه‌جا می‌شوند. «فلانی ۴۰ گرم بدهکار است» جمله‌ی
  * طبیعی این صنف است، نه ترجمه‌ی ریالی آن.
  */
-export function BalanceCard({ data }: { data: BalanceSummary | undefined }) {
+export function BalanceCard({ data }: { data: PartyBalanceSummary | undefined }) {
   if (!data) return <BalanceCardSkeleton />;
 
   return (

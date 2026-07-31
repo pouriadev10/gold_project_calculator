@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import type { ProfitBreakdown } from '@/mocks/dashboard';
+import { useProfitReport } from '@/api/queries';
+import type { ProfitReport } from '@/api/contracts';
 import { formatScaled } from '@gold/core-calc';
 
 /**
@@ -23,18 +24,16 @@ const PERIOD_LABEL: Record<Period, string> = {
   month: 'این ماه',
 };
 
-export function ProfitCard({
-  today,
-  month,
-}: {
-  today: ProfitBreakdown | undefined;
-  month: ProfitBreakdown | undefined;
-}) {
+/**
+ * کارت خودش داده‌اش را می‌گیرد، چون بازه‌ی زمانی حالت داخلی اوست.
+ * بالا بردن این حالت به صفحه، فقط یک prop اضافه می‌ساخت بی‌آنکه کسی
+ * دیگر به آن نیاز داشته باشد.
+ */
+export function ProfitCard() {
   const [period, setPeriod] = useState<Period>('month');
+  const { data } = useProfitReport(period);
 
-  if (!today || !month) return <ProfitCardSkeleton />;
-
-  const data = period === 'today' ? today : month;
+  if (!data) return <ProfitCardSkeleton />;
 
   return (
     <Card>
@@ -93,7 +92,7 @@ function BreakdownRow({
 }: {
   label: string;
   hint: string;
-  amount: ProfitBreakdown['operational'];
+  amount: ProfitReport['operational'];
 }) {
   return (
     <div className="flex items-center justify-between gap-3">

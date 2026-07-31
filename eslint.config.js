@@ -82,6 +82,8 @@ export default tseslint.config(
       '**/dev-dist/**',
       '**/.claude/**',
       '**/design-system/**',
+      // سرویس‌ورکر تولیدشده‌ی msw — فایل vendor است، ما نگهش نمی‌داریم
+      '**/public/mockServiceWorker.js',
       '**/*.config.js',
       '**/*.config.ts',
       '**/*.config.cjs',

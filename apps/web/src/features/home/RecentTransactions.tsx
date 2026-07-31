@@ -3,7 +3,7 @@ import { AmountDisplay } from '@/components/common/AmountDisplay';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatJalaliDateTime } from '@/lib/date';
-import type { RecentTransaction, TransactionKind } from '@/mocks/dashboard';
+import type { Transaction, TransactionKind } from '@/api/contracts';
 
 /**
  * آخرین معامله‌ها — **فهرست کارتی، نه جدول**.
@@ -20,7 +20,7 @@ const KIND_META: Record<TransactionKind, { icon: typeof Coins; label: string }> 
   'coin-sale': { icon: Coins, label: 'سکه' },
 };
 
-export function RecentTransactions({ items }: { items: readonly RecentTransaction[] | undefined }) {
+export function RecentTransactions({ items }: { items: readonly Transaction[] | undefined }) {
   if (!items) return <RecentTransactionsSkeleton />;
 
   return (
@@ -55,7 +55,7 @@ export function RecentTransactions({ items }: { items: readonly RecentTransactio
                       {label} · {item.title}
                     </p>
                     <p className="text-[0.6875rem] text-muted-foreground">
-                      {formatJalaliDateTime(item.occurredAt)}
+                      {formatJalaliDateTime(new Date(item.occurredAt))}
                     </p>
                   </div>
 

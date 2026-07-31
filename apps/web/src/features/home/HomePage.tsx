@@ -1,15 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Minus, Plus } from 'lucide-react';
+import { useBalanceSummary, useRecentTransactions } from '@/api/queries';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { UnitToggle } from '@/components/common/UnitToggle';
 import { Button } from '@/components/ui/button';
-import {
-  MOCK_BALANCE,
-  MOCK_PROFIT_MONTH,
-  MOCK_PROFIT_TODAY,
-  MOCK_RECENT_TRANSACTIONS,
-} from '@/mocks/dashboard';
 import { BalanceCard } from './BalanceCard';
 import { MaznehBar } from './MaznehBar';
 import { ProfitCard } from './ProfitCard';
@@ -27,6 +22,8 @@ import { RecentTransactions } from './RecentTransactions';
  */
 export function HomePage() {
   const isOnline = useOnlineStatus();
+  const balance = useBalanceSummary();
+  const transactions = useRecentTransactions(5);
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -42,10 +39,10 @@ export function HomePage() {
       </div>
 
       <div className="flex-1 space-y-4 px-4 pb-action lg:grid lg:grid-cols-2 lg:items-start lg:gap-4 lg:space-y-0 xl:grid-cols-3">
-        <BalanceCard data={MOCK_BALANCE} />
-        <ProfitCard today={MOCK_PROFIT_TODAY} month={MOCK_PROFIT_MONTH} />
+        <BalanceCard data={balance.data} />
+        <ProfitCard />
         <div className="lg:col-span-2 xl:col-span-1">
-          <RecentTransactions items={MOCK_RECENT_TRANSACTIONS} />
+          <RecentTransactions items={transactions.data?.items} />
         </div>
       </div>
 

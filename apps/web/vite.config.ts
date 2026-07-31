@@ -1,11 +1,41 @@
+import { existsSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+
+/**
+ * `mockServiceWorker.js` را از خروجی production حذف می‌کند.
+ *
+ * این فایل باید در `public/` بماند چون msw در توسعه آن را از ریشه
+ * سرو می‌کند — ولی Vite کل `public/` را کورکورانه در `dist` کپی می‌کند.
+ * نتیجه: ۹ کیلوبایت کد ساختگی روی سرور production.
+ *
+ * `globIgnores` جلوی کش‌شدنش را می‌گیرد؛ این افزونه خود فایل را هم برمی‌دارد.
+ */
+function stripMockWorker(): Plugin {
+  let outDir = 'dist';
+  return {
+    name: 'strip-mock-worker',
+    apply: 'build',
+    configResolved(config) {
+      outDir = config.build.outDir;
+    },
+    closeBundle() {
+      const target = join(outDir, 'mockServiceWorker.js');
+      if (existsSync(target)) {
+        rmSync(target);
+        this.warn('mockServiceWorker.js از خروجی production حذف شد');
+      }
+    },
+  };
+}
 
 export default defineConfig({
   plugins: [
     react(),
+    stripMockWorker(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['fonts/vazirmatn-fa.woff2', 'icons/*.png', 'icons/*.svg'],
@@ -34,6 +64,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,woff2,svg,png}'],
+        // سرویس‌ورکر ساختگی هرگز نباید در production کش شود
+        globIgnores: ['**/mockServiceWorker.js'],
         cleanupOutdatedCaches: true,
         navigateFallback: '/index.html',
       },
