@@ -84,7 +84,8 @@ export const handlers = [
 
   http.get('/api/transactions/recent', async ({ request }) => {
     await delay(READ_DELAY_MS);
-    const limit = Number(new URL(request.url).searchParams.get('limit') ?? '5');
+    // پارامتر شمارشی است، نه مالی — تجزیه‌ی صحیح کافی است
+    const limit = Number.parseInt(new URL(request.url).searchParams.get('limit') ?? '5', 10);
     return HttpResponse.json({ items: recentTransactions.slice(0, limit) });
   }),
 

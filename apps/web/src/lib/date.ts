@@ -11,6 +11,8 @@
  * مستقیماً به LCP تبدیل می‌شود.
  */
 
+import { toSafeNumber } from '@gold/core-calc';
+
 const DATE_TIME = new Intl.DateTimeFormat('fa-IR', {
   day: 'numeric',
   month: 'long',
@@ -62,9 +64,9 @@ export function formatJalaliDistance(date: Date, now: Date = new Date()): string
   const magnitude = deltaMs < 0n ? -deltaMs : deltaMs;
 
   if (magnitude < MINUTE) return 'لحظاتی پیش';
-  if (magnitude < HOUR) return RELATIVE.format(Number(deltaMs / MINUTE), 'minute');
-  if (magnitude < DAY) return RELATIVE.format(Number(deltaMs / HOUR), 'hour');
-  if (magnitude < 30n * DAY) return RELATIVE.format(Number(deltaMs / DAY), 'day');
+  if (magnitude < HOUR) return RELATIVE.format(toSafeNumber(deltaMs / MINUTE), 'minute');
+  if (magnitude < DAY) return RELATIVE.format(toSafeNumber(deltaMs / HOUR), 'hour');
+  if (magnitude < 30n * DAY) return RELATIVE.format(toSafeNumber(deltaMs / DAY), 'day');
 
   return formatJalaliFullDate(date);
 }

@@ -4,5 +4,7 @@ export * from './karat.js';
 export * from './pricing.js';
 export * from './coin.js';
 export * from './dual.js';
+export * from './input.js';
+export * from './number-bridge.js';
 export * from './persian.js';
 export * from './format.js';

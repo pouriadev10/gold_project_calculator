@@ -78,6 +78,11 @@ const devRoutes = import.meta.env.DEV
         path: '/_dev/smoke',
         component: lazyRouteComponent(() => import('@/features/dev/SmokePage')),
       }),
+      createRoute({
+        getParentRoute: () => rootRoute,
+        path: '/_dev/keypad',
+        component: lazyRouteComponent(() => import('@/features/dev/KeypadHarness')),
+      }),
     ]
   : [];
 

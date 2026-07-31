@@ -6,6 +6,7 @@ import {
   gramRate1000,
   valueOfPure,
 } from '../src/pricing.js';
+import { toSafeNumber } from '../src/number-bridge.js';
 import { karat, pureMg, rial } from '../src/types.js';
 
 const MAZNEH = 100_000_000n;
@@ -47,7 +48,7 @@ describe('عیار پایه‌ی مظنه', () => {
     // فرمول غلط عیار پایه را ۱۰۰۰ فرض می‌کند، پس نرخ را کم‌تر از واقع می‌دهد
     expect(wrong).toBeLessThan(correct);
 
-    const driftPercent = Math.abs(Number(((wrong - correct) * 10_000n) / correct) / 100);
+    const driftPercent = Math.abs(toSafeNumber(((wrong - correct) * 10_000n) / correct) / 100);
     expect(driftPercent).toBeGreaterThan(5);
     expect(driftPercent).toBeLessThan(7);
   });

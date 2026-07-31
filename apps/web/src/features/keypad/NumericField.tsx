@@ -1,0 +1,165 @@
+import { useEffect, useId, useMemo } from 'react';
+import {
+  DIGIT_SPECS,
+  bigIntToDigits,
+  digitsToBigInt,
+  formatCount,
+  formatKarat,
+  formatRial,
+  toPersianDigits,
+  type NumericFieldKind,
+} from '@gold/core-calc';
+import { cn } from '@/lib/utils';
+import { useKeypadStore } from './keypad-store';
+
+/**
+ * فیلد عددی — پل میان فرم و صفحه‌کلید سفارشی.
+ *
+ * ## چرا `readOnly` و `inputMode="none"`
+ *
+ * این ترکیب تنها راه قابل اتکا برای **باز نشدن کیبورد سیستم‌عامل** است
+ * و در عین حال فیلد را focusable و قابل دسترس نگه می‌دارد:
+ *
+ * - `inputMode="none"` به مرورگر می‌گوید صفحه‌کلید نرم لازم نیست.
+ * - `readOnly` تضمین می‌کند حتی اگر مرورگری `inputMode` را نادیده گرفت،
+ *   ورودی مستقیم ممکن نباشد؛ برخلاف `disabled`، فوکوس و خواندن با
+ *   صفحه‌خوان را از بین نمی‌برد.
+ *
+ * مقدار نمایشی فارسی است، ولی مقدار واقعی همیشه `bigint` لاتین می‌ماند
+ * و در `data-value` هم برای تست و ابزار کمکی گذاشته می‌شود.
+ */
+
+export interface NumericFieldProps {
+  kind: NumericFieldKind;
+  label: string;
+  /** ترتیب حرکت کلید «بعدی» را همین ترتیب رندر تعیین می‌کند */
+  value?: bigint;
+  onChange?: (value: bigint) => void;
+  error?: string | undefined;
+  hint?: string | undefined;
+  disabled?: boolean;
+  className?: string;
+}
+
+const UNIT_LABEL: Record<NumericFieldKind, string> = {
+  weight: 'گرم',
+  karat: '',
+  rial: 'ریال',
+  mazneh: 'ریال',
+  count: 'عدد',
+};
+
+/** نمایش مقدار با قالب مناسب هر نوع. */
+function displayValue(kind: NumericFieldKind, raw: string, value: bigint): string {
+  if (raw === '') return '';
+
+  switch (kind) {
+    case 'weight':
+      // حین تایپ، خود بافر نمایش داده می‌شود تا «۱۲٫» و صفرهای انتهایی نپرند
+      return toPersianDigits(raw.replace('.', '٫'));
+    case 'karat':
+      return formatKarat(Number.parseInt(raw, 10));
+    case 'count':
+      return formatCount(Number.parseInt(raw, 10));
+    case 'rial':
+    case 'mazneh':
+      return formatRial(value);
+    default:
+      return toPersianDigits(raw);
+  }
+}
+
+export function NumericField({
+  kind,
+  label,
+  value,
+  onChange,
+  error,
+  hint,
+  disabled,
+  className,
+}: NumericFieldProps) {
+  const id = useId();
+  const spec = DIGIT_SPECS[kind];
+
+  const registerField = useKeypadStore((s) => s.registerField);
+  const unregisterField = useKeypadStore((s) => s.unregisterField);
+  const setBuffer = useKeypadStore((s) => s.setBuffer);
+  const focusField = useKeypadStore((s) => s.focusField);
+
+  const raw = useKeypadStore((s) => s.buffers[id] ?? '');
+  const isActive = useKeypadStore((s) => s.activeId === id && s.isOpen);
+
+  useEffect(() => {
+    registerField({ id, kind, label });
+    return () => unregisterField(id);
+  }, [id, kind, label, registerField, unregisterField]);
+
+  /** مقدار اولیه‌ی کنترل‌شده از بیرون */
+  useEffect(() => {
+    if (value === undefined) return;
+    const current = digitsToBigInt(useKeypadStore.getState().buffers[id] ?? '', spec);
+    if (current !== value) setBuffer(id, bigIntToDigits(value, spec));
+    // فقط وقتی مقدار بیرونی عوض شود؛ تایپ کاربر نباید بازنویسی گردد
+  }, [value, id, spec, setBuffer]);
+
+  const currentValue = useMemo(() => digitsToBigInt(raw, spec), [raw, spec]);
+
+  /** اطلاع تغییر به فرم */
+  useEffect(() => {
+    onChange?.(currentValue);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onChange پایدار نیست و حلقه می‌سازد
+  }, [currentValue]);
+
+  const shown = displayValue(kind, raw, currentValue);
+  const unit = UNIT_LABEL[kind];
+
+  return (
+    <div className={cn('flex flex-col gap-1', className)}>
+      <label htmlFor={id} className="text-xs font-medium text-muted-foreground">
+        {label}
+      </label>
+
+      <div
+        className={cn(
+          'flex min-h-touch items-center gap-2 rounded-lg border bg-card px-3 transition-colors',
+          isActive ? 'border-ring ring-2 ring-ring ring-offset-1 ring-offset-background' : 'border-input',
+          error && 'border-destructive',
+          disabled && 'opacity-50',
+        )}
+      >
+        <input
+          id={id}
+          // این دو با هم، کیبورد سیستم‌عامل را کنار می‌گذارند
+          inputMode="none"
+          readOnly
+          disabled={disabled}
+          value={shown}
+          placeholder="۰"
+          autoCorrect="off"
+          autoCapitalize="off"
+          autoComplete="off"
+          spellCheck={false}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
+          data-value={currentValue.toString()}
+          data-kind={kind}
+          onFocus={() => !disabled && focusField(id)}
+          onPointerDown={() => !disabled && focusField(id)}
+          className="min-w-0 flex-1 cursor-pointer bg-transparent text-base font-semibold tabular-nums outline-none placeholder:font-normal placeholder:text-muted-foreground"
+        />
+        {unit ? <span className="shrink-0 text-xs text-muted-foreground">{unit}</span> : null}
+      </div>
+
+      {error ? (
+        <p id={`${id}-error`} role="alert" className="text-xs text-destructive">
+          {error}
+        </p>
+      ) : hint ? (
+        <p id={`${id}-hint`} className="text-xs text-muted-foreground">
+          {hint}
+        </p>
+      ) : null}
+    </div>
+  );
+}

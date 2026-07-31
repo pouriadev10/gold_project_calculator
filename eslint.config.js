@@ -1,6 +1,7 @@
 // @ts-check
 import js from '@eslint/js';
 import globals from 'globals';
+import reactHooks from 'eslint-plugin-react-hooks';
 import tseslint from 'typescript-eslint';
 
 /**
@@ -32,6 +33,13 @@ const noFloatMath = [
   {
     selector: "MemberExpression[property.name='toFixed']",
     message: 'toFixed ممنوع است — قالب‌بندی مالی از core-calc/format.ts می‌آید.',
+  },
+  {
+    // `Number()` روی ورودی کاربر دقت را بی‌صدا از بین می‌برد.
+    // تنها نقطه‌ی مجاز تبدیل: core-calc/src/number-bridge.ts
+    selector: "CallExpression[callee.name='Number']",
+    message:
+      'Number() ممنوع است — برای تبدیل bigint از toSafeNumber در core-calc استفاده کن.',
   },
 ];
 
@@ -118,9 +126,9 @@ export default tseslint.config(
     },
   },
 
-  // استثنای واحد: خانه‌ی رسمی گرد کردن
+  // دو استثنای واحد: خانه‌ی رسمی گرد کردن، و پل bigint→number
   {
-    files: ['packages/core-calc/src/rounding.ts'],
+    files: ['packages/core-calc/src/rounding.ts', 'packages/core-calc/src/number-bridge.ts'],
     rules: {
       'no-restricted-syntax': 'off',
     },
@@ -144,7 +152,9 @@ export default tseslint.config(
   // فایل‌های UI: علاوه بر قواعد بالا، جهت و رنگ هم کنترل می‌شود
   {
     files: ['apps/web/**/*.{ts,tsx}'],
+    plugins: { 'react-hooks': reactHooks },
     rules: {
+      ...reactHooks.configs.recommended.rules,
       'no-restricted-syntax': [
         'error',
         ...noFloatMath,

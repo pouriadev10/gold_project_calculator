@@ -1,3 +1,4 @@
+import { toSafeNumber } from '@gold/core-calc';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { ApiError, NetworkError, apiGet, apiPost, newIdempotencyKey } from './client';
@@ -54,8 +55,9 @@ describe('تبدیل رشته به bigint روی مرز', () => {
     const result = await apiGet('/x', dualAmountSchema);
 
     expect(result.rial.toString()).toBe(huge);
-    // اثبات اینکه مسیر number این عدد را خراب می‌کرد
-    expect(Number(huge).toString()).not.toBe(huge);
+    // اثبات اینکه مسیر number این عدد را خراب می‌کرد:
+    // پل رسمی تبدیل، عمداً خطا می‌دهد به‌جای برگرداندن عدد نادرست
+    expect(() => toSafeNumber(BigInt(huge))).toThrow();
   });
 
   it('عدد خام به‌جای رشته رد می‌شود — قرارداد نقض شده است', async () => {
