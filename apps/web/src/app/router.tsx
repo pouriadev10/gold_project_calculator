@@ -8,8 +8,13 @@ import {
 import { AppNav } from '@/components/common/AppNav';
 import { HomePage } from '@/features/home/HomePage';
 import { PlaceholderPage } from '@/features/placeholder/PlaceholderPage';
+import { SettingsPage } from '@/features/settings/SettingsPage';
+import { useTheme } from '@/hooks/useTheme';
 
 function RootLayout() {
+  // پوسته یک بار در ریشه اعمال و با تنظیم سیستم همگام می‌شود
+  useTheme();
+
   return (
     <div className="lg:flex lg:items-stretch">
       <AppNav />
@@ -56,9 +61,7 @@ const partiesRoute = createRoute({
 const moreRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/more',
-  component: () => (
-    <PlaceholderPage title="بیشتر" note="تنظیمات، گزارش‌ها و پشتیبان‌گیری در گام‌های بعد می‌آید." />
-  ),
+  component: SettingsPage,
 });
 
 /**

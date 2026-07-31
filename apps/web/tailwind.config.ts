@@ -61,6 +61,7 @@ const config: Config = {
         border: 'hsl(var(--border) / <alpha-value>)',
         input: 'hsl(var(--input) / <alpha-value>)',
         ring: 'hsl(var(--ring) / <alpha-value>)',
+        overlay: 'hsl(var(--overlay) / <alpha-value>)',
 
         // معنایی دامنه — بدهکار/بستانکار/سود/زیان
         credit: 'hsl(var(--credit) / <alpha-value>)',

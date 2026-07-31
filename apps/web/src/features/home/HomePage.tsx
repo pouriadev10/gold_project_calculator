@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Minus, Plus } from 'lucide-react';
+import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { UnitToggle } from '@/components/common/UnitToggle';
 import { Button } from '@/components/ui/button';
 import {
@@ -31,9 +32,13 @@ export function HomePage() {
     <div className="flex min-h-dvh flex-col">
       <MaznehBar isOnline={isOnline} />
 
-      <div className="flex items-center justify-between gap-3 px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
         <span className="text-xs text-muted-foreground">واحد نمایش</span>
-        <UnitToggle />
+        <div className="flex flex-wrap items-center gap-2">
+          <UnitToggle />
+          {/* کلید پوسته اینجا هم هست تا کاربر برای شب‌کردن صفحه به تنظیمات نرود */}
+          <ThemeToggle className="hidden sm:inline-flex" />
+        </div>
       </div>
 
       <div className="flex-1 space-y-4 px-4 pb-action lg:grid lg:grid-cols-2 lg:items-start lg:gap-4 lg:space-y-0 xl:grid-cols-3">

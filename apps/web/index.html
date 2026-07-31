@@ -28,12 +28,25 @@
     <style>
       :root {
         color-scheme: light;
+        --shell-bg: #faf9f7;
+        --shell-fg: #1c1917;
+        --shell-bar: #f1efeb;
+        --shell-card: #ffffff;
+        --shell-border: #e6e1da;
+      }
+      html.dark {
+        color-scheme: dark;
+        --shell-bg: #16130f;
+        --shell-fg: #f4f0e9;
+        --shell-bar: #2c2621;
+        --shell-card: #1f1b17;
+        --shell-border: #4f463d;
       }
       html,
       body {
         margin: 0;
-        background: #faf9f7;
-        color: #1c1917;
+        background: var(--shell-bg);
+        color: var(--shell-fg);
         font-family: Vazirmatn, system-ui, sans-serif;
       }
       #app-shell {
@@ -42,14 +55,14 @@
       #app-shell .bar {
         height: 92px;
         border-radius: 12px;
-        background: #f1efeb;
+        background: var(--shell-bar);
         margin-block-end: 12px;
       }
       #app-shell .card {
         height: 168px;
         border-radius: 12px;
-        background: #fff;
-        border: 1px solid #e6e1da;
+        background: var(--shell-card);
+        border: 1px solid var(--shell-border);
         margin-block-end: 12px;
       }
       #app-shell .title {
@@ -58,6 +71,32 @@
         margin-block-end: 12px;
       }
     </style>
+
+    <!--
+      پوسته پیش از اولین رنگ‌آمیزی تعیین می‌شود.
+
+      اگر این اسکریپت نباشد، صفحه یک لحظه سفید بالا می‌آید و بعد تیره
+      می‌شود — همان پرشی که در حالت شب چشم را می‌زند. عمداً همین‌جا و
+      به‌صورت همگام (بدون defer) نشسته تا پیش از رندر اجرا شود.
+
+      کلید `gold-ui-theme` با استور Zustand مشترک است؛ اگر آنجا عوض شد،
+      اینجا هم باید عوض شود.
+    -->
+    <script>
+      (function () {
+        try {
+          var raw = localStorage.getItem('gold-ui-theme');
+          var mode = raw ? JSON.parse(raw).state.theme : 'system';
+          var isDark =
+            mode === 'dark' ||
+            (mode === 'system' &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (isDark) document.documentElement.classList.add('dark');
+        } catch (e) {
+          /* اگر localStorage در دسترس نبود، حالت روشن پیش‌فرض است */
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root">
