@@ -1,0 +1,27 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    /*
+     * NestJS روی دکوراتورهای legacy و `design:paramtypes` بنا شده،
+     * و این دو فقط در خروجی CommonJS با tsc به‌درستی تولید می‌شوند.
+     * پس apps/api تنها بسته‌ی CJS مخزن است — `"type": "commonjs"` در package.json.
+     * `verbatimModuleSyntax` با module=commonjs ناسازگار است و باید خاموش بماند.
+     */
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "verbatimModuleSyntax": false,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+
+    "types": ["node", "vitest/globals"],
+    "noEmit": true
+  },
+  /*
+   * برخلاف core-calc، فایل‌های `vitest.config.*` اینجا typecheck نمی‌شوند.
+   * apps/api تنها بسته‌ای است که `@types/node` را صریح اعلام می‌کند (نسخه‌ی ۲۲،
+   * هم‌تراز با runtime)، و همین باعث می‌شود pnpm یک نمونه‌ی دوم از vite با peer
+   * متفاوت حل کند. آوردن تایپ‌های vite داخل برنامه‌ی api دو هویت ناسازگار از
+   * `Plugin` می‌سازد. این فایل‌ها کد اپلیکیشن نیستند و ESLint هم نادیده‌شان می‌گیرد.
+   */
+  "include": ["src/**/*.ts", "test/**/*.ts"]
+}

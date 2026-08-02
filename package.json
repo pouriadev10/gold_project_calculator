@@ -16,6 +16,7 @@
     "test": "pnpm -r --no-bail test",
     "build": "pnpm -r build",
     "dev": "pnpm --filter @gold/web dev",
+    "dev:api": "pnpm --filter @gold/api dev",
     "size": "node scripts/check-bundle-size.mjs",
     "lhci": "pnpm --filter @gold/web exec lhci autorun",
     "gate": "pnpm typecheck && pnpm lint && pnpm test && pnpm build && pnpm size"
