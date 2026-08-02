@@ -20,6 +20,9 @@ importers:
       globals:
         specifier: ^15.12.0
         version: 15.15.0
+      onom:
+        specifier: 1.0.0-alpha.0
+        version: 1.0.0-alpha.0
       prettier:
         specifier: ^3.3.3
         version: 3.9.6
@@ -1583,8 +1586,18 @@ packages:
   '@types/estree@1.0.9':
     resolution: {integrity: sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==}
 
+  '@types/fs-extra@5.1.0':
+    resolution: {integrity: sha512-AInn5+UBFIK9FK5xc9yP5e3TQSPNNgjHByqYcj9g5elVBnDQcQL7PlO1CIRy2gWlbwK7UPYqi7vRvFA44dCmYQ==}
+
+  '@types/glob@5.0.38':
+    resolution: {integrity: sha512-rTtf75rwyP9G2qO5yRpYtdJ6aU1QqEhWbtW55qEgquEDa6bXW0s2TWZfDm02GuppjEozOWG/F2UnPq5hAQb+gw==}
+
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
+
+  '@types/minimatch@6.0.0':
+    resolution: {integrity: sha512-zmPitbQ8+6zNutpwgcQuLcsEpn/Cj54Kbn7L5pX0Os5kdWplB7xPgEh/g+SWOB/qmows2gpuCaPyduq8ZZRnxA==}
+    deprecated: This is a stub types definition. minimatch provides its own type definitions, so you do not need this installed.
 
   '@types/node@26.1.2':
     resolution: {integrity: sha512-Vu4a5UFA9rIIFJ7rB/Vaafh9lrCQszopTCx6KjFboXTGQbPNasehVR5TEiithSDGyd1DEiUByggTZsg8jukeIg==}
@@ -2629,6 +2642,10 @@ packages:
     resolution: {integrity: sha512-zJ2mQYM18rEFOudeV4GShTGIQ7RbzA7ozbU9I/XBpm7kqgMywgmylMwXHxZJmkVoYkna9d2pVXVXPdYTP9ej8Q==}
     engines: {node: '>= 0.6'}
 
+  fs-extra@7.0.1:
+    resolution: {integrity: sha512-YJDaCJZEnBmcbw13fvdAM9AwNOJwOzrE4pqMqBq5nFiEqXUqHwlK4B+3pUw6JNvfSPtX05xFHtYy/1ni01eGCw==}
+    engines: {node: '>=6 <7 || >=8'}
+
   fs-extra@9.1.0:
     resolution: {integrity: sha512-hcg3ZmepS30/7BSFqRvoo3DOMQu7IjqxO5nCDt+zM9XWjb33Wg7ziNT+Qvqbuc3+gWpzO02JubVyk2G4Zvo1OQ==}
     engines: {node: '>=10'}
@@ -3107,6 +3124,9 @@ packages:
     engines: {node: '>=6'}
     hasBin: true
 
+  jsonfile@4.0.0:
+    resolution: {integrity: sha512-m6F1R3z8jjlf2imQHS2Qez5sjKWQzbuuhuJ/FKYFRZvPE3PuHcSMVZzfsLhGVOkfd20obL5SWEBew5ShlquNxg==}
+
   jsonfile@6.2.1:
     resolution: {integrity: sha512-zwOTdL3rFQ/lRdBnntKVOX6k5cKJwEc1HdilT71BWEu7J41gXIB2MRp+vxduPSwZJPWBxEzv4yH1wYLJGUHX4Q==}
 
@@ -3415,6 +3435,9 @@ packages:
   onetime@2.0.1:
     resolution: {integrity: sha512-oyyPpiMaKARvvcgip+JV+7zci5L8D1W9RZIz2l1o08AM3pfspitVWnPt3mzHcBPp12oYMTy0pqrFs/C+m3EwsQ==}
     engines: {node: '>=4'}
+
+  onom@1.0.0-alpha.0:
+    resolution: {integrity: sha512-9Sq/0Jntr65AfYi1b5WL2caC9Bc54L/luva2baOl1nsbpBPiT2KezIiwMKVUl3hU3qX9XgFKCwFkAxoBCQpx6A==}
 
   open@7.4.2:
     resolution: {integrity: sha512-MVHddDVweXZF3awtlAS+6pgKLlm/JgxZ90+/NBurBoQctVOOB/zDdVjcyPzQ+0laDGbsWgrRkflI65sQeOgT9Q==}
@@ -4301,6 +4324,10 @@ packages:
   unique-string@2.0.0:
     resolution: {integrity: sha512-uNaeirEPvpZWSgzwsPGtU2zVSTrn/8L5q/IexZmH0eH6SA73CmAA5U4GwORTxQAZs95TAXLNqeLoPPNO5gZfWg==}
     engines: {node: '>=8'}
+
+  universalify@0.1.2:
+    resolution: {integrity: sha512-rBJeI5CXAlmy1pV+617WB9J63U6XcazHHF2f2dbJix4XzpUF0RS3Zbj0FGIOCAva5P/d/GBOYaACQ1w+0azUkg==}
+    engines: {node: '>= 4.0.0'}
 
   universalify@2.0.1:
     resolution: {integrity: sha512-gptHNQghINnc/vTGIk0SOFGFNXw7JVrlRUtConJRlvaw6DuX0wO5Jeko9sWrMBhh+PsYAZ7oXAiOnf/UKogyiw==}
@@ -6146,7 +6173,20 @@ snapshots:
 
   '@types/estree@1.0.9': {}
 
+  '@types/fs-extra@5.1.0':
+    dependencies:
+      '@types/node': 26.1.2
+
+  '@types/glob@5.0.38':
+    dependencies:
+      '@types/minimatch': 6.0.0
+      '@types/node': 26.1.2
+
   '@types/json-schema@7.0.15': {}
+
+  '@types/minimatch@6.0.0':
+    dependencies:
+      minimatch: 10.2.6
 
   '@types/node@26.1.2':
     dependencies:
@@ -7387,6 +7427,12 @@ snapshots:
 
   fresh@0.5.2: {}
 
+  fs-extra@7.0.1:
+    dependencies:
+      graceful-fs: 4.2.11
+      jsonfile: 4.0.0
+      universalify: 0.1.2
+
   fs-extra@9.1.0:
     dependencies:
       at-least-node: 1.0.0
@@ -7893,6 +7939,10 @@ snapshots:
 
   json5@2.2.3: {}
 
+  jsonfile@4.0.0:
+    optionalDependencies:
+      graceful-fs: 4.2.11
+
   jsonfile@6.2.1:
     dependencies:
       universalify: 2.0.1
@@ -8203,6 +8253,13 @@ snapshots:
   onetime@2.0.1:
     dependencies:
       mimic-fn: 1.2.0
+
+  onom@1.0.0-alpha.0:
+    dependencies:
+      '@types/fs-extra': 5.1.0
+      '@types/glob': 5.0.38
+      fs-extra: 7.0.1
+      glob: 7.2.3
 
   open@7.4.2:
     dependencies:
@@ -9203,6 +9260,8 @@ snapshots:
   unique-string@2.0.0:
     dependencies:
       crypto-random-string: 2.0.0
+
+  universalify@0.1.2: {}
 
   universalify@2.0.1: {}
 
