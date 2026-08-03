@@ -1,0 +1,38 @@
+# هرچه اینجاست وارد context بیلد نمی‌شود.
+#
+# عمداً از الگوی «پوشه را حذف کن، بعد یک فایل داخلش را برگردان» استفاده
+# نشده: رفتار negation روی پوشه بین BuildKit و بیلدر قدیمی یکسان نیست.
+# هر مسیر صریح فهرست شده است.
+
+# وابستگی‌ها و خروجی‌ها داخل ایمیج ساخته می‌شوند، نه کپی. کپی‌شدن
+# node_modules میزبان یعنی بردن باینری‌های بومی ویندوز به لینوکس.
+**/node_modules
+**/dist
+**/dev-dist
+**/coverage
+
+# راز — هرگز نباید داخل ایمیج برود.
+**/.env
+**/.env.*
+
+.git
+.github
+.gitignore
+.gitattributes
+
+# ابزار و مستندات؛ برای بیلد بک‌اند بی‌ربط‌اند.
+.agents
+.claude
+design-system
+/scripts
+*.md
+
+# از فرانت‌اند فقط package.json لازم است (برای frozen-lockfile)؛
+# بقیه‌اش حجم context را بی‌جهت بالا می‌برد.
+apps/web/src
+apps/web/public
+apps/web/.lighthouseci
+
+**/.DS_Store
+**/Thumbs.db
+**/*.log

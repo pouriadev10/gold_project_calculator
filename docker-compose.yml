@@ -1,0 +1,78 @@
+# محیط توسعه‌ی بک‌اند — BE-005.
+#
+#   docker compose up            → PostgreSQL و API بالا می‌آیند
+#   docker compose --profile tools run --rm migrate   → اجرای مهاجرت
+#
+# Redis و BullMQ عمداً اینجا نیستند. ثبت مالی هرگز وارد صف نمی‌شود؛
+# یک فاکتور یا در همان درخواست کامل ثبت می‌شود یا اصلاً ثبت نمی‌شود.
+
+name: gold
+
+x-api-env: &api-env
+  NODE_ENV: ${NODE_ENV:-development}
+  PORT: '3000'
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  DATABASE_URL: postgresql://${POSTGRES_USER:-gold}:${POSTGRES_PASSWORD:-gold}@db:5432/${POSTGRES_DB:-gold}
+  # مقادیر توسعه‌ای. اسمشان عمداً چیزی است که در review فریاد می‌زند —
+  # در production کلید واقعی از محیط می‌آید و همین‌ها را بازنویسی می‌کند.
+  JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-dev-only-access-secret-change-in-production}
+  JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-only-refresh-secret-change-in-production}
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-gold}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gold}
+      POSTGRES_DB: ${POSTGRES_DB:-gold}
+      # بدون این، initdb به locale سیستم تکیه می‌کند و ترتیب مرتب‌سازی
+      # بین ماشین‌ها فرق می‌کند — همان چیزی که نتیجه‌ی ORDER BY نام مشتری
+      # را روی دو محیط متفاوت می‌کند.
+      POSTGRES_INITDB_ARGS: '--encoding=UTF8 --locale=C'
+    healthcheck:
+      # `docker compose up` نباید API را قبل از آماده شدن دیتابیس بالا بیاورد.
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-gold} -d ${POSTGRES_DB:-gold}']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    volumes:
+      - gold-db-data:/var/lib/postgresql/data
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment: *api-env
+    ports:
+      - '${API_PORT:-3000}:3000'
+    healthcheck:
+      # wget از busybox می‌آید و در ایمیج alpine موجود است.
+      test: ['CMD', 'wget', '--spider', '-q', 'http://127.0.0.1:3000/health']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # زیر profile است، پس `docker compose up` هرگز اجرایش نمی‌کند.
+  # مهاجرت باید تصمیم صریح یک آدم باشد، نه اثر جانبی بالا آمدن سرویس.
+  migrate:
+    profiles: ['tools']
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment: *api-env
+    command: ['node', 'apps/api/scripts/migrate.mjs']
+
+volumes:
+  gold-db-data:

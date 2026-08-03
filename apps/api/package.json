@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:integration": "vitest run --config vitest.config.e2e.mts"
+    "test:integration": "vitest run --config vitest.config.e2e.mts",
+    "db:migrate": "node scripts/migrate.mjs"
   },
   "dependencies": {
     "@gold/contracts": "workspace:*",
