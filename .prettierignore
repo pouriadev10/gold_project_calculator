@@ -4,3 +4,8 @@ coverage
 pnpm-lock.yaml
 design-system
 .claude
+
+# خروجی drizzle-kit — تولیدشده، دست‌نویس نیست. مهاجرت‌های SQL و شرح
+# json آن‌ها اگر خودکار reformat شوند دیگر با چیزی که ابزار تولید کرده
+# بیت‌به‌بیت یکی نیستند و review دیف را گمراه‌کننده می‌کند.
+apps/api/drizzle

@@ -228,7 +228,12 @@ API و PostgreSQL را بالا بیاورد و `/health` پاسخ دهد.
 
 # Milestone 2 — دیتابیس، مستأجر و امنیت پایه
 
-## [ ] BE-006 — راه‌اندازی Drizzle و Migration
+## [x] BE-006 — راه‌اندازی Drizzle و Migration
+
+> **وضعیت:** با `docker compose --profile tools run migrate` روی
+> `gold_test` تأیید شد — جدول با ستون‌های snake_case ساخته شد، اجرای
+> دوباره‌ی مهاجرت idempotent بود، و کل `test:integration` (۲۶ تست) روی
+> دیتابیس واقعی سبز شد.
 
 **هدف** — اتصال PostgreSQL به API با Drizzle ORM.
 

@@ -75,6 +75,10 @@ COPY --from=build /repo/packages/contracts/dist ./packages/contracts/dist
 COPY apps/api/package.json ./apps/api/
 COPY packages/contracts/package.json ./packages/contracts/
 COPY apps/api/scripts ./apps/api/scripts
+# فایل‌های مهاجرت SQL — سرویس migrate در docker-compose.yml همین‌ها را
+# می‌خواند. بدون این COPY، migrate.mjs با «meta/_journal.json پیدا نشد»
+# شکست می‌خورد چون drizzle/ اصلاً داخل ایمیج نیست.
+COPY apps/api/drizzle ./apps/api/drizzle
 
 USER node
 EXPOSE 3000
