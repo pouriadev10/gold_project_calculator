@@ -7,6 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { AppModule } from '../src/app.module';
 import { AuditModule } from '../src/platform/audit/audit.module';
 import { AuthModule } from '../src/platform/auth/auth.module';
+import { ConfigModule } from '../src/platform/config/config.module';
 import { DatabaseModule } from '../src/platform/database/database.module';
 import { IdempotencyModule } from '../src/platform/idempotency/idempotency.module';
 import { RequestContextModule } from '../src/platform/request-context/request-context.module';
@@ -28,6 +29,7 @@ import { TaxModule } from '../src/modules/tax/tax.module';
  * فهرستی که خودش از `AppModule` خوانده شود هرگز این را نمی‌گیرد.
  */
 const PLATFORM_MODULES: ReadonlyArray<readonly [string, Type]> = [
+  ['ConfigModule', ConfigModule],
   ['DatabaseModule', DatabaseModule],
   ['RequestContextModule', RequestContextModule],
   ['TenantModule', TenantModule],

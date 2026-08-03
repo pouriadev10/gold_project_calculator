@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AuditModule } from './platform/audit/audit.module';
 import { AuthModule } from './platform/auth/auth.module';
+import { ConfigModule } from './platform/config/config.module';
 import { DatabaseModule } from './platform/database/database.module';
 import { IdempotencyModule } from './platform/idempotency/idempotency.module';
 import { RequestContextModule } from './platform/request-context/request-context.module';
@@ -37,6 +38,7 @@ import { TaxModule } from './modules/tax/tax.module';
 @Module({
   imports: [
     // زیرساخت — ترتیب از پایین‌ترین لایه به بالا
+    ConfigModule,
     DatabaseModule,
     RequestContextModule,
     TenantModule,

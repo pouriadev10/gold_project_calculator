@@ -164,7 +164,7 @@ type QuantityString = string;
 
 ---
 
-## [ ] BE-004 — تنظیم Config و Environment Validation
+## [x] BE-004 — تنظیم Config و Environment Validation
 
 **هدف** — اعتبارسنجی متغیرهای محیطی در لحظه‌ی راه‌اندازی.
 
