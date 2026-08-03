@@ -194,18 +194,10 @@ JWT_REFRESH_SECRET
 
 ---
 
-## [ ] BE-005 — Docker Compose توسعه
+## [x] BE-005 — Docker Compose توسعه
 
-> **وضعیت:** فایل‌ها نوشته و کامیت شده‌اند (`docker-compose.yml`،
-> `apps/api/Dockerfile`، `.dockerignore`، `apps/api/scripts/migrate.mjs`).
-> چک‌باکس عمداً خالی مانده چون معیار پذیرش این تسک اجرای واقعی
-> `docker compose up` است و روی ماشین توسعه Docker نصب نیست.
-> برای بستن تسک:
->
-> ```bash
-> docker compose up --build
-> curl http://localhost:3000/health   # باید {"status":"ok"} بدهد
-> ```
+> **وضعیت:** با `docker compose up --build` روی محیط کاربر تأیید شد —
+> هر دو سرویس `healthy` و `GET /health` → `{"status":"ok"}`.
 
 **هدف** — اجرای محیط توسعه‌ی بک‌اند و PostgreSQL با یک دستور.
 
