@@ -13,6 +13,7 @@
     "test:integration": "vitest run --config vitest.config.e2e.mts"
   },
   "dependencies": {
+    "@gold/contracts": "workspace:*",
     "@nestjs/common": "^11.0.12",
     "@nestjs/core": "^11.0.12",
     "@nestjs/platform-fastify": "^11.0.12",

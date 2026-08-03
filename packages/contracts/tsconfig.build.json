@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    /*
+     * تنها مصرف‌کننده‌ی این خروجی، `apps/api` در زمان اجراست که CommonJS است.
+     * فرانت‌اند و تست‌ها مستقیم از `src/` می‌خوانند (شرط `import` در exports)،
+     * پس اینجا نه ESM لازم است نه فایل تعریف نوع.
+     */
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "verbatimModuleSyntax": false,
+    "noEmit": false,
+    "declaration": false,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "types": []
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "test/**/*"]
+}

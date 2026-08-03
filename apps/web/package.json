@@ -12,6 +12,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@gold/contracts": "workspace:*",
     "@gold/core-calc": "workspace:*",
     "@hookform/resolvers": "^3.9.1",
     "@radix-ui/react-dialog": "^1.1.23",

@@ -35,6 +35,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@gold/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@nestjs/common':
         specifier: ^11.0.12
         version: 11.1.28(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
@@ -78,6 +81,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@gold/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@gold/core-calc':
         specifier: workspace:*
         version: link:../../packages/core-calc
@@ -220,6 +226,19 @@ importers:
       workbox-window:
         specifier: ^7.3.0
         version: 7.4.1
+
+  packages/contracts:
+    dependencies:
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+    devDependencies:
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.5
+        version: 2.1.9(@types/node@26.1.2)(jsdom@25.0.1(supports-color@8.1.1))(msw@2.15.0(@types/node@26.1.2)(typescript@5.9.3))(supports-color@8.1.1)(terser@5.49.0)
 
   packages/core-calc:
     devDependencies:
@@ -7679,7 +7698,7 @@ snapshots:
 
   '@types/set-cookie-parser@2.4.10':
     dependencies:
-      '@types/node': 26.1.2
+      '@types/node': 22.20.1
 
   '@types/statuses@2.0.6': {}
 
