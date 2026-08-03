@@ -14,4 +14,5 @@
  * و به هیچ ماژولی import نمی‌دهند، پس چرخه‌ای ساخته نمی‌شود.
  */
 export * from './migration-probes';
+export * from './rls-probes';
 export * from './tenants';

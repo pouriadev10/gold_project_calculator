@@ -15,6 +15,20 @@
       "when": 1785781613688,
       "tag": "0001_redundant_richard_fisk",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785783109761,
+      "tag": "0002_vengeful_power_pack",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1785783120548,
+      "tag": "0003_tenant_rls",
+      "breakpoints": true
     }
   ]
 }
