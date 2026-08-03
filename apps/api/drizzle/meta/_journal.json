@@ -8,6 +8,13 @@
       "when": 1785761727428,
       "tag": "0000_white_nightmare",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1785781613688,
+      "tag": "0001_redundant_richard_fisk",
+      "breakpoints": true
     }
   ]
 }

@@ -80,7 +80,7 @@ describe('ساختار مونولیت ماژولار', () => {
     expect(Reflect.getMetadata('providers', TaxModule)).toBeUndefined();
   });
 
-  it('هیچ routeی برای tax ثبت نشده و تنها endpoint موجود /health است', () => {
+  it('ماژول tax هیچ routeی ثبت نمی‌کند', () => {
     const routes = adapter.getInstance().printRoutes({ commonPrefix: false });
 
     expect(routes).toContain('health');
