@@ -685,7 +685,7 @@ versioned_settings
 
 ---
 
-## [ ] BE-019 — Seed تنظیمات اولیه tenant
+## [x] BE-019 — Seed تنظیمات اولیه tenant
 
 **هدف** — ساخت تنظیمات اولیه هنگام ایجاد tenant.
 

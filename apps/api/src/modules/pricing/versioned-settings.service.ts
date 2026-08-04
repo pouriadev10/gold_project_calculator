@@ -6,6 +6,7 @@ import { versionedSettings } from '../../platform/database/schema';
 import { withTenantTransaction } from '../../platform/database/tenant-transaction';
 import {
   InvalidSettingVersionDateError,
+  RequiredSettingMissingError,
   SettingVersionConflictError,
 } from './versioned-settings.errors';
 import type { Database } from '../../platform/database/connect';
@@ -127,6 +128,23 @@ export class VersionedSettingsService {
     return withTenantTransaction(this.db, tenantId, (transaction) =>
       this.getEffectiveInTransaction(transaction, tenantId, settingKey, effectiveAt),
     );
+  }
+
+  /**
+   * Required domain settings must fail loudly when absent. A caller must never
+   * quietly replace an absent historical value with a code-level default.
+   */
+  async getRequiredEffective(
+    tenantId: string,
+    settingKey: string,
+    effectiveAt: Date,
+  ): Promise<VersionedSetting> {
+    const setting = await this.getEffective(tenantId, settingKey, effectiveAt);
+    if (setting === undefined) {
+      throw new RequiredSettingMissingError(settingKey);
+    }
+
+    return setting;
   }
 
   async getEffectiveInTransaction(

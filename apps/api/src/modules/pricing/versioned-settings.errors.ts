@@ -13,3 +13,14 @@ export class SettingVersionConflictError extends Error {
     this.name = 'SettingVersionConflictError';
   }
 }
+
+/** A required setting was removed or has no version valid at the requested time. */
+export class RequiredSettingMissingError extends Error {
+  readonly settingKey: string;
+
+  constructor(settingKey: string) {
+    super(`Required tenant setting "${settingKey}" is missing for the requested time`);
+    this.name = 'RequiredSettingMissingError';
+    this.settingKey = settingKey;
+  }
+}

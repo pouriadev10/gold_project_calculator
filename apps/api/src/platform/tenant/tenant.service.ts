@@ -3,15 +3,21 @@ import { eq } from 'drizzle-orm';
 import { DRIZZLE } from '../database/database.module';
 import { isUniqueViolation } from '../database/pg-errors';
 import { tenants } from '../database/schema';
+import { configureTenantTransaction } from '../database/tenant-transaction';
 import { normalizeTextForStorage } from '../../shared/validation';
 import { TenantSlugConflictError } from './tenant.errors';
+import { TENANT_INITIALIZER } from './tenant-initializer';
 import type { Database } from '../database/connect';
 import type { Tenant } from '../database/schema';
 import type { CreateTenantInput } from './tenant.dto';
+import type { TenantInitializer } from './tenant-initializer';
 
 @Injectable()
 export class TenantService {
-  constructor(@Inject(DRIZZLE) private readonly db: Database) {}
+  constructor(
+    @Inject(DRIZZLE) private readonly db: Database,
+    @Inject(TENANT_INITIALIZER) private readonly initializer: TenantInitializer,
+  ) {}
 
   /**
    * مستأجر جدید می‌سازد.
@@ -30,17 +36,28 @@ export class TenantService {
        * `DEFAULT` ستون عمل کند. اگر `undefined` پاس داده شود، drizzle
        * ستون را در INSERT می‌آورد و پیش‌فرض دیتابیس دور زده می‌شود.
        */
-      const [created] = await this.db
-        .insert(tenants)
-        .values(
-          input.timezone === undefined
-            ? { name, slug: input.slug }
-            : { name, slug: input.slug, timezone: input.timezone },
-        )
-        .returning();
+      const created = await this.db.transaction(async (transaction) => {
+        const [tenant] = await transaction
+          .insert(tenants)
+          .values(
+            input.timezone === undefined
+              ? { name, slug: input.slug }
+              : { name, slug: input.slug, timezone: input.timezone },
+          )
+          .returning();
+
+        const newTenant = tenant!;
+        await configureTenantTransaction(transaction, newTenant.id);
+        await this.initializer.initializeInTransaction(transaction, {
+          tenantId: newTenant.id,
+          validFrom: newTenant.createdAt,
+        });
+
+        return newTenant;
+      });
 
       // `returning()` روی درج موفق همیشه دقیقاً یک ردیف می‌دهد.
-      return created!;
+      return created;
     } catch (error) {
       if (isUniqueViolation(error)) {
         throw new TenantSlugConflictError(input.slug);

@@ -16,6 +16,15 @@ export const TENANT_SETTING = 'app.current_tenant_id';
 /** تراکنشی که داخل آن نقش و مستأجر تنظیم شده‌اند. */
 export type TenantTransaction = Parameters<Parameters<Database['transaction']>[0]>[0];
 
+/** Establishes the limited DB role and tenant scope for an already-open transaction. */
+export async function configureTenantTransaction(
+  transaction: TenantTransaction,
+  tenantId: string,
+): Promise<void> {
+  await transaction.execute(sql.raw(`SET LOCAL ROLE ${APP_DATABASE_ROLE}`));
+  await transaction.execute(sql`SELECT set_config(${TENANT_SETTING}, ${tenantId}, true)`);
+}
+
 /**
  * تنها مسیر مجاز دسترسی به داده‌ی مستأجر — BE-009.
  *
@@ -43,8 +52,7 @@ export async function withTenantTransaction<T>(
      * `SET LOCAL ROLE` پارامتر نمی‌پذیرد، ولی اینجا مقدار از ورودی کاربر
      * نمی‌آید — یک ثابت کد است، نه داده.
      */
-    await tx.execute(sql.raw(`SET LOCAL ROLE ${APP_DATABASE_ROLE}`));
-    await tx.execute(sql`SELECT set_config(${TENANT_SETTING}, ${tenantId}, true)`);
+    await configureTenantTransaction(tx, tenantId);
 
     return work(tx);
   });
