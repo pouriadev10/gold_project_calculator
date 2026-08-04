@@ -38,6 +38,17 @@ export class UserService {
     }
   }
 
+  /**
+   * هش رمز عبور را می‌نشاند — BE-011.
+   *
+   * ورودی **هش** است نه رمز خام: این سرویس چیزی درباره‌ی Argon2 نمی‌داند
+   * و نباید بداند. هش کردن کار `PasswordService` است، و همین مرز باعث
+   * می‌شود رمز خام هرگز از این لایه عبور نکند.
+   */
+  async setPasswordHash(userId: string, passwordHash: string): Promise<void> {
+    await this.db.update(users).set({ passwordHash }).where(eq(users.id, userId));
+  }
+
   async findById(id: string): Promise<User | undefined> {
     const [found] = await this.db.select().from(users).where(eq(users.id, id)).limit(1);
 

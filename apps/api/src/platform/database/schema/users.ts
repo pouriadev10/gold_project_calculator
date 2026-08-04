@@ -12,8 +12,6 @@ export type UserStatus = (typeof userStatusEnum.enumValues)[number];
  * می‌خورد، حسابدارِ دو طلافروشی باید دو حساب جدا می‌ساخت و همان لحظه
  * مدل شکسته بود. رابطه‌ی کاربر با مستأجر در `tenant_memberships` است.
  *
- * ستون رمز عبور اینجا نیست — اعتبارنامه‌ها کار BE-011 است و مهاجرت
- * جداگانه‌ی خودش را می‌آورد. این جدول فقط «این شخص کیست» را می‌گوید.
  */
 export const users = pgTable('users', {
   id: uuid().primaryKey().defaultRandom(),
@@ -25,6 +23,15 @@ export const users = pgTable('users', {
    */
   email: text().notNull().unique(),
   displayName: text().notNull(),
+  /**
+   * هش Argon2id رمز عبور — BE-011.
+   *
+   * nullable است چون «کاربر بدون رمز» یک حالت واقعی است، نه نقص داده:
+   * کاربری که دعوت شده ولی هنوز رمز نگذاشته. مقدار `null` یعنی این حساب
+   * نمی‌تواند وارد شود، و `AuthService` دقیقاً همان پاسخ عمومی «ایمیل یا
+   * رمز نادرست» را می‌دهد تا وجود یا نبود حساب لو نرود.
+   */
+  passwordHash: text(),
   status: userStatusEnum().notNull().default('ACTIVE'),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp({ withTimezone: true })

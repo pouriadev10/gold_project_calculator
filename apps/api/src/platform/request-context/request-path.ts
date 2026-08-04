@@ -20,8 +20,11 @@ export interface MountedRequest extends IncomingMessage {
  *   به آن تکیه کند.
  * - `/internal/dev/tenants` جایی است که مستأجر **ساخته** می‌شود؛ الزام
  *   داشتن مستأجر برای ساختن اولین مستأجر یک بن‌بست است.
+ * - `/auth` مستأجر را از توکن یا بدنه‌ی درخواست می‌گیرد، نه از هدر —
+ *   کسی که هنوز وارد نشده هدر مستأجر ندارد که بفرستد. این مسیرها
+ *   احراز هویت خودشان را دارند (`JwtAuthGuard` روی آنچه لازم است).
  */
-const PUBLIC_PATH_PREFIXES = ['/health', '/internal/dev/tenants'] as const;
+const PUBLIC_PATH_PREFIXES = ['/health', '/internal/dev/tenants', '/auth'] as const;
 
 /**
  * مسیر درخواست، بدون query string.

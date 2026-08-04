@@ -43,6 +43,13 @@
       "when": 1785848135107,
       "tag": "0005_seed_roles_and_membership_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1785850274466,
+      "tag": "0006_perpetual_devos",
+      "breakpoints": true
     }
   ]
 }
