@@ -85,6 +85,13 @@
       "when": 1785859044079,
       "tag": "0011_round_black_queen",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1785859919709,
+      "tag": "0012_giant_patriot",
+      "breakpoints": true
     }
   ]
 }

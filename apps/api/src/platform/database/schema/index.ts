@@ -17,6 +17,7 @@ export * from './audit-logs';
 export * from './coin-types';
 export * from './idempotency-records';
 export * from './migration-probes';
+export * from './parties';
 export * from './price-quotes';
 export * from './refresh-tokens';
 export * from './rls-probes';

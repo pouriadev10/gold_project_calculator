@@ -824,7 +824,7 @@ interface PriceFeedProvider {
 
 # Milestone 5 — اشخاص
 
-## [ ] BE-023 — مدل طرف حساب
+## [x] BE-023 — مدل طرف حساب
 
 **هدف** — ساخت مدل قابل توسعه‌ی Party.
 
