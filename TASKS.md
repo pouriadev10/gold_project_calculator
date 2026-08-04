@@ -565,7 +565,7 @@ audit_logs
 
 # Milestone 3 — قواعد مشترک داده
 
-## [ ] BE-015 — Serialization امن BigInt
+## [x] BE-015 — Serialization امن BigInt
 
 **هدف** — جلوگیری از خروج `number` برای پول و وزن.
 
