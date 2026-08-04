@@ -22,3 +22,4 @@ export * from './roles';
 export * from './tenant-memberships';
 export * from './tenants';
 export * from './users';
+export * from './versioned-settings';
