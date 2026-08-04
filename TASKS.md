@@ -870,7 +870,7 @@ BUSINESS
 
 ---
 
-## [ ] BE-024 — API اشخاص
+## [x] BE-024 — API اشخاص
 
 **endpointها**
 
