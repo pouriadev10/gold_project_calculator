@@ -6,21 +6,22 @@ import {
   dimensionOf,
   intrinsicValue,
 } from '../src/coin.js';
-import type { BullionType, CoinType } from '../src/coin.js';
+import type { BullionType, CentralBankMintedCoinType } from '../src/coin.js';
 import { gramRate1000 } from '../src/pricing.js';
 import { mulDivHalfUp } from '../src/rounding.js';
-import { grossMg, karat, rial } from '../src/types.js';
+import { grossMg, grossUg, karat, rial } from '../src/types.js';
 
 const MAZNEH = 100_000_000n;
 const RATE_1000 = gramRate1000(MAZNEH);
 
 // مشخصات سکه در تست پارامتر است، نه ثابت — قاعده‌ی ۲-۶ CLAUDE.md
-const FULL_COIN: CoinType = {
+const FULL_COIN: CentralBankMintedCoinType = {
   kind: 'coin',
   id: 'bahar-azadi-new',
   label: 'تمام بهار آزادی',
-  grossMg: grossMg(8133n),
+  grossWeightUg: grossUg(8_133_000n),
   karat: karat(900),
+  isCentralBankMinted: true,
 };
 
 const GOLD_BAR: BullionType = {
@@ -43,9 +44,23 @@ describe('سکه یک شیء است، نه یک وزن', () => {
 describe('ارزش ذاتی سکه', () => {
   it('برابر وزن خالص × نرخ گرم ۱۰۰۰ است', () => {
     // ۸۱۳۳ میلی‌گرم عیار ۹۰۰ → ۷۳۱۹.۷ ≈ ۷۳۲۰ میلی‌گرم خالص
-    const pure = mulDivHalfUp(8133n, 900n, 1000n);
-    expect(pure).toBe(7320n);
-    expect(intrinsicValue(FULL_COIN, RATE_1000)).toBe(mulDivHalfUp(pure, RATE_1000, 1000n));
+    const pureUg = (8_133_000n * 900n) / 1000n;
+    expect(pureUg).toBe(7_319_700n);
+    expect(intrinsicValue(FULL_COIN, RATE_1000)).toBe(
+      mulDivHalfUp(8_133_000n * 900n, RATE_1000, 1_000_000_000n),
+    );
+  });
+
+  it('keeps a fractional pure microgram as rational data until final rial rounding', () => {
+    const fractionalCoin: CentralBankMintedCoinType = {
+      ...FULL_COIN,
+      grossWeightUg: grossUg(1_000_001n),
+      karat: karat(999),
+    };
+
+    expect(intrinsicValue(fractionalCoin, RATE_1000)).toBe(
+      mulDivHalfUp(1_000_001n * 999n, RATE_1000, 1_000_000_000n),
+    );
   });
 });
 
@@ -82,9 +97,13 @@ describe('شمش حباب ندارد — در هیچ حالتی', () => {
   });
 
   it('یک شمش و یک سکه با وزن خالص برابر، قیمت ذوب برابر دارند — تفاوت فقط حباب است', () => {
-    const equivalentBar = grossMg(FULL_COIN.grossMg);
-    const barPrice = bullionPrice(equivalentBar, FULL_COIN.karat, RATE_1000);
-    expect(barPrice).toBe(intrinsicValue(FULL_COIN, RATE_1000));
+    const exactWeightCoin: CentralBankMintedCoinType = {
+      ...FULL_COIN,
+      grossWeightUg: grossUg(8_000_000n),
+    };
+    const equivalentBar = grossMg(7_200n);
+    const barPrice = bullionPrice(equivalentBar, karat(1000), RATE_1000);
+    expect(barPrice).toBe(intrinsicValue(exactWeightCoin, RATE_1000));
   });
 
   it('شمش هیچ فیلد و مسیر حبابی ندارد', () => {

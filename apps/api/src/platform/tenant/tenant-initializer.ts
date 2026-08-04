@@ -17,3 +17,17 @@ export interface TenantInitializer {
     input: TenantInitializationInput,
   ): Promise<void>;
 }
+
+/** Executes each domain-owned seed step in the same tenant-creation transaction. */
+export class CompositeTenantInitializer implements TenantInitializer {
+  constructor(private readonly initializers: readonly TenantInitializer[]) {}
+
+  async initializeInTransaction(
+    transaction: TenantTransaction,
+    input: TenantInitializationInput,
+  ): Promise<void> {
+    for (const initializer of this.initializers) {
+      await initializer.initializeInTransaction(transaction, input);
+    }
+  }
+}

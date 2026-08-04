@@ -22,6 +22,7 @@ import { ReportingModule } from '../src/modules/reporting/reporting.module';
 import { SalesModule } from '../src/modules/sales/sales.module';
 import { SettlementModule } from '../src/modules/settlement/settlement.module';
 import { TaxModule } from '../src/modules/tax/tax.module';
+import { TenantInitializationModule } from '../src/tenant-initialization.module';
 
 /**
  * فهرست صریح است و نه مشتق‌شده از متادیتای `AppModule` — عمداً.
@@ -51,6 +52,10 @@ const DOMAIN_MODULES: ReadonlyArray<readonly [string, Type]> = [
   ['TaxModule', TaxModule],
 ];
 
+const COMPOSITION_MODULES: ReadonlyArray<readonly [string, Type]> = [
+  ['TenantInitializationModule', TenantInitializationModule],
+];
+
 describe('ساختار مونولیت ماژولار', () => {
   let app: NestFastifyApplication;
   const adapter = new FastifyAdapter();
@@ -74,6 +79,13 @@ describe('ساختار مونولیت ماژولار', () => {
   it.each(DOMAIN_MODULES)('ماژول دامنه %s توسط Nest resolve می‌شود', (_name, moduleClass) => {
     expect(app.get(moduleClass)).toBeInstanceOf(moduleClass);
   });
+
+  it.each(COMPOSITION_MODULES)(
+    'ماژول اتصال‌دهنده %s توسط Nest resolve می‌شود',
+    (_name, moduleClass) => {
+      expect(app.get(moduleClass)).toBeInstanceOf(moduleClass);
+    },
+  );
 
   it('ماژول tax عمداً خالی است — نه controller، نه provider', () => {
     expect(Reflect.getMetadata('controllers', TaxModule)).toBeUndefined();

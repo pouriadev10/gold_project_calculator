@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { TENANT_INITIALIZER } from '../../platform/tenant/tenant-initializer';
 import { INITIAL_TENANT_SETTINGS } from './tenant-initial-settings';
 import { VersionedSettingsService } from './versioned-settings.service';
 import type {
@@ -31,9 +30,3 @@ export class InitialTenantSettingsService implements TenantInitializer {
     }
   }
 }
-
-/** Binding token used by TenantModule; exported here to keep the dependency through a port. */
-export const INITIAL_TENANT_SETTINGS_PROVIDER = {
-  provide: TENANT_INITIALIZER,
-  useExisting: InitialTenantSettingsService,
-};

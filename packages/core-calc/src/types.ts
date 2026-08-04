@@ -16,6 +16,14 @@ export type Rial = Brand<bigint, 'Rial'>;
 /** وزن ناخالص بر حسب میلی‌گرم. */
 export type GrossMg = Brand<bigint, 'GrossMg'>;
 
+/**
+ * وزن مشخصات مرجع سکه بر حسب میکروگرم.
+ *
+ * این واحد فقط برای مشخصات نسخه‌دار coin type است تا وزن‌های رسمیِ دارای
+ * نیم‌میلی‌گرم دقیق بمانند؛ مقدار سکه در دفتر کل همچنان `CoinCount` است.
+ */
+export type GrossUg = Brand<bigint, 'GrossUg'>;
+
 /** وزن طلای خالص ۱۰۰۰ بر حسب میلی‌گرم. */
 export type PureMg = Brand<bigint, 'PureMg'>;
 
@@ -49,6 +57,11 @@ export function rial(value: bigint): Rial {
 export function grossMg(value: bigint): GrossMg {
   if (value < 0n) throw new CalcError('وزن ناخالص نمی‌تواند منفی باشد');
   return value as GrossMg;
+}
+
+export function grossUg(value: bigint): GrossUg {
+  if (value < 0n) throw new CalcError('وزن ناخالص میکروگرم نمی‌تواند منفی باشد');
+  return value as GrossUg;
 }
 
 export function pureMg(value: bigint): PureMg {

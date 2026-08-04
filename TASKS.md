@@ -715,7 +715,7 @@ versioned_settings
 
 ---
 
-## [ ] BE-020 — انواع سکه نسخه‌دار
+## [x] BE-020 — انواع سکه نسخه‌دار
 
 **هدف** — تعریف نوع سکه به‌عنوان بُعد مستقل شمارشی.
 
@@ -726,7 +726,7 @@ coin_types
 coin_type_versions
 ```
 
-**فیلدها** — code · title · mint_type · gross_weight_mg · karat · is_central_bank_minted ·
+**فیلدها** — code · title · mint_type · gross_weight_ug · karat · is_central_bank_minted ·
 valid_from · valid_to · version · active
 
 **قواعد**

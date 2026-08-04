@@ -17,8 +17,9 @@
 
 import { toPureMg } from './karat.js';
 import { valueOfPure } from './pricing.js';
+import { mulDivHalfUp } from './rounding.js';
 import { coinDimension, rial } from './types.js';
-import type { AssetDimension, GrossMg, Karat, Rial } from './types.js';
+import type { AssetDimension, GrossMg, GrossUg, Karat, Rial } from './types.js';
 
 /**
  * نوع سکه‌ی ضرب بانک مرکزی.
@@ -27,13 +28,25 @@ import type { AssetDimension, GrossMg, Karat, Rial } from './types.js';
  * هیچ عدد صنفی در کد هاردکد نمی‌شود. این‌ها رکورد دیتابیسی نسخه‌دار
  * هستند و به‌صورت پارامتر به این توابع می‌رسند.
  */
-export interface CoinType {
+interface CoinTypeBase {
   readonly kind: 'coin';
   readonly id: string;
   readonly label: string;
-  readonly grossMg: GrossMg;
+  readonly grossWeightUg: GrossUg;
   readonly karat: Karat;
 }
+
+/** Only central-bank coins can have a bubble. */
+export interface CentralBankMintedCoinType extends CoinTypeBase {
+  readonly isCentralBankMinted: true;
+}
+
+/** A private or other non-bank coin remains a countable asset but has no bubble API. */
+export interface NonCentralBankCoinType extends CoinTypeBase {
+  readonly isCentralBankMinted: false;
+}
+
+export type CoinType = CentralBankMintedCoinType | NonCentralBankCoinType;
 
 /** شمش — بدون حباب، در هر حالتی. */
 export interface BullionType {
@@ -53,7 +66,18 @@ export function dimensionOf(coin: CoinType): AssetDimension {
  * این فقط طلای درون سکه است — حباب جداست.
  */
 export function intrinsicValue(coin: CoinType, rate1000: Rial): Rial {
-  return valueOfPure(toPureMg(coin.grossMg, coin.karat), rate1000);
+  /*
+   * `(gross microgram × karat × rial/gram) ÷ (1000 × 1_000_000)`.
+   * The exact pure weight remains a rational value until the sole final-rial
+   * rounding in `mulDivHalfUp`; no intermediate microgram is rounded.
+   */
+  return rial(
+    mulDivHalfUp(
+      coin.grossWeightUg * BigInt(coin.karat),
+      rate1000,
+      1_000_000_000n,
+    ),
+  );
 }
 
 /**
@@ -62,7 +86,11 @@ export function intrinsicValue(coin: CoinType, rate1000: Rial): Rial {
  * امضا فقط `CoinType` می‌پذیرد. این تنها ضامن قانون حباب است.
  * حباب می‌تواند منفی باشد (سکه زیر ارزش ذاتی) — خطا نیست.
  */
-export function bubble(coin: CoinType, marketPrice: Rial, rate1000: Rial): Rial {
+export function bubble(
+  coin: CentralBankMintedCoinType,
+  marketPrice: Rial,
+  rate1000: Rial,
+): Rial {
   return rial(marketPrice - intrinsicValue(coin, rate1000));
 }
 

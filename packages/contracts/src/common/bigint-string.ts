@@ -67,5 +67,8 @@ export type RialString = BigIntString;
 /** وزن بر حسب میلی‌گرم. */
 export type WeightMgString = BigIntString;
 
+/** وزن مشخصات مرجع سکه بر حسب میکروگرم. */
+export type WeightUgString = BigIntString;
+
 /** مقدار یک بُعد دفتر کل. برای سکه تعداد است و برای طلا میلی‌گرم خالص. */
 export type QuantityString = BigIntString;

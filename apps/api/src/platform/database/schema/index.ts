@@ -14,6 +14,7 @@
  * و به هیچ ماژولی import نمی‌دهند، پس چرخه‌ای ساخته نمی‌شود.
  */
 export * from './audit-logs';
+export * from './coin-types';
 export * from './idempotency-records';
 export * from './migration-probes';
 export * from './refresh-tokens';

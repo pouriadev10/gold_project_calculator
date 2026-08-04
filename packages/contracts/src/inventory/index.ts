@@ -3,4 +3,4 @@
  *
  * اسکلت خالی؛ فعلاً چیزی صادر نمی‌شود.
  */
-export {};
+export * from './coin-types.js';

@@ -77,8 +77,10 @@ describe('tenant initial settings (BE-019)', () => {
     expect(settings.every((setting) => setting.validFrom.getTime() === tenant.createdAt.getTime())).toBe(
       true,
     );
-    expect(seeded.audit).toHaveLength(Object.keys(EXPECTED_SETTINGS).length);
-    expect(seeded.audit.every((entry) => entry.action === 'SETTING_VERSION_CREATED')).toBe(true);
+    const settingsAudit = seeded.audit.filter(
+      (entry) => entry.action === 'SETTING_VERSION_CREATED',
+    );
+    expect(settingsAudit).toHaveLength(Object.keys(EXPECTED_SETTINGS).length);
   });
 
   it('uses historical seeded values after a later version is created', async () => {

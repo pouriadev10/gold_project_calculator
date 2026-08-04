@@ -19,6 +19,7 @@ import { SalesModule } from './modules/sales/sales.module';
 import { SettlementModule } from './modules/settlement/settlement.module';
 import { TaxModule } from './modules/tax/tax.module';
 import { ApiExceptionFilter } from './platform/error-contract/api-exception.filter';
+import { TenantInitializationModule } from './tenant-initialization.module';
 
 /**
  * ماژول ریشه‌ی مونولیت ماژولار.
@@ -43,6 +44,7 @@ import { ApiExceptionFilter } from './platform/error-contract/api-exception.filt
     ConfigModule,
     DatabaseModule,
     RequestContextModule,
+    TenantInitializationModule,
     TenantModule,
     UsersModule,
     AuthModule,
