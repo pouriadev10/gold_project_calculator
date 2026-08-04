@@ -787,7 +787,7 @@ GET  /pricing/quotes
 
 ---
 
-## [ ] BE-022 — اسکلت فید مظنه با Fallback
+## [x] BE-022 — اسکلت فید مظنه با Fallback
 
 **هدف** — ساخت abstraction فید بدون وابستگی عملیات فروش به آن.
 
