@@ -4,6 +4,7 @@ import { shouldRegisterDevEndpoints } from '../config/dev-endpoints';
 import { TenantModule } from '../tenant/tenant.module';
 import { DevContextController } from './dev-context.controller';
 import { RequestContextService } from './request-context.service';
+import { RequestIdMiddleware } from './request-id.middleware';
 import { TenantContextMiddleware } from './tenant-context.middleware';
 
 const DEV_CONTROLLERS: Type[] = shouldRegisterDevEndpoints() ? [DevContextController] : [];
@@ -24,12 +25,14 @@ const DEV_CONTROLLERS: Type[] = shouldRegisterDevEndpoints() ? [DevContextContro
 @Global()
 @Module({
   imports: [TenantModule],
-  providers: [RequestContextService],
+  providers: [RequestContextService, RequestIdMiddleware],
   controllers: DEV_CONTROLLERS,
   exports: [RequestContextService],
 })
 export class RequestContextModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(TenantContextMiddleware).forRoutes({ path: '*path', method: RequestMethod.ALL });
+    consumer
+      .apply(RequestIdMiddleware, TenantContextMiddleware)
+      .forRoutes({ path: '*path', method: RequestMethod.ALL });
   }
 }

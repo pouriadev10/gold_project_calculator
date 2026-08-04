@@ -17,7 +17,7 @@ const MAX_CAUSE_DEPTH = 5;
  * بود؛ تستِ slug تکراری گرفتش. حالا مشترک است تا همان اشتباه در سرویس
  * بعدی تکرار نشود.
  */
-function findPgErrorCode(error: unknown): string | undefined {
+export function getPostgresErrorCode(error: unknown): string | undefined {
   let current: unknown = error;
 
   for (let depth = 0; depth < MAX_CAUSE_DEPTH; depth += 1) {
@@ -39,10 +39,10 @@ function findPgErrorCode(error: unknown): string | undefined {
 
 /** نقض محدودیت یکتایی — مثل slug تکراری یا عضویت تکراری. */
 export function isUniqueViolation(error: unknown): boolean {
-  return findPgErrorCode(error) === UNIQUE_VIOLATION;
+  return getPostgresErrorCode(error) === UNIQUE_VIOLATION;
 }
 
 /** نقض کلید خارجی — مثل ارجاع به مستأجر یا کاربری که وجود ندارد. */
 export function isForeignKeyViolation(error: unknown): boolean {
-  return findPgErrorCode(error) === FOREIGN_KEY_VIOLATION;
+  return getPostgresErrorCode(error) === FOREIGN_KEY_VIOLATION;
 }

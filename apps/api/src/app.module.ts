@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_FILTER } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AuditModule } from './platform/audit/audit.module';
 import { AuthModule } from './platform/auth/auth.module';
@@ -17,6 +18,7 @@ import { ReportingModule } from './modules/reporting/reporting.module';
 import { SalesModule } from './modules/sales/sales.module';
 import { SettlementModule } from './modules/settlement/settlement.module';
 import { TaxModule } from './modules/tax/tax.module';
+import { ApiExceptionFilter } from './platform/error-contract/api-exception.filter';
 
 /**
  * ماژول ریشه‌ی مونولیت ماژولار.
@@ -61,5 +63,6 @@ import { TaxModule } from './modules/tax/tax.module';
     TaxModule,
   ],
   controllers: [AppController],
+  providers: [{ provide: APP_FILTER, useClass: ApiExceptionFilter }],
 })
 export class AppModule {}

@@ -617,7 +617,7 @@ audit_logs
 
 ---
 
-## [ ] BE-017 — Error Contract استاندارد
+## [x] BE-017 — Error Contract استاندارد
 
 **هدف** — یکسان‌سازی خطاهای API.
 

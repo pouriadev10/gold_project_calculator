@@ -6,10 +6,10 @@ import { MissingRequestContextError } from './request-context.errors';
  * آنچه در طول یک درخواست همه‌جا در دسترس است.
  *
  * عمداً کوچک نگه داشته شده: هرچه اینجا بیاید به‌طور ضمنی به هر لایه‌ای
- * تزریق می‌شود و ردیابی وابستگی‌ها را سخت می‌کند. `requestId` در BE-017
- * و اطلاعات کاربر در BE-011 اضافه می‌شوند.
+ * تزریق می‌شود و ردیابی وابستگی‌ها را سخت می‌کند.
  */
 export interface RequestContextStore {
+  readonly requestId: string;
   readonly tenantId: string;
   readonly tenantSlug: string;
   readonly userId: string | undefined;
@@ -54,6 +54,11 @@ export class RequestContextService {
   /** نام یکتای مستأجر جاری — برای لاگ و پیام خطا. */
   getTenantSlug(): string {
     return this.#requireStore().tenantSlug;
+  }
+
+  /** شناسه‌ی ساخته‌شده برای همین درخواست — پیوند response خطا و log سرور. */
+  getRequestId(): string {
+    return this.#requireStore().requestId;
   }
 
   /** کاربر جاری. تا BE-011 همیشه `undefined` است. */

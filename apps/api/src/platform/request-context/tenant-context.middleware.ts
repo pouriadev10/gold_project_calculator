@@ -15,6 +15,7 @@ import {
 } from '../idempotency/idempotency.errors';
 import { readIdempotencyKey, requireIdempotencyKey } from '../idempotency/idempotency-key';
 import { RequestContextService } from './request-context.service';
+import { readRequestId } from './request-id';
 import { TENANT_HEADER } from './request-context.errors';
 import { isPublicPath, resolveRequestPath } from './request-path';
 import type { MountedRequest } from './request-path';
@@ -110,8 +111,17 @@ export class TenantContextMiddleware implements NestMiddleware {
       }
     }
 
-    this.context.run({ tenantId: tenant.id, tenantSlug: tenant.slug, userId: undefined }, () => {
-      next();
-    });
+    const requestId = readRequestId(req);
+
+    if (requestId === undefined) {
+      throw new Error('request id middleware باید پیش از tenant context اجرا شود');
+    }
+
+    this.context.run(
+      { requestId, tenantId: tenant.id, tenantSlug: tenant.slug, userId: undefined },
+      () => {
+        next();
+      },
+    );
   }
 }

@@ -5,13 +5,14 @@ import { RequestContextService } from './request-context.service';
 import type { RequestContextStore } from './request-context.service';
 
 function storeFor(tenantId: string): RequestContextStore {
-  return { tenantId, tenantSlug: `slug-${tenantId}`, userId: undefined };
+  return { requestId: `request-${tenantId}`, tenantId, tenantSlug: `slug-${tenantId}`, userId: undefined };
 }
 
 describe('RequestContextService — خارج از درخواست', () => {
   it.each([
     ['getTenantId', (c: RequestContextService) => c.getTenantId()],
     ['getTenantSlug', (c: RequestContextService) => c.getTenantSlug()],
+    ['getRequestId', (c: RequestContextService) => c.getRequestId()],
     ['getUserId', (c: RequestContextService) => c.getUserId()],
   ])('%s خطا می‌دهد به‌جای برگرداندن undefined', (_name, read) => {
     expect(() => read(new RequestContextService())).toThrow(MissingRequestContextError);
@@ -26,9 +27,10 @@ describe('RequestContextService — داخل درخواست', () => {
   it('مقدارهای store را برمی‌گرداند', () => {
     const context = new RequestContextService();
 
-    context.run({ tenantId: 'a', tenantSlug: 'shop-a', userId: 'u1' }, () => {
+    context.run({ requestId: 'request-a', tenantId: 'a', tenantSlug: 'shop-a', userId: 'u1' }, () => {
       expect(context.getTenantId()).toBe('a');
       expect(context.getTenantSlug()).toBe('shop-a');
+      expect(context.getRequestId()).toBe('request-a');
       expect(context.getUserId()).toBe('u1');
       expect(context.hasContext()).toBe(true);
     });

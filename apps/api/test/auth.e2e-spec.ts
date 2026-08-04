@@ -180,8 +180,8 @@ describe('احراز هویت (نیازمند PostgreSQL واقعی)', () => {
       const wrongPassword = await login(member.email, 'رمز-غلط-کاملاً', tenantActive.slug);
 
       expect(unknown.statusCode).toBe(401);
-      expect(unknown.json<{ message: string }>().message).toBe(
-        wrongPassword.json<{ message: string }>().message,
+      expect(unknown.json<{ error: { message: string } }>().error.message).toBe(
+        wrongPassword.json<{ error: { message: string } }>().error.message,
       );
     });
 
