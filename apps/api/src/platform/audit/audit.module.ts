@@ -1,9 +1,13 @@
 import { Module } from '@nestjs/common';
+import { AuditService } from './audit.service';
 
 /**
  * ثبت تغییرناپذیر عملیات حساس — BE-014.
  *
- * اسکلت خالی.
+ * داده‌ها پیش از ذخیره پاک‌سازی می‌شوند و خود جدول در PostgreSQL append-only است.
  */
-@Module({})
+@Module({
+  providers: [AuditService],
+  exports: [AuditService],
+})
 export class AuditModule {}

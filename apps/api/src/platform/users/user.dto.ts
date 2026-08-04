@@ -35,3 +35,10 @@ export const addMembershipSchema = z.object({
 });
 
 export type AddMembershipInput = z.infer<typeof addMembershipSchema>;
+
+/** تغییر نقش همان عضویت موجود است؛ رکورد عضویت دوم ساخته نمی‌شود. */
+export const changeMembershipRoleSchema = z.object({
+  roleCode: roleCodeSchema,
+});
+
+export type ChangeMembershipRoleInput = z.infer<typeof changeMembershipRoleSchema>;

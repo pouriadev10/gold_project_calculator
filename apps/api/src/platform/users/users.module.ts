@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AuditModule } from '../audit/audit.module';
 import { MembershipService } from './membership.service';
 import { UserService } from './user.service';
 
@@ -12,6 +13,7 @@ import { UserService } from './user.service';
  * توسعه نمی‌خواهد؛ مسیرهای واقعی کاربر با احراز هویت BE-011 می‌آیند.
  */
 @Module({
+  imports: [AuditModule],
   providers: [UserService, MembershipService],
   exports: [UserService, MembershipService],
 })

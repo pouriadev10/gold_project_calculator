@@ -13,6 +13,7 @@
  * جهت وابستگی هم سالم می‌ماند: فایل‌های اینجا فقط به `drizzle-orm` وابسته‌اند
  * و به هیچ ماژولی import نمی‌دهند، پس چرخه‌ای ساخته نمی‌شود.
  */
+export * from './audit-logs';
 export * from './idempotency-records';
 export * from './migration-probes';
 export * from './refresh-tokens';

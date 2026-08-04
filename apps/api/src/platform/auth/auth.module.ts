@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
+import { AuditModule } from '../audit/audit.module';
 import { shouldRegisterDevEndpoints } from '../config/dev-endpoints';
+import { IdempotencyModule } from '../idempotency/idempotency.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';
@@ -29,7 +31,7 @@ const DEV_CONTROLLERS: Type[] = shouldRegisterDevEndpoints() ? [DevAuthzControll
  * تستی بگیردش. اینجا محافظت صریح است و در خود controller دیده می‌شود.
  */
 @Module({
-  imports: [JwtModule.register({}), UsersModule, TenantModule],
+  imports: [JwtModule.register({}), UsersModule, TenantModule, AuditModule, IdempotencyModule],
   providers: [AuthService, PasswordService, TokenService, JwtAuthGuard, RolesGuard],
   controllers: [AuthController, ...DEV_CONTROLLERS],
   exports: [AuthService, PasswordService, TokenService, JwtAuthGuard, RolesGuard],

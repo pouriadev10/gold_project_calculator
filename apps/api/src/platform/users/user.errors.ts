@@ -41,3 +41,11 @@ export class MembershipReferenceError extends Error {
     this.name = 'MembershipReferenceError';
   }
 }
+
+/** عضویت هدف در مستأجر جاری وجود ندارد. */
+export class MembershipNotFoundError extends Error {
+  constructor() {
+    super('عضویت مورد نظر در این مستأجر پیدا نشد');
+    this.name = 'MembershipNotFoundError';
+  }
+}

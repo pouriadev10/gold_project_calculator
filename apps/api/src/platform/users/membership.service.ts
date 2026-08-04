@@ -1,13 +1,20 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
+import { AuditService } from '../audit/audit.service';
 import { DRIZZLE } from '../database/database.module';
 import { isForeignKeyViolation, isUniqueViolation } from '../database/pg-errors';
 import { tenantMemberships } from '../database/schema';
 import { withTenantTransaction } from '../database/tenant-transaction';
-import { MembershipAlreadyExistsError, MembershipReferenceError } from './user.errors';
+import {
+  MembershipAlreadyExistsError,
+  MembershipNotFoundError,
+  MembershipReferenceError,
+} from './user.errors';
 import type { Database } from '../database/connect';
 import type { RoleCode, TenantMembership } from '../database/schema';
+import type { TenantTransaction } from '../database/tenant-transaction';
 import type { AddMembershipInput } from './user.dto';
+import type { ChangeMembershipRoleInput } from './user.dto';
 
 /**
  * عضویت کاربران در مستأجرها — BE-010.
@@ -23,7 +30,10 @@ import type { AddMembershipInput } from './user.dto';
  */
 @Injectable()
 export class MembershipService {
-  constructor(@Inject(DRIZZLE) private readonly db: Database) {}
+  constructor(
+    @Inject(DRIZZLE) private readonly db: Database,
+    @Inject(AuditService) private readonly audit: AuditService,
+  ) {}
 
   /**
    * کاربر را با یک نقش به مستأجر متصل می‌کند.
@@ -77,5 +87,65 @@ export class MembershipService {
 
       return found?.roleCode;
     });
+  }
+
+  /**
+   * تغییر نقش همراه با audit. نسخه‌ی transaction-aware برای endpointهای مالی و
+   * مدیریتی است که باید نقش، ردّ ممیزی و idempotency را در یک commit نگه دارند.
+   */
+  async changeRoleInTransaction(
+    transaction: TenantTransaction,
+    tenantId: string,
+    actorUserId: string,
+    userId: string,
+    input: ChangeMembershipRoleInput,
+  ): Promise<TenantMembership> {
+    const [before] = await transaction
+      .select()
+      .from(tenantMemberships)
+      .where(
+        and(eq(tenantMemberships.tenantId, tenantId), eq(tenantMemberships.userId, userId)),
+      )
+      .limit(1);
+
+    if (before === undefined) {
+      throw new MembershipNotFoundError();
+    }
+
+    if (before.roleCode === input.roleCode) {
+      return before;
+    }
+
+    const [updated] = await transaction
+      .update(tenantMemberships)
+      .set({ roleCode: input.roleCode })
+      .where(
+        and(eq(tenantMemberships.tenantId, tenantId), eq(tenantMemberships.userId, userId)),
+      )
+      .returning();
+
+    await this.audit.recordInTransaction(transaction, {
+      tenantId,
+      actorUserId,
+      action: 'ROLE_CHANGED',
+      entityType: 'tenant_membership',
+      entityId: updated!.id,
+      beforeData: { roleCode: before.roleCode, userId: before.userId },
+      afterData: { roleCode: updated!.roleCode, userId: updated!.userId },
+    });
+
+    return updated!;
+  }
+
+  /** تغییر نقش مستقل، برای job یا مسیرهایی که transaction بیرونی ندارند. */
+  async changeRole(
+    tenantId: string,
+    actorUserId: string,
+    userId: string,
+    input: ChangeMembershipRoleInput,
+  ): Promise<TenantMembership> {
+    return withTenantTransaction(this.db, tenantId, (transaction) =>
+      this.changeRoleInTransaction(transaction, tenantId, actorUserId, userId, input),
+    );
   }
 }
