@@ -62,6 +62,9 @@ describe('مجوزدهی نقش‌محور (نیازمند PostgreSQL واقعی
     if (options.tenantId !== undefined) {
       headers['x-tenant-id'] = options.tenantId;
     }
+    if (method === 'POST') {
+      headers['idempotency-key'] = randomUUID();
+    }
 
     return adapter.getInstance().inject({ method, url, headers });
   }

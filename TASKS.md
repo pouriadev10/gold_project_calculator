@@ -492,7 +492,7 @@ GET  /auth/me
 
 ---
 
-## [ ] BE-013 — Idempotency برای endpointهای نوشتنی
+## [x] BE-013 — Idempotency برای endpointهای نوشتنی
 
 **هدف** — جلوگیری از ثبت تکراری تراکنش مالی.
 

@@ -9,6 +9,11 @@ import type { NestMiddleware } from '@nestjs/common';
 import type { ServerResponse } from 'node:http';
 import { TenantService } from '../tenant/tenant.service';
 import { isTenantWritable } from '../tenant/tenant.rules';
+import {
+  InvalidIdempotencyKeyError,
+  MissingIdempotencyKeyError,
+} from '../idempotency/idempotency.errors';
+import { readIdempotencyKey, requireIdempotencyKey } from '../idempotency/idempotency-key';
 import { RequestContextService } from './request-context.service';
 import { TENANT_HEADER } from './request-context.errors';
 import { isPublicPath, resolveRequestPath } from './request-path';
@@ -91,6 +96,20 @@ export class TenantContextMiddleware implements NestMiddleware {
      * Interceptorها، Pipeها و خود handler — داخل همین context اجرا می‌شوند
      * و هر `await` میانی هم آن را حفظ می‌کند.
      */
+    if (WRITE_METHODS.has(req.method ?? '')) {
+      try {
+        requireIdempotencyKey(readIdempotencyKey(req.headers));
+      } catch (error) {
+        if (
+          error instanceof InvalidIdempotencyKeyError ||
+          error instanceof MissingIdempotencyKeyError
+        ) {
+          throw new BadRequestException(error.message);
+        }
+        throw error;
+      }
+    }
+
     this.context.run({ tenantId: tenant.id, tenantSlug: tenant.slug, userId: undefined }, () => {
       next();
     });
