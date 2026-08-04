@@ -29,6 +29,20 @@
       "when": 1785783120548,
       "tag": "0003_tenant_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1785848113492,
+      "tag": "0004_magical_vargas",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1785848135107,
+      "tag": "0005_seed_roles_and_membership_rls",
+      "breakpoints": true
     }
   ]
 }

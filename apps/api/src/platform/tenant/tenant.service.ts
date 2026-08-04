@@ -1,46 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import { DRIZZLE } from '../database/database.module';
+import { isUniqueViolation } from '../database/pg-errors';
 import { tenants } from '../database/schema';
 import { TenantSlugConflictError } from './tenant.errors';
 import type { Database } from '../database/connect';
 import type { Tenant } from '../database/schema';
 import type { CreateTenantInput } from './tenant.dto';
-
-/** کد خطای PostgreSQL برای نقض محدودیت یکتایی. */
-const UNIQUE_VIOLATION = '23505';
-
-/**
- * سقف پیمایش زنجیره‌ی `cause` — نگهبان در برابر زنجیره‌ی حلقوی.
- * در عمل عمق واقعی یک است (wrapper درزل روی خطای pg).
- */
-const MAX_CAUSE_DEPTH = 5;
-
-/**
- * آیا این خطا نقض محدودیت یکتایی است؟
- *
- * زنجیره‌ی `cause` پیموده می‌شود چون drizzle خطای درایور `pg` را در
- * `DrizzleQueryError` می‌پیچد و `code` روی شیء بیرونی وجود ندارد. نسخه‌ی
- * اول همین تابع فقط سطح اول را می‌دید و نتیجه‌اش ۵۰۰ به‌جای ۴۰۹ بود —
- * تستِ slug تکراری آن را گرفت.
- */
-function isUniqueViolation(error: unknown): boolean {
-  let current: unknown = error;
-
-  for (let depth = 0; depth < MAX_CAUSE_DEPTH; depth += 1) {
-    if (typeof current !== 'object' || current === null) {
-      return false;
-    }
-
-    if ((current as { code?: unknown }).code === UNIQUE_VIOLATION) {
-      return true;
-    }
-
-    current = (current as { cause?: unknown }).cause;
-  }
-
-  return false;
-}
 
 @Injectable()
 export class TenantService {

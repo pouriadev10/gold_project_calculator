@@ -15,4 +15,7 @@
  */
 export * from './migration-probes';
 export * from './rls-probes';
+export * from './roles';
+export * from './tenant-memberships';
 export * from './tenants';
+export * from './users';
