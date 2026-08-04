@@ -78,6 +78,13 @@
       "when": 1785858364411,
       "tag": "0010_huge_enchantress",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1785859044079,
+      "tag": "0011_round_black_queen",
+      "breakpoints": true
     }
   ]
 }
