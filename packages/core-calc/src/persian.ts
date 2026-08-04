@@ -49,6 +49,12 @@ const INVISIBLE = charClass([0x200b, 0x200d, [0x200e, 0x200f], [0x202a, 0x202e],
 /** نیم‌فاصله (U+200C) */
 const ZWNJ = charClass([0x200c]);
 
+/** فاصله‌های اطراف نیم‌فاصله بخشی از املای درست نیستند. */
+const SPACES_AROUND_ZWNJ = new RegExp(`\\s*${cp(0x200c)}\\s*`, 'gu');
+
+/** تمام فاصله‌های پیاپیِ ورودی به یک فاصله‌ی معمولی تبدیل می‌شوند. */
+const REPEATED_WHITESPACE = /\s+/gu;
+
 const PERSIAN_ZERO = 0x06f0;
 const ARABIC_ZERO = 0x0660;
 const LATIN_ZERO = 0x30;
@@ -84,8 +90,8 @@ export function toPersianDigits(input: string): string {
 }
 
 /**
- * نرمال‌سازی برای **ذخیره**: حروف یکدست، ارقام لاتین، بدون نویسه‌ی نامرئی.
- * نیم‌فاصله حفظ می‌شود.
+ * نرمال‌سازی برای **ذخیره**: حروف یکدست، ارقام لاتین، بدون نویسه‌ی نامرئی و
+ * فاصله‌ی اضافه. نیم‌فاصله حفظ می‌شود، اما فاصله‌ی اشتباه دو طرف آن حذف می‌شود.
  */
 export function normalizePersian(input: string): string {
   return toLatinDigits(input)
@@ -94,6 +100,8 @@ export function normalizePersian(input: string): string {
     .replace(YEH, PERSIAN_YEH)
     .replace(KAF, PERSIAN_KAF)
     .replace(HEH, PERSIAN_HEH)
+    .replace(SPACES_AROUND_ZWNJ, cp(0x200c))
+    .replace(REPEATED_WHITESPACE, ' ')
     .trim();
 }
 
@@ -104,7 +112,7 @@ export function normalizePersian(input: string): string {
 export function searchKey(input: string): string {
   return normalizePersian(input)
     .replace(ZWNJ, ' ')
-    .replace(/\s+/gu, ' ')
+    .replace(REPEATED_WHITESPACE, ' ')
     .toLowerCase()
     .trim();
 }

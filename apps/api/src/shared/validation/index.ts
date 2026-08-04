@@ -5,3 +5,4 @@
  * `packages/contracts` است (BE-003).
  */
 export * from './zod-validation.pipe';
+export * from './persian-text';

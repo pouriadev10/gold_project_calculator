@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm';
 import { DRIZZLE } from '../database/database.module';
 import { isUniqueViolation } from '../database/pg-errors';
 import { tenants } from '../database/schema';
+import { normalizeTextForStorage } from '../../shared/validation';
 import { TenantSlugConflictError } from './tenant.errors';
 import type { Database } from '../database/connect';
 import type { Tenant } from '../database/schema';
@@ -21,6 +22,8 @@ export class TenantService {
    * اینجا دیتابیس داور است و ما فقط خطایش را ترجمه می‌کنیم.
    */
   async create(input: CreateTenantInput): Promise<Tenant> {
+    const name = normalizeTextForStorage(input.name);
+
     try {
       /*
        * وقتی timezone نیامده، کلید اصلاً به شیء اضافه نمی‌شود تا
@@ -31,8 +34,8 @@ export class TenantService {
         .insert(tenants)
         .values(
           input.timezone === undefined
-            ? { name: input.name, slug: input.slug }
-            : { name: input.name, slug: input.slug, timezone: input.timezone },
+            ? { name, slug: input.slug }
+            : { name, slug: input.slug, timezone: input.timezone },
         )
         .returning();
 

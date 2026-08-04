@@ -77,6 +77,11 @@ describe('یکدست‌سازی حروف', () => {
   it('فاصله‌ی ابتدا و انتها حذف می‌شود', () => {
     expect(normalizePersian('  علی  ')).toBe('علی');
   });
+
+  it('فاصله‌های پیاپی و فاصله‌ی دو طرف نیم‌فاصله یکدست می‌شوند', () => {
+    expect(normalizePersian(`  علی   ${ZWNJ}  رضا  `)).toBe(`علی${ZWNJ}رضا`);
+    expect(normalizePersian('  علی    رضا  ')).toBe('علی رضا');
+  });
 });
 
 describe('کلید جست‌وجو', () => {

@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm';
 import { DRIZZLE } from '../database/database.module';
 import { isUniqueViolation } from '../database/pg-errors';
 import { users } from '../database/schema';
+import { normalizeTextForStorage } from '../../shared/validation';
 import { UserEmailConflictError } from './user.errors';
 import type { Database } from '../database/connect';
 import type { User } from '../database/schema';
@@ -26,13 +27,18 @@ export class UserService {
    * تبدیل شده؛ یکتایی را دیتابیس تشخیص می‌دهد نه یک `SELECT` قبلی.
    */
   async create(input: CreateUserInput): Promise<User> {
+    const normalizedInput = {
+      ...input,
+      displayName: normalizeTextForStorage(input.displayName),
+    };
+
     try {
-      const [created] = await this.db.insert(users).values(input).returning();
+      const [created] = await this.db.insert(users).values(normalizedInput).returning();
 
       return created!;
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new UserEmailConflictError(input.email);
+        throw new UserEmailConflictError(normalizedInput.email);
       }
       throw error;
     }
@@ -61,6 +67,20 @@ export class UserService {
       .select()
       .from(users)
       .where(eq(users.email, email.trim().toLowerCase()))
+      .limit(1);
+
+    return found;
+  }
+
+  /**
+   * نام ذخیره‌شده و عبارت جست‌وجو با یک تابع canonical می‌شوند؛ بنابراین
+   * «علي» و «علی»، یا «۱۲۳۴» و «1234»، دقیقاً همان کاربر را می‌یابند.
+   */
+  async findByDisplayName(displayName: string): Promise<User | undefined> {
+    const [found] = await this.db
+      .select()
+      .from(users)
+      .where(eq(users.displayName, normalizeTextForStorage(displayName)))
       .limit(1);
 
     return found;

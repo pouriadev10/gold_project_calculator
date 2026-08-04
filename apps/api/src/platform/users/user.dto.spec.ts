@@ -17,6 +17,15 @@ describe('createUserSchema', () => {
     expect(parsed).toEqual({ email: 'a@b.com', displayName: 'علی' });
   });
 
+  it('حروف فارسی و ارقام را پیش از اعتبارسنجی canonical می‌کند', () => {
+    const parsed = createUserSchema.parse({
+      email: 'a@b.com',
+      displayName: '  علي   شماره‌  ۱۲٣  ',
+    });
+
+    expect(parsed.displayName).toBe('علی شماره‌123');
+  });
+
   it.each([
     ['بدون @', 'not-an-email'],
     ['بدون دامنه', 'a@'],

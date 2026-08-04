@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { normalizeTextForStorage } from '../../shared/validation';
 
 /**
  * قرارداد ورودی endpointهای موقت توسعه.
@@ -36,7 +37,10 @@ function isValidTimeZone(value: string): boolean {
 }
 
 export const createTenantSchema = z.object({
-  name: z.string().trim().min(1, 'نام الزامی است').max(MAX_NAME_LENGTH),
+  name: z
+    .string()
+    .transform(normalizeTextForStorage)
+    .pipe(z.string().min(1, 'نام الزامی است').max(MAX_NAME_LENGTH)),
   slug: z
     .string()
     .trim()

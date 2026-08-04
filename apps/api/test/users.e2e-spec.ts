@@ -90,6 +90,27 @@ describe('کاربران و عضویت (نیازمند PostgreSQL واقعی)', 
       expect(await userService.findByEmail(email.toUpperCase())).toBeDefined();
     });
 
+    it('نام ذخیره‌شده و جست‌وجوی «علي» و «علی» یکسان هستند', async () => {
+      const email = uniqueEmail();
+      const created = await userService.create({
+        email,
+        displayName: '  علي   رضا  ',
+      });
+
+      expect(created.displayName).toBe('علی رضا');
+      expect((await userService.findByDisplayName('علی رضا'))?.id).toBe(created.id);
+      expect((await userService.findByDisplayName('  علي    رضا  '))?.id).toBe(created.id);
+    });
+
+    it('جست‌وجوی شماره با ارقام فارسی و لاتین یکسان است', async () => {
+      const created = await userService.create({
+        email: uniqueEmail(),
+        displayName: 'شماره 09121234567',
+      });
+
+      expect((await userService.findByDisplayName('شماره ۰۹۱۲۱۲۳۴۵۶۷'))?.id).toBe(created.id);
+    });
+
     it('ایمیل تکراری رد می‌شود', async () => {
       const email = uniqueEmail();
       await userService.create({ email, displayName: 'اولی' });

@@ -24,6 +24,12 @@ describe('createTenantSchema — ورودی معتبر', () => {
       slug: 'gold-shop',
     });
   });
+
+  it('نام فارسی را با همان قرارداد ذخیره‌سازی یکدست می‌کند', () => {
+    const parsed = createTenantSchema.parse({ name: '  طلا  ي  ', slug: 'gold-shop' });
+
+    expect(parsed.name).toBe('طلا ی');
+  });
 });
 
 describe('createTenantSchema — slug نامعتبر', () => {

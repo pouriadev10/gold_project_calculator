@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { normalizeTextForStorage } from '../../shared/validation';
 import { PHASE_ONE_ROLES } from '../database/schema';
 
 const MAX_EMAIL_LENGTH = 254;
@@ -21,7 +22,10 @@ export const emailSchema = z
 
 export const createUserSchema = z.object({
   email: emailSchema,
-  displayName: z.string().trim().min(1, 'نام نمایشی الزامی است').max(MAX_DISPLAY_NAME_LENGTH),
+  displayName: z
+    .string()
+    .transform(normalizeTextForStorage)
+    .pipe(z.string().min(1, 'نام نمایشی الزامی است').max(MAX_DISPLAY_NAME_LENGTH)),
 });
 
 export type CreateUserInput = z.infer<typeof createUserSchema>;
