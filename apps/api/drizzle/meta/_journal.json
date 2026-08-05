@@ -92,6 +92,13 @@
       "when": 1785859919709,
       "tag": "0012_giant_patriot",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1785924385416,
+      "tag": "0013_yielding_sandman",
+      "breakpoints": true
     }
   ]
 }

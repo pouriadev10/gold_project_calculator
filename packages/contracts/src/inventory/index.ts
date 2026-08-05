@@ -4,3 +4,4 @@
  * اسکلت خالی؛ فعلاً چیزی صادر نمی‌شود.
  */
 export * from './coin-types.js';
+export * from './jewelry-items.js';
