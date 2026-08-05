@@ -16,6 +16,7 @@
 export * from './audit-logs';
 export * from './coin-types';
 export * from './idempotency-records';
+export * from './inventory-movements';
 export * from './jewelry-items';
 export * from './migration-probes';
 export * from './parties';
