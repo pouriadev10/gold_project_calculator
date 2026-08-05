@@ -4,6 +4,7 @@ import { AuditService } from '../../platform/audit/audit.service';
 import { DRIZZLE } from '../../platform/database/database.module';
 import { coinTypes, coinTypeVersions } from '../../platform/database/schema';
 import { withTenantTransaction } from '../../platform/database/tenant-transaction';
+import { AssetDimensionsService } from '../ledger/asset-dimensions.service';
 import {
   CoinMintTypeMismatchError,
   CoinTypeVersionConflictError,
@@ -39,6 +40,7 @@ export class CoinTypesService {
   constructor(
     @Inject(DRIZZLE) private readonly db: Database,
     @Inject(AuditService) private readonly audit: AuditService,
+    @Inject(AssetDimensionsService) private readonly dimensions: AssetDimensionsService,
   ) {}
 
   async createType(input: CreateCoinTypeInput): Promise<CoinTypeVersion> {
@@ -173,6 +175,13 @@ export class CoinTypesService {
         validFrom: version.validFrom.toISOString(),
         version: version.version.toString(),
       },
+    });
+
+    await this.dimensions.syncCoinDimensionInTransaction(transaction, {
+      tenantId: input.tenantId,
+      coinTypeId: input.coinTypeId,
+      title: input.title,
+      active: input.active,
     });
 
     return version;

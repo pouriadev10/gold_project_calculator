@@ -3,6 +3,7 @@ import { AuditModule } from '../../platform/audit/audit.module';
 import { AuthModule } from '../../platform/auth/auth.module';
 import { IdempotencyModule } from '../../platform/idempotency/idempotency.module';
 import { UsersModule } from '../../platform/users/users.module';
+import { LedgerModule } from '../ledger/ledger.module';
 import { PricingModule } from '../pricing/pricing.module';
 import { CoinTypesService } from './coin-types.service';
 import { InitialCoinTypesService } from './initial-coin-types.service';
@@ -22,7 +23,7 @@ import { JewelryItemsService } from './jewelry-items.service';
  * `app.module.ts` برای ارتباط دو دامنه تجویز می‌کند.
  */
 @Module({
-  imports: [AuditModule, AuthModule, IdempotencyModule, PricingModule, UsersModule],
+  imports: [AuditModule, AuthModule, IdempotencyModule, LedgerModule, PricingModule, UsersModule],
   controllers: [JewelryItemsController],
   providers: [
     CoinTypesService,

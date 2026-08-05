@@ -6,7 +6,12 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { AppModule } from '../src/app.module';
 import { DRIZZLE } from '../src/platform/database/database.module';
 import { getPostgresConstraintName, isCheckViolation } from '../src/platform/database/pg-errors';
-import { coinTypes, inventoryMovements, tenants } from '../src/platform/database/schema';
+import {
+  assetDimensions,
+  coinTypes,
+  inventoryMovements,
+  tenants,
+} from '../src/platform/database/schema';
 import { withTenantTransaction } from '../src/platform/database/tenant-transaction';
 import { TenantService } from '../src/platform/tenant/tenant.service';
 import { RequiredSettingMissingError } from '../src/modules/pricing/versioned-settings.errors';
@@ -66,6 +71,38 @@ describe('حرکات موجودی (نیازمند PostgreSQL واقعی)', () =>
     return withTenantTransaction(db, tenantId, (transaction) =>
       movements.recordInTransaction(transaction, tenantId, input),
     );
+  }
+
+  async function goldDimensionId(tenantId: string): Promise<string> {
+    const [dimension] = await withTenantTransaction(db, tenantId, (transaction) =>
+      transaction
+        .select({ id: assetDimensions.id })
+        .from(assetDimensions)
+        .where(
+          and(eq(assetDimensions.tenantId, tenantId), eq(assetDimensions.kind, 'GOLD')),
+        )
+        .limit(1),
+    );
+
+    return dimension!.id;
+  }
+
+  async function coinDimensionId(tenantId: string, coinTypeId: string): Promise<string> {
+    const [dimension] = await withTenantTransaction(db, tenantId, (transaction) =>
+      transaction
+        .select({ id: assetDimensions.id })
+        .from(assetDimensions)
+        .where(
+          and(
+            eq(assetDimensions.tenantId, tenantId),
+            eq(assetDimensions.kind, 'COIN'),
+            eq(assetDimensions.coinTypeId, coinTypeId),
+          ),
+        )
+        .limit(1),
+    );
+
+    return dimension!.id;
   }
 
   /** کالای زیورآلات واقعی می‌سازد تا `item_id` شناسه‌ی ساختگی نباشد. */
@@ -160,6 +197,7 @@ describe('حرکات موجودی (نیازمند PostgreSQL واقعی)', () =>
       );
 
       expect(created).toMatchObject({ itemType: 'COIN', itemId: coinTypeId, quantity: 3n });
+      expect(created.dimensionId).toBe(await coinDimensionId(tenantA.id, coinTypeId));
     });
 
     it('آبشده با میلی‌گرم خالص و بدون شناسه ثبت می‌شود', async () => {
@@ -401,6 +439,8 @@ describe('حرکات موجودی (نیازمند PostgreSQL واقعی)', () =>
     }
 
     it('دیتابیس مستقل از سرویس جلوی حرکت صفر را می‌گیرد', async () => {
+      const dimensionId = await goldDimensionId(tenantA.id);
+
       await expectCheckViolation(
         () =>
           withTenantTransaction(db, tenantA.id, (transaction) =>
@@ -409,6 +449,7 @@ describe('حرکات موجودی (نیازمند PostgreSQL واقعی)', () =>
               sourceType: 'OPENING_BALANCE',
               sourceId: randomUUID(),
               itemType: 'MELTED_GOLD',
+              dimensionId,
               quantity: 0n,
               occurredAt: new Date(),
             }),
@@ -418,6 +459,8 @@ describe('حرکات موجودی (نیازمند PostgreSQL واقعی)', () =>
     });
 
     it('دیتابیس مستقل از سرویس جلوی شناسه‌ی ناسازگار را می‌گیرد', async () => {
+      const dimensionId = await goldDimensionId(tenantA.id);
+
       await expectCheckViolation(
         () =>
           withTenantTransaction(db, tenantA.id, (transaction) =>
@@ -427,6 +470,7 @@ describe('حرکات موجودی (نیازمند PostgreSQL واقعی)', () =>
               sourceId: randomUUID(),
               itemType: 'MELTED_GOLD',
               itemId: randomUUID(),
+              dimensionId,
               quantity: 5n,
               occurredAt: new Date(),
             }),
@@ -541,10 +585,10 @@ describe('حرکات موجودی (نیازمند PostgreSQL واقعی)', () =>
       expect(found[0]).toMatchObject({ sourceId, sourceType: 'PURCHASE', quantity: 2_000n });
     });
 
-    it('بُعد دفتر کل فعلاً خالی است و در BE-030 پر می‌شود', async () => {
+    it('بُعد طلای حرکت آبشده به‌صورت قطعی ثبت می‌شود', async () => {
       const created = await record(tenantA.id, movement());
 
-      expect(created.dimensionId).toBeNull();
+      expect(created.dimensionId).toBe(await goldDimensionId(tenantA.id));
     });
   });
 });

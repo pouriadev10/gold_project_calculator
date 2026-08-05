@@ -5,6 +5,7 @@ import { inventoryMovements } from '../../platform/database/schema';
 import { withTenantTransaction } from '../../platform/database/tenant-transaction';
 import { RequiredSettingMissingError } from '../pricing/versioned-settings.errors';
 import { VersionedSettingsService } from '../pricing/versioned-settings.service';
+import { AssetDimensionsService } from '../ledger/asset-dimensions.service';
 import {
   InvalidInventoryItemIdentityError,
   NegativeInventoryError,
@@ -28,8 +29,6 @@ export interface RecordInventoryMovementInput {
   readonly itemType: InventoryItemType;
   /** برای `JEWELRY` و `COIN` الزامی، برای `MELTED_GOLD` باید خالی باشد. */
   readonly itemId?: string | null | undefined;
-  /** تا BE-030 خالی می‌ماند؛ آن‌وقت کلید خارجی `asset_dimensions` می‌گیرد. */
-  readonly dimensionId?: string | null | undefined;
   /** مثبت یعنی ورود به موجودی و منفی یعنی خروج. صفر مجاز نیست. */
   readonly quantity: bigint;
   readonly occurredAt: Date;
@@ -89,6 +88,7 @@ export class InventoryMovementsService {
   constructor(
     @Inject(DRIZZLE) private readonly db: Database,
     @Inject(VersionedSettingsService) private readonly settings: VersionedSettingsService,
+    @Inject(AssetDimensionsService) private readonly dimensions: AssetDimensionsService,
   ) {}
 
   async recordInTransaction(
@@ -130,6 +130,13 @@ export class InventoryMovementsService {
         throw new InvalidInventoryItemIdentityError(input.itemType);
       }
 
+      const dimension = await this.dimensions.resolveInventoryDimensionInTransaction(
+        transaction,
+        tenantId,
+        input.itemType,
+        itemId,
+      );
+
       /*
        * قفل مشورتی روی «مستأجر + نوع + کالا». بدون آن، دو فروش هم‌زمان
        * هر دو موجودی قبلی را می‌خوانند، هر دو مجاز تشخیص داده می‌شوند و
@@ -161,7 +168,7 @@ export class InventoryMovementsService {
           sourceId: input.sourceId,
           itemType: input.itemType,
           itemId,
-          dimensionId: input.dimensionId ?? null,
+          dimensionId: dimension.id,
           quantity: input.quantity,
           occurredAt: input.occurredAt,
         })

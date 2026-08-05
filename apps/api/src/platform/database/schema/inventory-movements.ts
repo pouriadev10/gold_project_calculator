@@ -1,5 +1,15 @@
 import { sql } from 'drizzle-orm';
-import { bigint, check, index, pgEnum, pgTable, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+  bigint,
+  check,
+  foreignKey,
+  index,
+  pgEnum,
+  pgTable,
+  timestamp,
+  uuid,
+} from 'drizzle-orm/pg-core';
+import { assetDimensions } from './asset-dimensions';
 import { tenants } from './tenants';
 
 /**
@@ -74,17 +84,18 @@ export const inventoryMovements = pgTable(
     sourceId: uuid().notNull(),
     itemType: inventoryItemTypeEnum().notNull(),
     itemId: uuid(),
-    /**
-     * بُعد دفتر کل. فعلاً بدون کلید خارجی و nullable است، چون جدول
-     * `asset_dimensions` در BE-030 ساخته می‌شود؛ کلید خارجی و `NOT NULL`
-     * همان‌جا اضافه می‌شوند.
-     */
-    dimensionId: uuid(),
+    /** بُعد قطعی همین حرکت؛ با کلید خارجی هم‌مستأجر محافظت می‌شود. */
+    dimensionId: uuid().notNull(),
     quantity: bigint({ mode: 'bigint' }).notNull(),
     occurredAt: timestamp({ withTimezone: true }).notNull(),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
+    foreignKey({
+      columns: [table.tenantId, table.dimensionId],
+      foreignColumns: [assetDimensions.tenantId, assetDimensions.id],
+      name: 'inventory_movements_tenant_dimension_fk',
+    }).onDelete('restrict'),
     /*
      * حرکت صفر یعنی هیچ اتفاقی نیفتاده. اجازه دادنش فقط دفتر را با
      * ردیف‌هایی پر می‌کند که موجودی را عوض نمی‌کنند ولی موقع بررسی
