@@ -83,6 +83,15 @@ export const jewelryItemVersions = pgTable(
     tenantId: uuid().notNull(),
     jewelryItemId: uuid().notNull(),
     title: text().notNull(),
+    /*
+     * کلید جست‌وجوی عنوان — BE-026، همان الگوی `parties.normalized_name`.
+     *
+     * ستون جداست و از روی `title` با `searchKey` ساخته می‌شود. بدون آن،
+     * جست‌وجوی «انگشتر» روی عنوانی که با یای عربی تایپ شده هیچ‌وقت جواب
+     * نمی‌دهد، و تنها راه دیگرش تکرار کردن قواعد نرمال‌سازی فارسی داخل
+     * SQL بود — یعنی دو منبع حقیقت برای چیزی که `core-calc` مالک آن است.
+     */
+    normalizedTitle: text().notNull(),
     grossWeightMg: bigint({ mode: 'bigint' }).notNull(),
     karat: integer().notNull(),
     /*
@@ -140,6 +149,10 @@ export const jewelryItemVersions = pgTable(
       table.tenantId,
       table.jewelryItemId,
       table.validFrom,
+    ),
+    index('jewelry_item_versions_tenant_normalized_title_idx').on(
+      table.tenantId,
+      table.normalizedTitle,
     ),
   ],
 );

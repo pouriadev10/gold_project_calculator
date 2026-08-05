@@ -44,6 +44,32 @@ export class InvalidJewelryWeightError extends Error {
   }
 }
 
+export class JewelryItemNotFoundError extends Error {
+  readonly jewelryItemId: string;
+
+  constructor(jewelryItemId: string) {
+    super(`Jewelry item "${jewelryItemId}" was not found for this tenant`);
+    this.name = 'JewelryItemNotFoundError';
+    this.jewelryItemId = jewelryItemId;
+  }
+}
+
+/**
+ * کالای غیرفعال در معامله‌ی جدید انتخاب شده است — معیار BE-026.
+ *
+ * غیرفعال‌سازی رکورد را پاک نمی‌کند، چون فاکتورهای قدیمی هنوز به آن
+ * ارجاع می‌دهند؛ فقط جلوی انتخاب شدنش در سند **جدید** را می‌گیرد.
+ */
+export class InactiveJewelryItemError extends Error {
+  readonly jewelryItemId: string;
+
+  constructor(jewelryItemId: string) {
+    super(`Jewelry item "${jewelryItemId}" is inactive and cannot be used in a new transaction`);
+    this.name = 'InactiveJewelryItemError';
+    this.jewelryItemId = jewelryItemId;
+  }
+}
+
 export class JewelryItemCodeConflictError extends Error {
   readonly code: string;
 

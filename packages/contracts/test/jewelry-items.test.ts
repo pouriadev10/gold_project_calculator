@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { jewelryItemVersionSchema, jewelryWageTypeSchema } from '../src/index.js';
+import {
+  createJewelryItemSchema,
+  jewelryItemDetailQuerySchema,
+  jewelryItemListSchema,
+  jewelryItemQuerySchema,
+  jewelryItemVersionSchema,
+  jewelryWageTypeSchema,
+  updateJewelryItemSchema,
+} from '../src/index.js';
 
 const valid = {
   id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301',
@@ -122,5 +130,117 @@ describe('jewelryItemVersionSchema — سایر قواعد', () => {
 describe('jewelryWageTypeSchema', () => {
   it('فقط سه نوع فاز ۱ را می‌شناسد', () => {
     expect(jewelryWageTypeSchema.options).toEqual(['PER_GRAM', 'PERCENT_X100', 'FLAT']);
+  });
+});
+
+/** قرارداد ورودی API — BE-026. */
+const validCreate = {
+  code: 'RING-001',
+  title: 'انگشتر نگین‌دار',
+  grossWeightMg: '12000',
+  karat: 750,
+  wageType: 'PER_GRAM',
+  wageValue: '350000',
+};
+
+describe('createJewelryItemSchema', () => {
+  it('کسورات اختیاری‌اند و پیش‌فرضشان صفر است', () => {
+    const parsed = createJewelryItemSchema.parse(validCreate);
+
+    expect(parsed).toMatchObject({ stoneWeightMg: '0', otherDeductionWeightMg: '0' });
+    expect(parsed.validFrom).toBeUndefined();
+  });
+
+  it('تاریخ شروع اعتبار اختیاری ولی آفست‌دار است', () => {
+    expect(
+      createJewelryItemSchema.parse({ ...validCreate, validFrom: '2026-01-01T00:00:00Z' })
+        .validFrom,
+    ).toBe('2026-01-01T00:00:00Z');
+    expect(
+      createJewelryItemSchema.safeParse({ ...validCreate, validFrom: '2026-01-01T00:00:00' })
+        .success,
+    ).toBe(false);
+  });
+
+  it.each([
+    ['کد خالی', { code: '' }],
+    ['عنوان خالی', { title: '' }],
+    ['وزن اعشاری', { grossWeightMg: '12.5' }],
+    ['وزن ناخالص صفر', { grossWeightMg: '0' }],
+    ['اجرت منفی', { wageValue: '-1' }],
+    ['عیار خارج از بازه', { karat: 0 }],
+  ])('ورودی نامعتبر رد می‌شود: %s', (_label, override) => {
+    expect(createJewelryItemSchema.safeParse({ ...validCreate, ...override }).success).toBe(false);
+  });
+
+  it('فیلد ناشناخته رد می‌شود، نه نادیده گرفته', () => {
+    // وگرنه کلاینتی که `pureWeightMg` می‌فرستد بی‌صدا فکر می‌کند
+    // سرور آن را پذیرفته است.
+    expect(
+      createJewelryItemSchema.safeParse({ ...validCreate, pureWeightMg: '7500' }).success,
+    ).toBe(false);
+  });
+});
+
+describe('updateJewelryItemSchema', () => {
+  it('تغییر تک‌فیلدی معتبر است', () => {
+    expect(updateJewelryItemSchema.parse({ karat: 995 })).toEqual({ karat: 995 });
+    expect(updateJewelryItemSchema.parse({ title: 'عنوان تازه' })).toEqual({
+      title: 'عنوان تازه',
+    });
+  });
+
+  it('بدنه‌ی خالی رد می‌شود', () => {
+    expect(updateJewelryItemSchema.safeParse({}).success).toBe(false);
+  });
+
+  it('کد در بدنه‌ی ویرایش جایی ندارد — هویت کالاست، نه مشخصه‌ی نسخه', () => {
+    expect(updateJewelryItemSchema.safeParse({ code: 'RING-002' }).success).toBe(false);
+  });
+
+  it('مقدار نامعتبر حتی در حالت جزئی هم رد می‌شود', () => {
+    expect(updateJewelryItemSchema.safeParse({ grossWeightMg: '12.5' }).success).toBe(false);
+    expect(updateJewelryItemSchema.safeParse({ wageValue: '-1' }).success).toBe(false);
+  });
+});
+
+describe('jewelryItemQuerySchema', () => {
+  it('پیش‌فرض صفحه‌بندی را از قرارداد مشترک می‌گیرد', () => {
+    expect(jewelryItemQuerySchema.parse({})).toMatchObject({ limit: 50, offset: 0 });
+  });
+
+  it('`active` رشته‌ی صریح است و `"false"` را به `false` تبدیل می‌کند', () => {
+    // `z.coerce.boolean()` اینجا فاجعه بود: `Boolean("false") === true`.
+    expect(jewelryItemQuerySchema.parse({ active: 'false' }).active).toBe(false);
+    expect(jewelryItemQuerySchema.parse({ active: 'true' }).active).toBe(true);
+    expect(jewelryItemQuerySchema.safeParse({ active: 'maybe' }).success).toBe(false);
+  });
+
+  it('اندازه‌ی صفحه‌ی خارج از بازه رد می‌شود', () => {
+    expect(jewelryItemQuerySchema.safeParse({ limit: '1000' }).success).toBe(false);
+    expect(jewelryItemQuerySchema.safeParse({ offset: '-1' }).success).toBe(false);
+  });
+
+  it('جست‌وجوی خالی رد می‌شود', () => {
+    expect(jewelryItemQuerySchema.safeParse({ search: '' }).success).toBe(false);
+  });
+});
+
+describe('jewelryItemDetailQuerySchema', () => {
+  it('`at` اختیاری و آفست‌دار است', () => {
+    expect(jewelryItemDetailQuerySchema.parse({}).at).toBeUndefined();
+    expect(jewelryItemDetailQuerySchema.parse({ at: '2026-01-15T00:00:00Z' }).at).toBe(
+      '2026-01-15T00:00:00Z',
+    );
+    expect(jewelryItemDetailQuerySchema.safeParse({ at: '2026-01-15' }).success).toBe(false);
+  });
+});
+
+describe('jewelryItemListSchema', () => {
+  it('پوسته‌ی فهرست همان نسخه‌ها را حمل می‌کند', () => {
+    const page = jewelryItemListSchema.parse({ items: [valid], total: 1, limit: 50, offset: 0 });
+
+    expect(page.items[0]).toEqual(valid);
+    expect(page.total).toBe(1);
   });
 });
