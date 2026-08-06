@@ -3,6 +3,7 @@ import { InventoryModule } from './modules/inventory/inventory.module';
 import { InitialCoinTypesService } from './modules/inventory/initial-coin-types.service';
 import { LedgerModule } from './modules/ledger/ledger.module';
 import { InitialAssetDimensionsService } from './modules/ledger/initial-asset-dimensions.service';
+import { InitialLedgerAccountsService } from './modules/ledger/initial-ledger-accounts.service';
 import { PricingModule } from './modules/pricing/pricing.module';
 import { InitialTenantSettingsService } from './modules/pricing/initial-tenant-settings.service';
 import { CompositeTenantInitializer, TENANT_INITIALIZER } from './platform/tenant/tenant-initializer';
@@ -17,12 +18,19 @@ import { CompositeTenantInitializer, TENANT_INITIALIZER } from './platform/tenan
   providers: [
     {
       provide: TENANT_INITIALIZER,
-      inject: [InitialTenantSettingsService, InitialAssetDimensionsService, InitialCoinTypesService],
+      inject: [
+        InitialTenantSettingsService,
+        InitialAssetDimensionsService,
+        InitialLedgerAccountsService,
+        InitialCoinTypesService,
+      ],
       useFactory: (
         settings: InitialTenantSettingsService,
         dimensions: InitialAssetDimensionsService,
+        accounts: InitialLedgerAccountsService,
         coinTypes: InitialCoinTypesService,
-      ): CompositeTenantInitializer => new CompositeTenantInitializer([settings, dimensions, coinTypes]),
+      ): CompositeTenantInitializer =>
+        new CompositeTenantInitializer([settings, dimensions, accounts, coinTypes]),
     },
   ],
   exports: [TENANT_INITIALIZER],

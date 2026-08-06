@@ -6,6 +6,7 @@ import {
   pgTable,
   text,
   timestamp,
+  unique,
   uuid,
 } from 'drizzle-orm/pg-core';
 import { tenants } from './tenants';
@@ -56,6 +57,8 @@ export const parties = pgTable(
       'parties_mobile_normalization_pair_check',
       sql`(${table.mobile} IS NULL) = (${table.normalizedMobile} IS NULL)`,
     ),
+    // حساب‌های دفتر کل باید بتوانند FK هم‌مستأجر به Party داشته باشند.
+    unique('parties_tenant_id_id_unique').on(table.tenantId, table.id),
     index('parties_tenant_normalized_name_idx').on(table.tenantId, table.normalizedName),
     index('parties_tenant_normalized_mobile_idx').on(table.tenantId, table.normalizedMobile),
   ],
