@@ -5,6 +5,7 @@ import {
   coinCount,
   coinDimension,
   grossMg,
+  grossUg,
   karat,
   pureMg,
   rial,
@@ -21,6 +22,11 @@ describe('سازنده‌های نوع', () => {
     expect(() => pureMg(-1n)).toThrow('وزن خالص نمی‌تواند منفی باشد');
     expect(grossMg(0n)).toBe(0n);
     expect(pureMg(0n)).toBe(0n);
+  });
+
+  it('وزن میکروگرم منفی هم رد می‌شود', () => {
+    expect(() => grossUg(-1n)).toThrow('وزن ناخالص میکروگرم نمی‌تواند منفی باشد');
+    expect(grossUg(0n)).toBe(0n);
   });
 
   it('عیار باید صحیح و بین ۱ تا ۱۰۰۰ باشد', () => {

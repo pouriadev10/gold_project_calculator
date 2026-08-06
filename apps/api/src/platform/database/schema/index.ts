@@ -14,8 +14,11 @@
  * و به هیچ ماژولی import نمی‌دهند، پس چرخه‌ای ساخته نمی‌شود.
  */
 export * from './audit-logs';
+export * from './asset-dimensions';
 export * from './coin-types';
 export * from './idempotency-records';
+export * from './inventory-movements';
+export * from './jewelry-items';
 export * from './migration-probes';
 export * from './parties';
 export * from './price-quotes';

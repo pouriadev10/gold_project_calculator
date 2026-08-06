@@ -1,6 +1,8 @@
 import { Global, Module } from '@nestjs/common';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { InitialCoinTypesService } from './modules/inventory/initial-coin-types.service';
+import { LedgerModule } from './modules/ledger/ledger.module';
+import { InitialAssetDimensionsService } from './modules/ledger/initial-asset-dimensions.service';
 import { PricingModule } from './modules/pricing/pricing.module';
 import { InitialTenantSettingsService } from './modules/pricing/initial-tenant-settings.service';
 import { CompositeTenantInitializer, TENANT_INITIALIZER } from './platform/tenant/tenant-initializer';
@@ -11,15 +13,16 @@ import { CompositeTenantInitializer, TENANT_INITIALIZER } from './platform/tenan
  */
 @Global()
 @Module({
-  imports: [PricingModule, InventoryModule],
+  imports: [PricingModule, LedgerModule, InventoryModule],
   providers: [
     {
       provide: TENANT_INITIALIZER,
-      inject: [InitialTenantSettingsService, InitialCoinTypesService],
+      inject: [InitialTenantSettingsService, InitialAssetDimensionsService, InitialCoinTypesService],
       useFactory: (
         settings: InitialTenantSettingsService,
+        dimensions: InitialAssetDimensionsService,
         coinTypes: InitialCoinTypesService,
-      ): CompositeTenantInitializer => new CompositeTenantInitializer([settings, coinTypes]),
+      ): CompositeTenantInitializer => new CompositeTenantInitializer([settings, dimensions, coinTypes]),
     },
   ],
   exports: [TENANT_INITIALIZER],

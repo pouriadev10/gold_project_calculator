@@ -92,6 +92,34 @@
       "when": 1785859919709,
       "tag": "0012_giant_patriot",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1785924385416,
+      "tag": "0013_yielding_sandman",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1785926150887,
+      "tag": "0014_lean_pixie",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1785955350017,
+      "tag": "0015_tiny_black_crow",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1785959295103,
+      "tag": "0016_peaceful_strong_guy",
+      "breakpoints": true
     }
   ]
 }

@@ -20,6 +20,8 @@ const EXPECTED_SETTINGS: Readonly<Record<string, { readonly value: string }>> = 
   'pricing.rial_rounding_unit': { value: '1000' },
   'pricing.rounding_policy': { value: 'HALF_UP' },
   'reporting.default_display_karat': { value: '750' },
+  // BE-027 — سیاست موجودی منفی. پیش‌فرض «نه».
+  'inventory.allow_negative_stock': { value: 'false' },
   'sales.invoice_correction_window_minutes': { value: '30' },
   'sales.manager_approval_variance_rial': { value: '0' },
   'tax.gold_jewelry_labor_profit_commission_rate_bps': { value: '1000' },
