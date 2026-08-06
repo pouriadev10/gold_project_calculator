@@ -1232,7 +1232,7 @@ quantity · metadata · created_at
 
 ---
 
-## [ ] BE-033 — Constraint Trigger تراز دفتر کل
+## [x] BE-033 — Constraint Trigger تراز دفتر کل
 
 **هدف** — اعمال ناوردای مجموع صفر در دیتابیس.
 
