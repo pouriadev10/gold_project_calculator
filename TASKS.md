@@ -1259,7 +1259,7 @@ DEFERRABLE INITIALLY DEFERRED
 
 ---
 
-## [ ] BE-034 — Ledger Posting Service
+## [x] BE-034 — Ledger Posting Service
 
 **هدف** — تنها مسیر مجاز ساخت تراکنش دفتر کل.
 

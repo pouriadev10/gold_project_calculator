@@ -4,6 +4,7 @@ import { AssetDimensionsService } from './asset-dimensions.service';
 import { InitialAssetDimensionsService } from './initial-asset-dimensions.service';
 import { InitialLedgerAccountsService } from './initial-ledger-accounts.service';
 import { LedgerAccountsService } from './ledger-accounts.service';
+import { LedgerPostingService } from './ledger-posting.service';
 
 /**
  * دفتر کل چندواحدی — قلب سیستم. BE-030 تا BE-037.
@@ -17,12 +18,14 @@ import { LedgerAccountsService } from './ledger-accounts.service';
     InitialAssetDimensionsService,
     InitialLedgerAccountsService,
     LedgerAccountsService,
+    LedgerPostingService,
   ],
   exports: [
     AssetDimensionsService,
     InitialAssetDimensionsService,
     InitialLedgerAccountsService,
     LedgerAccountsService,
+    LedgerPostingService,
   ],
 })
 export class LedgerModule {}
