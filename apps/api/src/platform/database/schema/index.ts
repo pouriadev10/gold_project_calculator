@@ -20,6 +20,7 @@ export * from './idempotency-records';
 export * from './inventory-movements';
 export * from './jewelry-items';
 export * from './ledger-accounts';
+export * from './ledger-transactions';
 export * from './migration-probes';
 export * from './parties';
 export * from './price-quotes';
