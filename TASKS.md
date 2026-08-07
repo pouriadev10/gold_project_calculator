@@ -1355,7 +1355,16 @@ ledgerPostingService.post({
 
 ---
 
-## [ ] BE-037 — Query مانده حساب
+## [x] BE-037 — Query مانده حساب
+
+> **وضعیت:** `AccountBalanceService.getAccountBalances` جمع `ledger_entries.quantity`
+> را به تفکیک `dimension` می‌زند، با join روی `ledger_transactions.effective_at`
+> برای `at` اختیاری (نه `created_at` — قاعده‌ی ۲-۸). `rial`/`gold`/`silver`
+> رشته‌اند؛ `coins` یک `Record<code, number>` است چون تعداد سکه `integer`
+> است نه `bigint` — تبدیلش با `toSafeNumber` از `core-calc` انجام می‌شود،
+> تنها نقطه‌ی مجاز `bigint → number`. خروجی sparse است: بُعدی که حساب هرگز
+> entry نداشته کلید نمی‌گیرد؛ بُعدی که entry داشته و جمعش صفر شده («رفت +
+> برگشتِ reverse») مقدار `"0"` می‌گیرد — این دو حالت را عمداً یکی نکردیم.
 
 **هدف** — محاسبه‌ی مانده هر حساب در ابعاد مستقل.
 

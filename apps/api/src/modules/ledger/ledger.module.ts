@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuditModule } from '../../platform/audit/audit.module';
+import { AccountBalanceService } from './account-balance.service';
 import { AssetDimensionsService } from './asset-dimensions.service';
 import { InitialAssetDimensionsService } from './initial-asset-dimensions.service';
 import { InitialLedgerAccountsService } from './initial-ledger-accounts.service';
@@ -17,6 +18,7 @@ import { LedgerReversalService } from './ledger-reversal.service';
 @Module({
   imports: [AuditModule],
   providers: [
+    AccountBalanceService,
     AssetDimensionsService,
     InitialAssetDimensionsService,
     InitialLedgerAccountsService,
@@ -25,6 +27,7 @@ import { LedgerReversalService } from './ledger-reversal.service';
     LedgerReversalService,
   ],
   exports: [
+    AccountBalanceService,
     AssetDimensionsService,
     InitialAssetDimensionsService,
     InitialLedgerAccountsService,
