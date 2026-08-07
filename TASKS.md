@@ -1291,7 +1291,15 @@ ledgerPostingService.post({
 
 ---
 
-## [ ] BE-035 — Property-Based Tests دفتر کل
+## [x] BE-035 — Property-Based Tests دفتر کل
+
+> **وضعیت:** پنج property با `fast-check@3` (seed ثابت، ۲۰۰ اجرا هرکدام) روی
+> chart واقعیِ یک tenant seed‌شده — نه UUID ساختگی. تک‌بُعدی، چندبُعدی
+> (ریال/طلا/چند سکه با `fc.subarray`)، reversal (نقیض دقیق یک سند، اثر خالص
+> صفر روی هر حساب+بُعد) و نامتوازن عمدی هم از مسیر سرویس (`LedgerPostingService`)
+> و هم با SQL مستقیم زیر نقش `gold_app` (اثبات مستقل constraint trigger
+> BE-033). تأیید هر اجرا با query واقعی از `ledger_entries`، نه فقط اعتماد به
+> پاسخ سرویس.
 
 **هدف** — اثبات ناوردای دفتر کل با `fast-check`.
 
