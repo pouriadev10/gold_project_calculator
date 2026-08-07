@@ -141,6 +141,13 @@
       "when": 1786020404295,
       "tag": "0019_ledger-balance-constraint",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1786022214815,
+      "tag": "0020_nostalgic_venus",
+      "breakpoints": true
     }
   ]
 }

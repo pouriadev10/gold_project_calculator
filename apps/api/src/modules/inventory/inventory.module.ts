@@ -10,6 +10,8 @@ import { InitialCoinTypesService } from './initial-coin-types.service';
 import { InventoryMovementsService } from './inventory-movements.service';
 import { JewelryItemsController } from './jewelry-items.controller';
 import { JewelryItemsService } from './jewelry-items.service';
+import { OpeningBalancesController } from './opening-balances.controller';
+import { OpeningBalancesService } from './opening-balances.service';
 
 /**
  * کالای زیورآلات، آبشده و سکه — BE-025 تا BE-028.
@@ -24,18 +26,20 @@ import { JewelryItemsService } from './jewelry-items.service';
  */
 @Module({
   imports: [AuditModule, AuthModule, IdempotencyModule, LedgerModule, PricingModule, UsersModule],
-  controllers: [JewelryItemsController],
+  controllers: [JewelryItemsController, OpeningBalancesController],
   providers: [
     CoinTypesService,
     InitialCoinTypesService,
     InventoryMovementsService,
     JewelryItemsService,
+    OpeningBalancesService,
   ],
   exports: [
     CoinTypesService,
     InitialCoinTypesService,
     InventoryMovementsService,
     JewelryItemsService,
+    OpeningBalancesService,
   ],
 })
 export class InventoryModule {}

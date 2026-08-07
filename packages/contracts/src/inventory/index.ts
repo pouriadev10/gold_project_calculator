@@ -6,3 +6,4 @@
 export * from './coin-types.js';
 export * from './inventory-movements.js';
 export * from './jewelry-items.js';
+export * from './opening-balances.js';
