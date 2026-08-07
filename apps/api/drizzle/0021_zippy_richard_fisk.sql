@@ -1,0 +1,1 @@
+ALTER TYPE "public"."ledger_transaction_source_type" ADD VALUE 'LEDGER_REVERSAL';

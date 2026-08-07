@@ -53,6 +53,8 @@ export interface LedgerPostingInput {
   readonly description: string;
   readonly entries: readonly LedgerPostingEntryInput[];
   readonly createdBy?: string | null | undefined;
+  /** فقط برای سربرگ‌های reversal — BE-036. برای posting عادی ست نمی‌شود. */
+  readonly reversalOfTransactionId?: string | null | undefined;
 }
 
 export interface LedgerPostingResult {
@@ -135,6 +137,7 @@ export class LedgerPostingService {
         sourceId: input.source.id,
         effectiveAt: input.effectiveAt,
         description: input.description,
+        reversalOfTransactionId: input.reversalOfTransactionId ?? null,
         createdBy: input.createdBy ?? null,
       })
       .returning();
@@ -188,6 +191,13 @@ export class LedgerPostingService {
     }
     if (!ledgerTransactionSourceTypeEnum.enumValues.includes(input.source.type)) {
       throw new InvalidLedgerPostingError('source.type is not supported');
+    }
+    if (
+      input.reversalOfTransactionId !== null &&
+      input.reversalOfTransactionId !== undefined &&
+      !isUuid(input.reversalOfTransactionId)
+    ) {
+      throw new InvalidLedgerPostingError('reversalOfTransactionId must be a UUID');
     }
     if (!(input.effectiveAt instanceof Date) || Number.isNaN(input.effectiveAt.getTime())) {
       throw new InvalidLedgerPostingError('effectiveAt must be a valid Date');

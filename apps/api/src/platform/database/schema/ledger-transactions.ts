@@ -30,6 +30,15 @@ export const ledgerTransactionSourceTypeEnum = pgEnum('ledger_transaction_source
   'SECOND_HAND_PURCHASE',
   'SETTLEMENT',
   'SALES_INVOICE_AMENDMENT',
+  /**
+   * BE-036 — سربرگ اصلاحی، نه یک سند مبدأ کسب‌وکاری تازه. `source_id` آن
+   * عمداً همان `id` تراکنش اصلی است، نه یک UUID تازه: یکتاییِ
+   * `(tenant_id, source_type, source_id)` که از قبل روی این جدول هست
+   * همان قفلِ «هر تراکنش حداکثر یک reversal» را بدون constraint جدید
+   * می‌دهد، و تلاش دوم برای reverse کردن یک تراکنش با همان خطای رقابتیِ
+   * آشنا (unique violation) رد می‌شود.
+   */
+  'LEDGER_REVERSAL',
 ]);
 
 export type LedgerTransactionSourceType =

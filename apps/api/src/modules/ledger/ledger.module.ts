@@ -5,11 +5,14 @@ import { InitialAssetDimensionsService } from './initial-asset-dimensions.servic
 import { InitialLedgerAccountsService } from './initial-ledger-accounts.service';
 import { LedgerAccountsService } from './ledger-accounts.service';
 import { LedgerPostingService } from './ledger-posting.service';
+import { LedgerReversalService } from './ledger-reversal.service';
 
 /**
  * دفتر کل چندواحدی — قلب سیستم. BE-030 تا BE-037.
  *
- * اسکلت خالی. تنها مسیر مجاز ساخت تراکنش، سرویس posting این ماژول خواهد بود.
+ * تنها مسیر مجاز ساخت تراکنش، `LedgerPostingService` این ماژول است؛
+ * `LedgerReversalService` هم فقط از همان مسیر عبور می‌کند، insert مستقیم
+ * ندارد.
  */
 @Module({
   imports: [AuditModule],
@@ -19,6 +22,7 @@ import { LedgerPostingService } from './ledger-posting.service';
     InitialLedgerAccountsService,
     LedgerAccountsService,
     LedgerPostingService,
+    LedgerReversalService,
   ],
   exports: [
     AssetDimensionsService,
@@ -26,6 +30,7 @@ import { LedgerPostingService } from './ledger-posting.service';
     InitialLedgerAccountsService,
     LedgerAccountsService,
     LedgerPostingService,
+    LedgerReversalService,
   ],
 })
 export class LedgerModule {}

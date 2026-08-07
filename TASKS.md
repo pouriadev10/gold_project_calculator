@@ -1321,7 +1321,21 @@ ledgerPostingService.post({
 
 ---
 
-## [ ] BE-036 — Reversal دفتر کل
+## [x] BE-036 — Reversal دفتر کل
+
+> **وضعیت:** `LedgerReversalService` تنها از راه `LedgerPostingService`
+> می‌نویسد — entryهای معکوس، `reversal_of_transaction_id` تنظیم، تراکنش
+> اصلی دست‌نخورده. یکتاییِ موجود `(tenant_id, source_type, source_id)`
+> با `source_type = 'LEDGER_REVERSAL'` و `source_id = <شناسه‌ی سند اصلی>`
+> خودش قفلِ «هر تراکنش حداکثر یک reversal» را می‌دهد — بدون constraint
+> جدید. تلاش دوم/هم‌زمان به همان یکتایی می‌خورد؛ چون insert داخل یک
+> SAVEPOINT (تراکنش تودرتوی Drizzle) انجام می‌شود، آن خطا `TenantTransaction`
+> بیرونی را aborted نمی‌کند و متد reversal موجود را می‌خواند و برمی‌گرداند
+> (idempotent، حتی زیر بار هم‌زمانِ واقعی — تست شده با `Promise.all`).
+> بدون این SAVEPOINT، همان خطای رقابتیِ «چک کن بعد insert کن»ی که BE-007
+> با آن مواجه شد دوباره رخ می‌داد. Audit log با action جداگانه‌ی
+> `LEDGER_REVERSED` ثبت می‌شود. هیچ endpoint HTTP در این تسک نیست —
+> قابلیتی داخلی روی ماژول ledger برای مصرف‌کنندگان بعدی (مثل BE-054).
 
 **هدف** — اصلاح حسابداری بدون تغییر تاریخچه.
 
