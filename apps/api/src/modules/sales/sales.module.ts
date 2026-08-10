@@ -10,6 +10,8 @@ import { PricingModule } from '../pricing/pricing.module';
 import { DocumentCountersService } from './document-counters.service';
 import { JewelryCashSalesController } from './jewelry-cash-sales.controller';
 import { JewelryCashSalesService } from './jewelry-cash-sales.service';
+import { JewelryCreditSalesController } from './jewelry-credit-sales.controller';
+import { JewelryCreditSalesService } from './jewelry-credit-sales.service';
 import { SalesInvoicesService } from './sales-invoices.service';
 import { SalesPricingService } from './sales-pricing.service';
 
@@ -32,13 +34,14 @@ import { SalesPricingService } from './sales-pricing.service';
     PricingModule,
     UsersModule,
   ],
-  controllers: [JewelryCashSalesController],
+  controllers: [JewelryCashSalesController, JewelryCreditSalesController],
   providers: [
     DocumentCountersService,
     JewelryCashSalesService,
+    JewelryCreditSalesService,
     SalesInvoicesService,
     SalesPricingService,
   ],
-  exports: [DocumentCountersService, JewelryCashSalesService, SalesInvoicesService, SalesPricingService],
+  exports: [DocumentCountersService, JewelryCashSalesService, JewelryCreditSalesService, SalesInvoicesService, SalesPricingService],
 })
 export class SalesModule {}

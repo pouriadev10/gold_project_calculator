@@ -4,3 +4,4 @@
  * اسکلت خالی؛ فعلاً چیزی صادر نمی‌شود.
  */
 export * from './jewelry-cash-sales.js';
+export * from './jewelry-credit-sales.js';

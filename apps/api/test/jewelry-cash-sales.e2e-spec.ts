@@ -10,8 +10,9 @@ import { InventoryMovementsService } from '../src/modules/inventory/inventory-mo
 import { PartiesService } from '../src/modules/parties/parties.service';
 import { PriceQuotesService } from '../src/modules/pricing/price-quotes.service';
 import { JewelryCashSalesService } from '../src/modules/sales/jewelry-cash-sales.service';
+import { JewelryCreditSalesService } from '../src/modules/sales/jewelry-credit-sales.service';
 import { DRIZZLE } from '../src/platform/database/database.module';
-import { idempotencyRecords, ledgerEntries, ledgerTransactions, salesInvoices, tenants } from '../src/platform/database/schema';
+import { idempotencyRecords, ledgerAccounts, ledgerEntries, ledgerTransactions, salesInvoices, tenants } from '../src/platform/database/schema';
 import { withTenantTransaction } from '../src/platform/database/tenant-transaction';
 import { TenantService } from '../src/platform/tenant/tenant.service';
 import { UserService } from '../src/platform/users/user.service';
@@ -25,11 +26,13 @@ describe('cash jewelry sale (BE-041)', () => {
   let db: Database;
   let idempotency: IdempotencyService;
   let sales: JewelryCashSalesService;
+  let creditSales: JewelryCreditSalesService;
   let movements: InventoryMovementsService;
   let actorId = '';
   let partyId = '';
   let itemId = '';
   let quoteId = '';
+  let creditItemId = '';
   let effectiveAt = new Date();
 
   beforeAll(async () => {
@@ -44,6 +47,7 @@ describe('cash jewelry sale (BE-041)', () => {
     const opening = app.get(OpeningBalancesService);
     idempotency = app.get(IdempotencyService);
     sales = app.get(JewelryCashSalesService);
+    creditSales = app.get(JewelryCreditSalesService);
     movements = app.get(InventoryMovementsService);
     tenant.id = (await tenantService.create({ name: 'Cash sale tenant', slug: tenant.slug })).id;
     effectiveAt = new Date();
@@ -57,10 +61,16 @@ describe('cash jewelry sale (BE-041)', () => {
       validFrom: effectiveAt, active: true,
     });
     itemId = item.jewelryItemId;
+    const creditItem = await items.createItem({
+      tenantId: tenant.id, code: `CREDIT-${randomUUID().slice(0, 8)}`, title: 'Credit ring', grossWeightMg: 8_000n,
+      karat: 750, stoneWeightMg: 0n, otherDeductionWeightMg: 0n, wageType: 'FLAT', wageValue: 500_000n,
+      validFrom: effectiveAt, active: true,
+    });
+    creditItemId = creditItem.jewelryItemId;
     quoteId = (await quotes.createManual({ tenantId: tenant.id, quoteType: 'MAZNEH', amountRial: 100_000_000n, createdBy: actorId })).id;
     await withTenantTransaction(db, tenant.id, (transaction) => opening.createInTransaction(transaction, {
       tenantId: tenant.id, effectiveAt, description: 'Opening stock', createdBy: actorId,
-      lines: [{ itemType: 'JEWELRY', itemId, quantity: 1n }],
+      lines: [{ itemType: 'JEWELRY', itemId, quantity: 1n }, { itemType: 'JEWELRY', itemId: creditItemId, quantity: 1n }],
     }));
   });
 
@@ -111,5 +121,16 @@ describe('cash jewelry sale (BE-041)', () => {
     }));
     expect(after.invoices).toHaveLength(before.length);
     expect(after.keys).toHaveLength(0);
+  });
+
+  it('records the unpaid portion in the customer receivable subledger', async () => {
+    const created = await withTenantTransaction(db, tenant.id, (transaction) => creditSales.createInTransaction(transaction, {
+      tenantId: tenant.id, partyId, jewelryItemId: creditItemId, quoteId, effectiveAt, paidRial: 0n, createdBy: actorId,
+    }));
+    const [receivable] = await withTenantTransaction(db, tenant.id, (transaction) => transaction.select().from(ledgerAccounts).where(and(eq(ledgerAccounts.tenantId, tenant.id), eq(ledgerAccounts.partyId, partyId), eq(ledgerAccounts.accountType, 'ASSET'))));
+    const balance = await withTenantTransaction(db, tenant.id, (transaction) => transaction.select().from(ledgerEntries).where(and(eq(ledgerEntries.tenantId, tenant.id), eq(ledgerEntries.accountId, receivable!.id))));
+    expect(created.receivableRial).toBe(created.payableRial);
+    expect(balance.reduce((total, entry) => total + entry.quantity, 0n)).toBe(created.receivableRial);
+    expect(await movements.balance(tenant.id, 'JEWELRY', creditItemId)).toBe(0n);
   });
 });
