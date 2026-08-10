@@ -7,11 +7,12 @@ import tseslint from 'typescript-eslint';
 /**
  * قواعد سراسری پروژه — بخش ۱ و ۴ فایل BOOTSTRAP.md
  *
- * چهار خانواده‌ی ممنوعیت:
+ * پنج خانواده‌ی ممنوعیت:
  *   ۱. گرد کردن خارج از core-calc/src/rounding.ts
  *   ۲. parseFloat (و هر مسیر تبدیل شناور)
  *   ۳. کلاس‌های جهت‌دار Tailwind (RTL)
  *   ۴. رنگ hex خام در JSX
+ *   ۵. ایمپورت مستقیم از apps/api (FE-003) — مرز اپ‌ها فقط از packages/contracts رد می‌شود
  */
 
 /** ۱ + ۲ — گرد کردن و شناور. در همه‌جا جز rounding.ts ممنوع. */
@@ -81,6 +82,22 @@ const noRawHex = [
   },
 ];
 
+/**
+ * ۵ — ایمپورت مستقیم از apps/api.
+ *
+ * فرانت فقط باید از طریق packages/contracts با شکل داده‌ی بک‌اند آشنا شود.
+ * هم نام پکیج (`@gold/api`) و هم مسیر نسبی‌ای که به‌زور به داخل apps/api/
+ * سرک بکشد را می‌گیرد — یکی جلوی import رسمی را می‌گیرد، دیگری جلوی
+ * دورزدنش با `../../apps/api/src/...` را.
+ */
+const NO_API_IMPORT_PATTERNS = [
+  {
+    group: ['@gold/api', '@gold/api/*', '**/apps/api/**'],
+    message:
+      'ایمپورت مستقیم از apps/api ممنوع است — قرارداد مشترک باید از packages/contracts بیاید.',
+  },
+];
+
 export default tseslint.config(
   {
     ignores: [
@@ -123,6 +140,7 @@ export default tseslint.config(
         'error',
         { name: 'parseFloat', message: 'parseFloat ممنوع است — از bigint استفاده کن.' },
       ],
+      'no-restricted-imports': ['error', { patterns: NO_API_IMPORT_PATTERNS }],
     },
   },
 
@@ -131,6 +149,15 @@ export default tseslint.config(
     files: ['packages/core-calc/src/rounding.ts', 'packages/core-calc/src/number-bridge.ts'],
     rules: {
       'no-restricted-syntax': 'off',
+    },
+  },
+
+  // apps/api از قاعده‌ی ۵ مستثناست — ایمپورت‌های داخلی‌اش نسبی‌اند و اصلاً با این الگوها نمی‌خورند؛
+  // این استثنا صریح است تا اگر روزی رفتار glob فرق کرد، غافلگیر نشویم.
+  {
+    files: ['apps/api/**'],
+    rules: {
+      'no-restricted-imports': 'off',
     },
   },
 
