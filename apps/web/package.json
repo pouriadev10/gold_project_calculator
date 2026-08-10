@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "node scripts/e2e-not-ready.mjs",
-    "analyze": "node ../../scripts/check-bundle-size.mjs"
+    "analyze": "node ../../scripts/check-bundle-size.mjs",
+    "check:circular": "madge --circular --extensions ts,tsx --ts-config tsconfig.json src"
   },
   "dependencies": {
     "@gold/contracts": "workspace:*",
@@ -56,6 +57,7 @@
     "eslint-plugin-react-hooks": "^5.0.0",
     "fast-check": "^3.23.1",
     "jsdom": "^25.0.1",
+    "madge": "^8.0.0",
     "msw": "^2.15.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.15",

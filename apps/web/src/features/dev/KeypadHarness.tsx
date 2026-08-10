@@ -5,9 +5,9 @@ import { formatCount, formatScaled, measurementToScaled } from '@gold/core-calc'
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { NumericField } from '@/features/keypad/NumericField';
-import { NumericKeypad } from '@/features/keypad/NumericKeypad';
-import { useKeypadStore } from '@/features/keypad/keypad-store';
+import { NumericField } from '@/components/keypad/NumericField';
+import { NumericKeypad } from '@/components/keypad/NumericKeypad';
+import { useKeypadStore } from '@/components/keypad/keypad-store';
 
 /**
  * هارنس اندازه‌گیری کیپد — **فقط توسعه**.

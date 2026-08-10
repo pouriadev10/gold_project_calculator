@@ -6,8 +6,8 @@ import {
   lazyRouteComponent,
 } from '@tanstack/react-router';
 import { AppNav } from '@/components/common/AppNav';
+import { PlaceholderPage } from '@/components/common/PlaceholderPage';
 import { HomePage } from '@/features/home/HomePage';
-import { PlaceholderPage } from '@/features/placeholder/PlaceholderPage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
 import { useTheme } from '@/hooks/useTheme';
 
