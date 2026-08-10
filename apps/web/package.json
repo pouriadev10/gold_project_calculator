@@ -8,8 +8,11 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "node scripts/e2e-not-ready.mjs",
+    "analyze": "node ../../scripts/check-bundle-size.mjs"
   },
   "dependencies": {
     "@gold/contracts": "workspace:*",
