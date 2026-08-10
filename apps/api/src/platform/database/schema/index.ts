@@ -29,6 +29,7 @@ export * from './price-quotes';
 export * from './refresh-tokens';
 export * from './rls-probes';
 export * from './roles';
+export * from './sales-invoices';
 export * from './tenant-memberships';
 export * from './tenants';
 export * from './users';

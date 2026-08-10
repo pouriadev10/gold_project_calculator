@@ -160,21 +160,26 @@ export class PartiesService {
 
   /** Lookup for source documents: inactive parties must never be selectable for a new transaction. */
   async findActive(tenantId: string, partyId: string): Promise<Party | undefined> {
-    return withTenantTransaction(this.db, tenantId, async (transaction) => {
-      const [party] = await transaction
-        .select()
-        .from(parties)
-        .where(
-          and(
-            eq(parties.tenantId, tenantId),
-            eq(parties.id, partyId),
-            eq(parties.status, 'ACTIVE'),
-          ),
-        )
-        .limit(1);
+    return withTenantTransaction(this.db, tenantId, (transaction) =>
+      this.findActiveInTransaction(transaction, tenantId, partyId),
+    );
+  }
 
-      return party;
-    });
+  /** Same lookup, inside a caller-owned transaction — for atomic source-document creation. */
+  async findActiveInTransaction(
+    transaction: TenantTransaction,
+    tenantId: string,
+    partyId: string,
+  ): Promise<Party | undefined> {
+    const [party] = await transaction
+      .select()
+      .from(parties)
+      .where(
+        and(eq(parties.tenantId, tenantId), eq(parties.id, partyId), eq(parties.status, 'ACTIVE')),
+      )
+      .limit(1);
+
+    return party;
   }
 
   async updateInTransaction(
