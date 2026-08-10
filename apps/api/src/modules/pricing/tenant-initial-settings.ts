@@ -19,6 +19,7 @@ export const INITIAL_TENANT_SETTINGS = [
   { settingKey: 'purchase.second_hand_default_karat', valueJson: { value: '740' } },
   { settingKey: 'pricing.rial_rounding_unit', valueJson: { value: '1000' } },
   { settingKey: 'pricing.rounding_policy', valueJson: { value: 'HALF_UP' } },
+  { settingKey: 'sales.jewelry_profit_rate_bps', valueJson: { value: '700' } },
   { settingKey: 'reporting.default_display_karat', valueJson: { value: '750' } },
   /*
    * BE-027 — آیا اجازه هست موجودی یک کالا منفی شود؟ پیش‌فرض «نه»: مغازه

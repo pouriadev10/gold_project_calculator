@@ -1,8 +1,11 @@
 import { Module } from '@nestjs/common';
 import { AuditModule } from '../../platform/audit/audit.module';
+import { InventoryModule } from '../inventory/inventory.module';
 import { PartiesModule } from '../parties/parties.module';
+import { PricingModule } from '../pricing/pricing.module';
 import { DocumentCountersService } from './document-counters.service';
 import { SalesInvoicesService } from './sales-invoices.service';
+import { SalesPricingService } from './sales-pricing.service';
 
 /**
  * فروش، فاکتور و اصلاح فاکتور — BE-038 تا BE-043 و BE-053 تا BE-055.
@@ -13,8 +16,8 @@ import { SalesInvoicesService } from './sales-invoices.service';
  * `app.module.ts` تجویز می‌کند.
  */
 @Module({
-  imports: [AuditModule, PartiesModule],
-  providers: [DocumentCountersService, SalesInvoicesService],
-  exports: [DocumentCountersService, SalesInvoicesService],
+  imports: [AuditModule, InventoryModule, PartiesModule, PricingModule],
+  providers: [DocumentCountersService, SalesInvoicesService, SalesPricingService],
+  exports: [DocumentCountersService, SalesInvoicesService, SalesPricingService],
 })
 export class SalesModule {}

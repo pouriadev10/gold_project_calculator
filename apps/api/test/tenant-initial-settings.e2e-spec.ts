@@ -19,6 +19,7 @@ const EXPECTED_SETTINGS: Readonly<Record<string, { readonly value: string }>> = 
   'purchase.second_hand_default_karat': { value: '740' },
   'pricing.rial_rounding_unit': { value: '1000' },
   'pricing.rounding_policy': { value: 'HALF_UP' },
+  'sales.jewelry_profit_rate_bps': { value: '700' },
   'reporting.default_display_karat': { value: '750' },
   // BE-027 — سیاست موجودی منفی. پیش‌فرض «نه».
   'inventory.allow_negative_stock': { value: 'false' },

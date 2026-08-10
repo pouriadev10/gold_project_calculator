@@ -169,6 +169,13 @@
       "when": 1786390995399,
       "tag": "0023_clammy_microbe",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1786449900000,
+      "tag": "0024_seed_sales_profit_policy",
+      "breakpoints": true
     }
   ]
 }

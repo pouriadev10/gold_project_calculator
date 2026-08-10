@@ -1482,7 +1482,7 @@ quote_amount_rial · quote_observed_at · finalized_at · created_by
 
 ---
 
-## [ ] BE-040 — Domain Service قیمت‌گذاری فروش
+## [x] BE-040 — Domain Service قیمت‌گذاری فروش
 
 **هدف** — استفاده از `packages/core-calc` برای محاسبه سمت سرور.
 
