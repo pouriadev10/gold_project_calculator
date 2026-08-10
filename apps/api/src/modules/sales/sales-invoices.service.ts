@@ -6,6 +6,7 @@ import {
   salesInvoiceItems,
   salesInvoiceVersions,
   salesInvoices,
+  priceQuotes,
 } from '../../platform/database/schema';
 import { withTenantTransaction } from '../../platform/database/tenant-transaction';
 import { PartiesService, PartyNotFoundError } from '../parties/parties.service';
@@ -13,7 +14,9 @@ import { DocumentCountersService, jalaliYearPeriodKey } from './document-counter
 import {
   SalesInvoiceNotDraftError,
   SalesInvoiceNotFoundError,
+  SalesInvoiceQuoteNotFoundError,
   SalesInvoiceRequiresItemsError,
+  InvalidSalesInvoiceFinalizeInputError,
 } from './sales-invoices.errors';
 import type { Database } from '../../platform/database/connect';
 import type {
@@ -55,6 +58,48 @@ export interface FinalizedSalesInvoice {
   readonly invoice: SalesInvoice;
   readonly version: SalesInvoiceVersion;
   readonly items: readonly SalesInvoiceItem[];
+}
+
+function isPlainRecord(value: object): value is Record<string, unknown> {
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === null || prototype === Object.prototype;
+}
+
+function isSnapshotValue(
+  value: unknown,
+  seen = new WeakSet<object>(),
+): value is SalesInvoiceSnapshotValue {
+  if (value === null || typeof value === 'boolean' || typeof value === 'string') {
+    return true;
+  }
+  if (typeof value !== 'object' || value === undefined || seen.has(value)) {
+    return false;
+  }
+  seen.add(value);
+  if (Array.isArray(value)) {
+    return value.every((item) => isSnapshotValue(item, seen));
+  }
+  return isPlainRecord(value) && Object.values(value).every((item) => isSnapshotValue(item, seen));
+}
+
+function assertFinalizeInput(input: FinalizeSalesInvoiceInput): void {
+  if (!isSnapshotValue(input.totalsSnapshot) || !isSnapshotValue(input.settingsSnapshot)) {
+    throw new InvalidSalesInvoiceFinalizeInputError(
+      'Invoice snapshots must not contain number values',
+    );
+  }
+  for (const item of input.items) {
+    if (!Number.isSafeInteger(item.quantity) || item.quantity <= 0) {
+      throw new InvalidSalesInvoiceFinalizeInputError(
+        'Invoice item quantity must be a positive integer',
+      );
+    }
+    if (!isSnapshotValue(item.lineSnapshot)) {
+      throw new InvalidSalesInvoiceFinalizeInputError(
+        'Invoice line snapshots must not contain number values',
+      );
+    }
+  }
 }
 
 /**
@@ -138,6 +183,7 @@ export class SalesInvoicesService {
     transaction: TenantTransaction,
     input: FinalizeSalesInvoiceInput,
   ): Promise<FinalizedSalesInvoice> {
+    assertFinalizeInput(input);
     if (input.items.length === 0) {
       throw new SalesInvoiceRequiresItemsError();
     }
@@ -154,6 +200,19 @@ export class SalesInvoicesService {
     }
     if (invoice.status !== 'DRAFT') {
       throw new SalesInvoiceNotDraftError(input.salesInvoiceId);
+    }
+
+    const [quote] = await transaction
+      .select()
+      .from(priceQuotes)
+      .where(and(eq(priceQuotes.tenantId, input.tenantId), eq(priceQuotes.id, input.quoteId)))
+      .limit(1);
+    if (
+      quote === undefined ||
+      quote.amountRial !== input.quoteAmountRial ||
+      quote.observedAt.getTime() !== input.quoteObservedAt.getTime()
+    ) {
+      throw new SalesInvoiceQuoteNotFoundError();
     }
 
     const invoiceNumber = await this.counters.getNextNumberInTransaction(transaction, {

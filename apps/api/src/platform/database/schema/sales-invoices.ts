@@ -69,7 +69,7 @@ export const salesInvoices = pgTable(
     currentVersion: integer().notNull().default(0),
     status: salesInvoiceStatusEnum().notNull().default('DRAFT'),
     partyId: uuid().notNull(),
-    quoteId: uuid().references(() => priceQuotes.id, { onDelete: 'restrict' }),
+    quoteId: uuid(),
     quoteAmountRial: bigint({ mode: 'bigint' }),
     quoteObservedAt: timestamp({ withTimezone: true }),
     finalizedAt: timestamp({ withTimezone: true }),
@@ -81,6 +81,11 @@ export const salesInvoices = pgTable(
       columns: [table.tenantId, table.partyId],
       foreignColumns: [parties.tenantId, parties.id],
       name: 'sales_invoices_tenant_party_fk',
+    }),
+    foreignKey({
+      columns: [table.tenantId, table.quoteId],
+      foreignColumns: [priceQuotes.tenantId, priceQuotes.id],
+      name: 'sales_invoices_tenant_quote_fk',
     }),
 
     check('sales_invoices_current_version_nonnegative_check', sql`${table.currentVersion} >= 0`),
@@ -96,6 +101,14 @@ export const salesInvoices = pgTable(
         ${table.quoteObservedAt} IS NOT NULL AND
         ${table.finalizedAt} IS NOT NULL
       )`,
+    ),
+    check(
+      'sales_invoices_version_matches_status_check',
+      sql`(${table.status} = 'DRAFT' AND ${table.currentVersion} = 0) OR (${table.status} = 'FINALIZED' AND ${table.currentVersion} >= 1)`,
+    ),
+    check(
+      'sales_invoices_quote_amount_positive_check',
+      sql`${table.quoteAmountRial} IS NULL OR ${table.quoteAmountRial} > 0`,
     ),
 
     /* کلید مرکب برای FK هم‌مستأجرِ نسخه‌ها و ردیف‌های فاکتور. */
@@ -141,6 +154,11 @@ export const salesInvoiceVersions = pgTable(
     ),
 
     unique('sales_invoice_versions_tenant_id_id_unique').on(table.tenantId, table.id),
+    unique('sales_invoice_versions_tenant_invoice_id_id_unique').on(
+      table.tenantId,
+      table.salesInvoiceId,
+      table.id,
+    ),
     uniqueIndex('sales_invoice_versions_tenant_invoice_version_unique').on(
       table.tenantId,
       table.salesInvoiceId,
@@ -176,9 +194,13 @@ export const salesInvoiceItems = pgTable(
       name: 'sales_invoice_items_tenant_invoice_fk',
     }).onDelete('cascade'),
     foreignKey({
-      columns: [table.tenantId, table.salesInvoiceVersionId],
-      foreignColumns: [salesInvoiceVersions.tenantId, salesInvoiceVersions.id],
-      name: 'sales_invoice_items_tenant_version_fk',
+      columns: [table.tenantId, table.salesInvoiceId, table.salesInvoiceVersionId],
+      foreignColumns: [
+        salesInvoiceVersions.tenantId,
+        salesInvoiceVersions.salesInvoiceId,
+        salesInvoiceVersions.id,
+      ],
+      name: 'sales_invoice_items_tenant_invoice_version_fk',
     }).onDelete('cascade'),
 
     check('sales_invoice_items_quantity_positive_check', sql`${table.quantity} > 0`),

@@ -27,3 +27,17 @@ export class SalesInvoiceRequiresItemsError extends Error {
     this.name = 'SalesInvoiceRequiresItemsError';
   }
 }
+
+export class SalesInvoiceQuoteNotFoundError extends Error {
+  constructor() {
+    super('Sales invoice quote is not available to this tenant');
+    this.name = 'SalesInvoiceQuoteNotFoundError';
+  }
+}
+
+export class InvalidSalesInvoiceFinalizeInputError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'InvalidSalesInvoiceFinalizeInputError';
+  }
+}

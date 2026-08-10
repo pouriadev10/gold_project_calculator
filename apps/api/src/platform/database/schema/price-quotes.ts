@@ -6,6 +6,7 @@ import {
   pgEnum,
   pgTable,
   timestamp,
+  unique,
   uuid,
 } from 'drizzle-orm/pg-core';
 import { tenants } from './tenants';
@@ -41,6 +42,7 @@ export const priceQuotes = pgTable(
   },
   (table) => [
     check('price_quotes_amount_positive_check', sql`${table.amountRial} > 0`),
+    unique('price_quotes_tenant_id_id_unique').on(table.tenantId, table.id),
     index('price_quotes_latest_lookup_idx').on(
       table.tenantId,
       table.quoteType,
