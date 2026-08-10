@@ -235,7 +235,7 @@ BE-013
 * retry همان key را بفرستد.
 * شروع فرم جدید key جدید بسازد.
 ---
-## [ ] FE-008 — TanStack Query Provider و Query Keys
+## [x] FE-008 — TanStack Query Provider و Query Keys
 ### هدف
 استانداردسازی دریافت و mutation داده.
 ### کارها

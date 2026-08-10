@@ -9,6 +9,7 @@ import {
   transactionListSchema,
   type ProfitPeriod,
 } from './contracts';
+import { queryKeys } from './query-keys';
 
 /**
  * هوک‌های داده.
@@ -21,7 +22,7 @@ const MINUTE = 60_000;
 
 export function useCurrentRates() {
   return useQuery({
-    queryKey: ['rates', 'current'],
+    queryKey: queryKeys.rates.current(),
     queryFn: ({ signal }) => apiGet('/rates/current', currentRatesSchema, signal),
     staleTime: MINUTE,
   });
@@ -29,7 +30,7 @@ export function useCurrentRates() {
 
 export function useBalanceSummary() {
   return useQuery({
-    queryKey: ['parties', 'balance-summary'],
+    queryKey: queryKeys.parties.balanceSummary(),
     queryFn: ({ signal }) => apiGet('/parties/balance-summary', partyBalanceSummarySchema, signal),
     staleTime: MINUTE,
   });
@@ -37,7 +38,7 @@ export function useBalanceSummary() {
 
 export function useProfitReport(period: ProfitPeriod) {
   return useQuery({
-    queryKey: ['reports', 'profit', period],
+    queryKey: queryKeys.reports.profit(period),
     queryFn: ({ signal }) => apiGet(`/reports/profit?period=${period}`, profitReportSchema, signal),
     staleTime: MINUTE,
   });
@@ -45,7 +46,7 @@ export function useProfitReport(period: ProfitPeriod) {
 
 export function useRecentTransactions(limit = 5) {
   return useQuery({
-    queryKey: ['transactions', 'recent', limit],
+    queryKey: queryKeys.transactions.recent(limit),
     queryFn: ({ signal }) =>
       apiGet(`/transactions/recent?limit=${limit}`, transactionListSchema, signal),
     staleTime: MINUTE,
@@ -54,7 +55,7 @@ export function useRecentTransactions(limit = 5) {
 
 export function usePartySearch(search: string) {
   return useQuery({
-    queryKey: ['parties', 'search', search],
+    queryKey: queryKeys.parties.search(search),
     queryFn: ({ signal }) =>
       apiGet(`/parties?search=${encodeURIComponent(search)}`, partyListSchema, signal),
     staleTime: MINUTE,
@@ -63,7 +64,7 @@ export function usePartySearch(search: string) {
 
 export function useItemSearch(query: string, kind?: string) {
   return useQuery({
-    queryKey: ['items', query, kind ?? 'all'],
+    queryKey: queryKeys.items.search(query, kind ?? 'all'),
     queryFn: ({ signal }) => {
       const params = new URLSearchParams({ q: query });
       if (kind) params.set('kind', kind);
