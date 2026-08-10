@@ -1504,7 +1504,7 @@ quote_amount_rial · quote_observed_at · finalized_at · created_by
 
 ---
 
-## [ ] BE-041 — ثبت فروش نقدی زیورآلات
+## [x] BE-041 — ثبت فروش نقدی زیورآلات
 
 **endpoint**
 

@@ -135,4 +135,26 @@ export class AssetDimensionsService {
 
     return dimension;
   }
+
+  async getRequiredBaseDimensionInTransaction(
+    transaction: TenantTransaction,
+    tenantId: string,
+    code: 'RIAL' | 'GOLD' | 'SILVER',
+  ): Promise<AssetDimension> {
+    const [dimension] = await transaction
+      .select()
+      .from(assetDimensions)
+      .where(
+        and(
+          eq(assetDimensions.tenantId, tenantId),
+          eq(assetDimensions.code, code),
+          isNull(assetDimensions.coinTypeId),
+        ),
+      )
+      .limit(1);
+    if (dimension === undefined) {
+      throw new Error(`Required base asset dimension "${code}" is missing for tenant "${tenantId}"`);
+    }
+    return dimension;
+  }
 }

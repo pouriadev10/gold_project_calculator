@@ -1,9 +1,15 @@
 import { Module } from '@nestjs/common';
 import { AuditModule } from '../../platform/audit/audit.module';
+import { AuthModule } from '../../platform/auth/auth.module';
+import { IdempotencyModule } from '../../platform/idempotency/idempotency.module';
+import { UsersModule } from '../../platform/users/users.module';
 import { InventoryModule } from '../inventory/inventory.module';
+import { LedgerModule } from '../ledger/ledger.module';
 import { PartiesModule } from '../parties/parties.module';
 import { PricingModule } from '../pricing/pricing.module';
 import { DocumentCountersService } from './document-counters.service';
+import { JewelryCashSalesController } from './jewelry-cash-sales.controller';
+import { JewelryCashSalesService } from './jewelry-cash-sales.service';
 import { SalesInvoicesService } from './sales-invoices.service';
 import { SalesPricingService } from './sales-pricing.service';
 
@@ -16,8 +22,23 @@ import { SalesPricingService } from './sales-pricing.service';
  * `app.module.ts` تجویز می‌کند.
  */
 @Module({
-  imports: [AuditModule, InventoryModule, PartiesModule, PricingModule],
-  providers: [DocumentCountersService, SalesInvoicesService, SalesPricingService],
-  exports: [DocumentCountersService, SalesInvoicesService, SalesPricingService],
+  imports: [
+    AuditModule,
+    AuthModule,
+    IdempotencyModule,
+    InventoryModule,
+    LedgerModule,
+    PartiesModule,
+    PricingModule,
+    UsersModule,
+  ],
+  controllers: [JewelryCashSalesController],
+  providers: [
+    DocumentCountersService,
+    JewelryCashSalesService,
+    SalesInvoicesService,
+    SalesPricingService,
+  ],
+  exports: [DocumentCountersService, JewelryCashSalesService, SalesInvoicesService, SalesPricingService],
 })
 export class SalesModule {}
