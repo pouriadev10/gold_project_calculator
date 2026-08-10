@@ -52,11 +52,11 @@ export function useRecentTransactions(limit = 5) {
   });
 }
 
-export function usePartySearch(query: string) {
+export function usePartySearch(search: string) {
   return useQuery({
-    queryKey: ['parties', query],
+    queryKey: ['parties', 'search', search],
     queryFn: ({ signal }) =>
-      apiGet(`/parties?q=${encodeURIComponent(query)}`, partyListSchema, signal),
+      apiGet(`/parties?search=${encodeURIComponent(search)}`, partyListSchema, signal),
     staleTime: MINUTE,
   });
 }

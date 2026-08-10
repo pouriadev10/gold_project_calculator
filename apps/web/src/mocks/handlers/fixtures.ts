@@ -6,6 +6,7 @@ import {
   karat,
   mulDivHalfUp,
 } from '@gold/core-calc';
+import type { Party } from '@/api/contracts';
 
 /**
  * داده‌ی ساختگی مشترک همه‌ی handlerها.
@@ -70,23 +71,32 @@ export const coins = [
 /* ── اشخاص ────────────────────────────────────────────────── */
 
 // TODO(real-data): از ماژول parties
-export const parties = [
-  { id: 'P-1001', name: 'حسین مرادی', kind: 'consumer', nationalId: null, phone: '09121234567', mg: 412_500 },
-  { id: 'P-1002', name: 'زهرا کریمی', kind: 'consumer', nationalId: null, phone: '09127654321', mg: -86_000 },
-  { id: 'P-1003', name: 'مهدی صادقی', kind: 'colleague', nationalId: '0079123456', phone: '09351112233', mg: 268_000 },
-  { id: 'P-1004', name: 'فاطمه یوسفی', kind: 'consumer', nationalId: null, phone: null, mg: -154_300 },
-  { id: 'P-1005', name: 'علی‌رضا نجفی', kind: 'colleague', nationalId: null, phone: '09193334455', mg: 559_000 },
-  { id: 'P-1006', name: 'سمیه احمدی', kind: 'consumer', nationalId: null, phone: null, mg: -32_450 },
-  { id: 'P-1007', name: 'رضا کاظمی', kind: 'colleague', nationalId: null, phone: '09141239876', mg: 91_200 },
+// شکل partyRecords دقیقاً partySchema واقعی (@gold/contracts) است.
+// مانده بخشی از آن شکل نیست (BE-056 هنوز نیامده)، پس `mg` فقط در همین
+// فایل برای ساخت balanceSummary نگه داشته می‌شود، نه در پاسخ /api/parties.
+const NOW = '2026-07-30T09:00:00+00:00';
+
+const parties = [
+  { id: 'a1000000-0000-4000-8000-000000000001', displayName: 'حسین مرادی', type: 'CONSUMER', nationalId: null, mobile: '09121234567', mg: 412_500 },
+  { id: 'a1000000-0000-4000-8000-000000000002', displayName: 'زهرا کریمی', type: 'CONSUMER', nationalId: null, mobile: '09127654321', mg: -86_000 },
+  { id: 'a1000000-0000-4000-8000-000000000003', displayName: 'مهدی صادقی', type: 'BUSINESS', nationalId: '0079123456', mobile: '09351112233', mg: 268_000 },
+  { id: 'a1000000-0000-4000-8000-000000000004', displayName: 'فاطمه یوسفی', type: 'CONSUMER', nationalId: null, mobile: null, mg: -154_300 },
+  { id: 'a1000000-0000-4000-8000-000000000005', displayName: 'علی‌رضا نجفی', type: 'BUSINESS', nationalId: null, mobile: '09193334455', mg: 559_000 },
+  { id: 'a1000000-0000-4000-8000-000000000006', displayName: 'سمیه احمدی', type: 'CONSUMER', nationalId: null, mobile: null, mg: -32_450 },
+  { id: 'a1000000-0000-4000-8000-000000000007', displayName: 'رضا کاظمی', type: 'BUSINESS', nationalId: null, mobile: '09141239876', mg: 91_200 },
 ] as const;
 
-export const partyRecords = parties.map((p) => ({
+export const partyRecords: Party[] = parties.map((p) => ({
   id: p.id,
-  name: p.name,
-  kind: p.kind,
+  type: p.type,
+  displayName: p.displayName,
+  mobile: p.mobile,
   nationalId: p.nationalId,
-  phone: p.phone,
-  balance: dualToWire(mg(p.mg)),
+  linkedTenantId: null,
+  status: 'ACTIVE',
+  notes: null,
+  createdAt: NOW,
+  updatedAt: NOW,
 }));
 
 /* ── کالا ─────────────────────────────────────────────────── */

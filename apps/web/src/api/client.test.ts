@@ -105,11 +105,22 @@ describe('Idempotency-Key', () => {
 
 describe('خطاها', () => {
   it('خطای ساختاریافته‌ی سرور به ApiError تبدیل می‌شود', async () => {
-    mockFetch({ status: 400, body: { code: 'IDEMPOTENCY_KEY_REQUIRED', message: 'هدر اجباری است' } });
+    mockFetch({
+      status: 400,
+      body: {
+        error: {
+          code: 'IDEMPOTENCY_KEY_REQUIRED',
+          message: 'هدر اجباری است',
+          fields: {},
+          requestId: 'req-test-1',
+        },
+      },
+    });
 
     await expect(apiPost('/invoices', {}, okSchema)).rejects.toMatchObject({
       code: 'IDEMPOTENCY_KEY_REQUIRED',
       status: 400,
+      requestId: 'req-test-1',
     });
   });
 

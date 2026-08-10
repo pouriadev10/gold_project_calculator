@@ -1,33 +1,59 @@
 import { z } from 'zod';
+import { bigIntStringSchema, isoDateTimeSchema } from '@gold/contracts';
 
 /**
- * قرارداد API — منبع واحد حقیقت میان فرانت‌اند و بک‌اند.
+ * قرارداد API — لایه‌ی مصرف در فرانت.
  *
- * این فایل بعداً **عیناً با بک‌اند به اشتراک گذاشته می‌شود** (به
- * `packages/` منتقل می‌شود). تا آن روز، MSW همین اسکیماها را برمی‌گرداند،
- * پس هر صفحه‌ای که امروز نوشته می‌شود فردا بدون تغییر به سرور واقعی وصل می‌شود.
+ * دو دسته‌ی متفاوت اینجا کنار هم‌اند، عمداً جدا نشانه‌گذاری شده:
  *
- * ## قاعده‌ی طلایی این فایل
+ * ۱. **از `@gold/contracts` re-export می‌شود** — شکلی که بک‌اند همین امروز
+ *    پیاده کرده (BE-003 به بعد). این‌ها را اینجا دوباره تعریف نکن؛ اگر
+ *    شکلشان باید عوض شود، تغییر در `packages/contracts` است، نه اینجا.
+ * ۲. **View model محلی** — یا هنوز endpoint واقعی در بک‌اند ندارد (گزارش
+ *    سود، معاملات اخیر، خلاصه‌ی مانده)، یا یک تجمیع UI-محور روی چند
+ *    concept واقعی است (جست‌وجوی کالا). این‌ها با MSW نگه داشته می‌شوند تا
+ *    endpoint واقعی برسد.
  *
- * **هیچ مقدار پولی یا وزنی روی سیم `number` نیست.** همه رشته‌ی ارقام‌اند.
- * `number` جاوااسکریپت بالای ۹٬۰۰۷٬۱۹۹٬۲۵۴٬۷۴۰٬۹۹۱ دقت را از دست می‌دهد و
- * مانده‌ی ریالی یک مغازه‌ی طلا به‌راحتی از آن رد می‌شود. `bigint` هم در
- * JSON سریالایز نمی‌شود. پس قرارداد رشته است، و تبدیل در همین مرز انجام می‌گیرد.
+ * قاعده‌ی طلایی هر دو دسته یکی است: **هیچ مقدار پولی یا وزنی روی سیم
+ * `number` نیست.**
  */
 
-/** رشته‌ی ارقام صحیح روی سیم → `bigint` در برنامه. */
-const bigintString = z
-  .string()
-  .regex(/^-?\d+$/u, 'مقدار باید رشته‌ی ارقام صحیح باشد')
-  .transform((value) => BigInt(value));
+/* ══════════════ از @gold/contracts (منبع مشترک با بک‌اند) ══════════════ */
+
+export {
+  apiErrorSchema,
+  type ApiError as ApiErrorBody,
+  partyTypeSchema,
+  partySchema,
+  partyListSchema,
+  partyListQuerySchema,
+  type Party,
+  type PartyList,
+  type PartyListQuery,
+} from '@gold/contracts';
+
+/* ══════════════ View model محلی — بدون endpoint واقعی هنوز ══════════════ */
+
+/**
+ * رشته‌ی ارقام صحیح روی سیم → `bigint` در برنامه.
+ * قاعده‌ی اعتبارسنجی (چه رشته‌ای مجاز است) از `@gold/contracts` می‌آید —
+ * همان چیزی که بک‌اند هم بررسی می‌کند؛ تبدیل به `bigint` فقط اینجا لازم
+ * است چون مصرف‌کننده‌ی نهایی (`core-calc`, JSX) به مقدار عددی نیاز دارد،
+ * نه رشته.
+ */
+const bigintString = bigIntStringSchema.transform((value) => BigInt(value));
 
 /** عیار — عدد صحیح کوچک، پس `number` اینجا بی‌خطر است. */
 const karatNumber = z.number().int().min(1).max(1000);
 
-const isoDate = z.string().datetime({ offset: true });
-
 /* ── مبلغ دومقیاسه ─────────────────────────────────────────── */
 
+/**
+ * ترکیب ریال + معادل طلای خالص با نرخ قفل‌شده — شکل نمایشی، نه یک DTO
+ * سیمی واحد. هیچ endpointای دقیقاً همین سه فیلد را کنار هم برنمی‌گرداند؛
+ * صفحاتی که به بک‌اند واقعی وصل می‌شوند این را از یک مبلغ + نرخ snapshot
+ * خودشان می‌سازند (`@gold/core-calc`: `dualFromRial` / `dualFromPure`).
+ */
 export const dualAmountSchema = z.object({
   rial: bigintString,
   pureMg: bigintString,
@@ -38,6 +64,13 @@ export type DualAmountDto = z.infer<typeof dualAmountSchema>;
 
 /* ── GET /api/rates/current ────────────────────────────────── */
 
+/**
+ * بدون معادل بک‌اندی هنوز. `@gold/contracts` فقط رکورد خام مظنه را دارد
+ * (`priceQuoteSchema` — یک مقدار مثقال، نه نرخ محاسبه‌شده‌ی هر عیار).
+ * وقتی FE-029 به BE-021 وصل شود، یا این endpoint نرخ هر عیار را خودش با
+ * `gramRate` از `core-calc` روی یک priceQuote خام می‌سازد، یا بک‌اند یک
+ * endpoint تجمیعی مشابه همین اضافه می‌کند.
+ */
 export const gramRateSchema = z.object({
   karat: karatNumber,
   rateRial: bigintString,
@@ -55,37 +88,15 @@ export const currentRatesSchema = z.object({
   /** مظنه‌ی مثقال طلای آبشده */
   maznehRial: bigintString,
   /** زمان دریافت — همیشه نمایش داده می‌شود، هرگز وانمود نکن به‌روز است */
-  fetchedAt: isoDate,
+  fetchedAt: isoDateTimeSchema,
   gramRates: z.array(gramRateSchema),
   coins: z.array(coinRateSchema),
 });
 export type CurrentRates = z.infer<typeof currentRatesSchema>;
 
-/* ── GET /api/parties ──────────────────────────────────────── */
+/* ── GET /api/parties/balance-summary ──────────────────────── */
 
-/**
- * نوع طرف حساب — سیستم بر اساس همین، حالت مرجوعی را خودکار انتخاب می‌کند
- * (قاعده‌ی ۲-۵ CLAUDE.md: B2B برگشت است، B2C خرید دست‌دوم).
- */
-export const partyKindSchema = z.enum(['consumer', 'colleague']);
-export type PartyKind = z.infer<typeof partyKindSchema>;
-
-export const partySchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  kind: partyKindSchema,
-  /** کد ملی عمداً اختیاری است — بخش ۵ CLAUDE.md */
-  nationalId: z.string().nullable(),
-  phone: z.string().nullable(),
-  balance: dualAmountSchema,
-});
-export type Party = z.infer<typeof partySchema>;
-
-export const partyListSchema = z.object({
-  items: z.array(partySchema),
-  total: z.number().int().nonnegative(),
-});
-
+/** جمع بدهکار/بستانکار روی همه‌ی اشخاص. بدون معادل بک‌اندی هنوز (BE-056/BE-058). */
 export const partyBalanceSummarySchema = z.object({
   credit: dualAmountSchema,
   debit: dualAmountSchema,
@@ -97,7 +108,15 @@ export type PartyBalanceSummary = z.infer<typeof partyBalanceSummarySchema>;
 
 /* ── GET /api/items ────────────────────────────────────────── */
 
-/** مصنوع · آبشده · سکه — سکه هرگز به وزن تبدیل نمی‌شود */
+/**
+ * جست‌وجوی یکپارچه‌ی زیورآلات + آبشده + سکه — یک تجمیع UI-محور است، نه یک
+ * DTO واحد بک‌اندی. سه concept واقعی که این را می‌سازند، هر سه در
+ * `@gold/contracts`: `jewelryItemVersionSchema` (زیورآلات)،
+ * `coinTypeVersionSchema` (مشخصات مرجع سکه) + `inventoryBalanceSchema`
+ * (موجودی سکه/آبشده). وقتی FE-036/FE-038 به بک‌اند واقعی وصل شوند، این
+ * schema یا به چند فراخوانی جدا تبدیل می‌شود یا بک‌اند یک endpoint
+ * تجمیعی مشابه اضافه می‌کند.
+ */
 export const itemKindSchema = z.enum(['article', 'melted', 'coin']);
 export type ItemKind = z.infer<typeof itemKindSchema>;
 
@@ -122,6 +141,7 @@ export const itemListSchema = z.object({
 
 /* ── GET /api/reports/profit ───────────────────────────────── */
 
+/** بدون معادل بک‌اندی هنوز — گزارش‌ها Milestone 17 هستند (BE-058 تا BE-060). */
 export const profitPeriodSchema = z.enum(['today', 'month']);
 export type ProfitPeriod = z.infer<typeof profitPeriodSchema>;
 
@@ -141,6 +161,7 @@ export type ProfitReport = z.infer<typeof profitReportSchema>;
 
 /* ── GET /api/transactions/recent ──────────────────────────── */
 
+/** بدون معادل بک‌اندی هنوز — دفتر کل اسکلت خالی است (`ledger/index.ts`, BE-037). */
 export const transactionKindSchema = z.enum(['sale', 'purchase', 'second-hand', 'coin-sale']);
 export type TransactionKind = z.infer<typeof transactionKindSchema>;
 
@@ -150,7 +171,7 @@ export const transactionSchema = z.object({
   kind: transactionKindSchema,
   title: z.string(),
   amount: dualAmountSchema,
-  occurredAt: isoDate,
+  occurredAt: isoDateTimeSchema,
 });
 export type Transaction = z.infer<typeof transactionSchema>;
 
@@ -160,6 +181,21 @@ export const transactionListSchema = z.object({
 
 /* ── POST /api/invoices ────────────────────────────────────── */
 
+/**
+ * ⚠️ این mock قدیمی‌تر از قرارداد واقعی فروش است و دیگر شکلش را ندارد —
+ * از قبل از این‌که `@gold/contracts` قرارداد فروش داشته باشد ساخته شده.
+ *
+ * قرارداد واقعی دو endpoint جدا دارد، هرکدام **یک قلم کالا** و یک
+ * `quoteId` می‌گیرند، نه آرایه‌ای از خطوط با مظنه‌ی خام:
+ * `createJewelryCashSaleSchema` / `jewelryCashSaleSchema` (نقدی) و
+ * `createJewelryCreditSaleSchema` / `jewelryCreditSaleSchema` (نسیه) —
+ * هر دو در `@gold/contracts`.
+ *
+ * جایگزینی این mock کار FE-045 (وابسته به BE-041) و FE-047 (وابسته به
+ * BE-042) است، نه یک import-swap ساده در همین تسک — چون شکل درخواست هم
+ * عوض می‌شود، نه فقط نام فیلدها. فعلاً هیچ صفحه‌ای این endpoint را صدا
+ * نمی‌زند (بدون مصرف‌کننده‌ی UI).
+ */
 export const invoiceLineInputSchema = z.object({
   itemId: z.string(),
   /** برای سکه تعداد، برای بقیه `null` */
@@ -183,15 +219,6 @@ export const createInvoiceResultSchema = z.object({
   /** شماره‌ی بدون شکاف — بخش ۵ CLAUDE.md */
   number: z.string(),
   total: dualAmountSchema,
-  createdAt: isoDate,
+  createdAt: isoDateTimeSchema,
 });
 export type CreateInvoiceResult = z.infer<typeof createInvoiceResultSchema>;
-
-/* ── خطا ───────────────────────────────────────────────────── */
-
-export const apiErrorSchema = z.object({
-  code: z.string(),
-  message: z.string(),
-  details: z.record(z.string(), z.unknown()).optional(),
-});
-export type ApiErrorBody = z.infer<typeof apiErrorSchema>;

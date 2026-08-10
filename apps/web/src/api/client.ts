@@ -21,14 +21,24 @@ const BASE_URL = '/api';
 export class ApiError extends Error {
   readonly status: number;
   readonly code: string;
-  readonly details: Record<string, unknown> | undefined;
+  /** خطای هر فیلد فرم — کلید نام فیلد، مقدار فهرست پیام‌ها. برای خطای غیر-اعتبارسنجی خالی است. */
+  readonly fields: Record<string, string[]>;
+  /** همان شناسه‌ای که در log سرور ثبت شده. خطاهای ساخته‌شده سمت کلاینت (شبکه، SCHEMA_MISMATCH) شناسه ندارند. */
+  readonly requestId: string | undefined;
 
-  constructor(status: number, code: string, message: string, details?: Record<string, unknown>) {
+  constructor(
+    status: number,
+    code: string,
+    message: string,
+    fields: Record<string, string[]> = {},
+    requestId?: string,
+  ) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
     this.code = code;
-    this.details = details;
+    this.fields = fields;
+    this.requestId = requestId;
   }
 }
 
@@ -67,7 +77,8 @@ async function parseError(response: Response): Promise<never> {
 
   const parsed = apiErrorSchema.safeParse(body);
   if (parsed.success) {
-    throw new ApiError(response.status, parsed.data.code, parsed.data.message, parsed.data.details);
+    const { code, message, fields, requestId } = parsed.data.error;
+    throw new ApiError(response.status, code, message, fields, requestId);
   }
 
   throw new ApiError(response.status, 'UNKNOWN', 'خطای ناشناخته از سرور');
@@ -101,12 +112,9 @@ async function request<S extends z.ZodTypeAny>(
   const parsed = schema.safeParse(body);
 
   if (!parsed.success) {
-    throw new ApiError(
-      response.status,
-      'SCHEMA_MISMATCH',
-      'پاسخ سرور با قرارداد نمی‌خواند',
-      { issues: parsed.error.issues },
-    );
+    // ناسازگاری schema یک باگ کد است، نه یک خطای کاربر — باید فوراً در کنسول دیده شود
+    console.error('پاسخ سرور با قرارداد نمی‌خواند:', path, parsed.error.issues);
+    throw new ApiError(response.status, 'SCHEMA_MISMATCH', 'پاسخ سرور با قرارداد نمی‌خواند');
   }
 
   return parsed.data;

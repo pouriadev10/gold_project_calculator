@@ -1,4 +1,5 @@
 import { searchKey } from '@gold/core-calc';
+import { DEFAULT_PAGE_SIZE } from '@gold/contracts';
 import { HttpResponse, http, delay } from 'msw';
 import {
   MAZNEH_RIAL,
@@ -54,9 +55,15 @@ export const handlers = [
 
   http.get('/api/parties', async ({ request }) => {
     await delay(READ_DELAY_MS);
-    const query = new URL(request.url).searchParams.get('q');
-    const filtered = partyRecords.filter((p) => matchesQuery(p.name, query));
-    return HttpResponse.json({ items: filtered, total: filtered.length });
+    // نام پارامتر و پوسته‌ی پاسخ دقیقاً partyListQuerySchema/partyListSchema واقعی‌اند
+    const search = new URL(request.url).searchParams.get('search');
+    const filtered = partyRecords.filter((p) => matchesQuery(p.displayName, search));
+    return HttpResponse.json({
+      items: filtered,
+      total: filtered.length,
+      limit: DEFAULT_PAGE_SIZE,
+      offset: 0,
+    });
   }),
 
   http.get('/api/parties/balance-summary', async () => {
@@ -95,7 +102,14 @@ export const handlers = [
     const key = request.headers.get('Idempotency-Key');
     if (!key) {
       return HttpResponse.json(
-        { code: 'IDEMPOTENCY_KEY_REQUIRED', message: 'هدر Idempotency-Key اجباری است' },
+        {
+          error: {
+            code: 'IDEMPOTENCY_KEY_REQUIRED',
+            message: 'هدر Idempotency-Key اجباری است',
+            fields: {},
+            requestId: crypto.randomUUID(),
+          },
+        },
         { status: 400 },
       );
     }

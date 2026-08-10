@@ -169,7 +169,7 @@ apps/web/src/
 * aliasهای TypeScript و Vite درست باشند.
 ---
 # Milestone 2 — قرارداد API و زیرساخت ارتباط
-## [ ] FE-005 — اتصال `packages/contracts` به فرانت
+## [x] FE-005 — اتصال `packages/contracts` به فرانت
 ### وابستگی بک‌اند
 ```text
 BE-003
