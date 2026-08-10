@@ -213,7 +213,7 @@ shared/api/
 * timeout و abort تست شده باشند.
 * خطای شبکه با خطای دامنه تفکیک شود.
 ---
-## [ ] FE-007 — مدیریت Idempotency-Key
+## [x] FE-007 — مدیریت Idempotency-Key
 ### وابستگی بک‌اند
 ```text
 BE-013
