@@ -388,6 +388,9 @@ function PwaCheck() {
 
   useEffect(() => {
     let cancelled = false;
+    // این‌جا عمداً fetch خام است: دارد وجود خودِ manifest استاتیک را آزمایش
+    // می‌کند، نه یک endpoint REST — از api/client عبور کردنش معنا ندارد.
+    // eslint-disable-next-line no-restricted-globals -- آزمون مستقیم فایل استاتیک PWA، نه فراخوانی API
     void fetch('/manifest.webmanifest')
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('manifest پیدا نشد'))))
       .then((m: { name?: string; dir?: string }) => {

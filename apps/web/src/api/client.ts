@@ -1,10 +1,13 @@
 import type { z } from 'zod';
 import { apiErrorSchema } from './contracts';
+import { ApiError, NetworkError } from './api-error';
+
+export { ApiError, NetworkError };
 
 /**
  * لایه‌ی دسترسی به API.
  *
- * دو کار انجام می‌دهد که اگر به عهده‌ی صفحات گذاشته شوند، دیر یا زود
+ * چند کار انجام می‌دهد که اگر به عهده‌ی صفحات گذاشته شوند، دیر یا زود
  * یکی‌شان فراموش می‌شود:
  *
  * ۱. **`Idempotency-Key` روی هر نوشتن.** بخش ۵ `CLAUDE.md` این را اجباری
@@ -14,50 +17,32 @@ import { apiErrorSchema } from './contracts';
  *
  * ۲. **اعتبارسنجی پاسخ با `zod`.** پاسخ ناسازگار همین‌جا خطا می‌دهد،
  *    نه سه لایه بالاتر وسط رندر.
+ *
+ * ۳. **سقف زمان و لغو.** شبکه‌ی پاساژ بازار قطعاً یک‌جایی آویزان می‌ماند؛
+ *    بدون سقف، یک fetch فراموش‌شده تا ابد کاربر را در حالت loading نگه
+ *    می‌دارد.
+ *
+ * ۴. **شناسه‌ی رهگیری روی هر درخواست.** برای وصل‌کردن لاگ کلاینت به لاگ
+ *    سروری که همین `requestId` را در بدنه‌ی خطا برمی‌گرداند.
+ *
+ * `no-restricted-globals` در `eslint.config.js` استفاده‌ی مستقیم `fetch`
+ * را بیرون از همین پوشه (`api/`) خطا می‌دهد — هر Feature باید از این‌جا
+ * عبور کند.
  */
 
-const BASE_URL = '/api';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api';
 
-export class ApiError extends Error {
-  readonly status: number;
-  readonly code: string;
-  /** خطای هر فیلد فرم — کلید نام فیلد، مقدار فهرست پیام‌ها. برای خطای غیر-اعتبارسنجی خالی است. */
-  readonly fields: Record<string, string[]>;
-  /** همان شناسه‌ای که در log سرور ثبت شده. خطاهای ساخته‌شده سمت کلاینت (شبکه، SCHEMA_MISMATCH) شناسه ندارند. */
-  readonly requestId: string | undefined;
-
-  constructor(
-    status: number,
-    code: string,
-    message: string,
-    fields: Record<string, string[]> = {},
-    requestId?: string,
-  ) {
-    super(message);
-    this.name = 'ApiError';
-    this.status = status;
-    this.code = code;
-    this.fields = fields;
-    this.requestId = requestId;
-  }
-}
-
-/** خطای شبکه یا پاسخ نامعتبر — پیام فارسی برای نمایش مستقیم به کاربر. */
-export class NetworkError extends Error {
-  constructor(message = 'ارتباط با سرور برقرار نشد') {
-    super(message);
-    this.name = 'NetworkError';
-  }
-}
+/** سقف زمان یک درخواست. شبکه‌ی پاساژ کند است، ولی منتظر ماندن بی‌نهایت بدتر است. */
+const DEFAULT_TIMEOUT_MS = 15_000;
 
 /**
- * کلید یکتا برای هر تلاش نوشتن.
+ * تولید شناسه‌ی یکتا — هم برای `Idempotency-Key` هم برای `X-Request-Id`.
  *
  * `crypto.randomUUID` در همه‌ی مرورگرهای هدف موجود است، ولی فقط در
  * زمینه‌ی امن (https یا localhost). جایگزین برای زمینه‌ی ناامن لازم است
  * وگرنه ثبت فاکتور روی http داخلی مغازه می‌شکند.
  */
-export function newIdempotencyKey(): string {
+function generateUuid(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
   }
@@ -65,6 +50,50 @@ export function newIdempotencyKey(): string {
   const bytes = new Uint8Array(16);
   crypto.getRandomValues(bytes);
   return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * کلید یکتا برای هر تلاش نوشتن.
+ *
+ * اگر فراخوان کلید خودش را بدهد (برای تلاش مجدد **همان** عملیات)، همان
+ * استفاده می‌شود. تلاش مجدد با کلید تازه یعنی عملیات جدید، نه تکرار.
+ */
+export function newIdempotencyKey(): string {
+  return generateUuid();
+}
+
+/**
+ * شناسه‌ی رهگیری یک درخواست — روی **هر** درخواست (خواندن یا نوشتن) تازه
+ * ساخته می‌شود، برخلاف Idempotency-Key که فراخوان ممکن است نگه دارد.
+ * هدفش یکی‌کردن سند نیست؛ فقط پیداکردن این درخواست در لاگ سرور است.
+ */
+function newRequestId(): string {
+  return generateUuid();
+}
+
+/**
+ * دو `AbortSignal` را در یکی ترکیب می‌کند — هرکدام زودتر لغو شود، نتیجه
+ * هم لغو می‌شود.
+ *
+ * عمداً دستی نوشته شده به‌جای `AbortSignal.any`: آن متد به‌قدر کافی روی
+ * WebView اندروید میان‌رده‌ی قدیمی پشتیبانی نمی‌شود — بخش ۷ CLAUDE.md
+ * صریحاً می‌گوید تست روی دستگاه واقعی لازم است، نه فقط مرورگر توسعه‌ی جدید.
+ */
+function combineSignals(signals: ReadonlyArray<AbortSignal | undefined>): AbortSignal {
+  const controller = new AbortController();
+
+  for (const signal of signals) {
+    if (!signal) continue;
+    if (signal.aborted) {
+      controller.abort(signal.reason as unknown);
+      break;
+    }
+    signal.addEventListener('abort', () => controller.abort(signal.reason as unknown), {
+      once: true,
+    });
+  }
+
+  return controller.signal;
 }
 
 async function parseError(response: Response): Promise<never> {
@@ -95,14 +124,31 @@ async function request<S extends z.ZodTypeAny>(
   path: string,
   schema: S,
   init: RequestInit = {},
+  callerSignal?: AbortSignal,
+  timeoutMs: number = DEFAULT_TIMEOUT_MS,
 ): Promise<z.infer<S>> {
+  const timeoutSignal = AbortSignal.timeout(timeoutMs);
+  const signal = combineSignals([callerSignal, timeoutSignal]);
+
   let response: Response;
   try {
     response = await fetch(`${BASE_URL}${path}`, {
       ...init,
-      headers: { Accept: 'application/json', ...init.headers },
+      signal,
+      headers: { Accept: 'application/json', 'X-Request-Id': newRequestId(), ...init.headers },
     });
-  } catch {
+  } catch (error) {
+    /*
+     * لغو عمدی فراخوان (مثلاً TanStack Query هنگام unmount یا جایگزینی
+     * query) باید همان AbortError دست‌نخورده بالا برود — TanStack Query
+     * با بررسی `error.name === 'AbortError'` این حالت را «لغو» می‌شناسد،
+     * نه «خطا»؛ اگر اینجا در NetworkError بپیچیمش، آن تشخیص از کار می‌افتد
+     * و لغوهای عادی مثل خطای شبکه‌ی واقعی نمایش داده می‌شوند.
+     */
+    if (callerSignal?.aborted) throw error;
+    if (timeoutSignal.aborted) {
+      throw new NetworkError('درخواست بیش از حد معمول طول کشید — دوباره تلاش کنید');
+    }
     throw new NetworkError();
   }
 
@@ -120,12 +166,17 @@ async function request<S extends z.ZodTypeAny>(
   return parsed.data;
 }
 
+/**
+ * `timeoutMs` پیش‌فرض مناسب اکثر endpointهاست؛ فقط برای موارد شناخته‌شده
+ * (جست‌وجوی نوع‌به‌نوع، تولید PDF) لازم است بازنویسی شود.
+ */
 export function apiGet<S extends z.ZodTypeAny>(
   path: string,
   schema: S,
   signal?: AbortSignal,
+  timeoutMs: number = DEFAULT_TIMEOUT_MS,
 ): Promise<z.infer<S>> {
-  return request(path, schema, signal ? { method: 'GET', signal } : { method: 'GET' });
+  return request(path, schema, { method: 'GET' }, signal, timeoutMs);
 }
 
 /**
@@ -139,13 +190,21 @@ export function apiPost<S extends z.ZodTypeAny>(
   body: unknown,
   schema: S,
   idempotencyKey: string = newIdempotencyKey(),
+  signal?: AbortSignal,
+  timeoutMs: number = DEFAULT_TIMEOUT_MS,
 ): Promise<z.infer<S>> {
-  return request(path, schema, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Idempotency-Key': idempotencyKey,
+  return request(
+    path,
+    schema,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Idempotency-Key': idempotencyKey,
+      },
+      body: JSON.stringify(body),
     },
-    body: JSON.stringify(body),
-  });
+    signal,
+    timeoutMs,
+  );
 }

@@ -1,7 +1,8 @@
 import { toSafeNumber } from '@gold/core-calc';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { ApiError, NetworkError, apiGet, apiPost, newIdempotencyKey } from './client';
+import { ApiError, NetworkError } from './api-error';
+import { apiGet, apiPost, newIdempotencyKey } from './client';
 import { dualAmountSchema } from './contracts';
 
 /**
@@ -32,6 +33,27 @@ function sentHeaders(
   index = 0,
 ): Record<string, string> {
   return (spy.mock.calls[index]?.[1]?.headers ?? {}) as Record<string, string>;
+}
+
+/**
+ * fetch ای که خودش هرگز settle نمی‌شود — فقط وقتی `signal` (چه از فراخوان،
+ * چه از timeout) لغو شود رد می‌شود. برای آزمودن timeout و abort واقعاً به
+ * یک اتصال آویزان نیاز داریم، نه یک پاسخ فوری.
+ */
+function mockHangingFetch() {
+  const spy = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+    return new Promise<Response>((_resolve, reject) => {
+      const signal = init?.signal;
+      const rejectAborted = () => reject(new DOMException('عملیات لغو شد', 'AbortError'));
+      if (signal?.aborted) {
+        rejectAborted();
+        return;
+      }
+      signal?.addEventListener('abort', rejectAborted);
+    });
+  });
+  vi.stubGlobal('fetch', spy);
+  return spy;
 }
 
 beforeEach(() => vi.unstubAllGlobals());
@@ -129,5 +151,67 @@ describe('خطاها', () => {
 
     await expect(apiGet('/x', okSchema)).rejects.toThrow(NetworkError);
     await expect(apiGet('/x', okSchema)).rejects.toThrow('ارتباط با سرور برقرار نشد');
+  });
+});
+
+describe('timeout و لغو', () => {
+  it('گذشتن از سقف زمان، NetworkError با پیام «طول کشید» می‌دهد، نه AbortError خام', async () => {
+    mockHangingFetch();
+
+    const error: unknown = await apiGet('/x', okSchema, undefined, 20).catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(NetworkError);
+    expect((error as Error).message).toMatch(/طول کشید/);
+    // اگر اینجا AbortError خام برگردد، یعنی تشخیص «چه کسی لغو کرد» غلط است
+    expect((error as Error).name).not.toBe('AbortError');
+  });
+
+  it('لغو عمدی فراخوان دست‌نخورده بالا می‌رود — سازگار با لغو TanStack Query', async () => {
+    mockHangingFetch();
+    const controller = new AbortController();
+
+    const promise = apiGet('/x', okSchema, controller.signal);
+    controller.abort();
+    const error: unknown = await promise.catch((e: unknown) => e);
+
+    /*
+     * اینجا عمداً NetworkError **نیست**: TanStack Query لغوهای خودش را با
+     * `error.name === 'AbortError'` تشخیص می‌دهد و آن‌ها را «خطا» حساب
+     * نمی‌کند. اگر این‌جا در NetworkError بپیچیمش، لغوهای عادی (مثلاً
+     * وقتی کاربر زودتر از صفحه‌ی جست‌وجو بیرون می‌رود) مثل قطعی شبکه‌ی
+     * واقعی نمایش داده می‌شوند.
+     */
+    expect(error).not.toBeInstanceOf(NetworkError);
+    expect((error as Error).name).toBe('AbortError');
+  });
+
+  it('لغو فراخوان زودتر از پایان سقف زمان رخ می‌دهد و مانع NetworkError timeout می‌شود', async () => {
+    mockHangingFetch();
+    const controller = new AbortController();
+
+    // سقف زمان طولانی؛ لغو فراخوان باید خیلی زودتر برنده شود
+    const promise = apiGet('/x', okSchema, controller.signal, 5_000);
+    controller.abort();
+
+    await expect(promise).rejects.toMatchObject({ name: 'AbortError' });
+  });
+});
+
+describe('X-Request-Id', () => {
+  it('روی هر درخواست — چه خواندن چه نوشتن — فرستاده می‌شود', async () => {
+    const spy = mockFetch({ body: { value: 'ok' } });
+
+    await apiGet('/x', okSchema);
+
+    expect(sentHeaders(spy)['X-Request-Id']).toBeTruthy();
+  });
+
+  it('هر درخواست شناسه‌ی جدای خودش را دارد', async () => {
+    const spy = mockFetch({ body: { value: 'ok' } });
+
+    await apiGet('/x', okSchema);
+    await apiGet('/x', okSchema);
+
+    expect(sentHeaders(spy, 0)['X-Request-Id']).not.toBe(sentHeaders(spy, 1)['X-Request-Id']);
   });
 });

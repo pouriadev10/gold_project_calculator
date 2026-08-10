@@ -188,6 +188,27 @@ export default tseslint.config(
         ...noDirectionalClasses,
         ...noRawHex,
       ],
+      // FE-006: هر درخواست شبکه باید از apiGet/apiPost عبور کند تا Idempotency-Key،
+      // timeout و اعتبارسنجی zod هیچ‌جا فراموش نشوند.
+      'no-restricted-globals': [
+        'error',
+        { name: 'parseFloat', message: 'parseFloat ممنوع است — از bigint استفاده کن.' },
+        {
+          name: 'fetch',
+          message: 'fetch مستقیم ممنوع است — از apiGet/apiPost در @/api/client استفاده کن.',
+        },
+      ],
+    },
+  },
+
+  // لایه‌ی api/ تنها جایی است که مجاز است واقعاً fetch را صدا بزند
+  {
+    files: ['apps/web/src/api/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-globals': [
+        'error',
+        { name: 'parseFloat', message: 'parseFloat ممنوع است — از bigint استفاده کن.' },
+      ],
     },
   },
 );
