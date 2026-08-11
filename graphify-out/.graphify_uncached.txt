@@ -1,0 +1,5 @@
+C:\Users\Sobhan\OneDrive\Documents\gold project prd\.claude\skills\ui-styling\LICENSE.txt
+C:\Users\Sobhan\OneDrive\Documents\gold project prd\AGENTS.md
+C:\Users\Sobhan\OneDrive\Documents\gold project prd\README.md
+C:\Users\Sobhan\OneDrive\Documents\gold project prd\TASKS.md
+C:\Users\Sobhan\OneDrive\Documents\gold project prd\graphify-out\memory\query_20260811_192513_how_should_graphify_be_maintained_after_completing.md
