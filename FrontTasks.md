@@ -297,7 +297,7 @@ subtractBigIntStrings
 * هیچ precision loss رخ ندهد.
 ---
 # Milestone 3 — طراحی پایه و Shell برنامه
-## [ ] FE-011 — تثبیت Design System
+## [x] FE-011 — تثبیت Design System
 ### هدف
 تکمیل Design Tokenهای اصلی محصول.
 ### موارد

@@ -16,7 +16,9 @@ import animate from 'tailwindcss-animate';
 const config: Config = {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
 
-  // حالت روشن اجباری در فاز ۱ — حالت تاریک بعداً
+  // پیش‌فرض `system` است (از تنظیم دستگاه پیروی می‌کند)؛ کلاس `.dark` روی
+  // <html> از `lib/theme.ts` + `useTheme` می‌نشیند، انتخاب کاربر مقدم است.
+  // جزئیات و نسبت‌های کنتراست هر دو حالت: design-system/MASTER.md بخش ۱.
   darkMode: 'class',
 
   theme: {
@@ -67,6 +69,15 @@ const config: Config = {
         credit: 'hsl(var(--credit) / <alpha-value>)',
         debit: 'hsl(var(--debit) / <alpha-value>)',
         gold: 'hsl(var(--gold) / <alpha-value>)',
+
+        // هشدار — نیازمند توجه، نه خطا (مثلاً مظنه‌ی قدیمی)
+        warning: {
+          DEFAULT: 'hsl(var(--warning) / <alpha-value>)',
+          foreground: 'hsl(var(--warning-foreground) / <alpha-value>)',
+        },
+        // موفقیت — عمداً هم‌مقدار credit؛ توکن CSS جدا ندارد چون این محصول
+        // برای «خبر خوب» (مالی یا غیرمالی) دو سبز جدا نمی‌سازد
+        success: 'hsl(var(--credit) / <alpha-value>)',
       },
 
       borderRadius: {
@@ -84,6 +95,16 @@ const config: Config = {
         touch: '44px',
         // ارتفاع دکمه‌ی اقدام اصلی
         action: '56px',
+
+        // مقیاس فاصله‌گذاری متراکم — design-system/MASTER.md بخش ۳.
+        // مکمل مقیاس عددی پیش‌فرض Tailwind است، جایگزینش نیست.
+        xs: 'var(--space-xs)',
+        sm: 'var(--space-sm)',
+        md: 'var(--space-md)',
+        lg: 'var(--space-lg)',
+        xl: 'var(--space-xl)',
+        '2xl': 'var(--space-2xl)',
+        '3xl': 'var(--space-3xl)',
       },
 
       minHeight: {

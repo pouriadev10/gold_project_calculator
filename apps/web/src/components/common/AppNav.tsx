@@ -24,7 +24,7 @@ export function AppNav() {
       aria-label="ناوبری اصلی"
       className={cn(
         'fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card pb-safe',
-        'lg:static lg:h-dvh lg:w-60 lg:shrink-0 lg:border-e lg:border-t-0 lg:pb-0',
+        'lg:static lg:h-dvh lg:w-[var(--app-sidebar-w)] lg:shrink-0 lg:border-e lg:border-t-0 lg:pb-0',
       )}
     >
       <div className="hidden lg:block lg:px-4 lg:py-6">
