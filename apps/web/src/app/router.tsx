@@ -16,10 +16,16 @@ function RootLayout() {
   useTheme();
 
   return (
-    <div className="lg:flex lg:items-stretch">
+    <div className="lg:flex lg:h-dvh lg:items-stretch lg:overflow-hidden">
       <AppNav />
-      {/* فاصله‌ی پایین به‌اندازه‌ی نوار ناوبری تا محتوا زیرش پنهان نشود */}
-      <main className="min-w-0 flex-1 pb-nav">
+      {/*
+        فاصله‌ی پایین به‌اندازه‌ی نوار ناوبری تا محتوا زیرش پنهان نشود.
+        از ۱۰۲۴px به بالا `main` خودش مستقل اسکرول می‌شود (نه کل صفحه)،
+        وگرنه سایدبار هم با محتوا بالا می‌رفت و از دید خارج می‌شد — سایدبار
+        باید هر لحظه در دسترس بماند. حداکثر عرض فقط جلوی کشیده‌شدن بی‌حدوحصر
+        محتوا روی مانیتورهای خیلی عریض را می‌گیرد؛ زیر ۱۹۲۰px اصلاً اثر ندارد.
+      */}
+      <main className="min-w-0 flex-1 pb-nav lg:mx-auto lg:h-dvh lg:max-w-[1920px] lg:overflow-y-auto">
         <Outlet />
       </main>
     </div>

@@ -1,4 +1,5 @@
 import { Coins, Palette } from 'lucide-react';
+import { PageHeader } from '@/components/common/PageHeader';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { UnitToggle } from '@/components/common/UnitToggle';
 import { Card, CardContent } from '@/components/ui/card';
@@ -45,9 +46,7 @@ function SettingRow({
 export function SettingsPage() {
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="sticky top-0 z-30 border-b border-border bg-card px-4 py-3">
-        <h1 className="text-base font-bold">بیشتر</h1>
-      </header>
+      <PageHeader title="بیشتر" />
 
       <div className="space-y-4 p-4">
         <SettingRow
