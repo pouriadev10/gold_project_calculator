@@ -1663,7 +1663,14 @@ source account · destination account
 
 ---
 
-## [ ] BE-045 — پرداخت ریالی روی مانده شخص
+## [x] BE-045 — پرداخت ریالی روی مانده شخص
+
+> **وضعیت:** `RialSettlementsService` طبق بخش ۵-۷ سند posting — تک‌بعدی
+> (`RIAL`)، بدون تبدیل واحد (پس بدون نیاز به `lockedQuoteId`). یک ردیف
+> `settlement_lines` می‌سازد (`source=PARTY_RECEIVABLE`, `destination=CASH`)
+> و همان مبلغ را در دو entry دفتر کل قفل‌شده منعکس می‌کند. ۲ تست e2e:
+> کاهش مانده‌ی دریافتنی شخص + idempotent replay، و rollback کامل روی
+> party ناموجود.
 
 **endpoint**
 
