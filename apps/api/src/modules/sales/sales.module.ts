@@ -7,6 +7,8 @@ import { InventoryModule } from '../inventory/inventory.module';
 import { LedgerModule } from '../ledger/ledger.module';
 import { PartiesModule } from '../parties/parties.module';
 import { PricingModule } from '../pricing/pricing.module';
+import { CoinSalesController } from './coin-sales.controller';
+import { CoinSalesService } from './coin-sales.service';
 import { DocumentCountersService } from './document-counters.service';
 import { JewelryCashSalesController } from './jewelry-cash-sales.controller';
 import { JewelryCashSalesService } from './jewelry-cash-sales.service';
@@ -34,14 +36,22 @@ import { SalesPricingService } from './sales-pricing.service';
     PricingModule,
     UsersModule,
   ],
-  controllers: [JewelryCashSalesController, JewelryCreditSalesController],
+  controllers: [CoinSalesController, JewelryCashSalesController, JewelryCreditSalesController],
   providers: [
+    CoinSalesService,
     DocumentCountersService,
     JewelryCashSalesService,
     JewelryCreditSalesService,
     SalesInvoicesService,
     SalesPricingService,
   ],
-  exports: [DocumentCountersService, JewelryCashSalesService, JewelryCreditSalesService, SalesInvoicesService, SalesPricingService],
+  exports: [
+    CoinSalesService,
+    DocumentCountersService,
+    JewelryCashSalesService,
+    JewelryCreditSalesService,
+    SalesInvoicesService,
+    SalesPricingService,
+  ],
 })
 export class SalesModule {}

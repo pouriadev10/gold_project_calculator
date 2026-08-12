@@ -8,7 +8,9 @@ import { AssetDimensionsService } from '../ledger/asset-dimensions.service';
 import { LedgerAccountsService } from '../ledger/ledger-accounts.service';
 import {
   CoinMintTypeMismatchError,
+  CoinTypeNotFoundError,
   CoinTypeVersionConflictError,
+  InactiveCoinTypeError,
   InvalidCoinTypeVersionDateError,
 } from './coin-types.errors';
 import type { Database } from '../../platform/database/connect';
@@ -225,6 +227,35 @@ export class CoinTypesService {
       )
       .orderBy(desc(coinTypeVersions.validFrom))
       .limit(1);
+
+    return version;
+  }
+
+  async requireSelectableForSale(
+    tenantId: string,
+    coinTypeId: string,
+    effectiveAt: Date,
+  ): Promise<CoinTypeVersion> {
+    return withTenantTransaction(this.db, tenantId, (transaction) =>
+      this.requireSelectableForSaleInTransaction(transaction, tenantId, coinTypeId, effectiveAt),
+    );
+  }
+
+  /** Mirrors JewelryItemsService.requireSelectableForSaleInTransaction for coin types. */
+  async requireSelectableForSaleInTransaction(
+    transaction: TenantTransaction,
+    tenantId: string,
+    coinTypeId: string,
+    effectiveAt: Date,
+  ): Promise<CoinTypeVersion> {
+    const version = await this.getEffectiveInTransaction(transaction, tenantId, coinTypeId, effectiveAt);
+
+    if (version === undefined) {
+      throw new CoinTypeNotFoundError(coinTypeId);
+    }
+    if (!version.active) {
+      throw new InactiveCoinTypeError(coinTypeId);
+    }
 
     return version;
   }

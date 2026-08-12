@@ -1563,7 +1563,26 @@ POST /sales/invoices/jewelry
 
 ---
 
-## [ ] BE-043 — فروش سکه
+## [x] BE-043 — فروش سکه
+
+> **وضعیت:** `CoinSalesService` طبق بخش ۵-۴ `docs/accounting-postings.md` —
+> `COGS_COIN`/`INVENTORY_COIN:<coinTypeId>` روی بُعد `COIN:<coinTypeId>` با
+> **تعداد**، نه وزن. تعداد سکه‌ی موردنیاز از `requireSelectableForSaleInTransaction`ی
+> تازه در `CoinTypesService` می‌آید (آینه‌ی همان گیت BE-026 برای زیورآلات).
+> «پرداخت» یک ورودی مستقل است (`paidRial`) نه یک endpoint نقدی/نسیه‌ی جدا:
+> اگر کمتر از مبلغ محاسبه‌شده باشد، باقی طبق همان الگوی
+> `JewelryCreditSalesService` روی `PARTY_RECEIVABLE` می‌نشیند، اما همه در یک
+> endpoint واحد که تسک همان را می‌خواهد.
+>
+> قیمت بازار سکه ورودی کاربر است (`marketUnitPriceRial`) — فرمول ندارد چون
+> حباب بازاری است، نه محاسبه‌شدنی. `SalesPricingService.priceCoinInTransaction`
+> فقط ارزش ذاتی (`intrinsicValue`) و حباب (`bubble`) را از `packages/core-calc`
+> برای snapshot گزارشی می‌سازد؛ امضای `bubble()` فقط `CentralBankMintedCoinType`
+> می‌پذیرد، پس حباب سکه‌ی غیربانکی همیشه `null` است — تایپ‌اجباری، نه شرط
+> زمان اجرا. ۵ تست e2e در `coin-sales.e2e-spec.ts`: posting متوازن با حباب
+> صحیح (مقایسه با محاسبه‌ی مستقیم `core-calc`)، حباب `null` برای سکه‌ی
+> خصوصی، طلب نسیه، رد `paidRial` بیش از مبلغ، و rollback کامل روی
+> coin type ناموجود — همه روی PostgreSQL واقعی، بدون اثر روی نوع سکه‌ی دیگر.
 
 **endpoint**
 

@@ -18,3 +18,27 @@ export class CoinMintTypeMismatchError extends Error {
     this.name = 'CoinMintTypeMismatchError';
   }
 }
+
+export class CoinTypeNotFoundError extends Error {
+  readonly coinTypeId: string;
+
+  constructor(coinTypeId: string) {
+    super(`Coin type "${coinTypeId}" was not found for this tenant`);
+    this.name = 'CoinTypeNotFoundError';
+    this.coinTypeId = coinTypeId;
+  }
+}
+
+/**
+ * نسخه‌ی غیرفعال سکه در معامله‌ی جدید انتخاب شده است — همان معیار BE-026
+ * برای کالای زیورآلات، برای سکه.
+ */
+export class InactiveCoinTypeError extends Error {
+  readonly coinTypeId: string;
+
+  constructor(coinTypeId: string) {
+    super(`Coin type "${coinTypeId}" is inactive and cannot be used in a new transaction`);
+    this.name = 'InactiveCoinTypeError';
+    this.coinTypeId = coinTypeId;
+  }
+}
