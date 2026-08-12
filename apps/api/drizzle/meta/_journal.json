@@ -176,6 +176,20 @@
       "when": 1786449900000,
       "tag": "0024_seed_sales_profit_policy",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1786563842669,
+      "tag": "0025_nasty_wrecking_crew",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1786564282581,
+      "tag": "0026_unique_zuras",
+      "breakpoints": true
     }
   ]
 }

@@ -1612,7 +1612,23 @@ POST /sales/invoices/coins
 
 # Milestone 9 — تسویه
 
-## [ ] BE-044 — مدل Settlement
+## [x] BE-044 — مدل Settlement
+
+> **وضعیت:** `settlements`(سربرگ، mutable تا finalize، آینه‌ی `sales_invoices`)
+> + `settlement_lines` (append-only با تریگر migration ۰۰۲۵، آینه‌ی
+> `inventory_movements` در migration ۰۰۱۵). هر ردیف `source → destination`
+> جهت‌دار در یک بُعد است (`quantity` بزرگی مثبت، نه علامت‌دار)؛ posting دو
+> طرفه‌ی دفتر کل کار BE-045 تا BE-048 است، نه اینجا. `lockedQuoteId`/
+> `lockedQuoteAmountRial`/`lockedConversionSnapshot` را فراخوان می‌سازد —
+> این سرویس هیچ‌جا خودش مظنه نمی‌خواند. `SettlementsService` فقط
+> `createDraft`/`finalize` دارد، بدون endpoint HTTP (طبق تسک). ۳ تست e2e:
+> finalize چندبُعدی، رد mutation بعد از finalize، رد ورودی نامعتبر.
+>
+> نکته‌ی فنی: FK مستقیم `settlement_lines.tenant_id → tenants` (نه فقط از
+> راه `settlements`) لازم بود — وگرنه حذف tenant دو شاخه‌ی cascade مستقل
+> دارد (از راه settlements و از راه asset_dimensions/ledger_accounts) که
+> ترتیبشان تضمین‌شده نیست؛ همان الگویی که `inventory_movements` از قبل
+> دارد.
 
 **جدول‌ها**
 
