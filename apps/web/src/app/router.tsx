@@ -4,14 +4,26 @@ import {
   createRoute,
   createRouter,
   lazyRouteComponent,
+  redirect,
 } from '@tanstack/react-router';
+import { uuidSchema } from '@gold/contracts';
 import { AppNav } from '@/components/common/AppNav';
-import { PlaceholderPage } from '@/components/common/PlaceholderPage';
+import { NotFoundPage } from '@/components/common/NotFoundPage';
 import { HomePage } from '@/features/home/HomePage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
 import { useTheme } from '@/hooks/useTheme';
 
-function RootLayout() {
+/**
+ * ریشه‌ی بدون پوسته — فقط `<Outlet />`. مسیرهایی که نباید ناوبری برنامه
+ * را ببینند (مثل ورود، پیش از احراز هویت) مستقیماً زیر همین می‌آیند؛
+ * بقیه زیر `appShellRoute` (پوسته‌ی ناوبری + main) تو در تو می‌شوند.
+ */
+const rootRoute = createRootRoute({
+  component: Outlet,
+  notFoundComponent: NotFoundPage,
+});
+
+function AppShell() {
   // پوسته یک بار در ریشه اعمال و با تنظیم سیستم همگام می‌شود
   useTheme();
 
@@ -32,41 +44,134 @@ function RootLayout() {
   );
 }
 
-const rootRoute = createRootRoute({ component: RootLayout });
+const appShellRoute = createRoute({
+  id: 'app-shell',
+  getParentRoute: () => rootRoute,
+  component: AppShell,
+});
+
+// ---- مسیر بدون پوسته ----
+
+const loginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/login',
+  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'LoginPlaceholder'),
+});
+
+// ---- مسیرهای زیر پوسته‌ی برنامه ----
 
 const indexRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appShellRoute,
   path: '/',
+  beforeLoad: () => {
+    throw redirect({ to: '/dashboard' });
+  },
+});
+
+const dashboardRoute = createRoute({
+  getParentRoute: () => appShellRoute,
+  path: '/dashboard',
   component: HomePage,
 });
 
-const salesRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/sales',
-  component: () => (
-    <PlaceholderPage title="فروش" note="ثبت فاکتور فروش زیورآلات و سکه در گام‌های بعد می‌آید." />
-  ),
-});
-
-const purchaseRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/purchase',
-  component: () => (
-    <PlaceholderPage title="خرید" note="خرید از مصرف‌کننده و خرید دست‌دوم در گام‌های بعد می‌آید." />
-  ),
+const pricingRoute = createRoute({
+  getParentRoute: () => appShellRoute,
+  path: '/pricing',
+  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'PricingPlaceholder'),
 });
 
 const partiesRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appShellRoute,
   path: '/parties',
-  component: () => (
-    <PlaceholderPage title="اشخاص" note="حساب اشخاص و مانده‌ها در گام‌های بعد می‌آید." />
+  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'PartiesPlaceholder'),
+});
+
+const partyDetailRoute = createRoute({
+  getParentRoute: () => appShellRoute,
+  path: '/parties/$partyId',
+  params: {
+    parse: (raw: { partyId: string }) => ({ partyId: uuidSchema.parse(raw.partyId) }),
+    stringify: (parsed: { partyId: string }) => ({ partyId: parsed.partyId }),
+  },
+  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'PartyDetailPlaceholder'),
+});
+
+const inventoryRoute = createRoute({
+  getParentRoute: () => appShellRoute,
+  path: '/inventory',
+  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'InventoryPlaceholder'),
+});
+
+const inventoryJewelryRoute = createRoute({
+  getParentRoute: () => appShellRoute,
+  path: '/inventory/jewelry',
+  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'InventoryJewelryPlaceholder'),
+});
+
+const inventoryCoinsRoute = createRoute({
+  getParentRoute: () => appShellRoute,
+  path: '/inventory/coins',
+  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'InventoryCoinsPlaceholder'),
+});
+
+const salesNewRoute = createRoute({
+  getParentRoute: () => appShellRoute,
+  path: '/sales/new',
+  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'SalesNewPlaceholder'),
+});
+
+const salesInvoicesRoute = createRoute({
+  getParentRoute: () => appShellRoute,
+  path: '/sales/invoices',
+  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'SalesInvoicesPlaceholder'),
+});
+
+const salesInvoiceDetailRoute = createRoute({
+  getParentRoute: () => appShellRoute,
+  path: '/sales/invoices/$invoiceId',
+  params: {
+    parse: (raw: { invoiceId: string }) => ({ invoiceId: uuidSchema.parse(raw.invoiceId) }),
+    stringify: (parsed: { invoiceId: string }) => ({ invoiceId: parsed.invoiceId }),
+  },
+  component: lazyRouteComponent(
+    () => import('@/app/route-placeholders'),
+    'SalesInvoiceDetailPlaceholder',
   ),
 });
 
-const moreRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/more',
+const purchaseSecondHandRoute = createRoute({
+  getParentRoute: () => appShellRoute,
+  path: '/purchase/second-hand',
+  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'PurchaseSecondHandPlaceholder'),
+});
+
+const settlementsNewRoute = createRoute({
+  getParentRoute: () => appShellRoute,
+  path: '/settlements/new',
+  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'SettlementsNewPlaceholder'),
+});
+
+const reportingDebtorsRoute = createRoute({
+  getParentRoute: () => appShellRoute,
+  path: '/reporting/debtors',
+  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'ReportingDebtorsPlaceholder'),
+});
+
+const reportingCreditorsRoute = createRoute({
+  getParentRoute: () => appShellRoute,
+  path: '/reporting/creditors',
+  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'ReportingCreditorsPlaceholder'),
+});
+
+const reportingProfitRoute = createRoute({
+  getParentRoute: () => appShellRoute,
+  path: '/reporting/profit',
+  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'ReportingProfitPlaceholder'),
+});
+
+const settingsRoute = createRoute({
+  getParentRoute: () => appShellRoute,
+  path: '/settings',
   component: SettingsPage,
 });
 
@@ -80,12 +185,12 @@ const moreRoute = createRoute({
 const devRoutes = import.meta.env.DEV
   ? [
       createRoute({
-        getParentRoute: () => rootRoute,
+        getParentRoute: () => appShellRoute,
         path: '/_dev/smoke',
         component: lazyRouteComponent(() => import('@/features/dev/SmokePage')),
       }),
       createRoute({
-        getParentRoute: () => rootRoute,
+        getParentRoute: () => appShellRoute,
         path: '/_dev/keypad',
         component: lazyRouteComponent(() => import('@/features/dev/KeypadHarness')),
       }),
@@ -93,12 +198,27 @@ const devRoutes = import.meta.env.DEV
   : [];
 
 const routeTree = rootRoute.addChildren([
-  indexRoute,
-  salesRoute,
-  purchaseRoute,
-  partiesRoute,
-  moreRoute,
-  ...devRoutes,
+  loginRoute,
+  appShellRoute.addChildren([
+    indexRoute,
+    dashboardRoute,
+    pricingRoute,
+    partiesRoute,
+    partyDetailRoute,
+    inventoryRoute,
+    inventoryJewelryRoute,
+    inventoryCoinsRoute,
+    salesNewRoute,
+    salesInvoicesRoute,
+    salesInvoiceDetailRoute,
+    purchaseSecondHandRoute,
+    settlementsNewRoute,
+    reportingDebtorsRoute,
+    reportingCreditorsRoute,
+    reportingProfitRoute,
+    settingsRoute,
+    ...devRoutes,
+  ]),
 ]);
 
 export const router = createRouter({

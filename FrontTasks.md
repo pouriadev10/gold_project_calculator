@@ -358,7 +358,7 @@ design-system/MASTER.md
 * نقاط شکست ۶۴۰، ۱۰۲۴ و ۱۴۴۰ بررسی شوند.
 * navigation با کیبورد قابل استفاده باشد.
 ---
-## [ ] FE-013 — Route Structure
+## [x] FE-013 — Route Structure
 ### هدف
 تعریف routeهای فاز ۱ با TanStack Router.
 ### routeها

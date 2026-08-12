@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { Home, Menu, ShoppingCart, Users, Wallet } from 'lucide-react';
+import { Home, Settings, ShoppingCart, Users, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -8,14 +8,17 @@ import { cn } from '@/lib/utils';
  * زیر ۱۰۲۴px نوار پایین (منطقه‌ی شست)، از ۱۰۲۴px به بالا سایدبار.
  * یک کامپوننت با دو چیدمان CSS — نه دو کامپوننت، تا حالت فعال و ترتیب
  * آیتم‌ها نتوانند از هم جدا بیفتند.
+ *
+ * مقصدها اقدام‌محورند، نه صرفاً بخش‌محور: «فروش» مستقیم به شروع فروش
+ * می‌رود، نه یک صفحه‌ی میانی خالی — طبق قاعده‌ی هدف ثبت زیر ۱۵ ثانیه.
  */
 
 const ITEMS = [
-  { to: '/', label: 'خانه', icon: Home },
-  { to: '/sales', label: 'فروش', icon: ShoppingCart },
-  { to: '/purchase', label: 'خرید', icon: Wallet },
+  { to: '/dashboard', label: 'خانه', icon: Home },
+  { to: '/sales/new', label: 'فروش', icon: ShoppingCart },
+  { to: '/purchase/second-hand', label: 'خرید', icon: Wallet },
   { to: '/parties', label: 'اشخاص', icon: Users },
-  { to: '/more', label: 'بیشتر', icon: Menu },
+  { to: '/settings', label: 'تنظیمات', icon: Settings },
 ] as const;
 
 export function AppNav() {
@@ -46,7 +49,6 @@ export function AppNav() {
                 className: 'text-primary lg:bg-muted',
                 'aria-current': 'page',
               }}
-              activeOptions={{ exact: to === '/' }}
             >
               <Icon className="size-6 lg:size-5" aria-hidden="true" />
               <span>{label}</span>

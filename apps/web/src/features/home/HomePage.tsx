@@ -54,13 +54,13 @@ export function HomePage() {
       <div className="fixed inset-x-0 bottom-above-nav z-20 border-t border-border bg-background/95 px-4 py-3 backdrop-blur-sm lg:static lg:border-0 lg:bg-transparent lg:px-4 lg:pb-4">
         <div className="grid grid-cols-2 gap-3">
           <Button asChild size="action">
-            <Link to="/sales">
+            <Link to="/sales/new">
               <Plus aria-hidden="true" />
               فروش
             </Link>
           </Button>
           <Button asChild size="action" variant="outline">
-            <Link to="/purchase">
+            <Link to="/purchase/second-hand">
               <Minus aria-hidden="true" />
               خرید
             </Link>
