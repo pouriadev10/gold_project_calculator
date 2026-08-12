@@ -900,8 +900,8 @@
     "semantic_hash": ""
   },
   "apps/api/src/modules/settlement/settlement.module.ts": {
-    "mtime": 1786564036.517721,
-    "ast_hash": "df1941d5437d6adf58a0fe0cc11bd6b8",
+    "mtime": 1786564687.7781715,
+    "ast_hash": "b6d457636fd7f0cc168d3b6044667180",
     "semantic_hash": ""
   },
   "apps/api/src/modules/tax/tax.module.ts": {
@@ -1995,9 +1995,9 @@
     "semantic_hash": "6b40ac94acd8fbe6fcfeebdfd2427d17"
   },
   "packages/contracts/src/index.ts": {
-    "mtime": 1785920904.0349784,
-    "ast_hash": "0f8d14b2644a5adf3765c3a761a8db02",
-    "semantic_hash": "0f8d14b2644a5adf3765c3a761a8db02"
+    "mtime": 1786564639.4715695,
+    "ast_hash": "6b6d3dae8b7faafc285113dbd6a62686",
+    "semantic_hash": ""
   },
   "packages/contracts/src/inventory/coin-types.ts": {
     "mtime": 1785921229.8165276,
@@ -2995,8 +2995,8 @@
     "semantic_hash": "78ceb17408d801a2f3e341b58ca2f2e3"
   },
   "TASKS.md": {
-    "mtime": 1786564386.3117418,
-    "ast_hash": "15dab6d21744c27d0da1336912eb28e2",
+    "mtime": 1786564911.3288884,
+    "ast_hash": "9c04dfed22cd79d320e1f93c64e961b2",
     "semantic_hash": ""
   },
   "graphify-out/memory/query_20260811_192513_how_should_graphify_be_maintained_after_completing.md": {
@@ -3102,6 +3102,31 @@
   "apps/api/test/settlements.e2e-spec.ts": {
     "mtime": 1786564130.133621,
     "ast_hash": "f0b05a22a1c55855f69407c17c2539f2",
+    "semantic_hash": ""
+  },
+  "apps/api/src/modules/settlement/rial-settlements.controller.ts": {
+    "mtime": 1786564674.3241127,
+    "ast_hash": "a290c5eed2ec49d042d934b63745ce91",
+    "semantic_hash": ""
+  },
+  "apps/api/src/modules/settlement/rial-settlements.service.ts": {
+    "mtime": 1786564658.6107674,
+    "ast_hash": "ed024449935b70435c0144c9cc42c4d4",
+    "semantic_hash": ""
+  },
+  "apps/api/test/rial-settlements.e2e-spec.ts": {
+    "mtime": 1786564812.4399137,
+    "ast_hash": "28f293190ba55edbfd1106e2af86ff80",
+    "semantic_hash": ""
+  },
+  "packages/contracts/src/settlement/index.ts": {
+    "mtime": 1786564631.182516,
+    "ast_hash": "47fefd1ebeaecac850617042cbc71baf",
+    "semantic_hash": ""
+  },
+  "packages/contracts/src/settlement/rial-settlement.ts": {
+    "mtime": 1786564622.9285738,
+    "ast_hash": "1556def7c8f5f27b7b34a84cf36f8b7d",
     "semantic_hash": ""
   }
 }

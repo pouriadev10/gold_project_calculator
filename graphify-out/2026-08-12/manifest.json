@@ -605,9 +605,9 @@
     "semantic_hash": "4bb285a390faaa8f0af3a3f77062eae6"
   },
   "apps/api/drizzle/meta/_journal.json": {
-    "mtime": 1786392733.2891555,
-    "ast_hash": "df1790fbe606a85bc09f4184f527cb65",
-    "semantic_hash": "df1790fbe606a85bc09f4184f527cb65"
+    "mtime": 1786564282.5817852,
+    "ast_hash": "71fdae5a318d674f2d35857c50e60db9",
+    "semantic_hash": ""
   },
   "apps/api/nest-cli.json": {
     "mtime": 1785920903.9372323,
@@ -900,9 +900,9 @@
     "semantic_hash": ""
   },
   "apps/api/src/modules/settlement/settlement.module.ts": {
-    "mtime": 1785920903.9542322,
-    "ast_hash": "083a6bd20f40e705a954e7bfe950e2ec",
-    "semantic_hash": "083a6bd20f40e705a954e7bfe950e2ec"
+    "mtime": 1786564036.517721,
+    "ast_hash": "df1941d5437d6adf58a0fe0cc11bd6b8",
+    "semantic_hash": ""
   },
   "apps/api/src/modules/tax/tax.module.ts": {
     "mtime": 1785920903.955232,
@@ -1080,9 +1080,9 @@
     "semantic_hash": "0bf31f28aee57044f88aaad1b6c1146a"
   },
   "apps/api/src/platform/database/schema/index.ts": {
-    "mtime": 1786392733.3083222,
-    "ast_hash": "d816a00d13115102ed34b640b2ed68e1",
-    "semantic_hash": "d816a00d13115102ed34b640b2ed68e1"
+    "mtime": 1786563829.674489,
+    "ast_hash": "e5b3c6b2584b9671dba75c4cd8545b7c",
+    "semantic_hash": ""
   },
   "apps/api/src/platform/database/schema/inventory-movements.ts": {
     "mtime": 1786392663.4837162,
@@ -2995,8 +2995,8 @@
     "semantic_hash": "78ceb17408d801a2f3e341b58ca2f2e3"
   },
   "TASKS.md": {
-    "mtime": 1786562935.0642858,
-    "ast_hash": "b8cf3a3da0fab07b0ce473b5e148eaf6",
+    "mtime": 1786564386.3117418,
+    "ast_hash": "15dab6d21744c27d0da1336912eb28e2",
     "semantic_hash": ""
   },
   "graphify-out/memory/query_20260811_192513_how_should_graphify_be_maintained_after_completing.md": {
@@ -3062,6 +3062,46 @@
   "graphify-out/memory/query_20260811_194802_implement_fe_009_api_error_management.md": {
     "mtime": 1786561105.339972,
     "ast_hash": "769c7cbf7272da3b79ff4041fae16f40",
+    "semantic_hash": ""
+  },
+  "apps/api/drizzle/0025_nasty_wrecking_crew.sql": {
+    "mtime": 1786563955.9748175,
+    "ast_hash": "124f98ea0c63d888f2313abfa3e9fee8",
+    "semantic_hash": ""
+  },
+  "apps/api/drizzle/0026_unique_zuras.sql": {
+    "mtime": 1786564282.5823138,
+    "ast_hash": "90584d8e170d3274b3c71a0ac5342fd0",
+    "semantic_hash": ""
+  },
+  "apps/api/drizzle/meta/0025_snapshot.json": {
+    "mtime": 1786563842.669729,
+    "ast_hash": "788eacd069ea8f3302c2660c7a1f45a3",
+    "semantic_hash": ""
+  },
+  "apps/api/drizzle/meta/0026_snapshot.json": {
+    "mtime": 1786564282.5812454,
+    "ast_hash": "eaf6b0b3f9b5365acc3f1bfa1d6fc4d7",
+    "semantic_hash": ""
+  },
+  "apps/api/src/modules/settlement/settlements.errors.ts": {
+    "mtime": 1786563994.9497533,
+    "ast_hash": "a58a17f38e15d7585b11d02d307d012f",
+    "semantic_hash": ""
+  },
+  "apps/api/src/modules/settlement/settlements.service.ts": {
+    "mtime": 1786564026.8204303,
+    "ast_hash": "f5a46ecc0a928ae0265b2c9c2df71b18",
+    "semantic_hash": ""
+  },
+  "apps/api/src/platform/database/schema/settlements.ts": {
+    "mtime": 1786564268.9470298,
+    "ast_hash": "d783bbbb7fbf6bf729aab9d87e0d48dc",
+    "semantic_hash": ""
+  },
+  "apps/api/test/settlements.e2e-spec.ts": {
+    "mtime": 1786564130.133621,
+    "ast_hash": "f0b05a22a1c55855f69407c17c2539f2",
     "semantic_hash": ""
   }
 }
