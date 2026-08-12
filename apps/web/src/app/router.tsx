@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-router';
 import { uuidSchema } from '@gold/contracts';
 import { AppNav } from '@/components/common/AppNav';
+import { FullPageLoading } from '@/components/common/FullPageLoading';
 import { NotFoundPage } from '@/components/common/NotFoundPage';
 import { HomePage } from '@/features/home/HomePage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
@@ -224,6 +225,10 @@ const routeTree = rootRoute.addChildren([
 export const router = createRouter({
   routeTree,
   defaultPreload: 'intent',
+  // chunk تنبل هر مسیر ممکن است روی شبکه‌ی ضعیف کمی طول بکشد؛ بدون این
+  // در آن فاصله صفحه سفید می‌ماند — قاعده‌ی «هیچ صفحه‌ای هنگام loading
+  // سفید نماند».
+  defaultPendingComponent: FullPageLoading,
 });
 
 declare module '@tanstack/react-router' {

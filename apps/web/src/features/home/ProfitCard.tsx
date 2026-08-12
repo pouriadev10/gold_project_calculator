@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { TrendingUp } from 'lucide-react';
 import { AmountDisplay } from '@/components/common/AmountDisplay';
+import { RetryPanel } from '@/components/common/RetryPanel';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -31,7 +32,20 @@ const PERIOD_LABEL: Record<Period, string> = {
  */
 export function ProfitCard() {
   const [period, setPeriod] = useState<Period>('month');
-  const { data } = useProfitReport(period);
+  const { data, isError, refetch } = useProfitReport(period);
+
+  if (isError) {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold text-muted-foreground">سود</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <RetryPanel message="دریافت گزارش سود ناموفق بود." onRetry={() => void refetch()} />
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (!data) return <ProfitCardSkeleton />;
 

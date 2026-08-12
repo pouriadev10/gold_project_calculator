@@ -1,5 +1,9 @@
-import { ArrowDownLeft, ArrowUpRight, Coins, Recycle } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
+import { ArrowDownLeft, ArrowUpRight, Coins, Receipt, Recycle } from 'lucide-react';
 import { AmountDisplay } from '@/components/common/AmountDisplay';
+import { EmptyState } from '@/components/common/EmptyState';
+import { RetryPanel } from '@/components/common/RetryPanel';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatJalaliDateTime } from '@/lib/date';
@@ -20,7 +24,30 @@ const KIND_META: Record<TransactionKind, { icon: typeof Coins; label: string }> 
   'coin-sale': { icon: Coins, label: 'سکه' },
 };
 
-export function RecentTransactions({ items }: { items: readonly Transaction[] | undefined }) {
+export function RecentTransactions({
+  items,
+  isError,
+  onRetry,
+}: {
+  items: readonly Transaction[] | undefined;
+  isError?: boolean;
+  onRetry?: () => void;
+}) {
+  if (isError && onRetry) {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold text-muted-foreground">
+            آخرین معامله‌ها
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <RetryPanel message="دریافت آخرین معامله‌ها ناموفق بود." onRetry={onRetry} />
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (!items) return <RecentTransactionsSkeleton />;
 
   return (
@@ -33,9 +60,16 @@ export function RecentTransactions({ items }: { items: readonly Transaction[] | 
 
       <CardContent>
         {items.length === 0 ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">
-            هنوز معامله‌ای ثبت نشده است.
-          </p>
+          <EmptyState
+            icon={Receipt}
+            title="هنوز معامله‌ای ثبت نشده است"
+            description="اولین فروش یا خرید که ثبت شود، همین‌جا نشان داده می‌شود."
+            action={
+              <Button asChild variant="outline" size="sm">
+                <Link to="/sales/new">ثبت فروش</Link>
+              </Button>
+            }
+          />
         ) : (
           <ul className="divide-y divide-border">
             {items.map((item) => {

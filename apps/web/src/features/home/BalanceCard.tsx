@@ -2,6 +2,7 @@ import { formatCount } from '@gold/core-calc';
 import { Link } from '@tanstack/react-router';
 import { ChevronLeft } from 'lucide-react';
 import { AmountDisplay } from '@/components/common/AmountDisplay';
+import { RetryPanel } from '@/components/common/RetryPanel';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,7 +15,28 @@ import type { PartyBalanceSummary } from '@/api/contracts';
  * بین گرم و ریال جابه‌جا می‌شوند. «فلانی ۴۰ گرم بدهکار است» جمله‌ی
  * طبیعی این صنف است، نه ترجمه‌ی ریالی آن.
  */
-export function BalanceCard({ data }: { data: PartyBalanceSummary | undefined }) {
+export function BalanceCard({
+  data,
+  isError,
+  onRetry,
+}: {
+  data: PartyBalanceSummary | undefined;
+  isError?: boolean;
+  onRetry?: () => void;
+}) {
+  if (isError && onRetry) {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold text-muted-foreground">مانده حساب‌ها</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <RetryPanel message="دریافت مانده‌ی حساب‌ها ناموفق بود." onRetry={onRetry} />
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (!data) return <BalanceCardSkeleton />;
 
   return (

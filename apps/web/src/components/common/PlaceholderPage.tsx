@@ -1,6 +1,9 @@
+import { Link } from '@tanstack/react-router';
 import { Construction } from 'lucide-react';
+import { EmptyState } from '@/components/common/EmptyState';
 import { PageHeader } from '@/components/common/PageHeader';
 import { UnitToggle } from '@/components/common/UnitToggle';
+import { Button } from '@/components/ui/button';
 
 /**
  * صفحه‌ی جانگه‌دار برای مسیرهایی که در فازهای بعد ساخته می‌شوند.
@@ -15,12 +18,17 @@ export function PlaceholderPage({ title, note }: { title: string; note: string }
         <UnitToggle />
       </PageHeader>
 
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-16 text-center">
-        <span className="grid size-14 place-items-center rounded-full bg-muted text-muted-foreground">
-          <Construction className="size-7" aria-hidden="true" />
-        </span>
-        <p className="text-sm font-medium">این بخش هنوز ساخته نشده است</p>
-        <p className="max-w-xs text-xs text-muted-foreground">{note}</p>
+      <div className="flex flex-1 flex-col items-center justify-center">
+        <EmptyState
+          icon={Construction}
+          title="این بخش هنوز ساخته نشده است"
+          description={note}
+          action={
+            <Button asChild variant="outline" size="sm">
+              <Link to="/dashboard">بازگشت به داشبورد</Link>
+            </Button>
+          }
+        />
       </div>
     </div>
   );

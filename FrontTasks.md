@@ -390,7 +390,7 @@ design-system/MASTER.md
 * صفحه Not Found وجود داشته باشد.
 * chunkهای اصلی lazy load شوند.
 ---
-## [ ] FE-014 — Loading، Empty و Error States عمومی
+## [x] FE-014 — Loading، Empty و Error States عمومی
 ### componentها
 * PageSkeleton
 * CardSkeleton

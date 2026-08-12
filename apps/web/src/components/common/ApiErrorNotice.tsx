@@ -1,5 +1,6 @@
 import { AlertTriangle } from 'lucide-react';
 import { type ApiErrorPresentation, presentApiError } from '@/api/error-presentation';
+import { InlineError } from '@/components/common/InlineError';
 import { cn } from '@/lib/utils';
 
 export interface ApiErrorNoticeProps {
@@ -66,9 +67,5 @@ export function ApiErrorNoticeContent({
 export function ApiFieldError({ messages, className }: ApiFieldErrorProps) {
   if (!messages?.length) return null;
 
-  return (
-    <p className={cn('mt-1 text-sm leading-5 text-destructive', className)} role="alert">
-      {messages[0]}
-    </p>
-  );
+  return <InlineError message={messages[0]!} className={className} />;
 }

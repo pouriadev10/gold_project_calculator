@@ -39,10 +39,18 @@ export function HomePage() {
       </div>
 
       <div className="flex-1 space-y-4 px-4 pb-action lg:grid lg:grid-cols-2 lg:items-start lg:gap-4 lg:space-y-0 xl:grid-cols-3">
-        <BalanceCard data={balance.data} />
+        <BalanceCard
+          data={balance.data}
+          isError={balance.isError}
+          onRetry={() => void balance.refetch()}
+        />
         <ProfitCard />
         <div className="lg:col-span-2 xl:col-span-1">
-          <RecentTransactions items={transactions.data?.items} />
+          <RecentTransactions
+            items={transactions.data?.items}
+            isError={transactions.isError}
+            onRetry={() => void transactions.refetch()}
+          />
         </div>
       </div>
 
