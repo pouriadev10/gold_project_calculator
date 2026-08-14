@@ -17,3 +17,4 @@ export * from './inventory/index.js';
 export * from './ledger/index.js';
 export * from './sales/index.js';
 export * from './purchase/index.js';
+export * from './settlement/index.js';

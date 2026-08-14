@@ -14,3 +14,11 @@ export class SalesPricingSettingInvalidError extends Error {
     this.settingKey = settingKey;
   }
 }
+
+/** دفاع در برابر فراخوان داخلی که از Zod عبور نکرده — نه پاسخ به ورودی HTTP معمول. */
+export class SalesPricingInvalidCoinInputError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'SalesPricingInvalidCoinInputError';
+  }
+}

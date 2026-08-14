@@ -1563,7 +1563,26 @@ POST /sales/invoices/jewelry
 
 ---
 
-## [ ] BE-043 — فروش سکه
+## [x] BE-043 — فروش سکه
+
+> **وضعیت:** `CoinSalesService` طبق بخش ۵-۴ `docs/accounting-postings.md` —
+> `COGS_COIN`/`INVENTORY_COIN:<coinTypeId>` روی بُعد `COIN:<coinTypeId>` با
+> **تعداد**، نه وزن. تعداد سکه‌ی موردنیاز از `requireSelectableForSaleInTransaction`ی
+> تازه در `CoinTypesService` می‌آید (آینه‌ی همان گیت BE-026 برای زیورآلات).
+> «پرداخت» یک ورودی مستقل است (`paidRial`) نه یک endpoint نقدی/نسیه‌ی جدا:
+> اگر کمتر از مبلغ محاسبه‌شده باشد، باقی طبق همان الگوی
+> `JewelryCreditSalesService` روی `PARTY_RECEIVABLE` می‌نشیند، اما همه در یک
+> endpoint واحد که تسک همان را می‌خواهد.
+>
+> قیمت بازار سکه ورودی کاربر است (`marketUnitPriceRial`) — فرمول ندارد چون
+> حباب بازاری است، نه محاسبه‌شدنی. `SalesPricingService.priceCoinInTransaction`
+> فقط ارزش ذاتی (`intrinsicValue`) و حباب (`bubble`) را از `packages/core-calc`
+> برای snapshot گزارشی می‌سازد؛ امضای `bubble()` فقط `CentralBankMintedCoinType`
+> می‌پذیرد، پس حباب سکه‌ی غیربانکی همیشه `null` است — تایپ‌اجباری، نه شرط
+> زمان اجرا. ۵ تست e2e در `coin-sales.e2e-spec.ts`: posting متوازن با حباب
+> صحیح (مقایسه با محاسبه‌ی مستقیم `core-calc`)، حباب `null` برای سکه‌ی
+> خصوصی، طلب نسیه، رد `paidRial` بیش از مبلغ، و rollback کامل روی
+> coin type ناموجود — همه روی PostgreSQL واقعی، بدون اثر روی نوع سکه‌ی دیگر.
 
 **endpoint**
 
@@ -1593,7 +1612,23 @@ POST /sales/invoices/coins
 
 # Milestone 9 — تسویه
 
-## [ ] BE-044 — مدل Settlement
+## [x] BE-044 — مدل Settlement
+
+> **وضعیت:** `settlements`(سربرگ، mutable تا finalize، آینه‌ی `sales_invoices`)
+> + `settlement_lines` (append-only با تریگر migration ۰۰۲۵، آینه‌ی
+> `inventory_movements` در migration ۰۰۱۵). هر ردیف `source → destination`
+> جهت‌دار در یک بُعد است (`quantity` بزرگی مثبت، نه علامت‌دار)؛ posting دو
+> طرفه‌ی دفتر کل کار BE-045 تا BE-048 است، نه اینجا. `lockedQuoteId`/
+> `lockedQuoteAmountRial`/`lockedConversionSnapshot` را فراخوان می‌سازد —
+> این سرویس هیچ‌جا خودش مظنه نمی‌خواند. `SettlementsService` فقط
+> `createDraft`/`finalize` دارد، بدون endpoint HTTP (طبق تسک). ۳ تست e2e:
+> finalize چندبُعدی، رد mutation بعد از finalize، رد ورودی نامعتبر.
+>
+> نکته‌ی فنی: FK مستقیم `settlement_lines.tenant_id → tenants` (نه فقط از
+> راه `settlements`) لازم بود — وگرنه حذف tenant دو شاخه‌ی cascade مستقل
+> دارد (از راه settlements و از راه asset_dimensions/ledger_accounts) که
+> ترتیبشان تضمین‌شده نیست؛ همان الگویی که `inventory_movements` از قبل
+> دارد.
 
 **جدول‌ها**
 
@@ -1628,7 +1663,14 @@ source account · destination account
 
 ---
 
-## [ ] BE-045 — پرداخت ریالی روی مانده شخص
+## [x] BE-045 — پرداخت ریالی روی مانده شخص
+
+> **وضعیت:** `RialSettlementsService` طبق بخش ۵-۷ سند posting — تک‌بعدی
+> (`RIAL`)، بدون تبدیل واحد (پس بدون نیاز به `lockedQuoteId`). یک ردیف
+> `settlement_lines` می‌سازد (`source=PARTY_RECEIVABLE`, `destination=CASH`)
+> و همان مبلغ را در دو entry دفتر کل قفل‌شده منعکس می‌کند. ۲ تست e2e:
+> کاهش مانده‌ی دریافتنی شخص + idempotent replay، و rollback کامل روی
+> party ناموجود.
 
 **endpoint**
 

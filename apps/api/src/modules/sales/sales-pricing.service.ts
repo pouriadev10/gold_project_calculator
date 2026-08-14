@@ -1,20 +1,33 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { and, eq } from 'drizzle-orm';
 import {
+  bubble,
   calculateJewelrySale,
+  coinPositionValue,
+  gramRate1000,
   grossMg,
+  grossUg,
+  intrinsicValue,
   karat,
   rateDivisorFromMarketSettings,
+  rial,
+  toSafeNumber,
 } from '@gold/core-calc';
 import { DRIZZLE } from '../../platform/database/database.module';
 import { priceQuotes } from '../../platform/database/schema';
 import { withTenantTransaction } from '../../platform/database/tenant-transaction';
+import { CoinTypesService } from '../inventory/coin-types.service';
 import { JewelryItemsService } from '../inventory/jewelry-items.service';
 import { VersionedSettingsService } from '../pricing/versioned-settings.service';
-import { SalesPricingQuoteNotFoundError, SalesPricingSettingInvalidError } from './sales-pricing.errors';
+import {
+  SalesPricingInvalidCoinInputError,
+  SalesPricingQuoteNotFoundError,
+  SalesPricingSettingInvalidError,
+} from './sales-pricing.errors';
 import type { Database } from '../../platform/database/connect';
-import type { VersionedSetting, VersionedSettingValue } from '../../platform/database/schema';
+import type { CoinTypeVersion, VersionedSetting, VersionedSettingValue } from '../../platform/database/schema';
 import type { TenantTransaction } from '../../platform/database/tenant-transaction';
+import type { CoinType } from '@gold/core-calc';
 
 const SETTING_KEYS = {
   baseQuoteKarat: 'pricing.base_quote_karat',
@@ -47,6 +60,50 @@ export interface JewelrySalePrice {
   readonly payableBeforeRoundingRial: string;
   readonly payableRial: string;
   readonly settingsSnapshot: Readonly<Record<string, string>>;
+}
+
+export interface PriceCoinForSaleInput {
+  readonly tenantId: string;
+  readonly coinTypeId: string;
+  readonly count: number;
+  readonly marketUnitPriceRial: bigint;
+  readonly quoteId: string;
+  readonly effectiveAt: Date;
+}
+
+/**
+ * JSON-safe نتیجه‌ی قیمت‌گذاری سکه — BE-043. `intrinsicValueRial`/`bubbleRial`
+ * برای هر یک سکه است (خروجی مستقیم `core-calc`)، نه کل موقعیت. `bubbleRial`
+ * فقط برای سکه‌ی بانک مرکزی مقدار دارد؛ در غیر این صورت `null` — قانون حباب.
+ */
+export interface CoinSalePrice {
+  readonly coinTypeVersionId: string;
+  readonly coinTypeId: string;
+  readonly quoteId: string;
+  readonly quoteAmountRial: string;
+  readonly quoteObservedAt: string;
+  readonly count: number;
+  readonly marketUnitPriceRial: string;
+  readonly goldRate1000Rial: string;
+  readonly intrinsicValueRial: string;
+  readonly bubbleRial: string | null;
+  readonly payableRial: string;
+  readonly settingsSnapshot: Readonly<Record<string, string>>;
+}
+
+/** امضای `bubble()` فقط سکه‌ی بانک مرکزی می‌پذیرد؛ این تابع همان تفکیک نوعی را از نسخه‌ی دیتابیسی می‌سازد. */
+function toCoinType(version: CoinTypeVersion): CoinType {
+  const base = {
+    kind: 'coin' as const,
+    id: version.coinTypeId,
+    label: version.title,
+    grossWeightUg: grossUg(version.grossWeightUg),
+    karat: karat(version.karat),
+  };
+
+  return version.isCentralBankMinted
+    ? { ...base, isCentralBankMinted: true }
+    : { ...base, isCentralBankMinted: false };
 }
 
 function isSettingRecord(
@@ -103,6 +160,7 @@ function mithqalGramsX10k(setting: VersionedSetting | undefined): bigint {
 export class SalesPricingService {
   constructor(
     @Inject(DRIZZLE) private readonly db: Database,
+    @Inject(CoinTypesService) private readonly coinTypes: CoinTypesService,
     @Inject(JewelryItemsService) private readonly jewelryItems: JewelryItemsService,
     @Inject(VersionedSettingsService) private readonly settings: VersionedSettingsService,
   ) {}
@@ -225,6 +283,93 @@ export class SalesPricingService {
         roundingPolicy: settingString(roundingPolicy, SETTING_KEYS.roundingPolicy),
         profitRateBps: settingString(profitRate, SETTING_KEYS.profitRateBps),
         taxRateBps: settingString(taxRate, SETTING_KEYS.taxRateBps),
+      },
+    };
+  }
+
+  async priceCoin(input: PriceCoinForSaleInput): Promise<CoinSalePrice> {
+    return withTenantTransaction(this.db, input.tenantId, (transaction) =>
+      this.priceCoinInTransaction(transaction, input),
+    );
+  }
+
+  /**
+   * قیمت بازار سکه ورودی کاربر است — فرمول ندارد، چون حباب بازاری است، نه
+   * محاسبه‌شدنی (قاعده‌ی ۲-۳). این متد فقط ارزش ذاتی و حباب را برای snapshot
+   * گزارشی می‌سازد؛ مبلغ قابل پرداخت همان تعداد × قیمت بازار است.
+   */
+  async priceCoinInTransaction(
+    transaction: TenantTransaction,
+    input: PriceCoinForSaleInput,
+  ): Promise<CoinSalePrice> {
+    if (!Number.isSafeInteger(input.count) || input.count <= 0) {
+      throw new SalesPricingInvalidCoinInputError('Coin sale count must be a positive integer');
+    }
+    if (input.marketUnitPriceRial <= 0n) {
+      throw new SalesPricingInvalidCoinInputError('Coin sale market unit price must be positive');
+    }
+
+    const [version, quote, baseQuoteKarat, mithqalGrams] = await Promise.all([
+      this.coinTypes.requireSelectableForSaleInTransaction(
+        transaction,
+        input.tenantId,
+        input.coinTypeId,
+        input.effectiveAt,
+      ),
+      transaction
+        .select()
+        .from(priceQuotes)
+        .where(and(eq(priceQuotes.tenantId, input.tenantId), eq(priceQuotes.id, input.quoteId)))
+        .limit(1)
+        .then(([found]) => found),
+      this.settings.getEffectiveInTransaction(
+        transaction,
+        input.tenantId,
+        SETTING_KEYS.baseQuoteKarat,
+        input.effectiveAt,
+      ),
+      this.settings.getEffectiveInTransaction(
+        transaction,
+        input.tenantId,
+        SETTING_KEYS.mithqalGrams,
+        input.effectiveAt,
+      ),
+    ]);
+
+    if (quote === undefined || quote.quoteType !== 'MAZNEH' || quote.amountRial <= 0n) {
+      throw new SalesPricingQuoteNotFoundError();
+    }
+
+    const baseKarat = positiveIntegerSetting(baseQuoteKarat, SETTING_KEYS.baseQuoteKarat);
+    if (baseKarat > BigInt(Number.MAX_SAFE_INTEGER)) {
+      throw new SalesPricingSettingInvalidError(SETTING_KEYS.baseQuoteKarat);
+    }
+    const rate1000 = gramRate1000(
+      quote.amountRial,
+      rateDivisorFromMarketSettings(karat(toSafeNumber(baseKarat)), mithqalGramsX10k(mithqalGrams)),
+    );
+
+    const coin = toCoinType(version);
+    const marketUnitPriceRial = rial(input.marketUnitPriceRial);
+    const intrinsicValueRial = intrinsicValue(coin, rate1000);
+    const bubbleRial = coin.isCentralBankMinted ? bubble(coin, marketUnitPriceRial, rate1000) : null;
+    const payableRial = coinPositionValue(input.count, marketUnitPriceRial);
+
+    return {
+      coinTypeVersionId: version.id,
+      coinTypeId: version.coinTypeId,
+      quoteId: quote.id,
+      quoteAmountRial: quote.amountRial.toString(),
+      quoteObservedAt: quote.observedAt.toISOString(),
+      count: input.count,
+      marketUnitPriceRial: marketUnitPriceRial.toString(),
+      goldRate1000Rial: rate1000.toString(),
+      intrinsicValueRial: intrinsicValueRial.toString(),
+      bubbleRial: bubbleRial === null ? null : bubbleRial.toString(),
+      payableRial: payableRial.toString(),
+      settingsSnapshot: {
+        baseQuoteKarat: settingString(baseQuoteKarat, SETTING_KEYS.baseQuoteKarat),
+        mithqalGrams: settingString(mithqalGrams, SETTING_KEYS.mithqalGrams),
       },
     };
   }
