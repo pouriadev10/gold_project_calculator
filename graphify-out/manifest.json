@@ -1695,8 +1695,8 @@
     "semantic_hash": "5c7497d2a1c0adaa884f02f4c9460b63"
   },
   "apps/web/src/app/router.tsx": {
-    "mtime": 1786707307.1159482,
-    "ast_hash": "6302c62979d6036c07c4c2913787cc79",
+    "mtime": 1786733639.8269703,
+    "ast_hash": "0d43eee08d2e5505de4e47f7a3aae596",
     "semantic_hash": ""
   },
   "apps/web/src/components/common/AmountDisplay.test.tsx": {
@@ -1915,9 +1915,9 @@
     "semantic_hash": "b18436dd76b968403356940d7ff88616"
   },
   "apps/web/src/stores/unit-store.ts": {
-    "mtime": 1785500611.4859972,
-    "ast_hash": "a531c4a2bc4021cc15a14b3041247d39",
-    "semantic_hash": "a531c4a2bc4021cc15a14b3041247d39"
+    "mtime": 1786733602.2209792,
+    "ast_hash": "5430639a42d69ff2da4680998c1ef37a",
+    "semantic_hash": ""
   },
   "apps/web/src/test/setup.ts": {
     "mtime": 1786709822.6846073,
@@ -2900,8 +2900,8 @@
     "semantic_hash": "57f3eade61064fcaf09a18164aacb4bc"
   },
   "FrontTasks.md": {
-    "mtime": 1786729407.7484064,
-    "ast_hash": "8f78d43b4b2633867d69b7512dc3a32d",
+    "mtime": 1786734023.205955,
+    "ast_hash": "527145cd56ad899beb8fb359dc5a9dad",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
@@ -3262,6 +3262,26 @@
   "apps/web/src/components/keypad/KaratInput.tsx": {
     "mtime": 1786729228.2604485,
     "ast_hash": "877359618d501009801588c114011ec9",
+    "semantic_hash": ""
+  },
+  "apps/web/src/hooks/useUnit.test.ts": {
+    "mtime": 1786733623.797544,
+    "ast_hash": "c19b7db8963265299af9b91bd13d5c69",
+    "semantic_hash": ""
+  },
+  "apps/web/src/hooks/useUnit.ts": {
+    "mtime": 1786733612.4534056,
+    "ast_hash": "1cd15cd42f6d5f3adca32c8ea0611995",
+    "semantic_hash": ""
+  },
+  "apps/web/src/stores/unit-store.test.ts": {
+    "mtime": 1786733631.5703607,
+    "ast_hash": "dd1393ab93796e40c20231158a54a5ae",
+    "semantic_hash": ""
+  },
+  "apps/web/src/components/common/UnitToggle.test.tsx": {
+    "mtime": 1786734011.7025707,
+    "ast_hash": "d434a665d8ebf874deb7193b9f5683fe",
     "semantic_hash": ""
   }
 }

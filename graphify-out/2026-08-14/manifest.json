@@ -1695,8 +1695,8 @@
     "semantic_hash": "5c7497d2a1c0adaa884f02f4c9460b63"
   },
   "apps/web/src/app/router.tsx": {
-    "mtime": 1786707307.1159482,
-    "ast_hash": "6302c62979d6036c07c4c2913787cc79",
+    "mtime": 1786733639.8269703,
+    "ast_hash": "0d43eee08d2e5505de4e47f7a3aae596",
     "semantic_hash": ""
   },
   "apps/web/src/components/common/AmountDisplay.test.tsx": {
@@ -1915,9 +1915,9 @@
     "semantic_hash": "b18436dd76b968403356940d7ff88616"
   },
   "apps/web/src/stores/unit-store.ts": {
-    "mtime": 1785500611.4859972,
-    "ast_hash": "a531c4a2bc4021cc15a14b3041247d39",
-    "semantic_hash": "a531c4a2bc4021cc15a14b3041247d39"
+    "mtime": 1786733602.2209792,
+    "ast_hash": "5430639a42d69ff2da4680998c1ef37a",
+    "semantic_hash": ""
   },
   "apps/web/src/test/setup.ts": {
     "mtime": 1786709822.6846073,
@@ -2900,8 +2900,8 @@
     "semantic_hash": "57f3eade61064fcaf09a18164aacb4bc"
   },
   "FrontTasks.md": {
-    "mtime": 1786728879.4408648,
-    "ast_hash": "b42b2bcacc11cfeb418bc1fc36a35ab1",
+    "mtime": 1786733643.4187257,
+    "ast_hash": "f491ca1d22ede0a2345b66b2888268d4",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
@@ -3252,6 +3252,31 @@
   "apps/web/src/components/keypad/MoneyInput.tsx": {
     "mtime": 1786728705.6006646,
     "ast_hash": "9171a6f932d890d487df0badda6456f4",
+    "semantic_hash": ""
+  },
+  "apps/web/src/components/keypad/KaratInput.test.tsx": {
+    "mtime": 1786729325.3218517,
+    "ast_hash": "8f64b82f673bc5c1ddc7a53e21f070d1",
+    "semantic_hash": ""
+  },
+  "apps/web/src/components/keypad/KaratInput.tsx": {
+    "mtime": 1786729228.2604485,
+    "ast_hash": "877359618d501009801588c114011ec9",
+    "semantic_hash": ""
+  },
+  "apps/web/src/hooks/useUnit.test.ts": {
+    "mtime": 1786733623.797544,
+    "ast_hash": "c19b7db8963265299af9b91bd13d5c69",
+    "semantic_hash": ""
+  },
+  "apps/web/src/hooks/useUnit.ts": {
+    "mtime": 1786733612.4534056,
+    "ast_hash": "1cd15cd42f6d5f3adca32c8ea0611995",
+    "semantic_hash": ""
+  },
+  "apps/web/src/stores/unit-store.test.ts": {
+    "mtime": 1786733631.5703607,
+    "ast_hash": "dd1393ab93796e40c20231158a54a5ae",
     "semantic_hash": ""
   }
 }
