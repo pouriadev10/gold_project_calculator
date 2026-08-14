@@ -1,4 +1,4 @@
-import { dualFromPure, gramRate1000 } from '@gold/core-calc';
+import { dualFromPure, gramRate1000, karat, zeroDual } from '@gold/core-calc';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -65,6 +65,46 @@ describe('AmountDisplay', () => {
   it('مبلغ مثبت رنگ بستانکار می‌گیرد', () => {
     render(<AmountDisplay amount={AMOUNT} signed />);
     expect(screen.getByText(/گرم/).closest('[data-unit]')?.className).toContain('text-credit');
+  });
+});
+
+describe('AmountDisplay — گرم معادل عیار (FE-025)', () => {
+  it('با karat=۷۵۰ به‌جای خالص ۱۰۰۰، معادل عیار ۷۵۰ را نشان می‌دهد', () => {
+    // ۱۲.۳۵ گرم خالص = ۱۶.۴۶۶۷ گرم معادل عیار ۷۵۰ (وزن × ۱۰۰۰ ÷ ۷۵۰)
+    render(<AmountDisplay amount={AMOUNT} karat={karat(750)} />);
+    const node = screen.getByText(/گرم/).closest('[data-unit]');
+    expect(node?.getAttribute('data-raw')).toBe('16467');
+  });
+
+  it('روی واحد ریال بی‌اثر است — karat فقط چهره‌ی طلا را عوض می‌کند', () => {
+    render(<AmountDisplay amount={AMOUNT} unit="rial" karat={karat(750)} />);
+    const node = screen.getByText(/ریال/).closest('[data-unit]');
+    expect(node?.getAttribute('data-raw')).toBe(AMOUNT.rial.toString());
+  });
+
+  it('بدون karat، مبنای خالص ۱۰۰۰ همان قبل باقی می‌ماند', () => {
+    render(<AmountDisplay amount={AMOUNT} />);
+    expect(screen.getByText(/گرم/).closest('[data-unit]')?.getAttribute('data-raw')).toBe('12350');
+  });
+});
+
+describe('AmountDisplay — حالت‌های مرزی (FE-025)', () => {
+  it('مبلغ صفر بدون علامت منفی نمایش داده می‌شود', () => {
+    const zero = dualFromPure(0n, RATE);
+    render(<AmountDisplay amount={zero} signed />);
+    const node = screen.getByText(/گرم/).closest('[data-unit]');
+    expect(node?.textContent).not.toContain('−');
+    expect(node?.getAttribute('data-raw')).toBe('0');
+  });
+
+  it('بدون نرخ (zeroDual پیش از دریافت مظنه) در هر دو واحد بدون خطا صفر نشان می‌دهد', () => {
+    const noRate = zeroDual(0n);
+
+    const { rerender } = render(<AmountDisplay amount={noRate} unit="gold" />);
+    expect(screen.getByText(/گرم/).closest('[data-unit]')?.getAttribute('data-raw')).toBe('0');
+
+    rerender(<AmountDisplay amount={noRate} unit="rial" />);
+    expect(screen.getByText(/ریال/).closest('[data-unit]')?.getAttribute('data-raw')).toBe('0');
   });
 });
 

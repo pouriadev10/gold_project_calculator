@@ -1,5 +1,5 @@
-import type { DualAmount } from '@gold/core-calc';
-import { formatGram, formatRial } from '@gold/core-calc';
+import type { DualAmount, Karat } from '@gold/core-calc';
+import { formatGram, formatRial, fromPureMgSigned } from '@gold/core-calc';
 import { cn } from '@/lib/utils';
 import { UNIT_LABEL, useUnitStore, type MoneyUnit } from '@/stores/unit-store';
 
@@ -24,6 +24,12 @@ export interface AmountDisplayProps {
   amount: DualAmount;
   /** بازنویسی واحد فعال. اگر ندهی، تنظیم سراسری کاربر خوانده می‌شود. */
   unit?: MoneyUnit;
+  /**
+   * در واحد طلا، گرم را به معادل این عیار نشان بده (مثلاً ۷۵۰) به‌جای
+   * مبنای خالص ۱۰۰۰. تبدیل ثابت وزنی است، نه ریالی — نرخ لحظه‌ای در آن
+   * دخیل نیست. روی واحد ریال بی‌اثر است.
+   */
+  karat?: Karat;
   /** رنگ‌آمیزی بر اساس علامت: مثبت بستانکار، منفی بدهکار. */
   signed?: boolean;
   /** نمایش برچسب واحد کنار عدد. */
@@ -35,6 +41,7 @@ export interface AmountDisplayProps {
 export function AmountDisplay({
   amount,
   unit,
+  karat,
   signed = false,
   showUnit = true,
   size = 'md',
@@ -44,8 +51,9 @@ export function AmountDisplay({
   const activeUnit = unit ?? globalUnit;
 
   const isGold = activeUnit === 'gold';
-  const raw = isGold ? amount.pureMg : amount.rial;
-  const text = isGold ? formatGram(amount.pureMg) : formatRial(amount.rial);
+  const goldMg = karat !== undefined ? fromPureMgSigned(amount.pureMg, karat) : amount.pureMg;
+  const raw = isGold ? goldMg : amount.rial;
+  const text = isGold ? formatGram(goldMg) : formatRial(amount.rial);
 
   const toneClass = signed
     ? raw > 0n
