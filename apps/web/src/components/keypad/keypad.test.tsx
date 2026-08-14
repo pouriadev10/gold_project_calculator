@@ -1,9 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NumericField } from './NumericField';
 import { NumericKeypad } from './NumericKeypad';
 import { useKeypadStore } from './keypad-store';
+import { SHORTCUTS_BY_KIND, type Shortcut } from './shortcuts';
 
 /**
  * رفتار صفحه‌کلید.
@@ -305,5 +306,78 @@ describe('کیبورد فیزیکی', () => {
 
     await user.keyboard('{Enter}');
     expect(useKeypadStore.getState().isOpen).toBe(false);
+  });
+});
+
+describe('میان‌برهای قابل‌تنظیم — FE-019', () => {
+  it('shortcutsByKind بیرونی جایگزین میان‌بر پیش‌فرض همان نوع می‌شود', async () => {
+    const user = userEvent.setup();
+    const customKarat: readonly Shortcut[] = [
+      { type: 'set', label: '۷۳۰', aria: 'عیار ۷۳۰ سفارشی', value: 730n },
+    ];
+
+    render(
+      <>
+        <NumericField kind="karat" label="عیار" />
+        <NumericKeypad shortcutsByKind={{ ...SHORTCUTS_BY_KIND, karat: customKarat }} />
+      </>,
+    );
+
+    await user.click(screen.getByLabelText('عیار'));
+
+    expect(screen.getByRole('button', { name: 'عیار ۷۳۰ سفارشی' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'عیار ۷۵۰' })).not.toBeInTheDocument();
+
+    await tap(user, 'عیار ۷۳۰ سفارشی');
+    expect(screen.getByLabelText('عیار')).toHaveAttribute('data-value', '730');
+  });
+});
+
+describe('احترام به prefers-reduced-motion — لرزش لمسی', () => {
+  /** شبیه‌سازی `(prefers-reduced-motion: reduce)` — همان الگوی ThemeToggle.test.tsx. */
+  function mockReducedMotion(reduced: boolean) {
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn((query: string) => ({
+        matches: query.includes('prefers-reduced-motion') && reduced,
+        media: query,
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        dispatchEvent: () => false,
+        onchange: null,
+        addListener: () => {},
+        removeListener: () => {},
+      })),
+    );
+  }
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('با prefers-reduced-motion:reduce، لرزش هیچ‌وقت اجرا نمی‌شود', async () => {
+    mockReducedMotion(true);
+    const vibrate = vi.fn();
+    Object.defineProperty(navigator, 'vibrate', { value: vibrate, configurable: true });
+
+    const user = userEvent.setup();
+    render(<Form />);
+    await user.click(screen.getByLabelText('عیار'));
+    await tap(user, 'رقم ۷');
+
+    expect(vibrate).not.toHaveBeenCalled();
+  });
+
+  it('بدون prefers-reduced-motion، لرزش برای بازخورد ضربه اجرا می‌شود', async () => {
+    mockReducedMotion(false);
+    const vibrate = vi.fn();
+    Object.defineProperty(navigator, 'vibrate', { value: vibrate, configurable: true });
+
+    const user = userEvent.setup();
+    render(<Form />);
+    await user.click(screen.getByLabelText('عیار'));
+    await tap(user, 'رقم ۷');
+
+    expect(vibrate).toHaveBeenCalledWith(10);
   });
 });

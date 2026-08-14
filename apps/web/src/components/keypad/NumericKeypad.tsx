@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, type ReactNode } from 'react';
 import { Delete } from 'lucide-react';
+import type { NumericFieldKind } from '@gold/core-calc';
 import { cn } from '@/lib/utils';
 import { KeypadPreview } from './KeypadPreview';
 import { useKeypadStore } from './keypad-store';
@@ -130,7 +131,19 @@ function KeypadKey({
   );
 }
 
-export function NumericKeypad() {
+export interface NumericKeypadProps {
+  /**
+   * بازنویسی ستون میان‌برها — پیش‌فرض `SHORTCUTS_BY_KIND`. عیارهای ۷۵۰/۹۹۵/۹۰۰
+   * مشخصات استاندارد جهانی‌اند (بدون ابهام مستأجری)، ولی «عیار خرید از
+   * مصرف‌کننده» طبق CLAUDE.md بخش ۳ **قابل‌تنظیم هر مستأجر** است؛ این prop
+   * همان نقطه‌ای است که یک تسک بعدی (خواندن تنظیمات واقعی مستأجر) بدون
+   * دست‌زدن به داخل کیپد، مقدار ۷۴۰ ثابت را با مقدار واقعی تنظیمات
+   * جایگزین می‌کند.
+   */
+  shortcutsByKind?: Readonly<Record<NumericFieldKind, readonly Shortcut[]>>;
+}
+
+export function NumericKeypad({ shortcutsByKind = SHORTCUTS_BY_KIND }: NumericKeypadProps = {}) {
   const isOpen = useKeypadStore((s) => s.isOpen);
   const activeKind = useKeypadStore((s) => s.fields.find((f) => f.id === s.activeId)?.kind ?? null);
   const canGoNext = useKeypadStore(
@@ -149,7 +162,7 @@ export function NumericKeypad() {
   const close = useKeypadStore((s) => s.close);
 
   const allowsDecimal = activeKind === 'weight';
-  const shortcuts = activeKind ? SHORTCUTS_BY_KIND[activeKind] : [];
+  const shortcuts = activeKind ? shortcutsByKind[activeKind] : [];
 
   /** کیبورد فیزیکی — دسکتاپ گالری‌دار هم باید کار کند. */
   useEffect(() => {
