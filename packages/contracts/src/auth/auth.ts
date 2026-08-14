@@ -58,3 +58,16 @@ export const sessionResponseSchema = z.object({
   role: z.string(),
 });
 export type SessionResponse = z.infer<typeof sessionResponseSchema>;
+
+/**
+ * تمدید نشست — `POST /auth/refresh` (FE-027).
+ *
+ * BE-011 با **چرخش توکن** تمدید می‌کند: توکن تمدید قبلی همیشه باطل
+ * می‌شود و پاسخ یک `SessionResponse` کامل با توکن‌های تازه برمی‌گرداند.
+ * یعنی سمت کلاینت باید *هر بار* هر دو توکن تازه را جایگزین قبلی کند،
+ * نه فقط accessToken را — وگرنه تمدید بعدی با توکن باطل‌شده رد می‌شود.
+ */
+export const refreshSchema = z.object({
+  refreshToken: z.string().min(1, 'توکن تمدید الزامی است'),
+});
+export type RefreshInput = z.infer<typeof refreshSchema>;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { loginSchema, sessionResponseSchema } from '../src/index.js';
+import { loginSchema, refreshSchema, sessionResponseSchema } from '../src/index.js';
 
 describe('loginSchema — ورودی معتبر', () => {
   it('سه فیلد کامل را می‌پذیرد', () => {
@@ -72,5 +72,15 @@ describe('sessionResponseSchema', () => {
     // این تست ثابت می‌کند schema حداقل فیلدهای امن را همان‌طور که BE-011 برمی‌گرداند می‌شناسد
     const parsed = sessionResponseSchema.parse({ ...valid, passwordHash: 'leak' });
     expect(parsed).not.toHaveProperty('passwordHash');
+  });
+});
+
+describe('refreshSchema', () => {
+  it('توکن تمدید معتبر را می‌پذیرد', () => {
+    expect(refreshSchema.parse({ refreshToken: 'r1' })).toEqual({ refreshToken: 'r1' });
+  });
+
+  it('توکن خالی را رد می‌کند', () => {
+    expect(refreshSchema.safeParse({ refreshToken: '' }).success).toBe(false);
   });
 });

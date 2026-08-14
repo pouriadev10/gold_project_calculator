@@ -1,6 +1,7 @@
 import type { z } from 'zod';
-import { apiErrorSchema } from './contracts';
+import { useSessionStore } from '@/stores/session-store';
 import { ApiError, NetworkError } from './api-error';
+import { apiErrorSchema, sessionResponseSchema, type SessionResponse } from './contracts';
 
 export { ApiError, NetworkError };
 
@@ -24,6 +25,13 @@ export { ApiError, NetworkError };
  *
  * ۴. **شناسه‌ی رهگیری روی هر درخواست.** برای وصل‌کردن لاگ کلاینت به لاگ
  *    سروری که همین `requestId` را در بدنه‌ی خطا برمی‌گرداند.
+ *
+ * ۵. **هدر Authorization + تمدید خودکار (FE-027).** توکن دسترسی از
+ *    `session-store` خوانده می‌شود. روی ۴۰۱، یک تمدید تلاش می‌شود؛ اگر
+ *    موفق شد، خواندن‌ها (GET) بی‌صدا دوباره تلاش می‌شوند، ولی نوشتن‌ها
+ *    خودکار دوباره ارسال **نمی‌شوند** — قاعده‌ی FE-027 برای مبالغ مالی.
+ *    فراخوان با همان `Idempotency-Key` دوباره `submit` می‌کند (رابط
+ *    کاربری این را با پیام روشن از او می‌خواهد).
  *
  * `no-restricted-globals` در `eslint.config.js` استفاده‌ی مستقیم `fetch`
  * را بیرون از همین پوشه (`api/`) خطا می‌دهد — هر Feature باید از این‌جا
@@ -113,6 +121,56 @@ async function parseError(response: Response): Promise<never> {
   throw new ApiError(response.status, 'UNKNOWN', 'خطای ناشناخته از سرور');
 }
 
+function authHeader(): Record<string, string> {
+  const accessToken = useSessionStore.getState().session?.accessToken;
+  return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
+}
+
+/**
+ * تمدید هم‌زمان — چرخش توکن یعنی هر تمدید موفق، توکن تمدید قبلی را
+ * باطل می‌کند (auth.service.ts، BE-011). اگر دو درخواست هم‌زمان هر دو
+ * مستقل تمدید بزنند، دومی با توکنی که اولی همین الان باطل کرده رد
+ * می‌شود — نشستی که کاملاً سالم بود را غلط منقضی نشان می‌دهد. یک
+ * Promise مشترک این مسابقه را از ریشه حذف می‌کند: هرکس به این تابع
+ * برسد، همان یک تمدید در حال اجرا را می‌بیند، نه تمدید تازه.
+ *
+ * بدون `callerSignal`: این یک منبع مشترک بین چند فراخوان هم‌زمان است؛
+ * لغوشدن یکی از آن‌ها (مثلاً unmount یک کامپوننت) نباید تمدیدی را که
+ * بقیه هنوز منتظرش‌اند از کار بیندازد.
+ */
+let refreshInFlight: Promise<SessionResponse> | null = null;
+
+async function refreshAccessToken(): Promise<SessionResponse> {
+  const current = useSessionStore.getState().session;
+  if (!current) throw new ApiError(401, 'UNAUTHORIZED', 'نشستی برای تمدید وجود ندارد');
+
+  refreshInFlight ??= request(
+    '/auth/refresh',
+    sessionResponseSchema,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Idempotency-Key': newIdempotencyKey() },
+      body: JSON.stringify({ refreshToken: current.refreshToken }),
+    },
+    undefined,
+    DEFAULT_TIMEOUT_MS,
+    { skipAuthRetry: true },
+  ).finally(() => {
+    refreshInFlight = null;
+  });
+
+  const session = await refreshInFlight;
+  useSessionStore.getState().setSession(session);
+  return session;
+}
+
+interface RequestOptions {
+  /** برای `/auth/login|refresh|logout` — تمدید خودِ تمدید یعنی حلقه‌ی بی‌پایان. */
+  skipAuthRetry?: boolean;
+  /** این دومین تلاش همین درخواست است — یک بار تمدید کافی است، نه بی‌نهایت. */
+  isRetryAfterRefresh?: boolean;
+}
+
 /**
  * جنریک روی **خود اسکیما** است، نه روی نوع خروجی.
  *
@@ -126,6 +184,7 @@ async function request<S extends z.ZodTypeAny>(
   init: RequestInit = {},
   callerSignal?: AbortSignal,
   timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  options: RequestOptions = {},
 ): Promise<z.infer<S>> {
   const timeoutSignal = AbortSignal.timeout(timeoutMs);
   const signal = combineSignals([callerSignal, timeoutSignal]);
@@ -135,7 +194,12 @@ async function request<S extends z.ZodTypeAny>(
     response = await fetch(`${BASE_URL}${path}`, {
       ...init,
       signal,
-      headers: { Accept: 'application/json', 'X-Request-Id': newRequestId(), ...init.headers },
+      headers: {
+        Accept: 'application/json',
+        'X-Request-Id': newRequestId(),
+        ...authHeader(),
+        ...init.headers,
+      },
     });
   } catch (error) {
     /*
@@ -152,7 +216,47 @@ async function request<S extends z.ZodTypeAny>(
     throw new NetworkError();
   }
 
+  if (response.status === 401 && !options.skipAuthRetry && !options.isRetryAfterRefresh) {
+    if (!useSessionStore.getState().session) await parseError(response);
+
+    try {
+      await refreshAccessToken();
+    } catch {
+      // تمدید هم رد شد — نشست واقعاً مرده است، نه فقط توکن دسترسی
+      useSessionStore.getState().clearSession();
+      await parseError(response);
+    }
+
+    if ((init.method ?? 'GET') === 'GET') {
+      return request(path, schema, init, callerSignal, timeoutMs, {
+        ...options,
+        isRetryAfterRefresh: true,
+      });
+    }
+
+    /*
+     * قاعده‌ی FE-027: نوشتن مالی بعد از تمدید بدون کنترل دوباره ارسال
+     * نمی‌شود. نشست الان معتبر است؛ فراخوان با همان Idempotency-Key
+     * (که تغییر نکرده) دوباره `submit` می‌کند — امن است چون تکرار
+     * همان کلید همان نتیجه را می‌گیرد، نه سند دوم.
+     */
+    throw new ApiError(
+      409,
+      'RETRY_AFTER_REFRESH',
+      'نشست شما تازه شد؛ لطفاً دوباره ثبت کنید.',
+    );
+  }
+
+  if (response.status === 401) {
+    // این دومین تلاش همین درخواست بود و باز هم ۴۰۱ گرفت، یا مسیر تمدید خودش بود
+    useSessionStore.getState().clearSession();
+  }
+
   if (!response.ok) await parseError(response);
+
+  if (response.status === 204) {
+    return undefined as z.infer<S>;
+  }
 
   const body: unknown = await response.json();
   const parsed = schema.safeParse(body);
@@ -206,5 +310,36 @@ export function apiPost<S extends z.ZodTypeAny>(
     },
     signal,
     timeoutMs,
+  );
+}
+
+/**
+ * نوشتن بدون تمدید خودکار — فقط برای `/auth/login`, `/auth/refresh`,
+ * `/auth/logout` (`api/auth.ts`). این سه خودشان چرخه‌ی نشست‌اند؛ اگر از
+ * مسیر معمول با تمدید خودکار عبور کنند، یک ۴۰۱ روی تمدید یعنی تلاش
+ * برای تمدیدِ همان تمدید — حلقه‌ی بی‌پایان.
+ */
+export function apiPostRaw<S extends z.ZodTypeAny>(
+  path: string,
+  body: unknown,
+  schema: S,
+  idempotencyKey: string = newIdempotencyKey(),
+  signal?: AbortSignal,
+  timeoutMs: number = DEFAULT_TIMEOUT_MS,
+): Promise<z.infer<S>> {
+  return request(
+    path,
+    schema,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Idempotency-Key': idempotencyKey,
+      },
+      body: JSON.stringify(body),
+    },
+    signal,
+    timeoutMs,
+    { skipAuthRetry: true },
   );
 }

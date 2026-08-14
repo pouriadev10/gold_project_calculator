@@ -50,6 +50,35 @@ const DEMO_EMAIL = 'owner@example.com';
 const DEMO_PASSWORD = 'password123';
 const DEMO_TENANT_SLUG = 'demo';
 
+/**
+ * توکن‌های تمدید معتبر — شبیه‌سازی چرخش توکن واقعی BE-011 (auth.service.ts).
+ * هر تمدید موفق، توکن ورودی را از این مجموعه حذف و توکن تازه را اضافه
+ * می‌کند؛ استفاده‌ی دوباره از توکن قدیمی رد می‌شود، همان‌طور که سرور
+ * واقعی رد می‌کند.
+ */
+const validRefreshTokens = new Set<string>();
+
+function issueSession(key: string) {
+  const accessToken = `mock-access-${key}`;
+  const refreshToken = `mock-refresh-${key}`;
+  validRefreshTokens.add(refreshToken);
+  return {
+    accessToken,
+    refreshToken,
+    expiresInSeconds: 900,
+    user: { id: 'usr-owner-1', email: DEMO_EMAIL, displayName: 'مدیر فروشگاه' },
+    tenant: { id: 'tnt-demo-1', slug: DEMO_TENANT_SLUG, name: 'زرگری نمونه' },
+    role: 'OWNER',
+  };
+}
+
+function unauthorized(message: string) {
+  return HttpResponse.json(
+    { error: { code: 'UNAUTHORIZED', message, fields: {}, requestId: crypto.randomUUID() } },
+    { status: 401 },
+  );
+}
+
 export const handlers = [
   http.post('/api/auth/login', async ({ request }) => {
     await delay(WRITE_DELAY_MS);
@@ -80,30 +109,44 @@ export const handlers = [
       body.password !== DEMO_PASSWORD ||
       body.tenantSlug !== DEMO_TENANT_SLUG
     ) {
-      return HttpResponse.json(
-        {
-          error: {
-            code: 'UNAUTHORIZED',
-            message: 'ایمیل یا رمز عبور نادرست است',
-            fields: {},
-            requestId: crypto.randomUUID(),
-          },
-        },
-        { status: 401 },
-      );
+      return unauthorized('ایمیل یا رمز عبور نادرست است');
     }
 
-    const result = {
-      accessToken: `mock-access-${key}`,
-      refreshToken: `mock-refresh-${key}`,
-      expiresInSeconds: 900,
-      user: { id: 'usr-owner-1', email: DEMO_EMAIL, displayName: 'مدیر فروشگاه' },
-      tenant: { id: 'tnt-demo-1', slug: DEMO_TENANT_SLUG, name: 'زرگری نمونه' },
-      role: 'OWNER',
-    };
-
+    const result = issueSession(key);
     idempotencyCache.set(key, result);
     return HttpResponse.json(result);
+  }),
+
+  http.post('/api/auth/refresh', async ({ request }) => {
+    await delay(WRITE_DELAY_MS);
+
+    const key = request.headers.get('Idempotency-Key');
+    if (key) {
+      const cached = idempotencyCache.get(key);
+      if (cached) return HttpResponse.json(cached);
+    }
+
+    const body = (await request.json()) as { refreshToken: string };
+
+    // پیام دقیقاً همان چیزی است که InvalidRefreshTokenError برمی‌گرداند
+    if (!validRefreshTokens.has(body.refreshToken)) {
+      return unauthorized('نشست معتبر نیست یا منقضی شده است');
+    }
+
+    // چرخش توکن — توکن قبلی همین الان مصرف‌شده و باطل حساب می‌شود
+    validRefreshTokens.delete(body.refreshToken);
+    const result = issueSession(key ?? crypto.randomUUID());
+    if (key) idempotencyCache.set(key, result);
+    return HttpResponse.json(result);
+  }),
+
+  http.post('/api/auth/logout', async ({ request }) => {
+    await delay(WRITE_DELAY_MS);
+
+    const body = (await request.json()) as { refreshToken: string };
+    // موفق حتی برای توکن ناموجود — همان رفتار BE-011 (auth.service.ts)
+    validRefreshTokens.delete(body.refreshToken);
+    return new HttpResponse(null, { status: 204 });
   }),
 
   http.get('/api/rates/current', async () => {

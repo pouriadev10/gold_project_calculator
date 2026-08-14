@@ -13,6 +13,7 @@ import { NotFoundPage } from '@/components/common/NotFoundPage';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { HomePage } from '@/features/home/HomePage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
+import { useSessionGuard } from '@/hooks/useSessionGuard';
 import { useTheme } from '@/hooks/useTheme';
 import { useUnit } from '@/hooks/useUnit';
 
@@ -31,6 +32,8 @@ function AppShell() {
   useTheme();
   // واحد نمایش (طلا/ریال) را بین تب‌های باز همگام نگه می‌دارد — FE-023
   useUnit();
+  // مرگ نشست (تمدید ناموفق، خروج، خروج در تب دیگر) را می‌بیند و به ورود می‌فرستد — FE-027
+  useSessionGuard();
 
   return (
     <div className="lg:flex lg:h-dvh lg:items-stretch lg:overflow-hidden">

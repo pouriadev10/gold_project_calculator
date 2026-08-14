@@ -611,7 +611,7 @@ BE-011
 * login ناموفق پیام مناسب نشان دهد.
 * token خام در log نمایش داده نشود.
 ---
-## [ ] FE-027 — مدیریت Session
+## [x] FE-027 — مدیریت Session
 ### قابلیت‌ها
 * access token
 * refresh token flow

@@ -1,4 +1,5 @@
-import { apiPost } from './client';
+import { z } from 'zod';
+import { apiPostRaw } from './client';
 import { sessionResponseSchema, type LoginInput, type SessionResponse } from './contracts';
 
 /**
@@ -13,5 +14,26 @@ export function login(
   idempotencyKey: string,
   signal?: AbortSignal,
 ): Promise<SessionResponse> {
-  return apiPost('/auth/login', input, sessionResponseSchema, idempotencyKey, signal);
+  return apiPostRaw('/auth/login', input, sessionResponseSchema, idempotencyKey, signal);
+}
+
+/**
+ * تمدید نشست — `POST /auth/refresh`.
+ *
+ * از `apiPostRaw` استفاده می‌کند، نه `apiPost` عمومی: مسیر خودکار
+ * «رفرش-و-تلاش‌مجدد» در `client.ts` روی *بقیه‌ی* درخواست‌ها اعمال می‌شود؛
+ * اگر خودِ فراخوانی تمدید هم از همان مسیر عبور کند، یک ۴۰۱ روی تمدید
+ * باعث تلاش برای تمدید *همان* تمدید می‌شود — حلقه‌ی بی‌پایان.
+ */
+export function refresh(refreshToken: string, signal?: AbortSignal): Promise<SessionResponse> {
+  return apiPostRaw('/auth/refresh', { refreshToken }, sessionResponseSchema, undefined, signal);
+}
+
+/**
+ * خروج — `POST /auth/logout`. بک‌اند ۲۰۴ بدون بدنه می‌دهد (حتی برای توکن
+ * ناموجود — auth.service.ts)، پس `z.undefined()` فقط برای نوع خروجی
+ * `void` است؛ مسیر ۲۰۴ در `client.ts` اصلاً به‌سراغ پارس‌کردن نمی‌رود.
+ */
+export async function logout(refreshToken: string, signal?: AbortSignal): Promise<void> {
+  await apiPostRaw('/auth/logout', { refreshToken }, z.undefined(), undefined, signal);
 }
