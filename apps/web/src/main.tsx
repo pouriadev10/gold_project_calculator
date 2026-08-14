@@ -4,6 +4,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
 import { createQueryClient } from '@/api/query-client';
 import { router } from '@/app/router';
+import { Toaster } from '@/components/common/Toaster';
 import '@/styles/globals.css';
 
 const queryClient = createQueryClient();
@@ -31,6 +32,7 @@ async function bootstrap(): Promise<void> {
     <StrictMode>
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
+        <Toaster />
       </QueryClientProvider>
     </StrictMode>,
   );
