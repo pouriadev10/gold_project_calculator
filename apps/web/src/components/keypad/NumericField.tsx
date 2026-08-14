@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo } from 'react';
+import { X } from 'lucide-react';
 import {
   DIGIT_SPECS,
   bigIntToDigits,
@@ -39,6 +40,8 @@ export interface NumericFieldProps {
   hint?: string | undefined;
   disabled?: boolean;
   className?: string;
+  /** دکمه‌ی پاک‌کردن مستقیم روی فیلد — علاوه بر نگه‌داشتن ⌫ روی کیپد (FE-021). */
+  showClear?: boolean;
 }
 
 const UNIT_LABEL: Record<NumericFieldKind, string> = {
@@ -78,6 +81,7 @@ export function NumericField({
   hint,
   disabled,
   className,
+  showClear,
 }: NumericFieldProps) {
   const id = useId();
   const spec = DIGIT_SPECS[kind];
@@ -157,6 +161,21 @@ export function NumericField({
           }}
           className="min-w-0 flex-1 cursor-pointer bg-transparent text-base font-semibold tabular-nums outline-none placeholder:font-normal placeholder:text-muted-foreground"
         />
+        {showClear && raw !== '' && !disabled ? (
+          <button
+            type="button"
+            aria-label="پاک کردن"
+            onPointerDown={(event) => {
+              // نباید فوکوس را از فیلد بگیرد؛ فقط بافر پاک شود
+              event.preventDefault();
+              setBuffer(id, '');
+              focusField(id);
+            }}
+            className="grid size-touch shrink-0 cursor-pointer place-items-center rounded-sm text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+          >
+            <X className="size-4" aria-hidden="true" />
+          </button>
+        ) : null}
         {unit ? <span className="shrink-0 text-xs text-muted-foreground">{unit}</span> : null}
       </div>
 
