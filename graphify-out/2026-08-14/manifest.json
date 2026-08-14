@@ -2900,8 +2900,8 @@
     "semantic_hash": "57f3eade61064fcaf09a18164aacb4bc"
   },
   "FrontTasks.md": {
-    "mtime": 1786733643.4187257,
-    "ast_hash": "f491ca1d22ede0a2345b66b2888268d4",
+    "mtime": 1786734023.205955,
+    "ast_hash": "527145cd56ad899beb8fb359dc5a9dad",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
@@ -3277,6 +3277,11 @@
   "apps/web/src/stores/unit-store.test.ts": {
     "mtime": 1786733631.5703607,
     "ast_hash": "dd1393ab93796e40c20231158a54a5ae",
+    "semantic_hash": ""
+  },
+  "apps/web/src/components/common/UnitToggle.test.tsx": {
+    "mtime": 1786734011.7025707,
+    "ast_hash": "d434a665d8ebf874deb7193b9f5683fe",
     "semantic_hash": ""
   }
 }
