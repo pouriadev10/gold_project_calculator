@@ -10,6 +10,7 @@ import { uuidSchema } from '@gold/contracts';
 import { AppNav } from '@/components/common/AppNav';
 import { FullPageLoading } from '@/components/common/FullPageLoading';
 import { NotFoundPage } from '@/components/common/NotFoundPage';
+import { LoginPage } from '@/features/auth/LoginPage';
 import { HomePage } from '@/features/home/HomePage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
 import { useTheme } from '@/hooks/useTheme';
@@ -56,10 +57,17 @@ const appShellRoute = createRoute({
 
 // ---- مسیر بدون پوسته ----
 
+/**
+ * دلیل رسیدن به صفحه‌ی ورود — رشته، نه boolean، چون رفت‌وبرگشت رشته در
+ * query string بدون ابهام است. FE-027 وقتی تمدید نشست شکست بخورد، کاربر
+ * را به همین مسیر با `reason=expired` هدایت می‌کند.
+ */
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
-  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'LoginPlaceholder'),
+  validateSearch: (search: Record<string, unknown>): { reason?: 'expired' } =>
+    search['reason'] === 'expired' ? { reason: 'expired' } : {},
+  component: LoginPage,
 });
 
 // ---- مسیرهای زیر پوسته‌ی برنامه ----

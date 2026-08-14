@@ -30,6 +30,10 @@ export {
   type Party,
   type PartyList,
   type PartyListQuery,
+  loginSchema,
+  sessionResponseSchema,
+  type LoginInput,
+  type SessionResponse,
 } from '@gold/contracts';
 
 /* ══════════════ View model محلی — بدون endpoint واقعی هنوز ══════════════ */

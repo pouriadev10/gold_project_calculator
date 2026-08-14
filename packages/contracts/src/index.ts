@@ -11,6 +11,7 @@
  * ۲. سکه شمارشی است، نه وزنی. هرگز در قرارداد به گرم تبدیل نمی‌شود.
  */
 export * from './common/index.js';
+export * from './auth/index.js';
 export * from './pricing/index.js';
 export * from './parties/index.js';
 export * from './inventory/index.js';

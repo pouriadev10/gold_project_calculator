@@ -6,10 +6,6 @@ import { PlaceholderPage } from '@/components/common/PlaceholderPage';
  * بسته‌ی اولیه جدا بمانند — به‌جای اینکه هر مسیر chunk جداگانه بسازد.
  */
 
-export function LoginPlaceholder() {
-  return <PlaceholderPage title="ورود" note="فرم ورود در گام‌های احراز هویت ساخته می‌شود." />;
-}
-
 export function PricingPlaceholder() {
   return <PlaceholderPage title="مظنه" note="نمایش و ثبت مظنه در گام‌های بعد می‌آید." />;
 }
