@@ -1650,14 +1650,14 @@
     "semantic_hash": "ffc0e3cdf0295a572b43d67af7bbfe4d"
   },
   "apps/web/src/api/client.test.ts": {
-    "mtime": 1786561105.047234,
-    "ast_hash": "c72ea6c195db447545157b329cca8a6e",
-    "semantic_hash": "c72ea6c195db447545157b329cca8a6e"
+    "mtime": 1786737894.0457926,
+    "ast_hash": "9c14a46c22da07f6882b6397cb6571f8",
+    "semantic_hash": ""
   },
   "apps/web/src/api/client.ts": {
-    "mtime": 1786561105.0482347,
-    "ast_hash": "2a21055daa557e444fbb8fe552901fa1",
-    "semantic_hash": "2a21055daa557e444fbb8fe552901fa1"
+    "mtime": 1786737234.2663317,
+    "ast_hash": "878d8981843f3931f754722813eeee17",
+    "semantic_hash": ""
   },
   "apps/web/src/api/contracts-package.test.ts": {
     "mtime": 1785920904.0269785,
@@ -1665,8 +1665,8 @@
     "semantic_hash": "f0918d28c8b297bd1e16403c91156161"
   },
   "apps/web/src/api/contracts.ts": {
-    "mtime": 1786735797.1023004,
-    "ast_hash": "e8dbcd6bff3ee85a2d5218810e28ab84",
+    "mtime": 1786737008.5139275,
+    "ast_hash": "db8ee181e70e89872b425d77243d24d5",
     "semantic_hash": ""
   },
   "apps/web/src/api/queries.ts": {
@@ -1695,8 +1695,8 @@
     "semantic_hash": "5c7497d2a1c0adaa884f02f4c9460b63"
   },
   "apps/web/src/app/router.tsx": {
-    "mtime": 1786736012.716591,
-    "ast_hash": "5af923e885e5974568e33f89c0714acf",
+    "mtime": 1786737467.2749999,
+    "ast_hash": "40997a9793bfd09c78664644751e4a64",
     "semantic_hash": ""
   },
   "apps/web/src/components/common/AmountDisplay.test.tsx": {
@@ -1850,8 +1850,8 @@
     "semantic_hash": "c3fdd66fc637a565055e2625c4645a13"
   },
   "apps/web/src/features/settings/SettingsPage.tsx": {
-    "mtime": 1786707307.1259542,
-    "ast_hash": "8e4b38794d01a12971595556c995b0ad",
+    "mtime": 1786737508.0244584,
+    "ast_hash": "d5a34b99655d2f6783478129cb1905c0",
     "semantic_hash": ""
   },
   "apps/web/src/hooks/useIdempotentSubmit.test.ts": {
@@ -1905,8 +1905,8 @@
     "semantic_hash": "901fa9abd92a59c2e7b94bb66081e539"
   },
   "apps/web/src/mocks/handlers/index.ts": {
-    "mtime": 1786735858.4872,
-    "ast_hash": "2c604c18c2f464f2dcaa398de3847f66",
+    "mtime": 1786737554.5663896,
+    "ast_hash": "5aa08fc96ad65617141d3fc27184557d",
     "semantic_hash": ""
   },
   "apps/web/src/stores/theme-store.ts": {
@@ -2900,8 +2900,8 @@
     "semantic_hash": "57f3eade61064fcaf09a18164aacb4bc"
   },
   "FrontTasks.md": {
-    "mtime": 1786736541.0719955,
-    "ast_hash": "3f492d039c89d06e70e6033fbcc8d661",
+    "mtime": 1786738152.9476602,
+    "ast_hash": "8c6a48ac60ba93ec12260784ed83f430",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
@@ -3030,8 +3030,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/error-presentation.ts": {
-    "mtime": 1786561105.0522323,
-    "ast_hash": "86442c7c566831e918dfb79abe47affc",
+    "mtime": 1786737342.3460789,
+    "ast_hash": "73f98bd5bb9f37b0c4c34fece05617aa",
     "semantic_hash": ""
   },
   "apps/web/src/components/common/ApiErrorNotice.test.tsx": {
@@ -3285,8 +3285,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/auth.ts": {
-    "mtime": 1786735842.0032535,
-    "ast_hash": "52c63908d53745b213f4de7d043b6623",
+    "mtime": 1786737289.1186755,
+    "ast_hash": "65c05d04a72e4d954da1e78327f4853a",
     "semantic_hash": ""
   },
   "apps/web/src/features/auth/LoginPage.test.tsx": {
@@ -3300,18 +3300,18 @@
     "semantic_hash": ""
   },
   "apps/web/src/stores/session-store.test.ts": {
-    "mtime": 1786736161.489503,
-    "ast_hash": "55503947ce25b14a720e0096ea3bd79b",
+    "mtime": 1786737765.382257,
+    "ast_hash": "697d62a1fa0800565d76e628a4ea086c",
     "semantic_hash": ""
   },
   "apps/web/src/stores/session-store.ts": {
-    "mtime": 1786735835.6920328,
-    "ast_hash": "dc986f72f9dd92ba47f7b04ff3dcffb9",
+    "mtime": 1786737415.9618187,
+    "ast_hash": "bf897d0136c78007c4b8a2b43e427daa",
     "semantic_hash": ""
   },
   "packages/contracts/src/auth/auth.ts": {
-    "mtime": 1786735752.4661932,
-    "ast_hash": "b43bf0a9c2c61bb526e7ce411d25ce9c",
+    "mtime": 1786736973.8796258,
+    "ast_hash": "3e17ffb685df6364bc18a32b1f228481",
     "semantic_hash": ""
   },
   "packages/contracts/src/auth/index.ts": {
@@ -3320,8 +3320,33 @@
     "semantic_hash": ""
   },
   "packages/contracts/test/auth.test.ts": {
-    "mtime": 1786735777.2624328,
-    "ast_hash": "c471f78f531665bf50e2bcf82a24675c",
+    "mtime": 1786736990.3666582,
+    "ast_hash": "e900d068f608bc452ce25edc9761712e",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/settings/SettingsPage.test.tsx": {
+    "mtime": 1786737837.3459213,
+    "ast_hash": "fb1fc613587ea837871e0d6191c1dd56",
+    "semantic_hash": ""
+  },
+  "apps/web/src/hooks/useLogout.test.ts": {
+    "mtime": 1786737788.320464,
+    "ast_hash": "ec619b7c8467ced648d0e56d1896c794",
+    "semantic_hash": ""
+  },
+  "apps/web/src/hooks/useLogout.ts": {
+    "mtime": 1786737447.6632578,
+    "ast_hash": "8016b1120f5d1ee5310c0e04a10ea470",
+    "semantic_hash": ""
+  },
+  "apps/web/src/hooks/useSessionGuard.test.tsx": {
+    "mtime": 1786737821.1556191,
+    "ast_hash": "579135b05c5201434faa89341bc395ef",
+    "semantic_hash": ""
+  },
+  "apps/web/src/hooks/useSessionGuard.ts": {
+    "mtime": 1786737435.5238185,
+    "ast_hash": "54f39fc4ce73f115f1d4e39a0859cb2a",
     "semantic_hash": ""
   }
 }
