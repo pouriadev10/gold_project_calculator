@@ -1665,9 +1665,9 @@
     "semantic_hash": "f0918d28c8b297bd1e16403c91156161"
   },
   "apps/web/src/api/contracts.ts": {
-    "mtime": 1786561105.0502326,
-    "ast_hash": "2fcd19358fcb35d5738087471fc7032c",
-    "semantic_hash": "2fcd19358fcb35d5738087471fc7032c"
+    "mtime": 1786735797.1023004,
+    "ast_hash": "e8dbcd6bff3ee85a2d5218810e28ab84",
+    "semantic_hash": ""
   },
   "apps/web/src/api/queries.ts": {
     "mtime": 1786561105.0532348,
@@ -1695,8 +1695,8 @@
     "semantic_hash": "5c7497d2a1c0adaa884f02f4c9460b63"
   },
   "apps/web/src/app/router.tsx": {
-    "mtime": 1786733639.8269703,
-    "ast_hash": "0d43eee08d2e5505de4e47f7a3aae596",
+    "mtime": 1786736012.716591,
+    "ast_hash": "5af923e885e5974568e33f89c0714acf",
     "semantic_hash": ""
   },
   "apps/web/src/components/common/AmountDisplay.test.tsx": {
@@ -1905,9 +1905,9 @@
     "semantic_hash": "901fa9abd92a59c2e7b94bb66081e539"
   },
   "apps/web/src/mocks/handlers/index.ts": {
-    "mtime": 1786561105.0738866,
-    "ast_hash": "c15475659ec70bf7150a56753f6a5211",
-    "semantic_hash": "c15475659ec70bf7150a56753f6a5211"
+    "mtime": 1786735858.4872,
+    "ast_hash": "2c604c18c2f464f2dcaa398de3847f66",
+    "semantic_hash": ""
   },
   "apps/web/src/stores/theme-store.ts": {
     "mtime": 1785500611.6735494,
@@ -1995,8 +1995,8 @@
     "semantic_hash": "6b40ac94acd8fbe6fcfeebdfd2427d17"
   },
   "packages/contracts/src/index.ts": {
-    "mtime": 1786707255.670976,
-    "ast_hash": "6b6d3dae8b7faafc285113dbd6a62686",
+    "mtime": 1786735760.3122559,
+    "ast_hash": "79954bf4f120d6b0a8348baf08046263",
     "semantic_hash": ""
   },
   "packages/contracts/src/inventory/coin-types.ts": {
@@ -2900,8 +2900,8 @@
     "semantic_hash": "57f3eade61064fcaf09a18164aacb4bc"
   },
   "FrontTasks.md": {
-    "mtime": 1786735211.4905503,
-    "ast_hash": "cfd92b7c2fdb2b8bfd2d44c169760fc2",
+    "mtime": 1786736541.0719955,
+    "ast_hash": "3f492d039c89d06e70e6033fbcc8d661",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
@@ -3130,8 +3130,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/app/route-placeholders.tsx": {
-    "mtime": 1786707307.1159482,
-    "ast_hash": "9605c460e697d2c3bdc64b68e015eab3",
+    "mtime": 1786735990.558917,
+    "ast_hash": "ad48b6629e9bfbea69adc1327bf3e91c",
     "semantic_hash": ""
   },
   "apps/web/src/components/common/CardSkeleton.tsx": {
@@ -3282,6 +3282,46 @@
   "apps/web/src/components/common/UnitToggle.test.tsx": {
     "mtime": 1786734011.7025707,
     "ast_hash": "d434a665d8ebf874deb7193b9f5683fe",
+    "semantic_hash": ""
+  },
+  "apps/web/src/api/auth.ts": {
+    "mtime": 1786735842.0032535,
+    "ast_hash": "52c63908d53745b213f4de7d043b6623",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/auth/LoginPage.test.tsx": {
+    "mtime": 1786736222.2630599,
+    "ast_hash": "9c0e741aabc9ee3424006a537bfd1457",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/auth/LoginPage.tsx": {
+    "mtime": 1786735969.303594,
+    "ast_hash": "26da4f81c06c31567fe2344450854006",
+    "semantic_hash": ""
+  },
+  "apps/web/src/stores/session-store.test.ts": {
+    "mtime": 1786736161.489503,
+    "ast_hash": "55503947ce25b14a720e0096ea3bd79b",
+    "semantic_hash": ""
+  },
+  "apps/web/src/stores/session-store.ts": {
+    "mtime": 1786735835.6920328,
+    "ast_hash": "dc986f72f9dd92ba47f7b04ff3dcffb9",
+    "semantic_hash": ""
+  },
+  "packages/contracts/src/auth/auth.ts": {
+    "mtime": 1786735752.4661932,
+    "ast_hash": "b43bf0a9c2c61bb526e7ce411d25ce9c",
+    "semantic_hash": ""
+  },
+  "packages/contracts/src/auth/index.ts": {
+    "mtime": 1786735756.557521,
+    "ast_hash": "07f8427fa84ca529b1eb753eed997277",
+    "semantic_hash": ""
+  },
+  "packages/contracts/test/auth.test.ts": {
+    "mtime": 1786735777.2624328,
+    "ast_hash": "c471f78f531665bf50e2bcf82a24675c",
     "semantic_hash": ""
   }
 }

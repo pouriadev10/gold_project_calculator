@@ -1700,14 +1700,14 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/common/AmountDisplay.test.tsx": {
-    "mtime": 1785500611.6174853,
-    "ast_hash": "54f11dd186bb2bdd3ff403e05e23b091",
-    "semantic_hash": "54f11dd186bb2bdd3ff403e05e23b091"
+    "mtime": 1786735102.2280462,
+    "ast_hash": "03ec3dbe6bd2338c7f25570bc065e502",
+    "semantic_hash": ""
   },
   "apps/web/src/components/common/AmountDisplay.tsx": {
-    "mtime": 1785500611.472991,
-    "ast_hash": "d2048868b1284fa8c9427146d7956a09",
-    "semantic_hash": "d2048868b1284fa8c9427146d7956a09"
+    "mtime": 1786735082.016683,
+    "ast_hash": "28689787c7f617d327d3ccb73fb580cc",
+    "semantic_hash": ""
   },
   "apps/web/src/components/common/AppNav.tsx": {
     "mtime": 1786707307.1179483,
@@ -2170,9 +2170,9 @@
     "semantic_hash": "1d0d71a71f5f1cccc8e28975cc4a6a90"
   },
   "packages/core-calc/src/karat.ts": {
-    "mtime": 1785500611.435992,
-    "ast_hash": "dfabecf01e538f7866f0c619c3e99471",
-    "semantic_hash": "dfabecf01e538f7866f0c619c3e99471"
+    "mtime": 1786735021.3253767,
+    "ast_hash": "e7d7039fadc01e5efb48e55e7ab96e41",
+    "semantic_hash": ""
   },
   "packages/core-calc/src/number-bridge.ts": {
     "mtime": 1785500611.8323996,
@@ -2235,9 +2235,9 @@
     "semantic_hash": "e07849e63e858921d954d13413e25859"
   },
   "packages/core-calc/test/karat.test.ts": {
-    "mtime": 1785500611.4399922,
-    "ast_hash": "77071dc2ad5c98e2d78bee6b32fa7d99",
-    "semantic_hash": "77071dc2ad5c98e2d78bee6b32fa7d99"
+    "mtime": 1786735039.9255095,
+    "ast_hash": "455e11d492031894f1dadfa8863b5622",
+    "semantic_hash": ""
   },
   "packages/core-calc/test/number-bridge.test.ts": {
     "mtime": 1785500611.8333988,
@@ -2900,8 +2900,8 @@
     "semantic_hash": "57f3eade61064fcaf09a18164aacb4bc"
   },
   "FrontTasks.md": {
-    "mtime": 1786734023.205955,
-    "ast_hash": "527145cd56ad899beb8fb359dc5a9dad",
+    "mtime": 1786735211.4905503,
+    "ast_hash": "cfd92b7c2fdb2b8bfd2d44c169760fc2",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
