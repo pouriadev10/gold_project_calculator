@@ -407,7 +407,7 @@ design-system/MASTER.md
 * حداقل سه Feature از componentهای مشترک استفاده کنند.
 * هیچ صفحه‌ای هنگام loading سفید نماند.
 ---
-## [ ] FE-015 — Bottom Sheet و Dialog واکنش‌گرا
+## [x] FE-015 — Bottom Sheet و Dialog واکنش‌گرا
 ### هدف
 ایجاد abstraction مشترک.
 ### رفتار

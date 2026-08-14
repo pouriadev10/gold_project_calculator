@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { Drawer as DrawerPrimitive } from "vaul"
+import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -48,7 +49,16 @@ const DrawerContent = React.forwardRef<
       )}
       {...props}
     >
-      <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted" />
+      {/* فقط تزئینی — کل Content قابل درگ است، نه فقط این نوار؛ حذفش هیچ قابلیتی را از کار نمی‌اندازد */}
+      <div
+        aria-hidden="true"
+        data-testid="bottom-sheet-handle"
+        className="mx-auto mt-4 h-2 w-[100px] shrink-0 rounded-full bg-muted"
+      />
+      <DrawerPrimitive.Close className="absolute end-4 top-4 grid size-touch cursor-pointer place-items-center rounded-sm text-muted-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
+        <X className="size-5" />
+        <span className="sr-only">بستن</span>
+      </DrawerPrimitive.Close>
       {children}
     </DrawerPrimitive.Content>
   </DrawerPortal>

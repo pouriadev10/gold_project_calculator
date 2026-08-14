@@ -25,6 +25,16 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import {
+  ResponsiveDialog,
+  ResponsiveDialogClose,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogTrigger,
+} from '@/components/common/ResponsiveDialog';
 import { formatJalaliFullDate } from '@/lib/date';
 
 /**
@@ -82,6 +92,7 @@ export default function SmokePage() {
 
       <TailwindRtlCheck />
       <ShadcnCheck />
+      <ResponsiveDialogCheck />
       <RouterCheck />
       <QueryCheck />
       <ZustandCheck />
@@ -125,6 +136,38 @@ function ShadcnCheck() {
           </DialogHeader>
         </DialogContent>
       </Dialog>
+    </Section>
+  );
+}
+
+/**
+ * FE-015 — زیر ۶۴۰px Bottom Sheet تمام‌صفحه، از ۶۴۰px به بالا Dialog
+ * وسط‌چین. برای آزمون واقعی: عرض پنجره را از بالا و پایین ۶۴۰px رد کن و
+ * دوباره باز کن — چون سوییچ لحظه‌ای هنگام باز بودن مودال هدف این تسک
+ * نیست، تصمیم فقط لحظه‌ی باز شدن گرفته می‌شود.
+ */
+function ResponsiveDialogCheck() {
+  return (
+    <Section title="ResponsiveDialog" status="Bottom Sheet ↔ Dialog">
+      <ResponsiveDialog>
+        <ResponsiveDialogTrigger asChild>
+          <Button>باز کردن مودال واکنش‌گرا</Button>
+        </ResponsiveDialogTrigger>
+        <ResponsiveDialogContent>
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>مودال واکنش‌گرا</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>
+              زیر ۶۴۰px این‌جا Bottom Sheet تمام‌صفحه است؛ از ۶۴۰px به بالا Dialog وسط‌چین.
+            </ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
+          <Input placeholder="یک فیلد آزمایشی — با کیبورد قابل تایپ" aria-label="فیلد آزمایشی" />
+          <ResponsiveDialogFooter>
+            <ResponsiveDialogClose asChild>
+              <Button variant="outline">انصراف</Button>
+            </ResponsiveDialogClose>
+          </ResponsiveDialogFooter>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
     </Section>
   );
 }
