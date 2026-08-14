@@ -13,6 +13,7 @@ import { NotFoundPage } from '@/components/common/NotFoundPage';
 import { HomePage } from '@/features/home/HomePage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
 import { useTheme } from '@/hooks/useTheme';
+import { useUnit } from '@/hooks/useUnit';
 
 /**
  * ریشه‌ی بدون پوسته — فقط `<Outlet />`. مسیرهایی که نباید ناوبری برنامه
@@ -27,6 +28,8 @@ const rootRoute = createRootRoute({
 function AppShell() {
   // پوسته یک بار در ریشه اعمال و با تنظیم سیستم همگام می‌شود
   useTheme();
+  // واحد نمایش (طلا/ریال) را بین تب‌های باز همگام نگه می‌دارد — FE-023
+  useUnit();
 
   return (
     <div className="lg:flex lg:h-dvh lg:items-stretch lg:overflow-hidden">

@@ -532,7 +532,7 @@ design-system/MASTER.md
 * کاربر مجاز بتواند مقدار را تغییر دهد.
 ---
 # Milestone 5 — تنظیمات سراسری کاربر
-## [ ] FE-023 — Unit Display Store
+## [x] FE-023 — Unit Display Store
 ### هدف
 پیاده‌سازی تنظیم سراسری نمایش.
 ### حالت‌های فاز ۱
