@@ -3,6 +3,7 @@ import {
   bigIntToDigits,
   clearDigits,
   digitsToBigInt,
+  pasteDigits,
   popDigit,
   pushDigit,
   pushSeparator,
@@ -53,6 +54,8 @@ interface KeypadState {
   setValue: (value: bigint) => void;
   /** میان‌بر: تبدیل مقدار فعلی */
   transformValue: (apply: (current: bigint) => bigint) => void;
+  /** چسباندن (paste) — جای‌گزینی کامل بافر فیلد فعال با متن چسبانده‌شده */
+  pasteText: (text: string) => void;
 
   setBuffer: (id: string, raw: string) => void;
   reset: () => void;
@@ -138,6 +141,13 @@ export const useKeypadStore = create<KeypadState>()((set) => ({
       const spec = specOf(state, state.activeId);
       if (!spec) return {};
       return editActive(state, (raw) => bigIntToDigits(apply(digitsToBigInt(raw, spec)), spec));
+    }),
+
+  pasteText: (text) =>
+    set((state) => {
+      const spec = specOf(state, state.activeId);
+      if (!spec) return {};
+      return editActive(state, () => pasteDigits(text, spec));
     }),
 
   setBuffer: (id, raw) => set((state) => ({ buffers: { ...state.buffers, [id]: raw } })),

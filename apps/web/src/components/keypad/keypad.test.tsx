@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { NumericField } from './NumericField';
@@ -218,6 +218,77 @@ describe('دسترس‌پذیری', () => {
       screen.getByTestId('numeric-keypad').querySelector('[aria-live="polite"]'),
     ).toBeTruthy();
   });
+});
+
+describe('چسباندن (paste) — FE-018', () => {
+  /** readOnly شلیک رویداد paste را متوقف نمی‌کند، فقط درج پیش‌فرض را. */
+  async function paste(input: HTMLElement, text: string) {
+    const dataTransfer = { getData: () => text } as unknown as DataTransfer;
+    fireEvent.paste(input, { clipboardData: dataTransfer });
+  }
+
+  it('چسباندن مقدار فارسی همان bigint مقدار لاتین را می‌دهد', async () => {
+    const user = userEvent.setup();
+    render(<Form />);
+
+    await user.click(screen.getByLabelText('مظنه'));
+    await paste(screen.getByLabelText('مظنه'), '۱۲۵۰۰۰۰');
+
+    expect(screen.getByLabelText('مظنه')).toHaveAttribute('data-value', '1250000');
+  });
+
+  it('چسباندن مقدار لاتین هم کار می‌کند', async () => {
+    const user = userEvent.setup();
+    render(<Form />);
+
+    await user.click(screen.getByLabelText('مظنه'));
+    await paste(screen.getByLabelText('مظنه'), '1250000');
+
+    expect(screen.getByLabelText('مظنه')).toHaveAttribute('data-value', '1250000');
+  });
+
+  it('جداساز هزارگان و واحد پول نادیده گرفته می‌شوند', async () => {
+    const user = userEvent.setup();
+    render(<Form />);
+
+    await user.click(screen.getByLabelText('مظنه'));
+    await paste(screen.getByLabelText('مظنه'), '۱٬۲۵۰٬۰۰۰ ریال');
+
+    expect(screen.getByLabelText('مظنه')).toHaveAttribute('data-value', '1250000');
+  });
+
+  it('چسباندن جای‌گزین بافر قبلی می‌شود، نه اضافه به آن', async () => {
+    const user = userEvent.setup();
+    render(<Form />);
+
+    await user.click(screen.getByLabelText('عیار'));
+    await tap(user, 'رقم ۹');
+    expect(screen.getByLabelText('عیار')).toHaveAttribute('data-value', '9');
+
+    await paste(screen.getByLabelText('عیار'), '750');
+    expect(screen.getByLabelText('عیار')).toHaveAttribute('data-value', '750');
+  });
+
+  it('چسباندن مقدار نامعتبر (متن غیرعددی) بافر را خالی می‌کند، نه یک مقدار خراب', async () => {
+    const user = userEvent.setup();
+    render(<Form />);
+
+    await user.click(screen.getByLabelText('عیار'));
+    await paste(screen.getByLabelText('عیار'), 'سلام دنیا');
+
+    expect(screen.getByLabelText('عیار')).toHaveAttribute('data-value', '0');
+  });
+
+  it('چسباندن وزن با جداکننده‌ی اعشار فارسی، دقیق به میلی‌گرم تبدیل می‌شود', async () => {
+    const user = userEvent.setup();
+    render(<Form />);
+
+    await user.click(screen.getByLabelText('وزن'));
+    await paste(screen.getByLabelText('وزن'), '۱۲٫۳۴۵');
+
+    expect(screen.getByLabelText('وزن')).toHaveAttribute('data-value', '12345');
+  });
+
 });
 
 describe('کیبورد فیزیکی', () => {

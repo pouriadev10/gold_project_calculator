@@ -86,6 +86,7 @@ export function NumericField({
   const unregisterField = useKeypadStore((s) => s.unregisterField);
   const setBuffer = useKeypadStore((s) => s.setBuffer);
   const focusField = useKeypadStore((s) => s.focusField);
+  const pasteText = useKeypadStore((s) => s.pasteText);
 
   const raw = useKeypadStore((s) => s.buffers[id] ?? '');
   const isActive = useKeypadStore((s) => s.activeId === id && s.isOpen);
@@ -146,6 +147,14 @@ export function NumericField({
           data-kind={kind}
           onFocus={() => !disabled && focusField(id)}
           onPointerDown={() => !disabled && focusField(id)}
+          // `readOnly` جلوی درج پیش‌فرض مرورگر را می‌گیرد، ولی خودِ رویداد
+          // paste همچنان شلیک می‌شود — همان راهی که چسباندن مقدار فارسی
+          // (FE-018) را بدون باز کردن کیبورد سیستم ممکن می‌کند.
+          onPaste={(event) => {
+            if (disabled) return;
+            event.preventDefault();
+            pasteText(event.clipboardData.getData('text'));
+          }}
           className="min-w-0 flex-1 cursor-pointer bg-transparent text-base font-semibold tabular-nums outline-none placeholder:font-normal placeholder:text-muted-foreground"
         />
         {unit ? <span className="shrink-0 text-xs text-muted-foreground">{unit}</span> : null}

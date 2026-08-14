@@ -15,6 +15,7 @@
  * همه‌ی توابع اینجا خالص‌اند: رشته می‌گیرند، رشته می‌دهند.
  */
 
+import { toLatinDigits } from './persian.js';
 import { CalcError } from './types.js';
 
 /** جداکننده‌ی اعشار **داخلی**. نمایش فارسی جداگانه انجام می‌شود. */
@@ -135,6 +136,33 @@ export function bigIntToDigits(value: bigint, spec: DigitSpec): string {
   // (frac + unit) صفر پیشوند را تضمین می‌کند؛ slice(1) رقم اضافه را برمی‌دارد
   const padded = (fraction + unit).toString().slice(1).replace(/0+$/u, '');
   return `${integer}${DECIMAL_MARK}${padded}`;
+}
+
+/** جداکننده‌ی اعشار فارسی/عربی — کاربر ممکن است متن چسبانده‌شده با همین نویسه داشته باشد. */
+const ARABIC_DECIMAL_SEPARATOR = '٫';
+
+/**
+ * متن چسبانده‌شده (paste) را رقم‌به‌رقم از یک بافر خالی از همان مسیر
+ * `pushDigit`/`pushSeparator` عبور می‌دهد — یعنی همان قواعد کلمپ ظرفیت و
+ * صفر پیشوند که تایپ روی کیپد دارد، بدون تکرار منطق در جای دیگر. جای‌گزین
+ * می‌کند، نه اضافه — چسباندن یعنی «مقدار تازه»، نه ادامه‌ی بافر قبلی.
+ *
+ * هر نویسه‌ی غیرعددی (جداساز هزارگان، فاصله، واحد پول/وزن، ...) نادیده
+ * گرفته می‌شود؛ خروجی همیشه یک بافر معتبر و کلمپ‌شده است، هرگز نیمه‌خراب.
+ */
+export function pasteDigits(text: string, spec: DigitSpec): string {
+  const latin = toLatinDigits(text);
+  let buffer = '';
+
+  for (const ch of latin) {
+    if (DIGITS.has(ch)) {
+      buffer = pushDigit(buffer, ch, spec);
+    } else if (ch === DECIMAL_MARK || ch === ARABIC_DECIMAL_SEPARATOR) {
+      buffer = pushSeparator(buffer, spec);
+    }
+  }
+
+  return buffer;
 }
 
 /** آیا بافر مقدار معناداری دارد؟ `"0."` هنوز خالی حساب می‌شود. */

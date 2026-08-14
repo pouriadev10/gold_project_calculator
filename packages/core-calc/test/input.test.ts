@@ -6,6 +6,7 @@ import {
   clearDigits,
   digitsToBigInt,
   isBlank,
+  pasteDigits,
   popDigit,
   pushDigit,
   pushSeparator,
@@ -165,6 +166,56 @@ describe('رفت‌وبرگشت bigint ↔ رشته', () => {
         expect(typeof digitsToBigInt(buffer, WEIGHT)).toBe('bigint');
       }),
       { numRuns: 500 },
+    );
+  });
+});
+
+describe('pasteDigits — چسباندن متن', () => {
+  it('ارقام فارسی و لاتین یک بافر یکسان می‌دهند', () => {
+    expect(pasteDigits('۱۲۳۴۵', RIAL)).toBe(pasteDigits('12345', RIAL));
+    expect(pasteDigits('۱۲۳۴۵', RIAL)).toBe('12345');
+  });
+
+  it('ارقام عربی هم پذیرفته می‌شوند', () => {
+    expect(pasteDigits('١٢٣٤٥', RIAL)).toBe('12345');
+  });
+
+  it('جداکننده‌ی اعشار فارسی (٫) مثل نقطه عمل می‌کند', () => {
+    expect(pasteDigits('۱۲٫۳۴۵', WEIGHT)).toBe('12.345');
+    expect(pasteDigits('12.345', WEIGHT)).toBe('12.345');
+  });
+
+  it('جداساز هزارگان و واحد نادیده گرفته می‌شوند', () => {
+    expect(pasteDigits('۱۲۵,۰۰۰ ریال', RIAL)).toBe('125000');
+    expect(pasteDigits('12,500,000', RIAL)).toBe('12500000');
+  });
+
+  it('همان قاعده‌ی کلمپ ظرفیت تایپ روی این مسیر هم اعمال می‌شود', () => {
+    expect(pasteDigits('12345678901234', KARAT)).toBe(type('1234', KARAT)); // ظرفیت عیار ۴ رقم
+    expect(pasteDigits('1.234567', WEIGHT)).toBe('1.234'); // ظرفیت اعشار وزن ۳ رقم
+  });
+
+  it('صفر پیشوند همان رفتار تایپ را دارد', () => {
+    expect(pasteDigits('007', RIAL)).toBe(type('007', RIAL));
+  });
+
+  it('جای‌گزین می‌کند، نه اضافه — نتیجه فقط به متن چسبانده‌شده وابسته است', () => {
+    expect(pasteDigits('500', RIAL)).toBe('500');
+  });
+
+  it('متن کاملاً غیرعددی، بافر خالی می‌دهد نه یک بافر نیمه‌خراب', () => {
+    expect(pasteDigits('سلام', RIAL)).toBe('');
+    expect(pasteDigits('', RIAL)).toBe('');
+  });
+
+  it('خروجی همیشه با digitsToBigInt قابل تبدیل است — هرگز مقدار نامعتبر نمی‌سازد', () => {
+    fc.assert(
+      fc.property(fc.string({ maxLength: 30 }), (text) => {
+        const buffer = pasteDigits(text, WEIGHT);
+        expect(buffer.split('.').length).toBeLessThanOrEqual(2);
+        expect(typeof digitsToBigInt(buffer, WEIGHT)).toBe('bigint');
+      }),
+      { numRuns: 300 },
     );
   });
 });
