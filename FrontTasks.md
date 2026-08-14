@@ -490,7 +490,7 @@ design-system/MASTER.md
 * screen reader label وجود داشته باشد.
 * prefers-reduced-motion رعایت شود.
 ---
-## [ ] FE-020 — Weight Input
+## [x] FE-020 — Weight Input
 ### قابلیت‌ها
 * ورود گرم
 * ورود میلی‌گرم
