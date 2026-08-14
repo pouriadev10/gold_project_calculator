@@ -1625,9 +1625,9 @@
     "semantic_hash": "2624797592a621756cd68cb52f702d96"
   },
   "apps/web/package.json": {
-    "mtime": 1786561105.0432324,
-    "ast_hash": "1f0aacd3c1c1ccc17ebb03abd8de703c",
-    "semantic_hash": "1f0aacd3c1c1ccc17ebb03abd8de703c"
+    "mtime": 1786715841.6482737,
+    "ast_hash": "5807d11a51d1305a7fea55cf3acbf002",
+    "semantic_hash": ""
   },
   "apps/web/postcss.config.js": {
     "mtime": 1785500611.4689915,
@@ -1740,24 +1740,24 @@
     "semantic_hash": "1d162fcfb7cfdf1f25ea075c66d0aa46"
   },
   "apps/web/src/components/keypad/NumericField.tsx": {
-    "mtime": 1786561105.0622332,
-    "ast_hash": "e3c8f0edfe7cd54f72c2c5f06f052c6b",
-    "semantic_hash": "e3c8f0edfe7cd54f72c2c5f06f052c6b"
+    "mtime": 1786728620.4252853,
+    "ast_hash": "e96a87cec55cf3289317026ab31d3465",
+    "semantic_hash": ""
   },
   "apps/web/src/components/keypad/NumericKeypad.tsx": {
-    "mtime": 1786561105.0622332,
-    "ast_hash": "f4e07b9b915a75f5645721932a901e40",
-    "semantic_hash": "f4e07b9b915a75f5645721932a901e40"
+    "mtime": 1786723191.9712675,
+    "ast_hash": "0403af607008eddb4341282fcf7b43eb",
+    "semantic_hash": ""
   },
   "apps/web/src/components/keypad/keypad-store.ts": {
-    "mtime": 1786561105.063234,
-    "ast_hash": "051ac912737565807973511ccf7989a3",
-    "semantic_hash": "051ac912737565807973511ccf7989a3"
+    "mtime": 1786722356.2457242,
+    "ast_hash": "d1464440d660c828ab3fa71e6daa3cca",
+    "semantic_hash": ""
   },
   "apps/web/src/components/keypad/keypad.test.tsx": {
-    "mtime": 1786561105.063234,
-    "ast_hash": "35f0af6959ac44c266544865360120f1",
-    "semantic_hash": "35f0af6959ac44c266544865360120f1"
+    "mtime": 1786723278.8164957,
+    "ast_hash": "5ca258651f6a0fdc3141eb06dc46e823",
+    "semantic_hash": ""
   },
   "apps/web/src/components/keypad/shortcuts.ts": {
     "mtime": 1786561105.064234,
@@ -1785,9 +1785,9 @@
     "semantic_hash": "27c552a8796dc3245ebcba08d268a92d"
   },
   "apps/web/src/components/ui/drawer.tsx": {
-    "mtime": 1785500611.6695404,
-    "ast_hash": "2b2c04135450d508dbebbfda4ad78321",
-    "semantic_hash": "2b2c04135450d508dbebbfda4ad78321"
+    "mtime": 1786708968.4599984,
+    "ast_hash": "e46c0c54d0d6eb9eb36ee8fa3fb01ce9",
+    "semantic_hash": ""
   },
   "apps/web/src/components/ui/input.tsx": {
     "mtime": 1785500611.4769914,
@@ -1815,9 +1815,9 @@
     "semantic_hash": "b91c6f6a71e6f570118f5799860e0cc9"
   },
   "apps/web/src/features/dev/SmokePage.tsx": {
-    "mtime": 1786561105.0662422,
-    "ast_hash": "7d5c03b028473d8c89fc4e824d90cffb",
-    "semantic_hash": "7d5c03b028473d8c89fc4e824d90cffb"
+    "mtime": 1786716442.166865,
+    "ast_hash": "1355319256925d1bce36772945912ef0",
+    "semantic_hash": ""
   },
   "apps/web/src/features/home/BalanceCard.tsx": {
     "mtime": 1786707307.1239538,
@@ -1890,9 +1890,9 @@
     "semantic_hash": "b88b98f377ddc7a283b37651befe3f48"
   },
   "apps/web/src/main.tsx": {
-    "mtime": 1786561105.071508,
-    "ast_hash": "ae58e5859f2703f0dd532bc1438db52c",
-    "semantic_hash": "ae58e5859f2703f0dd532bc1438db52c"
+    "mtime": 1786716057.2689662,
+    "ast_hash": "52cafddfd96517e97a7629515328a22c",
+    "semantic_hash": ""
   },
   "apps/web/src/mocks/browser.ts": {
     "mtime": 1785500611.7560403,
@@ -1920,9 +1920,9 @@
     "semantic_hash": "a531c4a2bc4021cc15a14b3041247d39"
   },
   "apps/web/src/test/setup.ts": {
-    "mtime": 1785500611.4869971,
-    "ast_hash": "b6047cb48430aab17d0c9a3cec1e4bb5",
-    "semantic_hash": "b6047cb48430aab17d0c9a3cec1e4bb5"
+    "mtime": 1786709822.6846073,
+    "ast_hash": "ef46d1afa47e933b4128975de343cb75",
+    "semantic_hash": ""
   },
   "apps/web/src/vite-env.d.ts": {
     "mtime": 1786561105.0748868,
@@ -2160,9 +2160,9 @@
     "semantic_hash": "7133a3d012d18441e342fee4cf07884d"
   },
   "packages/core-calc/src/input.ts": {
-    "mtime": 1785500611.8313973,
-    "ast_hash": "dc9fd56f979e7a38a3c76e3bc432ac7a",
-    "semantic_hash": "dc9fd56f979e7a38a3c76e3bc432ac7a"
+    "mtime": 1786722240.8688023,
+    "ast_hash": "0b71292c973141481d5b37656393961d",
+    "semantic_hash": ""
   },
   "packages/core-calc/src/jewelry-sale.ts": {
     "mtime": 1786392733.3243062,
@@ -2225,9 +2225,9 @@
     "semantic_hash": "4c4dd950af3506361fc809f042c17917"
   },
   "packages/core-calc/test/input.test.ts": {
-    "mtime": 1785500611.8323996,
-    "ast_hash": "e54b16a80054ff35d6b4f1bf48487126",
-    "semantic_hash": "e54b16a80054ff35d6b4f1bf48487126"
+    "mtime": 1786722270.0540318,
+    "ast_hash": "056bfba05fdf4e035391e70977667d77",
+    "semantic_hash": ""
   },
   "packages/core-calc/test/jewelry-sale.test.ts": {
     "mtime": 1786392733.3243062,
@@ -2900,8 +2900,8 @@
     "semantic_hash": "57f3eade61064fcaf09a18164aacb4bc"
   },
   "FrontTasks.md": {
-    "mtime": 1786707307.1149478,
-    "ast_hash": "4a9a98215520f48dd6c2428bec5b33d7",
+    "mtime": 1786729407.7484064,
+    "ast_hash": "8f78d43b4b2633867d69b7512dc3a32d",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
@@ -3177,6 +3177,91 @@
   "apps/web/src/components/common/RetryPanel.tsx": {
     "mtime": 1786707307.1229537,
     "ast_hash": "a402d574b9ed319d85b3f10af433e06f",
+    "semantic_hash": ""
+  },
+  "apps/web/src/components/common/ResponsiveDialog.test.tsx": {
+    "mtime": 1786709721.5380282,
+    "ast_hash": "bdff119f0ef7d3d0852250467c397e67",
+    "semantic_hash": ""
+  },
+  "apps/web/src/components/common/ResponsiveDialog.tsx": {
+    "mtime": 1786709106.4091108,
+    "ast_hash": "bcbd39c2474e619cbb619cc9ec65f75f",
+    "semantic_hash": ""
+  },
+  "apps/web/src/hooks/useMediaQuery.test.ts": {
+    "mtime": 1786708991.237234,
+    "ast_hash": "5ceb50ddfcae7d9cfc52121c351d2a3b",
+    "semantic_hash": ""
+  },
+  "apps/web/src/hooks/useMediaQuery.ts": {
+    "mtime": 1786708977.5062258,
+    "ast_hash": "48758e1ab9a054a79ddae31c9c23acd7",
+    "semantic_hash": ""
+  },
+  "apps/web/src/components/common/Toaster.test.tsx": {
+    "mtime": 1786716139.2401667,
+    "ast_hash": "2ff2ae799bafbd317850bdbd5e7ed9ea",
+    "semantic_hash": ""
+  },
+  "apps/web/src/components/common/Toaster.tsx": {
+    "mtime": 1786716010.5011723,
+    "ast_hash": "729ff15f882d5657e6470de58f6f79a3",
+    "semantic_hash": ""
+  },
+  "apps/web/src/components/ui/toast.tsx": {
+    "mtime": 1786716878.7055953,
+    "ast_hash": "7eb9e2ff957c40c68d39ef9d08af89b9",
+    "semantic_hash": ""
+  },
+  "apps/web/src/stores/toast-store.test.ts": {
+    "mtime": 1786716104.5515296,
+    "ast_hash": "e604e36cf6cdc1397a979e0ef97828d3",
+    "semantic_hash": ""
+  },
+  "apps/web/src/stores/toast-store.ts": {
+    "mtime": 1786716781.376641,
+    "ast_hash": "e6cd65c06779a35cb640d1d00d0740b3",
+    "semantic_hash": ""
+  },
+  "apps/web/src/lib/persian-text.test.ts": {
+    "mtime": 1786721698.1362119,
+    "ast_hash": "9ec8876f55ee2d44dab986df232a5aee",
+    "semantic_hash": ""
+  },
+  "apps/web/src/lib/persian-text.ts": {
+    "mtime": 1786721660.1579926,
+    "ast_hash": "bd0ddad63a2ea31139ae67d2cb74ea27",
+    "semantic_hash": ""
+  },
+  "apps/web/src/components/keypad/WeightInput.test.tsx": {
+    "mtime": 1786727974.210601,
+    "ast_hash": "07c9ea949d26c3d0b7cdb585f2d28fb6",
+    "semantic_hash": ""
+  },
+  "apps/web/src/components/keypad/WeightInput.tsx": {
+    "mtime": 1786728049.080499,
+    "ast_hash": "f5cd13ff9c36cce5836bb9d57d3a055d",
+    "semantic_hash": ""
+  },
+  "apps/web/src/components/keypad/MoneyInput.test.tsx": {
+    "mtime": 1786728798.062376,
+    "ast_hash": "153551de834327b8d6634bfec49cf8d0",
+    "semantic_hash": ""
+  },
+  "apps/web/src/components/keypad/MoneyInput.tsx": {
+    "mtime": 1786728705.6006646,
+    "ast_hash": "9171a6f932d890d487df0badda6456f4",
+    "semantic_hash": ""
+  },
+  "apps/web/src/components/keypad/KaratInput.test.tsx": {
+    "mtime": 1786729325.3218517,
+    "ast_hash": "8f64b82f673bc5c1ddc7a53e21f070d1",
+    "semantic_hash": ""
+  },
+  "apps/web/src/components/keypad/KaratInput.tsx": {
+    "mtime": 1786729228.2604485,
+    "ast_hash": "877359618d501009801588c114011ec9",
     "semantic_hash": ""
   }
 }
