@@ -204,6 +204,13 @@
       "when": 1786797555320,
       "tag": "0028_far_hobgoblin",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1786798138484,
+      "tag": "0029_giant_revanche",
+      "breakpoints": true
     }
   ]
 }

@@ -35,6 +35,7 @@ export const inventoryMovementSourceTypeEnum = pgEnum('inventory_movement_source
   'OPENING_BALANCE',
   'SALE',
   'PURCHASE',
+  'SECOND_HAND_PURCHASE',
   'SETTLEMENT',
   'CORRECTION',
 ]);

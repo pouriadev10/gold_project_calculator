@@ -1790,7 +1790,7 @@ final_amount_rial · destination inventory type · identity snapshot · finalize
 
 ---
 
-## [ ] BE-050 — ثبت خرید طلای دست‌دوم
+## [x] BE-050 — ثبت خرید طلای دست‌دوم
 
 **endpoint**
 
