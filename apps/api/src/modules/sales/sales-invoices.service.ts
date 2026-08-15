@@ -242,6 +242,8 @@ export class SalesInvoicesService {
         salesInvoiceId: invoice.id,
         version: 1,
         reason: null,
+        reasonDetail: null,
+        partyId: invoice.partyId,
         totalsSnapshot: input.totalsSnapshot,
         settingsSnapshot: input.settingsSnapshot,
         createdBy: input.createdBy,
