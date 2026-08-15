@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Minus, Plus } from 'lucide-react';
 import { useBalanceSummary, useRecentTransactions } from '@/api/queries';
+import { RequireRole } from '@/components/common/RequireRole';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { UnitToggle } from '@/components/common/UnitToggle';
 import { Button } from '@/components/ui/button';
+import { PROFIT_REPORT_ROLES } from '@/lib/permissions';
 import { BalanceCard } from './BalanceCard';
 import { MaznehBar } from './MaznehBar';
 import { ProfitCard } from './ProfitCard';
@@ -44,7 +46,10 @@ export function HomePage() {
           isError={balance.isError}
           onRetry={() => void balance.refetch()}
         />
-        <ProfitCard />
+        {/* گزارش سود — FE-028: CASHIER نمی‌بیند، نه چون UI قشنگ‌تر می‌شود، چون دامنه‌ی دسترسی همین است */}
+        <RequireRole roles={PROFIT_REPORT_ROLES}>
+          <ProfitCard />
+        </RequireRole>
         <div className="lg:col-span-2 xl:col-span-1">
           <RecentTransactions
             items={transactions.data?.items}

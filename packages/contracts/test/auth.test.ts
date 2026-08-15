@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { loginSchema, refreshSchema, sessionResponseSchema } from '../src/index.js';
+import { loginSchema, refreshSchema, roleCodeSchema, sessionResponseSchema } from '../src/index.js';
 
 describe('loginSchema — ورودی معتبر', () => {
   it('سه فیلد کامل را می‌پذیرد', () => {
@@ -72,6 +72,20 @@ describe('sessionResponseSchema', () => {
     // این تست ثابت می‌کند schema حداقل فیلدهای امن را همان‌طور که BE-011 برمی‌گرداند می‌شناسد
     const parsed = sessionResponseSchema.parse({ ...valid, passwordHash: 'leak' });
     expect(parsed).not.toHaveProperty('passwordHash');
+  });
+
+  it.each(['OWNER', 'MANAGER', 'CASHIER'])('نقش %s را می‌پذیرد', (role) => {
+    expect(sessionResponseSchema.parse({ ...valid, role }).role).toBe(role);
+  });
+
+  it('نقش خارج از فهرست فاز ۱ را رد می‌کند — FE-028 روی همین enum تصمیم می‌گیرد', () => {
+    expect(sessionResponseSchema.safeParse({ ...valid, role: 'ADMIN' }).success).toBe(false);
+  });
+});
+
+describe('roleCodeSchema — FE-028', () => {
+  it('آینه‌ی PHASE_ONE_ROLES بک‌اند است، به همان ترتیب پرقدرت→کم‌قدرت', () => {
+    expect(roleCodeSchema.options).toEqual(['OWNER', 'MANAGER', 'CASHIER']);
   });
 });
 

@@ -43,32 +43,39 @@ let invoiceCounter = 122;
 const idempotencyCache = new Map<string, unknown>();
 
 /**
- * اعتبار آزمایشی FE-026 — فقط برای توسعه، هرگز در production استفاده نمی‌شود.
- * قرارداد پاسخ دقیقاً `SessionResponse` واقعی BE-011 است.
+ * اعتبار آزمایشی FE-026/FE-028 — فقط برای توسعه، هرگز در production
+ * استفاده نمی‌شود. دو حساب با نقش متفاوت تا رفتار نقش‌محور (FE-028) هم
+ * قابل آزمون دستی باشد، نه فقط با تست خودکار.
  */
-const DEMO_EMAIL = 'owner@example.com';
 const DEMO_PASSWORD = 'password123';
 const DEMO_TENANT_SLUG = 'demo';
+
+const DEMO_USERS = {
+  'owner@example.com': { id: 'usr-owner-1', displayName: 'مدیر فروشگاه', role: 'OWNER' as const },
+  'cashier@example.com': { id: 'usr-cashier-1', displayName: 'صندوق‌دار', role: 'CASHIER' as const },
+};
 
 /**
  * توکن‌های تمدید معتبر — شبیه‌سازی چرخش توکن واقعی BE-011 (auth.service.ts).
  * هر تمدید موفق، توکن ورودی را از این مجموعه حذف و توکن تازه را اضافه
  * می‌کند؛ استفاده‌ی دوباره از توکن قدیمی رد می‌شود، همان‌طور که سرور
- * واقعی رد می‌کند.
+ * واقعی رد می‌کند. هر توکن به ایمیلی که واردش کرده نگاشت می‌شود تا
+ * تمدید هم نقش درست همان کاربر را برگرداند.
  */
-const validRefreshTokens = new Set<string>();
+const validRefreshTokens = new Map<string, keyof typeof DEMO_USERS>();
 
-function issueSession(key: string) {
+function issueSession(key: string, email: keyof typeof DEMO_USERS) {
   const accessToken = `mock-access-${key}`;
   const refreshToken = `mock-refresh-${key}`;
-  validRefreshTokens.add(refreshToken);
+  validRefreshTokens.set(refreshToken, email);
+  const demoUser = DEMO_USERS[email];
   return {
     accessToken,
     refreshToken,
     expiresInSeconds: 900,
-    user: { id: 'usr-owner-1', email: DEMO_EMAIL, displayName: 'مدیر فروشگاه' },
+    user: { id: demoUser.id, email, displayName: demoUser.displayName },
     tenant: { id: 'tnt-demo-1', slug: DEMO_TENANT_SLUG, name: 'زرگری نمونه' },
-    role: 'OWNER',
+    role: demoUser.role,
   };
 }
 
@@ -102,17 +109,16 @@ export const handlers = [
     if (cached) return HttpResponse.json(cached);
 
     const body = (await request.json()) as { email: string; password: string; tenantSlug: string };
+    const demoUser = Object.hasOwn(DEMO_USERS, body.email)
+      ? (body.email as keyof typeof DEMO_USERS)
+      : undefined;
 
     // پیام دقیقاً همان چیزی است که InvalidCredentialsError (auth.errors.ts) برمی‌گرداند
-    if (
-      body.email !== DEMO_EMAIL ||
-      body.password !== DEMO_PASSWORD ||
-      body.tenantSlug !== DEMO_TENANT_SLUG
-    ) {
+    if (demoUser === undefined || body.password !== DEMO_PASSWORD || body.tenantSlug !== DEMO_TENANT_SLUG) {
       return unauthorized('ایمیل یا رمز عبور نادرست است');
     }
 
-    const result = issueSession(key);
+    const result = issueSession(key, demoUser);
     idempotencyCache.set(key, result);
     return HttpResponse.json(result);
   }),
@@ -127,15 +133,16 @@ export const handlers = [
     }
 
     const body = (await request.json()) as { refreshToken: string };
+    const demoUser = validRefreshTokens.get(body.refreshToken);
 
     // پیام دقیقاً همان چیزی است که InvalidRefreshTokenError برمی‌گرداند
-    if (!validRefreshTokens.has(body.refreshToken)) {
+    if (demoUser === undefined) {
       return unauthorized('نشست معتبر نیست یا منقضی شده است');
     }
 
     // چرخش توکن — توکن قبلی همین الان مصرف‌شده و باطل حساب می‌شود
     validRefreshTokens.delete(body.refreshToken);
-    const result = issueSession(key ?? crypto.randomUUID());
+    const result = issueSession(key ?? crypto.randomUUID(), demoUser);
     if (key) idempotencyCache.set(key, result);
     return HttpResponse.json(result);
   }),

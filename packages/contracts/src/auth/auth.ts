@@ -35,6 +35,18 @@ export const loginSchema = z.object({
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 
+/**
+ * نقش‌های فاز ۱ — آینه‌ی `PHASE_ONE_ROLES` در
+ * `apps/api/src/platform/database/schema/roles.ts` (BE-012).
+ *
+ * فهرست **سفید** است، نه سلسله‌مراتب: `OWNER` به‌صورت ضمنی هر کاری را
+ * که `MANAGER` می‌تواند ندارد — اگر جایی باید داشته باشد، نامش صریح در
+ * همان فهرست مجاز می‌آید. سمت سرور (`RolesGuard`) هم دقیقاً همین‌طور
+ * تصمیم می‌گیرد؛ اینجا فقط آینه‌ی آن برای UI است، نه مرجع.
+ */
+export const roleCodeSchema = z.enum(['OWNER', 'MANAGER', 'CASHIER']);
+export type RoleCode = z.infer<typeof roleCodeSchema>;
+
 /** پاسخ نشست — هرگز `passwordHash` یا فیلد حساس دیگری ندارد (قاعده‌ی BE-011). */
 export const sessionUserSchema = z.object({
   id: z.string(),
@@ -54,8 +66,7 @@ export const sessionResponseSchema = z.object({
   expiresInSeconds: z.number().int().positive(),
   user: sessionUserSchema,
   tenant: sessionTenantSchema,
-  /** نقش خام رشته‌ای — نگاشت به enum نقش‌ها کار FE-028 است. */
-  role: z.string(),
+  role: roleCodeSchema,
 });
 export type SessionResponse = z.infer<typeof sessionResponseSchema>;
 

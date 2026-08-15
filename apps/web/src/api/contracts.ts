@@ -33,9 +33,11 @@ export {
   loginSchema,
   sessionResponseSchema,
   refreshSchema,
+  roleCodeSchema,
   type LoginInput,
   type SessionResponse,
   type RefreshInput,
+  type RoleCode,
 } from '@gold/contracts';
 
 /* ══════════════ View model محلی — بدون endpoint واقعی هنوز ══════════════ */

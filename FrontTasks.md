@@ -628,7 +628,7 @@ BE-011
 * انقضای access token بدون از دست رفتن صفحه مدیریت شود.
 * refresh ناموفق logout انجام دهد.
 ---
-## [ ] FE-028 — Route Guards و Permission UI
+## [x] FE-028 — Route Guards و Permission UI
 ### وابستگی بک‌اند
 ```text
 BE-012

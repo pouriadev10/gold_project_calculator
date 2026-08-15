@@ -13,7 +13,7 @@ const SESSION = {
   expiresInSeconds: 900,
   user: { id: 'u1', email: 'owner@example.com', displayName: 'مدیر فروشگاه' },
   tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه' },
-  role: 'OWNER',
+  role: 'OWNER' as const,
 };
 
 beforeEach(() => {

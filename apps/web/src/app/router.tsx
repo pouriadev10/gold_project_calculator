@@ -10,12 +10,15 @@ import { uuidSchema } from '@gold/contracts';
 import { AppNav } from '@/components/common/AppNav';
 import { FullPageLoading } from '@/components/common/FullPageLoading';
 import { NotFoundPage } from '@/components/common/NotFoundPage';
+import { requireAuth, requireRole } from '@/app/route-guards';
+import { ForbiddenPage } from '@/features/auth/ForbiddenPage';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { HomePage } from '@/features/home/HomePage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
 import { useSessionGuard } from '@/hooks/useSessionGuard';
 import { useTheme } from '@/hooks/useTheme';
 import { useUnit } from '@/hooks/useUnit';
+import { PROFIT_REPORT_ROLES } from '@/lib/permissions';
 
 /**
  * ریشه‌ی بدون پوسته — فقط `<Outlet />`. مسیرهایی که نباید ناوبری برنامه
@@ -55,6 +58,8 @@ function AppShell() {
 const appShellRoute = createRoute({
   id: 'app-shell',
   getParentRoute: () => rootRoute,
+  // محافظ احراز هویت — FE-028. یک‌جا روی ریشه‌ی همه‌ی مسیرهای پوسته‌دار، نه تک‌تک هر مسیر.
+  beforeLoad: requireAuth,
   component: AppShell,
 });
 
@@ -181,6 +186,8 @@ const reportingCreditorsRoute = createRoute({
 const reportingProfitRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/reporting/profit',
+  // نقش‌محور — FE-028. لینک مستقیم برای CASHIER به /forbidden می‌رود، نه یک ۴۰۴ گنگ.
+  beforeLoad: requireRole(PROFIT_REPORT_ROLES),
   component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'ReportingProfitPlaceholder'),
 });
 
@@ -188,6 +195,12 @@ const settingsRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/settings',
   component: SettingsPage,
+});
+
+const forbiddenRoute = createRoute({
+  getParentRoute: () => appShellRoute,
+  path: '/forbidden',
+  component: ForbiddenPage,
 });
 
 /**
@@ -232,6 +245,7 @@ const routeTree = rootRoute.addChildren([
     reportingCreditorsRoute,
     reportingProfitRoute,
     settingsRoute,
+    forbiddenRoute,
     ...devRoutes,
   ]),
 ]);
