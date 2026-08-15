@@ -190,6 +190,13 @@
       "when": 1786564282581,
       "tag": "0026_unique_zuras",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1786792582135,
+      "tag": "0027_blushing_guardsmen",
+      "breakpoints": true
     }
   ]
 }

@@ -5,6 +5,10 @@ import { IdempotencyModule } from '../../platform/idempotency/idempotency.module
 import { UsersModule } from '../../platform/users/users.module';
 import { LedgerModule } from '../ledger/ledger.module';
 import { PartiesModule } from '../parties/parties.module';
+import { PricingModule } from '../pricing/pricing.module';
+import { InventoryModule } from '../inventory/inventory.module';
+import { GoldSettlementsController } from './gold-settlements.controller';
+import { GoldSettlementsService } from './gold-settlements.service';
 import { RialSettlementsController } from './rial-settlements.controller';
 import { RialSettlementsService } from './rial-settlements.service';
 import { SettlementsService } from './settlements.service';
@@ -16,9 +20,18 @@ import { SettlementsService } from './settlements.service';
  * ابزار پرداخت را posting می‌کند. BE-045: ریال.
  */
 @Module({
-  imports: [AuditModule, AuthModule, IdempotencyModule, LedgerModule, PartiesModule, UsersModule],
-  controllers: [RialSettlementsController],
-  providers: [RialSettlementsService, SettlementsService],
-  exports: [RialSettlementsService, SettlementsService],
+  imports: [
+    AuditModule,
+    AuthModule,
+    IdempotencyModule,
+    InventoryModule,
+    LedgerModule,
+    PartiesModule,
+    PricingModule,
+    UsersModule,
+  ],
+  controllers: [GoldSettlementsController, RialSettlementsController],
+  providers: [GoldSettlementsService, RialSettlementsService, SettlementsService],
+  exports: [GoldSettlementsService, RialSettlementsService, SettlementsService],
 })
 export class SettlementModule {}
