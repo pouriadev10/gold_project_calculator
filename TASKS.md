@@ -1818,7 +1818,7 @@ POST /purchase/second-hand/gold
 
 ---
 
-## [ ] BE-051 — خرید سکه از مصرف‌کننده
+## [x] BE-051 — خرید سکه از مصرف‌کننده
 
 **endpoint**
 

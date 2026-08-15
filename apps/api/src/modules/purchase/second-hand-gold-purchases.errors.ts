@@ -39,3 +39,10 @@ export class SecondHandPurchaseCalculationError extends Error {
     this.name = 'SecondHandPurchaseCalculationError';
   }
 }
+
+export class SecondHandCoinPurchaseInvalidInputError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'SecondHandCoinPurchaseInvalidInputError';
+  }
+}
