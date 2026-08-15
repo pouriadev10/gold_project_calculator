@@ -30,7 +30,7 @@ import type { INestApplicationContext } from '@nestjs/common';
 
 describe('gold settlement on a party rial balance (BE-046)', () => {
   const tenant = { id: '', slug: `gold-settlement-${randomUUID().slice(0, 12)}` };
-  const effectiveAt = new Date();
+  let effectiveAt = new Date();
   let app: INestApplicationContext;
   let db: Database;
   let idempotency: IdempotencyService;
@@ -61,6 +61,7 @@ describe('gold settlement on a party rial balance (BE-046)', () => {
     tenant.id = (
       await tenantService.create({ name: 'Gold settlement tenant', slug: tenant.slug })
     ).id;
+    effectiveAt = new Date();
     actorId = (
       await users.create({
         email: `${randomUUID().slice(0, 12)}@example.com`,

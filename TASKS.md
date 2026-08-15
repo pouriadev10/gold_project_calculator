@@ -1689,7 +1689,7 @@ POST /parties/:partyId/settlements/rial
 
 ---
 
-## [ ] BE-046 — پرداخت با طلا
+## [x] BE-046 — پرداخت با طلا
 
 **endpoint**
 
@@ -1712,7 +1712,7 @@ POST /parties/:partyId/settlements/gold
 
 ---
 
-## [ ] BE-047 — پرداخت با سکه
+## [x] BE-047 — پرداخت با سکه
 
 **endpoint**
 
@@ -1735,7 +1735,7 @@ POST /parties/:partyId/settlements/coins
 
 ---
 
-## [ ] BE-048 — تسویه ترکیبی
+## [x] BE-048 — تسویه ترکیبی
 
 **endpoint**
 

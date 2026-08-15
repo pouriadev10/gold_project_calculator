@@ -31,7 +31,7 @@ import type { INestApplicationContext } from '@nestjs/common';
 
 describe('coin settlement on a party rial balance (BE-047)', () => {
   const tenant = { id: '', slug: `coin-settlement-${randomUUID().slice(0, 12)}` };
-  const effectiveAt = new Date();
+  let effectiveAt = new Date();
   const maznehRial = 100_000_000n;
   let app: INestApplicationContext;
   let db: Database;
@@ -67,6 +67,7 @@ describe('coin settlement on a party rial balance (BE-047)', () => {
     tenant.id = (
       await tenantService.create({ name: 'Coin settlement tenant', slug: tenant.slug })
     ).id;
+    effectiveAt = new Date();
     actorId = (
       await users.create({
         email: `${randomUUID().slice(0, 12)}@example.com`,

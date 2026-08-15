@@ -11,6 +11,8 @@ import { CoinSettlementsController } from './coin-settlements.controller';
 import { CoinSettlementsService } from './coin-settlements.service';
 import { GoldSettlementsController } from './gold-settlements.controller';
 import { GoldSettlementsService } from './gold-settlements.service';
+import { MixedSettlementsController } from './mixed-settlements.controller';
+import { MixedSettlementsService } from './mixed-settlements.service';
 import { RialSettlementsController } from './rial-settlements.controller';
 import { RialSettlementsService } from './rial-settlements.service';
 import { SettlementsService } from './settlements.service';
@@ -32,16 +34,23 @@ import { SettlementsService } from './settlements.service';
     PricingModule,
     UsersModule,
   ],
-  controllers: [CoinSettlementsController, GoldSettlementsController, RialSettlementsController],
+  controllers: [
+    CoinSettlementsController,
+    GoldSettlementsController,
+    MixedSettlementsController,
+    RialSettlementsController,
+  ],
   providers: [
     CoinSettlementsService,
     GoldSettlementsService,
+    MixedSettlementsService,
     RialSettlementsService,
     SettlementsService,
   ],
   exports: [
     CoinSettlementsService,
     GoldSettlementsService,
+    MixedSettlementsService,
     RialSettlementsService,
     SettlementsService,
   ],
