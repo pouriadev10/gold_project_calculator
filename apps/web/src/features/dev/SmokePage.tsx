@@ -25,7 +25,19 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import {
+  ResponsiveDialog,
+  ResponsiveDialogClose,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogTrigger,
+} from '@/components/common/ResponsiveDialog';
+import { ApiError } from '@/api/api-error';
 import { formatJalaliFullDate } from '@/lib/date';
+import { toast } from '@/stores/toast-store';
 
 /**
  * صفحه‌ی دود — **فقط در حالت توسعه**.
@@ -82,6 +94,8 @@ export default function SmokePage() {
 
       <TailwindRtlCheck />
       <ShadcnCheck />
+      <ResponsiveDialogCheck />
+      <ToastCheck />
       <RouterCheck />
       <QueryCheck />
       <ZustandCheck />
@@ -125,6 +139,71 @@ function ShadcnCheck() {
           </DialogHeader>
         </DialogContent>
       </Dialog>
+    </Section>
+  );
+}
+
+/**
+ * FE-015 — زیر ۶۴۰px Bottom Sheet تمام‌صفحه، از ۶۴۰px به بالا Dialog
+ * وسط‌چین. برای آزمون واقعی: عرض پنجره را از بالا و پایین ۶۴۰px رد کن و
+ * دوباره باز کن — چون سوییچ لحظه‌ای هنگام باز بودن مودال هدف این تسک
+ * نیست، تصمیم فقط لحظه‌ی باز شدن گرفته می‌شود.
+ */
+function ResponsiveDialogCheck() {
+  return (
+    <Section title="ResponsiveDialog" status="Bottom Sheet ↔ Dialog">
+      <ResponsiveDialog>
+        <ResponsiveDialogTrigger asChild>
+          <Button>باز کردن مودال واکنش‌گرا</Button>
+        </ResponsiveDialogTrigger>
+        <ResponsiveDialogContent>
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>مودال واکنش‌گرا</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>
+              زیر ۶۴۰px این‌جا Bottom Sheet تمام‌صفحه است؛ از ۶۴۰px به بالا Dialog وسط‌چین.
+            </ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
+          <Input placeholder="یک فیلد آزمایشی — با کیبورد قابل تایپ" aria-label="فیلد آزمایشی" />
+          <ResponsiveDialogFooter>
+            <ResponsiveDialogClose asChild>
+              <Button variant="outline">انصراف</Button>
+            </ResponsiveDialogClose>
+          </ResponsiveDialogFooter>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
+    </Section>
+  );
+}
+
+/** FE-016 — چهار شدت + پل apiError؛ `<Toaster />` خودش در main.tsx سوار است. */
+function ToastCheck() {
+  return (
+    <Section title="Toast" status="۴ شدت + apiError + جلوگیری از تکرار">
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" onClick={() => toast.success('فاکتور ثبت شد', 'شماره ۱۰۰۱ صادر شد')}>
+          موفقیت
+        </Button>
+        <Button
+          size="sm"
+          variant="destructive"
+          onClick={() => toast.apiError(new ApiError(500, 'INTERNAL_ERROR', 'db failed'))}
+        >
+          خطا
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => toast.apiError(new ApiError(409, 'CONFLICT', 'conflict'))}
+        >
+          Conflict
+        </Button>
+        <Button size="sm" variant="outline" onClick={() => toast.info('مظنه به‌روزرسانی شد')}>
+          اطلاع
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => toast.success('فاکتور ثبت شد', 'شماره ۱۰۰۱ صادر شد')}>
+          تکراری (باید یکی بماند)
+        </Button>
+      </div>
     </Section>
   );
 }

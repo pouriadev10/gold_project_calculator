@@ -31,6 +31,19 @@ export function fromPureMg(pure: PureMg, k: Karat): GrossMg {
 }
 
 /**
+ * همان تبدیل `fromPureMg`، برای مبالغ **علامت‌دار** دفتر کل — نه وزن کالا.
+ *
+ * `DualAmount.pureMg` می‌تواند منفی باشد (مانده‌ی بدهکار، سطر اصلاحیه)،
+ * در حالی که برند `PureMg`/`GrossMg` منفی را رد می‌کند چون وزن فیزیکی
+ * کالا هرگز منفی نیست. این تابع فقط برای نمایش «گرم معادل عیار k» یک
+ * مبلغ دومقیاسه است — محاسبه‌ی حسابداری نمی‌سازد، همان وزن خالص را در
+ * مبنای دیگری بازمی‌نویسد.
+ */
+export function fromPureMgSigned(pureMgSigned: bigint, k: Karat): bigint {
+  return mulDivHalfUp(pureMgSigned, KARAT_BASE_BIG, BigInt(k));
+}
+
+/**
  * گام شبکه‌ی نمایش‌پذیر یک عیار بر حسب میلی‌گرم.
  *
  * برای وزن‌های ناخالصی که مضرب این گام باشند، رفت‌وبرگشت

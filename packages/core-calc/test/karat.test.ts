@@ -4,6 +4,7 @@ import {
   MESGHAL_MG_X10,
   MESGHAL_SCALE,
   fromPureMg,
+  fromPureMgSigned,
   gramToMesghal,
   karatLatticeMg,
   mesghalToGram,
@@ -32,6 +33,24 @@ describe('toPureMg — وزن خالص = وزن ناخالص × عیار ÷ ۱۰
 describe('fromPureMg', () => {
   it('وارون toPureMg است', () => {
     expect(fromPureMg(pureMg(7500n), K750)).toBe(10_000n);
+  });
+});
+
+describe('fromPureMgSigned — نسخه‌ی علامت‌دار برای نمایش مبالغ دفتر کل (FE-025)', () => {
+  it('برای مقادیر مثبت با fromPureMg یکی است', () => {
+    expect(fromPureMgSigned(7500n, K750)).toBe(fromPureMg(pureMg(7500n), K750));
+  });
+
+  it('مانده‌ی بدهکار (منفی) را هم درست به معادل عیار می‌برد — قرینه‌ی حالت مثبت', () => {
+    expect(fromPureMgSigned(-7500n, K750)).toBe(-10_000n);
+  });
+
+  it('صفر صفر می‌ماند', () => {
+    expect(fromPureMgSigned(0n, K750)).toBe(0n);
+  });
+
+  it('روی عیار ۱۰۰۰ وزن را تغییر نمی‌دهد', () => {
+    expect(fromPureMgSigned(-12_345n, karat(1000))).toBe(-12_345n);
   });
 });
 
@@ -119,5 +138,9 @@ describe('مثقال', () => {
       }),
       { numRuns: 1000 },
     );
+  });
+
+  it('برای مانده‌ی منفی هم علامت را درست نگه می‌دارد — نمایش مثقال روی مبلغ دفتر کل', () => {
+    expect(gramToMesghal(-46_083n)).toBe(-100_000n);
   });
 });

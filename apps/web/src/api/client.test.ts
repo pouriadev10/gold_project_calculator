@@ -1,8 +1,9 @@
 import { toSafeNumber } from '@gold/core-calc';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
+import { useSessionStore } from '@/stores/session-store';
 import { ApiError, NetworkError } from './api-error';
-import { apiGet, apiPost, newIdempotencyKey } from './client';
+import { apiGet, apiPost, apiPostRaw, newIdempotencyKey } from './client';
 import { dualAmountSchema } from './contracts';
 
 /**
@@ -56,7 +57,49 @@ function mockHangingFetch() {
   return spy;
 }
 
-beforeEach(() => vi.unstubAllGlobals());
+/** پاسخ ۴۰۱ ساختاریافته — همان شکلی که `parseError` انتظار دارد. */
+const UNAUTHORIZED_BODY = {
+  error: { code: 'UNAUTHORIZED', message: 'دسترسی غیرمجاز', fields: {}, requestId: 'req-401' },
+};
+
+const SESSION_A = {
+  accessToken: 'access-a',
+  refreshToken: 'refresh-a',
+  expiresInSeconds: 900,
+  user: { id: 'u1', email: 'owner@example.com', displayName: 'مدیر' },
+  tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه' },
+  role: 'OWNER',
+};
+
+const SESSION_B_WIRE = { ...SESSION_A, accessToken: 'access-b', refreshToken: 'refresh-b' };
+
+/** جعل `fetch` با تابع دلخواه — برای رفتار متفاوت بر اساس مسیر یا شماره‌ی فراخوانی. */
+function mockFetchWith(
+  handler: (
+    path: string,
+    init: RequestInit | undefined,
+    callIndex: number,
+  ) => { status?: number; body: unknown } | Promise<{ status?: number; body: unknown }>,
+) {
+  let callIndex = 0;
+  const spy = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const index = callIndex;
+    callIndex += 1;
+    const { status, body } = await handler(String(input), init, index);
+    return new Response(JSON.stringify(body), {
+      status: status ?? 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  });
+  vi.stubGlobal('fetch', spy);
+  return spy;
+}
+
+beforeEach(() => {
+  vi.unstubAllGlobals();
+  useSessionStore.setState({ session: null });
+  localStorage.clear();
+});
 afterEach(() => vi.unstubAllGlobals());
 
 describe('تبدیل رشته به bigint روی مرز', () => {
@@ -194,6 +237,154 @@ describe('timeout و لغو', () => {
     controller.abort();
 
     await expect(promise).rejects.toMatchObject({ name: 'AbortError' });
+  });
+});
+
+describe('Authorization — FE-027', () => {
+  it('با نشست فعال، هدر Bearer فرستاده می‌شود', async () => {
+    useSessionStore.setState({ session: SESSION_A });
+    const spy = mockFetch({ body: { value: 'ok' } });
+
+    await apiGet('/x', okSchema);
+
+    expect(sentHeaders(spy)['Authorization']).toBe('Bearer access-a');
+  });
+
+  it('بدون نشست، هدر Authorization اصلاً فرستاده نمی‌شود', async () => {
+    const spy = mockFetch({ body: { value: 'ok' } });
+
+    await apiGet('/x', okSchema);
+
+    expect(sentHeaders(spy)['Authorization']).toBeUndefined();
+  });
+});
+
+describe('تمدید خودکار روی ۴۰۱ — FE-027', () => {
+  it('بدون نشست، ۴۰۱ بلافاصله پرتاب می‌شود — تلاشی برای تمدید نمی‌شود', async () => {
+    const spy = mockFetch({ status: 401, body: UNAUTHORIZED_BODY });
+
+    await expect(apiGet('/x', okSchema)).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+
+  it('GET: ۴۰۱ → تمدید موفق → همان درخواست بی‌صدا دوباره امتحان می‌شود', async () => {
+    useSessionStore.setState({ session: SESSION_A });
+    const spy = mockFetchWith((path, _init, index) => {
+      if (path.includes('/auth/refresh')) return { body: SESSION_B_WIRE };
+      if (index === 0) return { status: 401, body: UNAUTHORIZED_BODY };
+      return { body: { value: 'ok' } };
+    });
+
+    const result = await apiGet('/x', okSchema);
+
+    expect(result).toEqual({ value: 'ok' });
+    expect(spy).toHaveBeenCalledTimes(3); // اول /x، بعد /auth/refresh، بعد دوباره /x
+    expect(useSessionStore.getState().session?.accessToken).toBe('access-b');
+    // تلاش دوم باید توکن تازه را حمل کند، نه توکن منقضی‌شده‌ی اول را
+    expect(sentHeaders(spy, 2)['Authorization']).toBe('Bearer access-b');
+  });
+
+  it('نوشتن: ۴۰۱ → تمدید موفق → دوباره ارسال خودکار نمی‌شود، RETRY_AFTER_REFRESH می‌دهد', async () => {
+    useSessionStore.setState({ session: SESSION_A });
+    const spy = mockFetchWith((path, _init, index) => {
+      if (path.includes('/auth/refresh')) return { body: SESSION_B_WIRE };
+      if (index === 0) return { status: 401, body: UNAUTHORIZED_BODY };
+      throw new Error('نباید دوباره /invoices صدا زده شود');
+    });
+
+    await expect(apiPost('/invoices', { a: 1 }, okSchema)).rejects.toMatchObject({
+      code: 'RETRY_AFTER_REFRESH',
+    });
+
+    expect(spy).toHaveBeenCalledTimes(2); // فقط /invoices اول و /auth/refresh — نه یک بار دیگر /invoices
+    // نشست معتبر است، نه پاک‌شده — کاربر هنوز واردشده، فقط باید دوباره ثبت کند
+    expect(useSessionStore.getState().session?.accessToken).toBe('access-b');
+  });
+
+  it('تمدید هم رد شود: همان ۴۰۱ اصلی پرتاب و نشست پاک می‌شود', async () => {
+    useSessionStore.setState({ session: SESSION_A });
+    mockFetchWith((path, _init, index) => {
+      if (path.includes('/auth/refresh')) {
+        return { status: 401, body: { error: { code: 'UNAUTHORIZED', message: 'نشست معتبر نیست یا منقضی شده است', fields: {}, requestId: 'req-refresh' } } };
+      }
+      if (index === 0) return { status: 401, body: UNAUTHORIZED_BODY };
+      throw new Error('نباید دوباره تلاش شود');
+    });
+
+    await expect(apiGet('/x', okSchema)).rejects.toMatchObject({ requestId: 'req-401' });
+    expect(useSessionStore.getState().session).toBeNull();
+  });
+
+  it('تلاش دوم بعد از تمدید هم ۴۰۱ بگیرد: بدون حلقه، همان ۴۰۱ پرتاب و نشست پاک می‌شود', async () => {
+    useSessionStore.setState({ session: SESSION_A });
+    const spy = mockFetchWith((path) => {
+      if (path.includes('/auth/refresh')) return { body: SESSION_B_WIRE };
+      return { status: 401, body: UNAUTHORIZED_BODY }; // /x همیشه ۴۰۱ می‌دهد، حتی بعد از تمدید
+    });
+
+    await expect(apiGet('/x', okSchema)).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+
+    expect(spy).toHaveBeenCalledTimes(3); // /x، /auth/refresh، دوباره /x — نه یک تمدید دوم
+    expect(useSessionStore.getState().session).toBeNull();
+  });
+
+  it('دو درخواست هم‌زمان با ۴۰۱، فقط یک تمدید می‌سازند — چرخش توکن اجازه‌ی دو تمدید هم‌زمان نمی‌دهد', async () => {
+    useSessionStore.setState({ session: SESSION_A });
+    let refreshCalls = 0;
+    let releaseRefresh: () => void = () => {};
+    const refreshGate = new Promise<void>((resolve) => {
+      releaseRefresh = resolve;
+    });
+    let xCalls = 0;
+
+    mockFetchWith(async (path) => {
+      if (path.includes('/auth/refresh')) {
+        refreshCalls += 1;
+        await refreshGate;
+        return { body: SESSION_B_WIRE };
+      }
+      xCalls += 1;
+      if (xCalls <= 2) return { status: 401, body: UNAUTHORIZED_BODY };
+      return { body: { value: 'ok' } };
+    });
+
+    const p1 = apiGet('/x', okSchema);
+    const p2 = apiGet('/x', okSchema);
+
+    // به هر دو زنجیره فرصت بده تا هر دو ۴۰۱ بگیرند و به مسیر تمدید برسند
+    for (let i = 0; i < 5; i += 1) await new Promise((resolve) => setTimeout(resolve, 0));
+
+    releaseRefresh();
+    const [r1, r2] = await Promise.all([p1, p2]);
+
+    expect(refreshCalls).toBe(1);
+    expect(r1).toEqual({ value: 'ok' });
+    expect(r2).toEqual({ value: 'ok' });
+  });
+});
+
+describe('پاسخ ۲۰۴ بدون بدنه — FE-027', () => {
+  it('سعی نمی‌کند بدنه‌ی خالی را JSON.parse کند', async () => {
+    useSessionStore.setState({ session: SESSION_A });
+    // برخلاف mockFetch عمومی: بدنه واقعاً خالی — Response با ۲۰۴ اجازه‌ی بدنه ندارد
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(null, { status: 204 })),
+    );
+
+    await expect(apiPostRaw('/auth/logout', {}, z.undefined())).resolves.toBeUndefined();
+  });
+});
+
+describe('apiPostRaw — بدون تمدید خودکار (FE-027)', () => {
+  it('روی ۴۰۱ تلاش برای تمدید نمی‌کند — برای جلوگیری از حلقه‌ی تمدیدِ تمدید', async () => {
+    useSessionStore.setState({ session: SESSION_A });
+    const spy = mockFetch({ status: 401, body: UNAUTHORIZED_BODY });
+
+    await expect(apiPostRaw('/auth/refresh', {}, okSchema)).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
+    });
+    expect(spy).toHaveBeenCalledTimes(1);
   });
 });
 

@@ -10,6 +10,7 @@ import { ApiError, NetworkError } from './api-error';
 export type ApiErrorKind =
   | 'validation'
   | 'conflict'
+  | 'retry-after-refresh'
   | 'session-expired'
   | 'forbidden'
   | 'network'
@@ -74,6 +75,22 @@ export function presentApiError(error: unknown): ApiErrorPresentation {
       'unknown',
       'انجام عملیات ممکن نشد',
       'مشکلی غیرمنتظره رخ داد. لطفاً دوباره تلاش کنید.',
+    );
+  }
+
+  /*
+   * سنتزشده در client.ts (FE-027)، نه از سرور — کد را قبل از هر بررسی
+   * status چک کن تا با ۴۰۹ واقعی (conflict) قاطی نشود. نشست معتبر است؛
+   * فقط همان نوشتن مالی خودکار دوباره ارسال نشده، پس پیام «نشست منقضی
+   * شده» اینجا گمراه‌کننده است — کاربر هنوز وارد است.
+   */
+  if (error.code === 'RETRY_AFTER_REFRESH') {
+    return presentation(
+      'retry-after-refresh',
+      'لازم است دوباره ثبت کنید',
+      'نشست شما تازه شد. برای اطمینان، دوباره دکمه‌ی ثبت را بزنید.',
+      EMPTY_FIELDS,
+      error.requestId,
     );
   }
 

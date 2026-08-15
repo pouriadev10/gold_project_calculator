@@ -10,9 +10,12 @@ import { uuidSchema } from '@gold/contracts';
 import { AppNav } from '@/components/common/AppNav';
 import { FullPageLoading } from '@/components/common/FullPageLoading';
 import { NotFoundPage } from '@/components/common/NotFoundPage';
+import { LoginPage } from '@/features/auth/LoginPage';
 import { HomePage } from '@/features/home/HomePage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
+import { useSessionGuard } from '@/hooks/useSessionGuard';
 import { useTheme } from '@/hooks/useTheme';
+import { useUnit } from '@/hooks/useUnit';
 
 /**
  * ریشه‌ی بدون پوسته — فقط `<Outlet />`. مسیرهایی که نباید ناوبری برنامه
@@ -27,6 +30,10 @@ const rootRoute = createRootRoute({
 function AppShell() {
   // پوسته یک بار در ریشه اعمال و با تنظیم سیستم همگام می‌شود
   useTheme();
+  // واحد نمایش (طلا/ریال) را بین تب‌های باز همگام نگه می‌دارد — FE-023
+  useUnit();
+  // مرگ نشست (تمدید ناموفق، خروج، خروج در تب دیگر) را می‌بیند و به ورود می‌فرستد — FE-027
+  useSessionGuard();
 
   return (
     <div className="lg:flex lg:h-dvh lg:items-stretch lg:overflow-hidden">
@@ -53,10 +60,17 @@ const appShellRoute = createRoute({
 
 // ---- مسیر بدون پوسته ----
 
+/**
+ * دلیل رسیدن به صفحه‌ی ورود — رشته، نه boolean، چون رفت‌وبرگشت رشته در
+ * query string بدون ابهام است. FE-027 وقتی تمدید نشست شکست بخورد، کاربر
+ * را به همین مسیر با `reason=expired` هدایت می‌کند.
+ */
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
-  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'LoginPlaceholder'),
+  validateSearch: (search: Record<string, unknown>): { reason?: 'expired' } =>
+    search['reason'] === 'expired' ? { reason: 'expired' } : {},
+  component: LoginPage,
 });
 
 // ---- مسیرهای زیر پوسته‌ی برنامه ----
