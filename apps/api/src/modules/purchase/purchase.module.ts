@@ -7,6 +7,8 @@ import { InventoryModule } from '../inventory/inventory.module';
 import { LedgerModule } from '../ledger/ledger.module';
 import { PartiesModule } from '../parties/parties.module';
 import { PricingModule } from '../pricing/pricing.module';
+import { B2cBuybacksController } from './b2c-buybacks.controller';
+import { B2cBuybacksService } from './b2c-buybacks.service';
 import { SecondHandCoinPurchasesController } from './second-hand-coin-purchases.controller';
 import { SecondHandCoinPurchasesService } from './second-hand-coin-purchases.service';
 import { SecondHandGoldPurchasesController } from './second-hand-gold-purchases.controller';
@@ -29,8 +31,12 @@ import { SecondHandGoldPurchasesService } from './second-hand-gold-purchases.ser
     PricingModule,
     UsersModule,
   ],
-  controllers: [SecondHandGoldPurchasesController, SecondHandCoinPurchasesController],
-  providers: [SecondHandGoldPurchasesService, SecondHandCoinPurchasesService],
-  exports: [SecondHandGoldPurchasesService, SecondHandCoinPurchasesService],
+  controllers: [
+    B2cBuybacksController,
+    SecondHandGoldPurchasesController,
+    SecondHandCoinPurchasesController,
+  ],
+  providers: [B2cBuybacksService, SecondHandGoldPurchasesService, SecondHandCoinPurchasesService],
+  exports: [B2cBuybacksService, SecondHandGoldPurchasesService, SecondHandCoinPurchasesService],
 })
 export class PurchaseModule {}
