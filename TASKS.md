@@ -1762,7 +1762,7 @@ POST /parties/:partyId/settlements/mixed
 
 # Milestone 10 — خرید از مصرف‌کننده
 
-## [ ] BE-049 — مدل خرید طلای دست‌دوم
+## [x] BE-049 — مدل خرید طلای دست‌دوم
 
 **جدول‌ها**
 
