@@ -1943,7 +1943,7 @@ POST /sales/invoices/:id/amend
 
 ---
 
-## [ ] BE-055 — تاریخچه اصلاحات
+## [x] BE-055 — تاریخچه اصلاحات
 
 **endpointها**
 

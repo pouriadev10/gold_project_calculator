@@ -12,6 +12,8 @@ import { CoinSalesService } from './coin-sales.service';
 import { DocumentCountersService } from './document-counters.service';
 import { InvoiceAmendmentsController } from './invoice-amendments.controller';
 import { InvoiceAmendmentsService } from './invoice-amendments.service';
+import { InvoiceHistoryController } from './invoice-history.controller';
+import { InvoiceHistoryService } from './invoice-history.service';
 import { JewelryCashSalesController } from './jewelry-cash-sales.controller';
 import { JewelryCashSalesService } from './jewelry-cash-sales.service';
 import { JewelryCreditSalesController } from './jewelry-credit-sales.controller';
@@ -42,6 +44,7 @@ import { SalesPricingService } from './sales-pricing.service';
   controllers: [
     CoinSalesController,
     InvoiceAmendmentsController,
+    InvoiceHistoryController,
     JewelryCashSalesController,
     JewelryCreditSalesController,
   ],
@@ -51,6 +54,7 @@ import { SalesPricingService } from './sales-pricing.service';
     JewelryCashSalesService,
     JewelryCreditSalesService,
     InvoiceAmendmentsService,
+    InvoiceHistoryService,
     InvoiceAmendmentPolicyService,
     SalesInvoicesService,
     SalesPricingService,
@@ -61,6 +65,7 @@ import { SalesPricingService } from './sales-pricing.service';
     JewelryCashSalesService,
     JewelryCreditSalesService,
     InvoiceAmendmentsService,
+    InvoiceHistoryService,
     InvoiceAmendmentPolicyService,
     SalesInvoicesService,
     SalesPricingService,

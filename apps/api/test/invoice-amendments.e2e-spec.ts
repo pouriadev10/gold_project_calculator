@@ -10,6 +10,8 @@ import { JewelryItemsService } from '../src/modules/inventory/jewelry-items.serv
 import { PartiesService } from '../src/modules/parties/parties.service';
 import { PriceQuotesService } from '../src/modules/pricing/price-quotes.service';
 import { InvoiceAmendmentsService } from '../src/modules/sales/invoice-amendments.service';
+import { InvoiceHistoryService } from '../src/modules/sales/invoice-history.service';
+import { SalesInvoiceNotFoundError } from '../src/modules/sales/sales-invoices.errors';
 import { JewelryCreditSalesService } from '../src/modules/sales/jewelry-credit-sales.service';
 import { DRIZZLE } from '../src/platform/database/database.module';
 import {
@@ -33,6 +35,7 @@ describe('sales invoice amendments (BE-054)', () => {
   let app: INestApplicationContext;
   let db: Database;
   let amendments: InvoiceAmendmentsService;
+  let history: InvoiceHistoryService;
   let creditSales: JewelryCreditSalesService;
   let movements: InventoryMovementsService;
   let actorUserId = '';
@@ -52,6 +55,7 @@ describe('sales invoice amendments (BE-054)', () => {
     app = await moduleRef.init();
     db = app.get<Database>(DRIZZLE);
     amendments = app.get(InvoiceAmendmentsService);
+    history = app.get(InvoiceHistoryService);
     creditSales = app.get(JewelryCreditSalesService);
     movements = app.get(InventoryMovementsService);
     const tenantService = app.get(TenantService);
@@ -354,5 +358,54 @@ describe('sales invoice amendments (BE-054)', () => {
     }));
     expect(after).toEqual(before);
     expect(await movements.balance(tenant.id, 'JEWELRY', unstockedItemId)).toBe(0n);
+  });
+
+  it('reads immutable version and amendment history with tenant-scoped ledger and inventory effects', async () => {
+    const versions = await history.getVersions(tenant.id, invoiceId);
+    const amendmentsHistory = await history.getAmendments(tenant.id, invoiceId);
+
+    expect(versions).toMatchObject({ invoiceId, invoiceNumber: 1 });
+    expect(versions.versions).toHaveLength(2);
+    expect(versions.versions[0]).toMatchObject({
+      version: 1,
+      reason: null,
+      pureWeightMg: '7500',
+      karat: 750,
+      payableRial: expect.any(String),
+    });
+    expect(versions.versions[1]).toMatchObject({
+      version: 2,
+      reason: 'PARTY_ERROR',
+      pureWeightMg: '6000',
+      karat: 750,
+      actor: { id: actorUserId },
+    });
+    expect(versions.versions[1]?.ledgerEffects).toEqual([
+      expect.objectContaining({ entries: expect.any(Array) }),
+    ]);
+    expect(versions.versions[1]?.inventoryEffects).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ itemId: originalItemId, quantity: '1' }),
+        expect.objectContaining({ itemId: correctedItemId, quantity: '-1' }),
+      ]),
+    );
+    expect(amendmentsHistory.amendments).toEqual([
+      expect.objectContaining({
+        version: 2,
+        reason: 'PARTY_ERROR',
+        changes: expect.objectContaining({
+          pureWeightMg: { before: '7500', after: '6000', delta: '-1500' },
+        }),
+      }),
+    ]);
+
+    const foreignTenant = await app.get(TenantService).create({
+      name: 'Foreign invoice history tenant',
+      slug: `invoice-history-${randomUUID().slice(0, 12)}`,
+    });
+    await expect(history.getVersions(foreignTenant.id, invoiceId)).rejects.toThrow(
+      SalesInvoiceNotFoundError,
+    );
+    await db.delete(tenants).where(eq(tenants.id, foreignTenant.id));
   });
 });

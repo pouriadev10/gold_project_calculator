@@ -5,3 +5,4 @@ export * from './jewelry-cash-sales.js';
 export * from './jewelry-credit-sales.js';
 export * from './coin-sales.js';
 export * from './invoice-amendments.js';
+export * from './invoice-history.js';
