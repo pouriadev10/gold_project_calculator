@@ -7,6 +7,8 @@ import { LedgerModule } from '../ledger/ledger.module';
 import { PartiesModule } from '../parties/parties.module';
 import { PricingModule } from '../pricing/pricing.module';
 import { InventoryModule } from '../inventory/inventory.module';
+import { CoinSettlementsController } from './coin-settlements.controller';
+import { CoinSettlementsService } from './coin-settlements.service';
 import { GoldSettlementsController } from './gold-settlements.controller';
 import { GoldSettlementsService } from './gold-settlements.service';
 import { RialSettlementsController } from './rial-settlements.controller';
@@ -30,8 +32,18 @@ import { SettlementsService } from './settlements.service';
     PricingModule,
     UsersModule,
   ],
-  controllers: [GoldSettlementsController, RialSettlementsController],
-  providers: [GoldSettlementsService, RialSettlementsService, SettlementsService],
-  exports: [GoldSettlementsService, RialSettlementsService, SettlementsService],
+  controllers: [CoinSettlementsController, GoldSettlementsController, RialSettlementsController],
+  providers: [
+    CoinSettlementsService,
+    GoldSettlementsService,
+    RialSettlementsService,
+    SettlementsService,
+  ],
+  exports: [
+    CoinSettlementsService,
+    GoldSettlementsService,
+    RialSettlementsService,
+    SettlementsService,
+  ],
 })
 export class SettlementModule {}
