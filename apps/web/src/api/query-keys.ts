@@ -1,4 +1,4 @@
-import type { ProfitPeriod } from './contracts';
+import type { PriceQuoteType, ProfitPeriod } from './contracts';
 
 /**
  * کارخانه‌ی کلید Query — تنها منبع ساخت `queryKey` در کل فرانت.
@@ -19,9 +19,10 @@ import type { ProfitPeriod } from './contracts';
  * خرید و بقیه هروقت hookشان ساخته شد، همین‌جا اضافه می‌شود.
  */
 export const queryKeys = {
-  rates: {
-    all: () => ['rates'] as const,
-    current: () => [...queryKeys.rates.all(), 'current'] as const,
+  pricing: {
+    all: () => ['pricing'] as const,
+    latestQuote: (quoteType: PriceQuoteType) =>
+      [...queryKeys.pricing.all(), 'latest', quoteType] as const,
   },
 
   parties: {

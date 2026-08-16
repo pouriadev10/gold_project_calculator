@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { bigIntStringSchema, isoDateTimeSchema } from '@gold/contracts';
+import {
+  bigIntStringSchema,
+  isoDateTimeSchema,
+  priceQuoteAmountRialSchema,
+  priceQuoteSchema as sharedPriceQuoteSchema,
+} from '@gold/contracts';
 
 /**
  * قرارداد API — لایه‌ی مصرف در فرانت.
@@ -34,10 +39,13 @@ export {
   sessionResponseSchema,
   refreshSchema,
   roleCodeSchema,
+  priceQuoteTypeSchema,
+  priceQuoteSourceSchema,
   type LoginInput,
   type SessionResponse,
   type RefreshInput,
   type RoleCode,
+  type PriceQuoteType,
 } from '@gold/contracts';
 
 /* ══════════════ View model محلی — بدون endpoint واقعی هنوز ══════════════ */
@@ -70,37 +78,23 @@ export const dualAmountSchema = z.object({
 });
 export type DualAmountDto = z.infer<typeof dualAmountSchema>;
 
-/* ── GET /api/rates/current ────────────────────────────────── */
+/* ── GET /api/pricing/quotes/latest — FE-029/BE-021 ──────────── */
 
 /**
- * بدون معادل بک‌اندی هنوز. `@gold/contracts` فقط رکورد خام مظنه را دارد
- * (`priceQuoteSchema` — یک مقدار مثقال، نه نرخ محاسبه‌شده‌ی هر عیار).
- * وقتی FE-029 به BE-021 وصل شود، یا این endpoint نرخ هر عیار را خودش با
- * `gramRate` از `core-calc` روی یک priceQuote خام می‌سازد، یا بک‌اند یک
- * endpoint تجمیعی مشابه همین اضافه می‌کند.
+ * آینه‌ی `priceQuoteSchema` واقعی (`@gold/contracts`)، فقط با
+ * `amountRial` به `bigint` تبدیل‌شده — قرارداد پایه از بک‌اند می‌آید و
+ * اینجا دوباره تعریف نمی‌شود، فقط برای مصرف در `core-calc`/JSX یک قدم
+ * تبدیل اضافه می‌شود، دقیقاً مثل بقیه‌ی مقادیر پولی این فایل.
+ *
+ * فقط **رکورد خام مظنه** است — نرخ هر عیار (گرم ۷۵۰ و ...) اینجا محاسبه
+ * نمی‌شود؛ آن حساب سمت مصرف‌کننده با `gramRate` از `core-calc` انجام
+ * می‌شود (`useMazneh.ts`)، چون مبنای تبدیل ثابت است و نیازی به رفت‌وبرگشت
+ * با سرور ندارد.
  */
-export const gramRateSchema = z.object({
-  karat: karatNumber,
-  rateRial: bigintString,
+export const priceQuoteSchema = sharedPriceQuoteSchema.extend({
+  amountRial: priceQuoteAmountRialSchema.transform((value) => BigInt(value)),
 });
-
-export const coinRateSchema = z.object({
-  id: z.string(),
-  label: z.string(),
-  grossMg: bigintString,
-  karat: karatNumber,
-  marketPriceRial: bigintString,
-});
-
-export const currentRatesSchema = z.object({
-  /** مظنه‌ی مثقال طلای آبشده */
-  maznehRial: bigintString,
-  /** زمان دریافت — همیشه نمایش داده می‌شود، هرگز وانمود نکن به‌روز است */
-  fetchedAt: isoDateTimeSchema,
-  gramRates: z.array(gramRateSchema),
-  coins: z.array(coinRateSchema),
-});
-export type CurrentRates = z.infer<typeof currentRatesSchema>;
+export type PriceQuote = z.infer<typeof priceQuoteSchema>;
 
 /* ── GET /api/parties/balance-summary ──────────────────────── */
 

@@ -6,8 +6,6 @@ import {
   FETCHED_AT,
   articlePriceRial,
   balanceSummary,
-  coins,
-  gramRates,
   itemRecords,
   partyRecords,
   profitMonth,
@@ -156,13 +154,25 @@ export const handlers = [
     return new HttpResponse(null, { status: 204 });
   }),
 
-  http.get('/api/rates/current', async () => {
+  /**
+   * `GET /pricing/quotes/latest` — قرارداد نهایی BE-021، دقیقاً همان
+   * `priceQuoteSchema` واقعی. `FETCHED_AT` عمداً قدیمی مانده (بخش بالای
+   * fixtures.ts) تا حالت «قدیمی» ویجت مظنه بدون کار اضافه قابل‌آزمون بماند.
+   */
+  http.get('/api/pricing/quotes/latest', async ({ request }) => {
     await delay(READ_DELAY_MS);
+    const quoteType = new URL(request.url).searchParams.get('quoteType');
+    if (quoteType !== 'MAZNEH') return HttpResponse.json(null);
+
     return HttpResponse.json({
-      maznehRial: MAZNEH_RIAL.toString(),
-      fetchedAt: FETCHED_AT.toISOString(),
-      gramRates,
-      coins,
+      // priceQuoteSchema واقعی id/createdBy را با uuidSchema اعتبارسنجی می‌کند — رشته‌ی دلخواه رد می‌شود
+      id: 'c1000000-0000-4000-8000-000000000001',
+      quoteType: 'MAZNEH',
+      amountRial: MAZNEH_RIAL.toString(),
+      source: 'MANUAL',
+      observedAt: FETCHED_AT.toISOString(),
+      createdBy: 'c1000000-0000-4000-8000-000000000002',
+      createdAt: FETCHED_AT.toISOString(),
     });
   }),
 

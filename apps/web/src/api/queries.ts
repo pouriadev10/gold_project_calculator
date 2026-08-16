@@ -1,12 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiGet } from './client';
 import {
-  currentRatesSchema,
   itemListSchema,
   partyBalanceSummarySchema,
   partyListSchema,
+  priceQuoteSchema,
   profitReportSchema,
   transactionListSchema,
+  type PriceQuoteType,
   type ProfitPeriod,
 } from './contracts';
 import { queryKeys } from './query-keys';
@@ -20,10 +21,16 @@ import { queryKeys } from './query-keys';
 
 const MINUTE = 60_000;
 
-export function useCurrentRates() {
+/**
+ * آخرین مظنه‌ی ثبت‌شده — `GET /pricing/quotes/latest` (BE-021).
+ * پاسخ `null` است اگر هیچ مظنه‌ای هنوز برای این مستأجر ثبت نشده — حالت
+ * «خالی»، نه خطا. `nullable()` همین را در قرارداد صریح می‌کند.
+ */
+export function useLatestPriceQuote(quoteType: PriceQuoteType = 'MAZNEH') {
   return useQuery({
-    queryKey: queryKeys.rates.current(),
-    queryFn: ({ signal }) => apiGet('/rates/current', currentRatesSchema, signal),
+    queryKey: queryKeys.pricing.latestQuote(quoteType),
+    queryFn: ({ signal }) =>
+      apiGet(`/pricing/quotes/latest?quoteType=${quoteType}`, priceQuoteSchema.nullable(), signal),
     staleTime: MINUTE,
   });
 }

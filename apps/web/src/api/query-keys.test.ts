@@ -3,7 +3,11 @@ import { queryKeys } from './query-keys';
 
 describe('queryKeys', () => {
   it('کلید هر query دقیقاً از all() همان بخش شروع می‌شود', () => {
-    expect(queryKeys.rates.current()).toEqual([...queryKeys.rates.all(), 'current']);
+    expect(queryKeys.pricing.latestQuote('MAZNEH')).toEqual([
+      ...queryKeys.pricing.all(),
+      'latest',
+      'MAZNEH',
+    ]);
     expect(queryKeys.parties.balanceSummary()).toEqual([
       ...queryKeys.parties.all(),
       'balance-summary',
@@ -25,7 +29,7 @@ describe('queryKeys', () => {
   });
 
   it('all() هر بخش کوتاه‌ترین پیشوند مشترک همان بخش است', () => {
-    expect(queryKeys.rates.all()).toEqual(['rates']);
+    expect(queryKeys.pricing.all()).toEqual(['pricing']);
     expect(queryKeys.parties.all()).toEqual(['parties']);
     expect(queryKeys.items.all()).toEqual(['items']);
     expect(queryKeys.transactions.all()).toEqual(['transactions']);
