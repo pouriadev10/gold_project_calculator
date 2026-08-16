@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { addDual, dualFromPure, dualFromRial, negateDual, zeroDual } from '../src/dual.js';
+import {
+  addDual,
+  comparableGoldBalanceNumerator,
+  dualFromPure,
+  dualFromRial,
+  negateDual,
+  zeroDual,
+} from '../src/dual.js';
 import { gramRate1000 } from '../src/pricing.js';
 
 const RATE = gramRate1000(100_000_000n);
@@ -31,6 +38,14 @@ describe('dualFromPure', () => {
     const roundTrip = dualFromRial(fromGold.rial, RATE);
     const drift = roundTrip.pureMg - fromGold.pureMg;
     expect(drift >= -1n && drift <= 1n).toBe(true);
+  });
+});
+
+describe('comparableGoldBalanceNumerator', () => {
+  it('compares mixed positions exactly without introducing a display-rounding difference', () => {
+    expect(comparableGoldBalanceNumerator(1n, -10n, 10_000n)).toBe(0n);
+    expect(comparableGoldBalanceNumerator(1n, 10n, 10_000n)).toBe(20_000n);
+    expect(comparableGoldBalanceNumerator(-1n, -10n, 10_000n)).toBe(-20_000n);
   });
 });
 
