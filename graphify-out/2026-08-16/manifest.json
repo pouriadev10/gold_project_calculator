@@ -1665,14 +1665,14 @@
     "semantic_hash": "f0918d28c8b297bd1e16403c91156161"
   },
   "apps/web/src/api/contracts.ts": {
-    "mtime": 1786822703.9944544,
-    "ast_hash": "7ab8d8bde3004243b4e140f1a10de7e4",
+    "mtime": 1786799366.2820492,
+    "ast_hash": "3656c8799d809729a7f8bac6a217f4b5",
     "semantic_hash": ""
   },
   "apps/web/src/api/queries.ts": {
-    "mtime": 1786822765.357066,
-    "ast_hash": "4f105227f7477bc6c546cebddfb62146",
-    "semantic_hash": ""
+    "mtime": 1786561105.0532348,
+    "ast_hash": "a36737d0b2e789c9616dd932b34f60f9",
+    "semantic_hash": "a36737d0b2e789c9616dd932b34f60f9"
   },
   "apps/web/src/api/query-client.test.ts": {
     "mtime": 1786561105.054232,
@@ -1685,14 +1685,14 @@
     "semantic_hash": "64d47274e2c4dcf4dd6ddd1e939b3786"
   },
   "apps/web/src/api/query-keys.test.ts": {
-    "mtime": 1786822736.018031,
-    "ast_hash": "a978d5c9685a9a99b6e0330c7afb6677",
-    "semantic_hash": ""
+    "mtime": 1786561105.0562313,
+    "ast_hash": "3775cf60f6f8ec4c32aae1837e556681",
+    "semantic_hash": "3775cf60f6f8ec4c32aae1837e556681"
   },
   "apps/web/src/api/query-keys.ts": {
-    "mtime": 1786822716.7381742,
-    "ast_hash": "6fe743cc3fa16194502d2b33d40d587e",
-    "semantic_hash": ""
+    "mtime": 1786561105.0572326,
+    "ast_hash": "5c7497d2a1c0adaa884f02f4c9460b63",
+    "semantic_hash": "5c7497d2a1c0adaa884f02f4c9460b63"
   },
   "apps/web/src/app/router.tsx": {
     "mtime": 1786800351.7217863,
@@ -1830,9 +1830,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/home/MaznehBar.tsx": {
-    "mtime": 1786822892.9921176,
-    "ast_hash": "0e0fd92175eaa6a247c3e251d773f8c5",
-    "semantic_hash": ""
+    "mtime": 1785500611.6211743,
+    "ast_hash": "119a5c92838efe010694bad25b84574f",
+    "semantic_hash": "119a5c92838efe010694bad25b84574f"
   },
   "apps/web/src/features/home/ProfitCard.tsx": {
     "mtime": 1786707307.124954,
@@ -1845,9 +1845,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/home/useMazneh.ts": {
-    "mtime": 1786822821.0735538,
-    "ast_hash": "6dceec45c96dc75611454ea720fc88d5",
-    "semantic_hash": ""
+    "mtime": 1785500611.7550416,
+    "ast_hash": "c3fdd66fc637a565055e2625c4645a13",
+    "semantic_hash": "c3fdd66fc637a565055e2625c4645a13"
   },
   "apps/web/src/features/settings/SettingsPage.tsx": {
     "mtime": 1786737508.0244584,
@@ -1905,8 +1905,8 @@
     "semantic_hash": "901fa9abd92a59c2e7b94bb66081e539"
   },
   "apps/web/src/mocks/handlers/index.ts": {
-    "mtime": 1786823676.8137257,
-    "ast_hash": "ba1f10472406ea03d652ac2bbcb9fdd0",
+    "mtime": 1786800052.4183965,
+    "ast_hash": "cb2e00e8f5b1d83b1e0fd51c1a1814df",
     "semantic_hash": ""
   },
   "apps/web/src/stores/theme-store.ts": {
@@ -2900,8 +2900,8 @@
     "semantic_hash": "57f3eade61064fcaf09a18164aacb4bc"
   },
   "FrontTasks.md": {
-    "mtime": 1786866103.363305,
-    "ast_hash": "bf8faafb780d971c4903d8d22d2087e2",
+    "mtime": 1786821891.58987,
+    "ast_hash": "63860d5f07ea6f834448387cfff41c61",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
@@ -3385,18 +3385,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/lib/permissions.ts": {
-    "mtime": 1786822830.8518512,
-    "ast_hash": "f78237e95c0b69191cb33f86dbb3a624",
-    "semantic_hash": ""
-  },
-  "apps/web/src/features/home/MaznehBar.test.tsx": {
-    "mtime": 1786823437.2696738,
-    "ast_hash": "0389884aadd6a0560c79ad4974ad01ce",
-    "semantic_hash": ""
-  },
-  "apps/web/src/features/home/useMazneh.test.tsx": {
-    "mtime": 1786823377.6667879,
-    "ast_hash": "460df5b2a82860f31e903dfc51191fb3",
+    "mtime": 1786799398.1989925,
+    "ast_hash": "686505d1a737f271686478e83082c879",
     "semantic_hash": ""
   }
 }
