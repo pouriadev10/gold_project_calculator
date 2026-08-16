@@ -2091,7 +2091,7 @@ GET /reporting/profit
 
 # Milestone 13 — رسید و Export
 
-## [ ] BE-061 — InvoiceExporter abstraction
+## [x] BE-061 — InvoiceExporter abstraction
 
 **هدف** — ایجاد abstraction موردنیاز برای خروجی اسناد.
 

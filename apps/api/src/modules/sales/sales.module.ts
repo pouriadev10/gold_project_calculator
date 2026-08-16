@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuditModule } from '../../platform/audit/audit.module';
 import { AuthModule } from '../../platform/auth/auth.module';
+import { FilesModule } from '../../platform/files/files.module';
 import { IdempotencyModule } from '../../platform/idempotency/idempotency.module';
 import { UsersModule } from '../../platform/users/users.module';
 import { InventoryModule } from '../inventory/inventory.module';
@@ -34,6 +35,7 @@ import { SalesPricingService } from './sales-pricing.service';
   imports: [
     AuditModule,
     AuthModule,
+    FilesModule,
     IdempotencyModule,
     InventoryModule,
     LedgerModule,
