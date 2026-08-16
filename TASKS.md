@@ -1991,7 +1991,7 @@ GET /parties/:id/balances
 
 ---
 
-## [ ] BE-057 — صورت‌حساب Party
+## [x] BE-057 — صورت‌حساب Party
 
 **endpoint**
 

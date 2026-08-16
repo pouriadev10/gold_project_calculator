@@ -6,6 +6,7 @@ import { UsersModule } from '../../platform/users/users.module';
 import { LedgerModule } from '../ledger/ledger.module';
 import { PricingModule } from '../pricing/pricing.module';
 import { PartyBalancesService } from './party-balances.service';
+import { PartyStatementsService } from './party-statements.service';
 import { PartiesController } from './parties.controller';
 import { PartiesService } from './parties.service';
 
@@ -17,7 +18,7 @@ import { PartiesService } from './parties.service';
 @Module({
   imports: [AuditModule, AuthModule, IdempotencyModule, LedgerModule, PricingModule, UsersModule],
   controllers: [PartiesController],
-  providers: [PartiesService, PartyBalancesService],
-  exports: [PartiesService, PartyBalancesService],
+  providers: [PartiesService, PartyBalancesService, PartyStatementsService],
+  exports: [PartiesService, PartyBalancesService, PartyStatementsService],
 })
 export class PartiesModule {}
