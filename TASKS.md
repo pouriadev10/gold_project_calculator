@@ -1965,7 +1965,7 @@ GET /sales/invoices/:id/amendments
 
 # Milestone 12 — حساب اشخاص و گزارش‌های پایه
 
-## [ ] BE-056 — مانده چندواحدی Party
+## [x] BE-056 — مانده چندواحدی Party
 
 **endpoint**
 

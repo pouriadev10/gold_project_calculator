@@ -1,5 +1,11 @@
 import { z } from 'zod';
-import { paginatedSchema, paginationQuerySchema, uuidSchema } from '../common/index.js';
+import {
+  bigIntStringSchema,
+  isoDateTimeSchema,
+  paginatedSchema,
+  paginationQuerySchema,
+  uuidSchema,
+} from '../common/index.js';
 
 /** Classifications supported for phase-1 counterparties. */
 export const partyTypeSchema = z.enum(['CONSUMER', 'BUSINESS']);
@@ -62,8 +68,56 @@ export const partySchema = z.object({
 
 export const partyListSchema = paginatedSchema(partySchema);
 
+/** Optional historical cut-off and mazneh used only for the separate display projection. */
+export const partyBalancesQuerySchema = z
+  .object({
+    at: isoDateTimeSchema.optional(),
+    referenceQuoteId: uuidSchema.optional(),
+  })
+  .strict();
+
+const partyCoinBalanceSchema = z.object({
+  coinTypeId: uuidSchema,
+  code: z.string().min(1),
+  count: z.number().int(),
+});
+
+const partyRawBalancesSchema = z.object({
+  rial: bigIntStringSchema,
+  pureGoldMg: bigIntStringSchema,
+  coins: z.array(partyCoinBalanceSchema),
+});
+
+const partyGoldDisplaySchema = z.object({
+  displayUnit: z.literal('GOLD'),
+  referenceMazneh: z.object({
+    id: uuidSchema,
+    amountRial: bigIntStringSchema,
+    observedAt: isoDateTimeSchema,
+    goldRatePerGramRial: bigIntStringSchema,
+  }),
+  rialEquivalentPureGoldMg: bigIntStringSchema,
+  totalGoldDisplayPureMg: bigIntStringSchema,
+  /** Coin positions intentionally stay in `rawBalances.coins`; mazneh alone cannot price their bubble. */
+  coinsRemainSeparate: z.literal(true),
+});
+
+/**
+ * Party subledger balance. `rawBalances` is the accounting truth; `convertedView`
+ * is optional presentation data and never changes or collapses a raw dimension.
+ */
+export const partyBalancesSchema = z.object({
+  partyId: uuidSchema,
+  calculatedAt: isoDateTimeSchema,
+  defaultDisplayUnit: z.literal('GOLD'),
+  rawBalances: partyRawBalancesSchema,
+  convertedView: partyGoldDisplaySchema.nullable(),
+});
+
 export type CreatePartyInput = z.infer<typeof createPartySchema>;
 export type UpdatePartyInput = z.infer<typeof updatePartySchema>;
 export type PartyListQuery = z.infer<typeof partyListQuerySchema>;
 export type Party = z.infer<typeof partySchema>;
 export type PartyList = z.infer<typeof partyListSchema>;
+export type PartyBalancesQuery = z.infer<typeof partyBalancesQuerySchema>;
+export type PartyBalances = z.infer<typeof partyBalancesSchema>;

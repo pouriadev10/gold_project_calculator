@@ -18,6 +18,7 @@ import {
 } from '@nestjs/common';
 import {
   createPartySchema,
+  partyBalancesQuerySchema,
   partyListQuerySchema,
   updatePartySchema,
   uuidSchema,
@@ -31,8 +32,12 @@ import { IDEMPOTENCY_KEY_HEADER } from '../../platform/idempotency/idempotency-k
 import { IdempotencyService } from '../../platform/idempotency/idempotency.service';
 import { RequestContextService } from '../../platform/request-context/request-context.service';
 import { PartiesService, PartyNotFoundError } from './parties.service';
+import { PartyBalancesService } from './party-balances.service';
+import { PartyBalanceReferenceQuoteNotFoundError } from './party-balances.errors';
 import type {
   CreatePartyInput,
+  PartyBalances as PartyBalancesResponse,
+  PartyBalancesQuery,
   Party as PartyResponse,
   PartyList as PartyListResponse,
   PartyListQuery,
@@ -78,6 +83,7 @@ export class PartiesController {
     @Inject(RequestContextService) private readonly context: RequestContextService,
     @Inject(IdempotencyService) private readonly idempotency: IdempotencyService,
     @Inject(PartiesService) private readonly parties: PartiesService,
+    @Inject(PartyBalancesService) private readonly balances: PartyBalancesService,
   ) {}
 
   @Post()
@@ -121,6 +127,27 @@ export class PartiesController {
     const page = await this.parties.list(this.context.getTenantId(), query);
 
     return { ...page, items: page.items.map(toResponse) };
+  }
+
+  @Get(':id/balances')
+  async getBalances(
+    @Param('id', new ZodValidationPipe(uuidSchema)) id: string,
+    @Query(new ZodValidationPipe(partyBalancesQuerySchema)) query: PartyBalancesQuery,
+  ): Promise<PartyBalancesResponse> {
+    try {
+      return await this.balances.getBalances(this.context.getTenantId(), id, {
+        at: query.at === undefined ? new Date() : new Date(query.at),
+        referenceQuoteId: query.referenceQuoteId,
+      });
+    } catch (error) {
+      if (
+        error instanceof PartyNotFoundError ||
+        error instanceof PartyBalanceReferenceQuoteNotFoundError
+      ) {
+        throw new NotFoundException(error.message);
+      }
+      throw error;
+    }
   }
 
   @Get(':id')
