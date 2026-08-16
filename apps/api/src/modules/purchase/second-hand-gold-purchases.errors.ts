@@ -5,6 +5,13 @@ export class SecondHandPurchasePartyNotFoundError extends Error {
   }
 }
 
+export class SecondHandPurchaseNotFoundError extends Error {
+  constructor(secondHandPurchaseId: string) {
+    super(`Second-hand purchase "${secondHandPurchaseId}" is not available to this tenant`);
+    this.name = 'SecondHandPurchaseNotFoundError';
+  }
+}
+
 export class SecondHandPurchasePartyNotConsumerError extends Error {
   constructor() {
     super('Second-hand purchases in phase 1 are limited to consumer parties');

@@ -71,6 +71,10 @@ describe('party statements (BE-057)', () => {
   let salesQuoteId = '';
   let settlementQuoteId = '';
   let displayQuoteId = '';
+  let salesInvoiceId = '';
+  let secondHandPurchaseId = '';
+  let foreignSalesInvoiceId = '';
+  let foreignSecondHandPurchaseId = '';
 
   async function makeMember(tenant: TenantFixture): Promise<Member> {
     const user = await users.create({
@@ -91,6 +95,16 @@ describe('party statements (BE-057)', () => {
 
   function headers(member: Member, tenant: TenantFixture): Record<string, string> {
     return { authorization: `Bearer ${member.token}`, 'x-tenant-id': tenant.id };
+  }
+
+  function renderedPdfText(body: string): string {
+    const cmap = Buffer.from(body, 'binary')
+      .toString('ascii')
+      .match(/begincidchar\n([\s\S]*?)\nendcidchar/);
+    if (cmap === null) return '';
+    return [...cmap[1]!.matchAll(/<[0-9A-F]{4}> <([0-9A-F]{4})>/g)]
+      .map((match) => String.fromCodePoint(Number.parseInt(match[1]!, 16)))
+      .join('');
   }
 
   beforeAll(async () => {
@@ -203,9 +217,17 @@ describe('party statements (BE-057)', () => {
     salesQuoteId = salesQuote.id;
     settlementQuoteId = settlementQuote.id;
     displayQuoteId = displayQuote.id;
+    const foreignQuote = await quotes.createManual({
+      tenantId: tenantB.id,
+      quoteType: 'MAZNEH',
+      amountRial: 80_000_000n,
+      createdBy: actorId,
+    });
 
-    const salesInvoiceId = randomUUID();
-    const secondHandPurchaseId = randomUUID();
+    salesInvoiceId = randomUUID();
+    secondHandPurchaseId = randomUUID();
+    foreignSalesInvoiceId = randomUUID();
+    foreignSecondHandPurchaseId = randomUUID();
     const settlementId = randomUUID();
     await withTenantTransaction(db, tenantA.id, async (transaction) => {
       await transaction.insert(salesInvoices).values({
@@ -344,6 +366,45 @@ describe('party statements (BE-057)', () => {
         { accountId: setup.cashAccountId, dimensionId: coinDimensionId, quantity: -3n },
       ],
     });
+    await withTenantTransaction(db, tenantB.id, async (transaction) => {
+      await transaction.insert(salesInvoices).values({
+        id: foreignSalesInvoiceId,
+        tenantId: tenantB.id,
+        invoiceNumber: 1,
+        currentVersion: 1,
+        status: 'FINALIZED',
+        partyId: partyBId,
+        quoteId: foreignQuote.id,
+        quoteAmountRial: foreignQuote.amountRial,
+        quoteObservedAt: foreignQuote.observedAt,
+        finalizedAt: SALES_AT,
+        createdBy: actorId,
+      });
+      await transaction.insert(salesInvoiceVersions).values({
+        tenantId: tenantB.id,
+        salesInvoiceId: foreignSalesInvoiceId,
+        version: 1,
+        partyId: partyBId,
+        totalsSnapshot: { payableRial: '80000000' },
+        settingsSnapshot: { goldRatePerGramRial: '246240880' },
+        createdBy: actorId,
+      });
+      await transaction.insert(secondHandPurchases).values({
+        id: foreignSecondHandPurchaseId,
+        tenantId: tenantB.id,
+        partyId: partyBId,
+        lockedQuoteId: foreignQuote.id,
+        lockedQuoteAmountRial: foreignQuote.amountRial,
+        lockedQuoteObservedAt: foreignQuote.observedAt,
+        settingsSnapshot: { purchaseKarat: '740', amountRial: '25000000' },
+        sellerIdentitySnapshot: {},
+        feeRial: 0n,
+        finalAmountRial: 25_000_000n,
+        effectiveAt: PURCHASE_AT,
+        finalizedAt: PURCHASE_AT,
+        createdBy: actorId,
+      });
+    });
   });
 
   afterAll(async () => {
@@ -394,6 +455,56 @@ describe('party statements (BE-057)', () => {
       id: displayQuoteId,
       amountRial: '200000000',
     });
+  });
+
+  it('exports tenant-scoped sales, purchase, and statement PDFs from locked source snapshots', async () => {
+    const [salesPdf, purchasePdf, statementPdf, foreignSalesPdf, foreignPurchasePdf, foreignStatement] =
+      await Promise.all([
+        adapter.getInstance().inject({
+          method: 'GET',
+          url: `/sales/invoices/${salesInvoiceId}/pdf`,
+          headers: headers(ownerA, tenantA),
+        }),
+        adapter.getInstance().inject({
+          method: 'GET',
+          url: `/purchase/second-hand/${secondHandPurchaseId}/pdf`,
+          headers: headers(ownerA, tenantA),
+        }),
+        adapter.getInstance().inject({
+          method: 'GET',
+          url: `/parties/${partyAId}/statement/pdf`,
+          headers: headers(ownerA, tenantA),
+        }),
+        adapter.getInstance().inject({
+          method: 'GET',
+          url: `/parties/${partyBId}/statement/pdf`,
+          headers: headers(ownerA, tenantA),
+        }),
+        adapter.getInstance().inject({
+          method: 'GET',
+          url: `/sales/invoices/${foreignSalesInvoiceId}/pdf`,
+          headers: headers(ownerA, tenantA),
+        }),
+        adapter.getInstance().inject({
+          method: 'GET',
+          url: `/purchase/second-hand/${foreignSecondHandPurchaseId}/pdf`,
+          headers: headers(ownerA, tenantA),
+        }),
+      ]);
+
+    for (const response of [salesPdf, purchasePdf, statementPdf]) {
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['content-type']).toContain('application/pdf');
+      expect(response.headers['content-disposition']).toContain('attachment;');
+      expect(Buffer.from(response.body, 'binary').subarray(0, 5).toString('ascii')).toBe('%PDF-');
+      expect(Buffer.from(response.body, 'binary').toString('ascii')).toContain('/ToUnicode');
+    }
+    expect(renderedPdfText(salesPdf.body)).toContain('307801100');
+    expect(renderedPdfText(purchasePdf.body)).toContain('۰۰۰٬۰۰۰٬۹۰');
+    expect(renderedPdfText(statementPdf.body)).toContain('100000000');
+    expect(foreignSalesPdf.statusCode).toBe(404);
+    expect(foreignPurchasePdf.statusCode).toBe(404);
+    expect(foreignStatement.statusCode).toBe(404);
   });
 
   it('computes balances before applying range, source, dimension, and pagination filters', async () => {

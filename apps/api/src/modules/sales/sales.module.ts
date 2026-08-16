@@ -21,6 +21,7 @@ import { JewelryCreditSalesController } from './jewelry-credit-sales.controller'
 import { JewelryCreditSalesService } from './jewelry-credit-sales.service';
 import { InvoiceAmendmentPolicyService } from './invoice-amendment-policy.service';
 import { SalesInvoicesService } from './sales-invoices.service';
+import { SalesInvoicePdfService } from './sales-invoice-pdf.service';
 import { SalesPricingService } from './sales-pricing.service';
 
 /**
@@ -59,6 +60,7 @@ import { SalesPricingService } from './sales-pricing.service';
     InvoiceHistoryService,
     InvoiceAmendmentPolicyService,
     SalesInvoicesService,
+    SalesInvoicePdfService,
     SalesPricingService,
   ],
   exports: [

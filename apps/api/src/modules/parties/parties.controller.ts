@@ -13,6 +13,7 @@ import {
   Post,
   Query,
   Req,
+  StreamableFile,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
@@ -36,6 +37,7 @@ import { PartiesService, PartyNotFoundError } from './parties.service';
 import { PartyBalancesService } from './party-balances.service';
 import { PartyBalanceReferenceQuoteNotFoundError } from './party-balances.errors';
 import { PartyStatementsService } from './party-statements.service';
+import { PartyStatementPdfService } from './party-statement-pdf.service';
 import type {
   CreatePartyInput,
   PartyBalances as PartyBalancesResponse,
@@ -89,6 +91,7 @@ export class PartiesController {
     @Inject(PartiesService) private readonly parties: PartiesService,
     @Inject(PartyBalancesService) private readonly balances: PartyBalancesService,
     @Inject(PartyStatementsService) private readonly statements: PartyStatementsService,
+    @Inject(PartyStatementPdfService) private readonly statementPdf: PartyStatementPdfService,
   ) {}
 
   @Post()
@@ -173,6 +176,22 @@ export class PartiesController {
       ) {
         throw new NotFoundException(error.message);
       }
+      throw error;
+    }
+  }
+
+  @Get(':id/statement/pdf')
+  async getStatementPdf(
+    @Param('id', new ZodValidationPipe(uuidSchema)) id: string,
+  ): Promise<StreamableFile> {
+    try {
+      const exported = await this.statementPdf.export(this.context.getTenantId(), id);
+      return new StreamableFile(exported.content, {
+        type: exported.contentType,
+        disposition: `attachment; filename="${exported.fileName}"`,
+      });
+    } catch (error) {
+      if (error instanceof PartyNotFoundError) throw new NotFoundException(error.message);
       throw error;
     }
   }

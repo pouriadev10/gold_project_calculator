@@ -28,6 +28,13 @@ const PAGE_HEIGHT = 842;
 const PAGE_MARGIN = 48;
 const TEXT_SIZE = 11;
 const LINE_HEIGHT = 19;
+const LINES_PER_PAGE = 35;
+const PERSIAN_INTEGER_FORMATTER = new Intl.NumberFormat('fa-IR');
+const PERSIAN_DATE_FORMATTER = new Intl.DateTimeFormat('fa-IR', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+  timeZone: 'Asia/Tehran',
+});
 
 /**
  * Arabic presentation forms. The renderer emits visual-order glyphs because
@@ -240,6 +247,27 @@ function stream(bytes: Buffer): Buffer {
   ]);
 }
 
+function formatInteger(value: string): string {
+  if (!/^-?\d+$/u.test(value)) return value;
+  return PERSIAN_INTEGER_FORMATTER.format(BigInt(value));
+}
+
+function formatRial(value: string | null): string {
+  return value === null ? '-' : `${formatInteger(value)} ریال`;
+}
+
+function formatDate(value: Date): string {
+  return PERSIAN_DATE_FORMATTER.format(value);
+}
+
+function paginate<T>(items: readonly T[]): readonly (readonly T[])[] {
+  const pages: T[][] = [];
+  for (let index = 0; index < items.length; index += LINES_PER_PAGE) {
+    pages.push([...items.slice(index, index + LINES_PER_PAGE)]);
+  }
+  return pages.length === 0 ? [[]] : pages;
+}
+
 class GlyphRegistry {
   private readonly glyphs: GlyphCode[] = [];
 
@@ -294,71 +322,93 @@ function toPdf(input: InvoiceExportInput, font: ParsedFont): Buffer {
   const details = [
     input.title,
     `شماره سند: ${input.documentNumber}`,
-    `تاریخ صدور: ${input.issuedAt.toISOString()}`,
+    `تاریخ صدور: ${formatDate(input.issuedAt)}`,
     `فروشنده: ${input.issuer.displayName}`,
     `خریدار: ${input.recipient.displayName}`,
-    `مظنه قفل‌شده: ${input.lockedQuote.amountRial}`,
-    `زمان مظنه: ${input.lockedQuote.observedAt.toISOString()}`,
+    ...(input.lockedQuote === null
+      ? []
+      : [
+          `مظنه قفل‌شده: ${formatRial(input.lockedQuote.amountRial)}`,
+          `زمان مظنه: ${formatDate(input.lockedQuote.observedAt)}`,
+        ]),
     'اقلام:',
     ...input.lines.map(
-      (line) => `${line.title} | تعداد: ${line.quantity} | مبلغ: ${line.amountRial ?? '-'}`,
+      (line) =>
+        `${line.title} | مقدار: ${formatInteger(line.quantity)} | مبلغ: ${formatRial(line.amountRial)}`,
     ),
     'اطلاعات تاریخی قفل‌شده:',
     ...flattenSnapshot(input.historicalSnapshot).map((entry) => `${entry.key}: ${entry.value}`),
   ];
   const registry = new GlyphRegistry(font);
-  const content = details
-    .slice(0, 35)
-    .map((detail, index) => {
-      const text = registry.encode(toRtlVisual(detail));
-      const y = PAGE_HEIGHT - PAGE_MARGIN - TEXT_SIZE - index * LINE_HEIGHT;
-      const estimatedWidth = Math.min(PAGE_WIDTH - PAGE_MARGIN * 2, detail.length * TEXT_SIZE * 0.62);
-      const x = PAGE_WIDTH - PAGE_MARGIN - estimatedWidth;
-      return `BT /F1 ${TEXT_SIZE} Tf 1 0 0 1 ${x.toFixed(2)} ${y.toFixed(2)} Tm <${text}> Tj ET`;
-    })
-    .join('\n');
+  const pages = paginate(details);
 
   const objects = new Map<number, Buffer>();
+  const firstFontObjectId = 3 + pages.length * 2;
+  const cidFontObjectId = firstFontObjectId + 1;
+  const fontDescriptorObjectId = firstFontObjectId + 2;
+  const toUnicodeObjectId = firstFontObjectId + 3;
+  const cidToGidObjectId = firstFontObjectId + 4;
+  const fontFileObjectId = firstFontObjectId + 5;
+  const pageObjectIds = pages.map((_, index) => 3 + index * 2);
   objects.set(1, Buffer.from('<< /Type /Catalog /Pages 2 0 R >>', 'ascii'));
-  objects.set(2, Buffer.from('<< /Type /Pages /Kids [3 0 R] /Count 1 >>', 'ascii'));
   objects.set(
-    3,
+    2,
     Buffer.from(
-      `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PAGE_WIDTH} ${PAGE_HEIGHT}] /Resources << /Font << /F1 6 0 R >> >> /Contents 4 0 R >>`,
+      `<< /Type /Pages /Kids [${pageObjectIds.map((id) => `${id} 0 R`).join(' ')}] /Count ${pages.length} >>`,
       'ascii',
     ),
   );
-  objects.set(4, stream(Buffer.from(content, 'ascii')));
+  for (const [pageIndex, page] of pages.entries()) {
+    const pageObjectId = pageObjectIds[pageIndex]!;
+    const contentObjectId = pageObjectId + 1;
+    const content = page
+      .map((detail, lineIndex) => {
+        const text = registry.encode(toRtlVisual(detail));
+        const y = PAGE_HEIGHT - PAGE_MARGIN - TEXT_SIZE - lineIndex * LINE_HEIGHT;
+        const estimatedWidth = Math.min(PAGE_WIDTH - PAGE_MARGIN * 2, detail.length * TEXT_SIZE * 0.62);
+        const x = PAGE_WIDTH - PAGE_MARGIN - estimatedWidth;
+        return `BT /F1 ${TEXT_SIZE} Tf 1 0 0 1 ${x.toFixed(2)} ${y.toFixed(2)} Tm <${text}> Tj ET`;
+      })
+      .join('\n');
+    objects.set(
+      pageObjectId,
+      Buffer.from(
+        `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PAGE_WIDTH} ${PAGE_HEIGHT}] /Resources << /Font << /F1 ${firstFontObjectId} 0 R >> >> /Contents ${contentObjectId} 0 R >>`,
+        'ascii',
+      ),
+    );
+    objects.set(contentObjectId, stream(Buffer.from(content, 'ascii')));
+  }
   objects.set(
-    6,
+    firstFontObjectId,
     Buffer.from(
-      '<< /Type /Font /Subtype /Type0 /BaseFont /Vazirmatn /Encoding /Identity-H /DescendantFonts [7 0 R] /ToUnicode 9 0 R >>',
+      `<< /Type /Font /Subtype /Type0 /BaseFont /Vazirmatn /Encoding /Identity-H /DescendantFonts [${cidFontObjectId} 0 R] /ToUnicode ${toUnicodeObjectId} 0 R >>`,
       'ascii',
     ),
   );
   objects.set(
-    7,
+    cidFontObjectId,
     Buffer.from(
-      '<< /Type /Font /Subtype /CIDFontType2 /BaseFont /Vazirmatn /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >> /FontDescriptor 8 0 R /CIDToGIDMap 10 0 R /DW 1000 >>',
+      `<< /Type /Font /Subtype /CIDFontType2 /BaseFont /Vazirmatn /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >> /FontDescriptor ${fontDescriptorObjectId} 0 R /CIDToGIDMap ${cidToGidObjectId} 0 R /DW 1000 >>`,
       'ascii',
     ),
   );
   objects.set(
-    8,
+    fontDescriptorObjectId,
     Buffer.from(
-      '<< /Type /FontDescriptor /FontName /Vazirmatn /Flags 4 /FontBBox [0 -500 1000 1000] /Ascent 1000 /Descent -500 /CapHeight 700 /ItalicAngle 0 /StemV 80 /FontFile2 11 0 R >>',
+      `<< /Type /FontDescriptor /FontName /Vazirmatn /Flags 4 /FontBBox [0 -500 1000 1000] /Ascent 1000 /Descent -500 /CapHeight 700 /ItalicAngle 0 /StemV 80 /FontFile2 ${fontFileObjectId} 0 R >>`,
       'ascii',
     ),
   );
-  objects.set(9, stream(registry.toUnicodeCMap()));
-  objects.set(10, stream(registry.cidToGlyphMap()));
-  objects.set(11, stream(font.bytes));
+  objects.set(toUnicodeObjectId, stream(registry.toUnicodeCMap()));
+  objects.set(cidToGidObjectId, stream(registry.cidToGlyphMap()));
+  objects.set(fontFileObjectId, stream(font.bytes));
 
   const header = Buffer.from('%PDF-1.7\n%\xE2\xE3\xCF\xD3\n', 'binary');
   const parts: Buffer[] = [header];
   const offsets: number[] = [0];
   let cursor = header.length;
-  for (let id = 1; id <= 11; id += 1) {
+  for (let id = 1; id <= fontFileObjectId; id += 1) {
     const body = objects.get(id) ?? Buffer.from('<< >>', 'ascii');
     const object = Buffer.concat([Buffer.from(`${id} 0 obj\n`, 'ascii'), body, Buffer.from('\nendobj\n', 'ascii')]);
     offsets[id] = cursor;
@@ -368,11 +418,11 @@ function toPdf(input: InvoiceExportInput, font: ParsedFont): Buffer {
   const xrefOffset = cursor;
   const xref = [
     'xref',
-    '0 12',
+    `0 ${fontFileObjectId + 1}`,
     '0000000000 65535 f ',
     ...offsets.slice(1).map((offset) => `${offset.toString().padStart(10, '0')} 00000 n `),
     'trailer',
-    '<< /Size 12 /Root 1 0 R >>',
+    `<< /Size ${fontFileObjectId + 1} /Root 1 0 R >>`,
     'startxref',
     xrefOffset.toString(),
     '%%EOF',

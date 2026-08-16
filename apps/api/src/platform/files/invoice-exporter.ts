@@ -29,10 +29,12 @@ export interface InvoiceExportInput {
   readonly issuedAt: Date;
   readonly issuer: InvoiceExportParty;
   readonly recipient: InvoiceExportParty;
-  readonly lockedQuote: {
+  readonly lockedQuote:
+    | {
     readonly amountRial: string;
     readonly observedAt: Date;
-  };
+      }
+    | null;
   readonly lines: readonly InvoiceExportLine[];
   readonly historicalSnapshot: InvoiceSnapshotValue;
 }

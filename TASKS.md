@@ -2118,7 +2118,7 @@ interface InvoiceExporter {
 
 ---
 
-## [ ] BE-062 — API دریافت رسید PDF
+## [x] BE-062 — API دریافت رسید PDF
 
 **endpointها**
 

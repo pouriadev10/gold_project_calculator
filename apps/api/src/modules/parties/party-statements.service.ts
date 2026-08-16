@@ -26,6 +26,11 @@ type StatementEntry = PartyStatement['items'][number];
 type StatementDimension = StatementEntry['dimension'];
 type StatementRateSnapshot = StatementEntry['documentRateSnapshots'][number];
 
+export interface PartyStatementExport {
+  readonly partyId: string;
+  readonly items: readonly StatementEntry[];
+}
+
 interface StatementEvent {
   readonly ledgerTransactionId: string;
   readonly sourceType: LedgerTransactionSourceType;
@@ -147,6 +152,48 @@ export class PartyStatementsService {
         total: visible.length,
         limit: query.limit,
         offset: query.offset,
+      };
+    });
+  }
+
+  /**
+   * Unpaginated immutable projection for a statement file. Browser endpoints
+   * remain paginated; a generated statement must never silently omit rows.
+   */
+  async getStatementForExport(tenantId: string, partyId: string): Promise<PartyStatementExport> {
+    return withTenantTransaction(this.db, tenantId, async (transaction) => {
+      const [party] = await transaction
+        .select({ id: parties.id })
+        .from(parties)
+        .where(and(eq(parties.tenantId, tenantId), eq(parties.id, partyId)))
+        .limit(1);
+      if (party === undefined) throw new PartyNotFoundError();
+
+      const events = await this.loadEventsInTransaction(transaction, tenantId, partyId, {});
+      const balancesByDimension = new Map<string, bigint>();
+      for (const event of events) {
+        const runningBalance = (balancesByDimension.get(event.dimension.id) ?? 0n) + event.quantity;
+        balancesByDimension.set(event.dimension.id, runningBalance);
+        event.runningBalance = runningBalance;
+      }
+      const rateSnapshots = await this.loadDocumentRateSnapshotsInTransaction(transaction, tenantId, events);
+
+      return {
+        partyId: party.id,
+        items: events.map((event) => ({
+          ledgerTransactionId: event.ledgerTransactionId,
+          source: { type: event.sourceType, id: event.sourceId },
+          effectiveAt: event.effectiveAt.toISOString(),
+          description: event.description,
+          dimension: event.dimension,
+          quantity: event.quantity.toString(),
+          runningBalance: event.runningBalance.toString(),
+          documentRateSnapshots: [
+            ...(rateSnapshots.get(
+              eventRateKey(event.sourceType, event.sourceId, event.dimension.id),
+            ) ?? []),
+          ],
+        })),
       };
     });
   }

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuditModule } from '../../platform/audit/audit.module';
 import { AuthModule } from '../../platform/auth/auth.module';
+import { FilesModule } from '../../platform/files/files.module';
 import { IdempotencyModule } from '../../platform/idempotency/idempotency.module';
 import { UsersModule } from '../../platform/users/users.module';
 import { InventoryModule } from '../inventory/inventory.module';
@@ -13,6 +14,8 @@ import { SecondHandCoinPurchasesController } from './second-hand-coin-purchases.
 import { SecondHandCoinPurchasesService } from './second-hand-coin-purchases.service';
 import { SecondHandGoldPurchasesController } from './second-hand-gold-purchases.controller';
 import { SecondHandGoldPurchasesService } from './second-hand-gold-purchases.service';
+import { SecondHandPurchasePdfController } from './second-hand-purchase-pdf.controller';
+import { SecondHandPurchasePdfService } from './second-hand-purchase-pdf.service';
 
 /**
  * خرید از مصرف‌کننده و مرجوعی B2C به‌عنوان خرید دست‌دوم — BE-049 تا BE-052.
@@ -24,6 +27,7 @@ import { SecondHandGoldPurchasesService } from './second-hand-gold-purchases.ser
   imports: [
     AuditModule,
     AuthModule,
+    FilesModule,
     IdempotencyModule,
     InventoryModule,
     LedgerModule,
@@ -35,8 +39,14 @@ import { SecondHandGoldPurchasesService } from './second-hand-gold-purchases.ser
     B2cBuybacksController,
     SecondHandGoldPurchasesController,
     SecondHandCoinPurchasesController,
+    SecondHandPurchasePdfController,
   ],
-  providers: [B2cBuybacksService, SecondHandGoldPurchasesService, SecondHandCoinPurchasesService],
+  providers: [
+    B2cBuybacksService,
+    SecondHandGoldPurchasesService,
+    SecondHandCoinPurchasesService,
+    SecondHandPurchasePdfService,
+  ],
   exports: [B2cBuybacksService, SecondHandGoldPurchasesService, SecondHandCoinPurchasesService],
 })
 export class PurchaseModule {}

@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { describe, expect, it } from 'vitest';
+import { DocumentIssuerService } from './document-issuer.service';
 import { FilesModule } from './files.module';
 import { INVOICE_EXPORTER, type InvoiceExporter } from './invoice-exporter';
 import { PdfInvoiceExporter } from './pdf-invoice-exporter.service';
@@ -48,9 +49,35 @@ describe('PdfInvoiceExporter', () => {
   });
 
   it('provides the renderer through the InvoiceExporter port', async () => {
-    const moduleRef = await Test.createTestingModule({ imports: [FilesModule] }).compile();
+    const moduleRef = await Test.createTestingModule({ imports: [FilesModule] })
+      .overrideProvider(DocumentIssuerService)
+      .useValue({})
+      .compile();
 
     expect(moduleRef.get<InvoiceExporter>(INVOICE_EXPORTER)).toBeInstanceOf(PdfInvoiceExporter);
     await moduleRef.close();
+  });
+
+  it('paginates a long statement without inventing a quote', async () => {
+    const exported = await new PdfInvoiceExporter().exportInvoice({
+      title: 'صورت‌حساب شخص',
+      documentNumber: 'statement-1',
+      issuedAt: new Date('2026-08-16T08:30:00.000Z'),
+      issuer: { displayName: 'فروشگاه آزمون', mobile: null },
+      recipient: { displayName: 'مشتری آزمون', mobile: null },
+      lockedQuote: null,
+      lines: Array.from({ length: 36 }, (_, index) => ({
+        title: `statement-line-${index + 1}`,
+        quantity: '1',
+        amountRial: null,
+      })),
+      historicalSnapshot: { immutable: 'statement-history' },
+    });
+
+    const rawPdf = exported.content.toString('ascii');
+    expect(rawPdf).toContain('/Count 2');
+    const renderedSnapshot = unicodeFromCMap(exported.content);
+    expect(renderedSnapshot).toContain('statement');
+    expect(renderedSnapshot).toContain('history');
   });
 });
