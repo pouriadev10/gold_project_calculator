@@ -4,6 +4,7 @@ import {
   itemListSchema,
   partyBalanceSummarySchema,
   partyListSchema,
+  priceQuoteListSchema,
   priceQuoteSchema,
   profitReportSchema,
   transactionListSchema,
@@ -31,6 +32,20 @@ export function useLatestPriceQuote(quoteType: PriceQuoteType = 'MAZNEH') {
     queryKey: queryKeys.pricing.latestQuote(quoteType),
     queryFn: ({ signal }) =>
       apiGet(`/pricing/quotes/latest?quoteType=${quoteType}`, priceQuoteSchema.nullable(), signal),
+    staleTime: MINUTE,
+  });
+}
+
+/**
+ * تاریخچه‌ی مظنه — `GET /pricing/quotes` (BE-021، FE-031).
+ * کل فهرست tenant را می‌دهد (بدون صفحه‌بندی سمت سرور)؛ صفحه‌بندی روی
+ * همین آرایه سمت کلاینت در `QuoteHistoryList` انجام می‌شود.
+ */
+export function usePriceQuoteHistory(quoteType: PriceQuoteType = 'MAZNEH') {
+  return useQuery({
+    queryKey: queryKeys.pricing.history(quoteType),
+    queryFn: ({ signal }) =>
+      apiGet(`/pricing/quotes?quoteType=${quoteType}`, priceQuoteListSchema, signal),
     staleTime: MINUTE,
   });
 }

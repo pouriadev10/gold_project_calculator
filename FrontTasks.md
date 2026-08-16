@@ -709,7 +709,34 @@ BE-021
 * double submit سند تکراری نسازد.
 * مقدار نامعتبر ارسال نشود.
 ---
-## [ ] FE-031 — تاریخچه مظنه
+## [x] FE-031 — تاریخچه مظنه
+
+> **وضعیت:** بک‌اند صفحه‌بندی سرور-محور ندارد — `priceQuoteQuerySchema` فقط
+> `quoteType` اختیاری دارد و `list()` (`price-quotes.service.ts`) کل فهرست
+> tenant را یک‌جا برمی‌گرداند. `pagination` سمت کلاینت است: یک `useReactTable`
+> با `getPaginationRowModel` (اندازه‌ی صفحه: ۱۰) روی همان آرایه‌ی کامل.
+>
+> هر دو نما — کارت زیر ۶۴۰px، جدول از ۶۴۰px به بالا — از **همان** صفحه‌ی
+> جاریِ همان جدول می‌خوانند (`useMediaQuery`، همان ثابت شکست `ResponsiveDialog.tsx`)
+> تا pagination یک منبع حقیقت داشته باشد، نه دو منطق موازی. این اولین
+> استفاده‌ی واقعی `@tanstack/react-table` در یک صفحه‌ی production است
+> (پیش‌تر فقط در هارنس دود اثبات شده بود)؛ پرایمیتیو `components/ui/table.tsx`
+> (shadcn استاندارد، با `text-start` به‌جای `text-left`) هم همین‌جا اضافه شد.
+>
+> تاریخچه برای **هر نقشی** باز است، نه فقط OWNER/MANAGER —
+> `GET /pricing/quotes` در `price-quotes.controller.ts` بدون `@Roles` است؛
+> فقط `POST .../manual` محدود است. در `PricingPage`، `QuoteHistoryList`
+> بیرون از شرط نقش رندر می‌شود.
+>
+> بعد از ثبت موفق مظنه‌ی دستی (FE-030)، فهرست خودکار تازه می‌شود — بدون
+> کد اضافه، چون `history()` زیرِ همان `queryKeys.pricing.all()` است که
+> `ManualQuoteForm` invalidate می‌کند.
+>
+> ۹ تست اضافه شد (`QuoteHistoryList.test.tsx` ۷، `PricingPage.test.tsx` ۲
+> تازه) — بارگذاری/خطا/خالی، سوییچ جدول↔کارت، و pagination دو-صفحه‌ای.
+> `pnpm gate:frontend` سبز: بسته‌ی اولیه هنوز ۱۴۴.۸KB فشرده (زیر بودجه)؛
+> `@tanstack/react-table` فقط داخل چانک تنبل `PricingPage` است.
+
 ### قابلیت‌ها
 * لیست
 * زمان

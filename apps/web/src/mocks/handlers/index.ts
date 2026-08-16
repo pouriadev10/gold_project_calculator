@@ -41,20 +41,54 @@ let invoiceCounter = 122;
 const idempotencyCache = new Map<string, unknown>();
 
 /**
- * مظنه‌ی جاری MAZNEH — قابل جهش با `POST /pricing/quotes/manual` (FE-030)
- * تا invalidation واقعی قابل‌مشاهده باشد: بعد از ثبت دستی، `GET .../latest`
- * باید همان مقدار تازه را برگرداند، نه همیشه fixture اولیه را.
+ * تاریخچه‌ی مظنه‌ی MAZNEH — نزولی بر اساس `observedAt` (همان ترتیب
+ * `list()` واقعی، `price-quotes.service.ts`). عنصر ۰ = «جاری».
+ *
+ * قابل جهش با `POST /pricing/quotes/manual` (FE-030): هر ثبت موفق در
+ * ابتدای همین آرایه اضافه می‌شود تا invalidation واقعی قابل‌مشاهده باشد —
+ * هم `GET .../latest` هم `GET .../quotes` (فهرست، FE-031) مقدار تازه را
+ * فوراً ببینند، نه همیشه fixture اولیه را.
  */
-let currentMaznehQuote = {
-  // priceQuoteSchema واقعی id/createdBy را با uuidSchema اعتبارسنجی می‌کند — رشته‌ی دلخواه رد می‌شود
-  id: 'c1000000-0000-4000-8000-000000000001',
-  quoteType: 'MAZNEH' as const,
-  amountRial: MAZNEH_RIAL.toString(),
-  source: 'MANUAL' as const,
-  observedAt: FETCHED_AT.toISOString(),
-  createdBy: 'c1000000-0000-4000-8000-000000000002',
-  createdAt: FETCHED_AT.toISOString(),
-};
+const DAY_MS = 24 * 60 * 60 * 1000;
+let maznehQuoteHistory = [
+  {
+    // priceQuoteSchema واقعی id/createdBy را با uuidSchema اعتبارسنجی می‌کند — رشته‌ی دلخواه رد می‌شود
+    id: 'c1000000-0000-4000-8000-000000000001',
+    quoteType: 'MAZNEH' as const,
+    amountRial: MAZNEH_RIAL.toString(),
+    source: 'MANUAL' as const,
+    observedAt: FETCHED_AT.toISOString(),
+    createdBy: 'c1000000-0000-4000-8000-000000000002',
+    createdAt: FETCHED_AT.toISOString(),
+  },
+  {
+    id: 'c1000000-0000-4000-8000-000000000003',
+    quoteType: 'MAZNEH' as const,
+    amountRial: (MAZNEH_RIAL - 3_500_000n).toString(),
+    source: 'FEED' as const,
+    observedAt: new Date(FETCHED_AT.getTime() - 2 * DAY_MS).toISOString(),
+    createdBy: null,
+    createdAt: new Date(FETCHED_AT.getTime() - 2 * DAY_MS).toISOString(),
+  },
+  {
+    id: 'c1000000-0000-4000-8000-000000000004',
+    quoteType: 'MAZNEH' as const,
+    amountRial: (MAZNEH_RIAL - 9_000_000n).toString(),
+    source: 'MANUAL' as const,
+    observedAt: new Date(FETCHED_AT.getTime() - 6 * DAY_MS).toISOString(),
+    createdBy: 'c1000000-0000-4000-8000-000000000002',
+    createdAt: new Date(FETCHED_AT.getTime() - 6 * DAY_MS).toISOString(),
+  },
+  {
+    id: 'c1000000-0000-4000-8000-000000000005',
+    quoteType: 'MAZNEH' as const,
+    amountRial: (MAZNEH_RIAL - 14_000_000n).toString(),
+    source: 'FEED' as const,
+    observedAt: new Date(FETCHED_AT.getTime() - 13 * DAY_MS).toISOString(),
+    createdBy: null,
+    createdAt: new Date(FETCHED_AT.getTime() - 13 * DAY_MS).toISOString(),
+  },
+];
 
 /**
  * اعتبار آزمایشی FE-026/FE-028 — فقط برای توسعه، هرگز در production
@@ -180,7 +214,22 @@ export const handlers = [
     const quoteType = new URL(request.url).searchParams.get('quoteType');
     if (quoteType !== 'MAZNEH') return HttpResponse.json(null);
 
-    return HttpResponse.json(currentMaznehQuote);
+    return HttpResponse.json(maznehQuoteHistory[0] ?? null);
+  }),
+
+  /**
+   * `GET /pricing/quotes` — قرارداد نهایی BE-021 (`priceQuoteQuerySchema`):
+   * فقط `quoteType` اختیاری، بدون صفحه‌بندی سرور-محور — همان چیزی که
+   * `list()` واقعی می‌دهد. صفحه‌بندی سمت کلاینت در `QuoteHistoryList`
+   * (FE-031) روی همین آرایه‌ی کامل انجام می‌شود.
+   */
+  http.get('/api/pricing/quotes', async ({ request }) => {
+    await delay(READ_DELAY_MS);
+    const quoteType = new URL(request.url).searchParams.get('quoteType');
+    const filtered =
+      quoteType === null ? maznehQuoteHistory : maznehQuoteHistory.filter((q) => q.quoteType === quoteType);
+
+    return HttpResponse.json(filtered);
   }),
 
   /**
@@ -213,17 +262,19 @@ export const handlers = [
 
     const body = (await request.json()) as { quoteType: 'MAZNEH'; amountRial: string };
     const now = new Date().toISOString();
-    currentMaznehQuote = {
+    const created = {
       id: crypto.randomUUID(),
       quoteType: body.quoteType,
       amountRial: body.amountRial,
-      source: 'MANUAL',
+      source: 'MANUAL' as const,
       observedAt: now,
       createdBy: 'c1000000-0000-4000-8000-000000000002',
       createdAt: now,
     };
-    idempotencyCache.set(key, currentMaznehQuote);
-    return HttpResponse.json(currentMaznehQuote, { status: 201 });
+    // تازه‌ترین اول — همان ترتیب `orderBy(desc(observedAt), ...)` واقعی
+    maznehQuoteHistory = [created, ...maznehQuoteHistory];
+    idempotencyCache.set(key, created);
+    return HttpResponse.json(created, { status: 201 });
   }),
 
   http.get('/api/parties', async ({ request }) => {

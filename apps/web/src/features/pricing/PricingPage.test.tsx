@@ -1,17 +1,25 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useSessionStore } from '@/stores/session-store';
+import type * as Queries from '@/api/queries';
 import PricingPage from './PricingPage';
 
 /**
- * FE-030 — دسترسی فرم ثبت مظنه در سطح صفحه.
+ * FE-030/FE-031 — دسترسی فرم ثبت مظنه و فهرست تاریخچه در سطح صفحه.
  *
  * برخلاف `/reporting/profit` (که کل مسیر را با `beforeLoad` نقش‌محور
  * می‌بندد)، `/pricing` برای هر نقشی باز می‌ماند — `RolesGuard` سمت سرور
  * فقط روی `POST .../manual` نشسته، نه روی خواندن. پس اینجا فقط رندر
  * شرطی خودِ فرم را می‌سنجیم، نه یک route guard.
+ *
+ * `usePriceQuoteHistory` مستقیم mock می‌شود (رفتار خودِ `QuoteHistoryList`
+ * جای دیگری تست شده) تا این فایل به fetch واقعی وابسته نباشد.
  */
+vi.mock('@/api/queries', async (importOriginal) => ({
+  ...(await importOriginal<typeof Queries>()),
+  usePriceQuoteHistory: () => ({ data: [], isLoading: false, isError: false, refetch: vi.fn() }),
+}));
 const sessionWithRole = (role: 'OWNER' | 'MANAGER' | 'CASHIER') => ({
   accessToken: 'a',
   refreshToken: 'r',
@@ -59,5 +67,13 @@ describe('PricingPage — دسترسی نقش‌محور به فرم ثبت دس
     renderPage();
     expect(screen.queryByLabelText('مظنه مثقال')).not.toBeInTheDocument();
     expect(screen.getByText('دسترسی محدود')).toBeInTheDocument();
+  });
+});
+
+describe('PricingPage — تاریخچه برای همه‌ی نقش‌ها باز است', () => {
+  it('برای CASHIER هم بخش تاریخچه دیده می‌شود — GET .../quotes بدون @Roles است', () => {
+    useSessionStore.setState({ session: sessionWithRole('CASHIER') });
+    renderPage();
+    expect(screen.getByText('تاریخچه‌ی مظنه')).toBeInTheDocument();
   });
 });

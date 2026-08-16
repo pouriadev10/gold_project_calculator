@@ -98,6 +98,20 @@ export const priceQuoteSchema = sharedPriceQuoteSchema.extend({
   amountRial: priceQuoteAmountRialSchema.transform((value) => BigInt(value)),
 });
 export type PriceQuote = z.infer<typeof priceQuoteSchema>;
+/** `@gold/contracts` این را جدا export نمی‌کند؛ اینجا از خودِ `PriceQuote` گرفته می‌شود. */
+export type PriceQuoteSource = PriceQuote['source'];
+
+/* ── GET /api/pricing/quotes — FE-031/BE-021 ─────────────────── */
+
+/**
+ * تاریخچه‌ی مظنه. بک‌اند صفحه‌بندی سرور-محور ندارد
+ * (`priceQuoteQuerySchema` فقط `quoteType` اختیاری دارد؛ `list()` در
+ * `price-quotes.service.ts` کل فهرست tenant را برمی‌گرداند، مرتب بر
+ * اساس `observedAt` نزولی) — pagination در `QuoteHistoryList` سمت
+ * کلاینت روی همین آرایه انجام می‌شود.
+ */
+export const priceQuoteListSchema = z.array(priceQuoteSchema);
+export type PriceQuoteList = z.infer<typeof priceQuoteListSchema>;
 
 /* ── GET /api/parties/balance-summary ──────────────────────── */
 

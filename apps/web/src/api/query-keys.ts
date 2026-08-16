@@ -23,6 +23,8 @@ export const queryKeys = {
     all: () => ['pricing'] as const,
     latestQuote: (quoteType: PriceQuoteType) =>
       [...queryKeys.pricing.all(), 'latest', quoteType] as const,
+    history: (quoteType: PriceQuoteType) =>
+      [...queryKeys.pricing.all(), 'history', quoteType] as const,
   },
 
   parties: {

@@ -8,6 +8,11 @@ describe('queryKeys', () => {
       'latest',
       'MAZNEH',
     ]);
+    expect(queryKeys.pricing.history('MAZNEH')).toEqual([
+      ...queryKeys.pricing.all(),
+      'history',
+      'MAZNEH',
+    ]);
     expect(queryKeys.parties.balanceSummary()).toEqual([
       ...queryKeys.parties.all(),
       'balance-summary',
