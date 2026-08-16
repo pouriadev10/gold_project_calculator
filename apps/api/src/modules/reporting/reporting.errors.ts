@@ -9,3 +9,9 @@ export class ReportingDisplaySettingInvalidError extends Error {
     super(`Reporting display setting '${settingKey}' is invalid`);
   }
 }
+
+export class ProfitReportSnapshotInvalidError extends Error {
+  constructor(message: string) {
+    super(`Profit report cannot read an immutable source snapshot: ${message}`);
+  }
+}

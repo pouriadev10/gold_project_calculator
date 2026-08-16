@@ -6,6 +6,7 @@ import { PartyBalanceReportService } from './party-balance-report.service';
 import { DashboardService } from './dashboard.service';
 import { ReportingController } from './reporting.controller';
 import { ReportingDisplayService } from './reporting-display.service';
+import { ProfitReportService } from './profit-report.service';
 
 /**
  * گزارش دو مقیاسه (طلا و ریال) — BE-058 تا BE-060.
@@ -15,6 +16,11 @@ import { ReportingDisplayService } from './reporting-display.service';
 @Module({
   imports: [AuthModule, PricingModule, UsersModule],
   controllers: [ReportingController],
-  providers: [DashboardService, PartyBalanceReportService, ReportingDisplayService],
+  providers: [
+    DashboardService,
+    PartyBalanceReportService,
+    ReportingDisplayService,
+    ProfitReportService,
+  ],
 })
 export class ReportingModule {}

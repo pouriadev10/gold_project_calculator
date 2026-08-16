@@ -1,17 +1,24 @@
 import { Controller, Get, Inject, NotFoundException, Query, UseGuards } from '@nestjs/common';
-import { dashboardQuerySchema, partyBalanceReportQuerySchema } from '@gold/contracts';
+import {
+  dashboardQuerySchema,
+  partyBalanceReportQuerySchema,
+  profitReportQuerySchema,
+} from '@gold/contracts';
 import { JwtAuthGuard } from '../../platform/auth/jwt-auth.guard';
 import { RolesGuard } from '../../platform/auth/roles.guard';
 import { RequestContextService } from '../../platform/request-context/request-context.service';
 import { ZodValidationPipe } from '../../shared/validation';
 import { PartyBalanceReportService } from './party-balance-report.service';
 import { DashboardService } from './dashboard.service';
+import { ProfitReportService } from './profit-report.service';
 import { ReportingReferenceQuoteNotFoundError } from './reporting.errors';
 import type {
   Dashboard,
   DashboardQuery,
   PartyBalanceReport,
   PartyBalanceReportQuery,
+  ProfitReport,
+  ProfitReportQuery,
 } from '@gold/contracts';
 
 /** Tenant-isolated debtor and creditor report projections. */
@@ -22,6 +29,7 @@ export class ReportingController {
     @Inject(RequestContextService) private readonly context: RequestContextService,
     @Inject(PartyBalanceReportService) private readonly reports: PartyBalanceReportService,
     @Inject(DashboardService) private readonly dashboard: DashboardService,
+    @Inject(ProfitReportService) private readonly profit: ProfitReportService,
   ) {}
 
   @Get('debtors')
@@ -43,6 +51,13 @@ export class ReportingController {
     @Query(new ZodValidationPipe(dashboardQuerySchema)) query: DashboardQuery,
   ): Promise<Dashboard> {
     return this.dashboard.getDashboard(this.context.getTenantId(), query);
+  }
+
+  @Get('profit')
+  async getProfit(
+    @Query(new ZodValidationPipe(profitReportQuerySchema)) query: ProfitReportQuery,
+  ): Promise<ProfitReport> {
+    return this.profit.getProfit(this.context.getTenantId(), query);
   }
 
   private async getReport(

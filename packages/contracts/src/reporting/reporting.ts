@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   bigIntStringSchema,
+  isoDateTimeSchema,
   paginatedSchema,
   paginationQuerySchema,
   uuidSchema,
@@ -123,3 +124,50 @@ export type PartyBalanceReportQuery = z.infer<typeof partyBalanceReportQuerySche
 export type PartyBalanceReport = z.infer<typeof partyBalanceReportSchema>;
 export type DashboardQuery = z.infer<typeof dashboardQuerySchema>;
 export type Dashboard = z.infer<typeof dashboardSchema>;
+
+/** A financial measure in its source Rial total and its event-locked gold equivalent. */
+const profitMeasureSchema = z.object({
+  rial: bigIntStringSchema,
+  goldEquivalentMg: bigIntStringSchema,
+});
+
+export const profitReportQuerySchema = z
+  .object({
+    from: isoDateTimeSchema.optional(),
+    to: isoDateTimeSchema.optional(),
+  })
+  .strict()
+  .superRefine((query, context) => {
+    if (
+      query.from !== undefined &&
+      query.to !== undefined &&
+      new Date(query.from).getTime() >= new Date(query.to).getTime()
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '"from" must be before "to"',
+        path: ['to'],
+      });
+    }
+  });
+
+/**
+ * Phase-1 profit is a read-only projection of immutable sales and B2C
+ * buyback snapshots. `goldEquivalentMg` is converted per event, never with a
+ * current quote. Coin values remain monetary projections; no coin balance is
+ * converted to a gold weight.
+ */
+export const profitReportSchema = z.object({
+  from: isoDateTimeSchema.nullable(),
+  to: isoDateTimeSchema.nullable(),
+  revenue: profitMeasureSchema,
+  costOfGoods: profitMeasureSchema,
+  grossProfit: profitMeasureSchema,
+  operatingProfit: profitMeasureSchema,
+  goldPriceEffect: profitMeasureSchema,
+  coinBubbleEffect: profitMeasureSchema,
+  totalProfit: profitMeasureSchema,
+});
+
+export type ProfitReportQuery = z.infer<typeof profitReportQuerySchema>;
+export type ProfitReport = z.infer<typeof profitReportSchema>;
