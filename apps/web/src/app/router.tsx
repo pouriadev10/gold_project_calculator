@@ -97,7 +97,9 @@ const dashboardRoute = createRoute({
 const pricingRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/pricing',
-  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'PricingPlaceholder'),
+  // بدون beforeLoad نقش‌محور — خواندن مظنه برای هر نقشی باز است؛ فقط فرم
+  // ثبت دستی داخل خودِ صفحه پنهان می‌شود (`PricingPage.tsx`, FE-030).
+  component: lazyRouteComponent(() => import('@/features/pricing/PricingPage')),
 });
 
 const partiesRoute = createRoute({

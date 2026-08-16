@@ -41,6 +41,22 @@ let invoiceCounter = 122;
 const idempotencyCache = new Map<string, unknown>();
 
 /**
+ * مظنه‌ی جاری MAZNEH — قابل جهش با `POST /pricing/quotes/manual` (FE-030)
+ * تا invalidation واقعی قابل‌مشاهده باشد: بعد از ثبت دستی، `GET .../latest`
+ * باید همان مقدار تازه را برگرداند، نه همیشه fixture اولیه را.
+ */
+let currentMaznehQuote = {
+  // priceQuoteSchema واقعی id/createdBy را با uuidSchema اعتبارسنجی می‌کند — رشته‌ی دلخواه رد می‌شود
+  id: 'c1000000-0000-4000-8000-000000000001',
+  quoteType: 'MAZNEH' as const,
+  amountRial: MAZNEH_RIAL.toString(),
+  source: 'MANUAL' as const,
+  observedAt: FETCHED_AT.toISOString(),
+  createdBy: 'c1000000-0000-4000-8000-000000000002',
+  createdAt: FETCHED_AT.toISOString(),
+};
+
+/**
  * اعتبار آزمایشی FE-026/FE-028 — فقط برای توسعه، هرگز در production
  * استفاده نمی‌شود. دو حساب با نقش متفاوت تا رفتار نقش‌محور (FE-028) هم
  * قابل آزمون دستی باشد، نه فقط با تست خودکار.
@@ -164,16 +180,50 @@ export const handlers = [
     const quoteType = new URL(request.url).searchParams.get('quoteType');
     if (quoteType !== 'MAZNEH') return HttpResponse.json(null);
 
-    return HttpResponse.json({
-      // priceQuoteSchema واقعی id/createdBy را با uuidSchema اعتبارسنجی می‌کند — رشته‌ی دلخواه رد می‌شود
-      id: 'c1000000-0000-4000-8000-000000000001',
-      quoteType: 'MAZNEH',
-      amountRial: MAZNEH_RIAL.toString(),
+    return HttpResponse.json(currentMaznehQuote);
+  }),
+
+  /**
+   * `POST /pricing/quotes/manual` — قرارداد نهایی BE-021
+   * (`createManualPriceQuoteSchema`): فقط `quoteType` و `amountRial`.
+   * بدون `observedAt` یا `description` ورودی — سرور واقعی هم `observedAt`
+   * را خودش می‌سازد (`price-quotes.service.ts`) و ستون توضیحی اصلاً وجود
+   * ندارد؛ FE-030 هم به همین شکل فقط مبلغ را می‌گیرد.
+   */
+  http.post('/api/pricing/quotes/manual', async ({ request }) => {
+    await delay(WRITE_DELAY_MS);
+
+    const key = request.headers.get('Idempotency-Key');
+    if (!key) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 'IDEMPOTENCY_KEY_REQUIRED',
+            message: 'هدر Idempotency-Key اجباری است',
+            fields: {},
+            requestId: crypto.randomUUID(),
+          },
+        },
+        { status: 400 },
+      );
+    }
+
+    const cached = idempotencyCache.get(key);
+    if (cached) return HttpResponse.json(cached, { status: 201 });
+
+    const body = (await request.json()) as { quoteType: 'MAZNEH'; amountRial: string };
+    const now = new Date().toISOString();
+    currentMaznehQuote = {
+      id: crypto.randomUUID(),
+      quoteType: body.quoteType,
+      amountRial: body.amountRial,
       source: 'MANUAL',
-      observedAt: FETCHED_AT.toISOString(),
+      observedAt: now,
       createdBy: 'c1000000-0000-4000-8000-000000000002',
-      createdAt: FETCHED_AT.toISOString(),
-    });
+      createdAt: now,
+    };
+    idempotencyCache.set(key, currentMaznehQuote);
+    return HttpResponse.json(currentMaznehQuote, { status: 201 });
   }),
 
   http.get('/api/parties', async ({ request }) => {

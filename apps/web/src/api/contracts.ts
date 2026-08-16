@@ -41,11 +41,14 @@ export {
   roleCodeSchema,
   priceQuoteTypeSchema,
   priceQuoteSourceSchema,
+  priceQuoteAmountRialSchema,
+  createManualPriceQuoteSchema,
   type LoginInput,
   type SessionResponse,
   type RefreshInput,
   type RoleCode,
   type PriceQuoteType,
+  type CreateManualPriceQuoteInput,
 } from '@gold/contracts';
 
 /* ══════════════ View model محلی — بدون endpoint واقعی هنوز ══════════════ */

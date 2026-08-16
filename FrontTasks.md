@@ -666,7 +666,34 @@ BE-021
 * loading، empty، stale و error پوشش داده شوند.
 * widget در Shell یا صفحات عملیاتی قابل استفاده باشد.
 ---
-## [ ] FE-030 — فرم ثبت مظنه دستی
+## [x] FE-030 — فرم ثبت مظنه دستی
+
+> **وضعیت:** فقط «مبلغ مظنه» فیلد واقعی است. `createManualPriceQuoteSchema`
+> (`@gold/contracts`, `.strict()`) فقط `quoteType` و `amountRial` می‌پذیرد؛
+> «زمان مشاهده» ورودی نیست چون سرور خودش `observedAt` را در لحظه‌ی درج
+> می‌سازد (`price-quotes.service.ts`, BE-021)، و «توضیح» ستونی در
+> `price_quotes` ندارد. `quoteType` همیشه `'MAZNEH'` است — تنها عضو
+> `priceQuoteTypeSchema` در فاز ۱، پس چیزی برای انتخاب نیست.
+>
+> «تأیید» یک `ResponsiveDialog` جدا است، نه مرحله‌ی دوم داخل همان فرم —
+> این مقدار پایه‌ی محاسبه‌ی هر فاکتور بعدی می‌شود (۲-۸ CLAUDE.md). «نمایش
+> نتیجه» مستقیماً از پاسخ سرور همان `submit` می‌آید (`RateDisplay` +
+> `formatJalaliDistance`)، نه از یک fetch جدا؛ query هم با
+> `queryKeys.pricing.all()` invalidate می‌شود تا `MaznehBar` (FE-029) و هر
+> مصرف‌کننده‌ی دیگر مظنه‌ی جدید را ببینند.
+>
+> صفحه‌ی `/pricing` برای هر نقشی باز است (بدون `beforeLoad` نقش‌محور) —
+> `RolesGuard` سمت سرور فقط روی `POST .../manual` نشسته
+> (`@Roles('OWNER','MANAGER')`)، نه روی خواندن؛ فقط خودِ فرم با
+> `useHasRole`/`MANUAL_QUOTE_ENTRY_ROLES` برای CASHIER پنهان می‌شود، همان
+> الگوی لینک «ثبت دستی» در `MaznehBar`.
+>
+> ۱۲ تست (`ManualQuoteForm.test.tsx`, `PricingPage.test.tsx`) هر سه معیار
+> «تمام است وقتی» را می‌سنجند، به‌علاوه‌ی گیت اعتبارسنجی، گفت‌وگوی تأیید،
+> و ماندگاری خطای سرور در صفحه (نه فقط toast — قاعده‌ی FE-009).
+> `pnpm gate:frontend` سبز: بسته‌ی اولیه ۱۴۴.۷KB فشرده (زیر بودجه‌ی
+> ۲۰۰KB)، `PricingPage` چانک تنبل مستقل خودش را دارد.
+
 ### فیلدها
 * مبلغ مظنه
 * زمان مشاهده
