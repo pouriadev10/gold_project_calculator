@@ -4,6 +4,7 @@ import {
   isoDateTimeSchema,
   priceQuoteAmountRialSchema,
   priceQuoteSchema as sharedPriceQuoteSchema,
+  type Party,
 } from '@gold/contracts';
 
 /**
@@ -29,12 +30,15 @@ export {
   apiErrorSchema,
   type ApiError as ApiErrorBody,
   partyTypeSchema,
+  partyStatusSchema,
   partySchema,
   partyListSchema,
   partyListQuerySchema,
+  createPartySchema,
   type Party,
   type PartyList,
   type PartyListQuery,
+  type CreatePartyInput,
   loginSchema,
   sessionResponseSchema,
   refreshSchema,
@@ -50,6 +54,10 @@ export {
   type PriceQuoteType,
   type CreateManualPriceQuoteInput,
 } from '@gold/contracts';
+
+/** `@gold/contracts` این‌ها را جدا export نمی‌کند؛ اینجا از خودِ `Party` گرفته می‌شوند. */
+export type PartyType = Party['type'];
+export type PartyStatus = Party['status'];
 
 /* ══════════════ View model محلی — بدون endpoint واقعی هنوز ══════════════ */
 

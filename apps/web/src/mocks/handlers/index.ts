@@ -1,6 +1,7 @@
 import { searchKey } from '@gold/core-calc';
 import { DEFAULT_PAGE_SIZE } from '@gold/contracts';
 import { HttpResponse, http, delay } from 'msw';
+import type { Party } from '@/api/contracts';
 import {
   MAZNEH_RIAL,
   FETCHED_AT,
@@ -34,6 +35,22 @@ function matchesQuery(haystack: string, query: string | null): boolean {
   if (!query) return true;
   return searchKey(haystack).includes(searchKey(query));
 }
+
+/** آینه‌ی `MOBILE_SEPARATOR` واقعی (`parties.service.ts`، BE-024) — «۰۹۱۲-۱۲۳» باید «09121234567» را پیدا کند */
+const MOBILE_SEPARATOR = /[\s\-()[\]{}./\\]/gu;
+
+function matchesMobile(mobile: string | null, query: string | null): boolean {
+  if (!query) return true;
+  if (!mobile) return false;
+  return searchKey(mobile).replace(MOBILE_SEPARATOR, '').includes(searchKey(query).replace(MOBILE_SEPARATOR, ''));
+}
+
+/**
+ * فهرست قابل‌جهش اشخاص — `POST /parties` (FE-032) رکورد تازه را اینجا
+ * اضافه می‌کند تا `GET /parties` بلافاصله بعد از invalidate آن را ببیند،
+ * همان الگوی `maznehQuoteHistory` برای مظنه.
+ */
+let partyList: Party[] = [...partyRecords];
 
 let invoiceCounter = 122;
 
@@ -277,17 +294,80 @@ export const handlers = [
     return HttpResponse.json(created, { status: 201 });
   }),
 
+  /**
+   * `GET /parties` — قرارداد نهایی BE-024 (`partyListQuerySchema`/`partyListSchema`):
+   * `search` نام **یا** موبایل را می‌گردد، `type`/`status` فیلتر می‌کنند،
+   * `limit`/`offset` صفحه‌بندی سرور-محور واقعی است (نه سمت کلاینت مثل
+   * تاریخچه‌ی مظنه) — همان ترتیب `list()` واقعی: نام صعودی.
+   */
   http.get('/api/parties', async ({ request }) => {
     await delay(READ_DELAY_MS);
-    // نام پارامتر و پوسته‌ی پاسخ دقیقاً partyListQuerySchema/partyListSchema واقعی‌اند
-    const search = new URL(request.url).searchParams.get('search');
-    const filtered = partyRecords.filter((p) => matchesQuery(p.displayName, search));
+    const params = new URL(request.url).searchParams;
+    const search = params.get('search');
+    const type = params.get('type');
+    const status = params.get('status');
+    const limit = Number.parseInt(params.get('limit') ?? String(DEFAULT_PAGE_SIZE), 10);
+    const offset = Number.parseInt(params.get('offset') ?? '0', 10);
+
+    const filtered = partyList
+      .filter((p) => (type ? p.type === type : true))
+      .filter((p) => (status ? p.status === status : true))
+      .filter((p) => matchesQuery(p.displayName, search) || matchesMobile(p.mobile, search))
+      .sort((a, b) => a.displayName.localeCompare(b.displayName, 'fa'));
+
     return HttpResponse.json({
-      items: filtered,
+      items: filtered.slice(offset, offset + limit),
       total: filtered.length,
-      limit: DEFAULT_PAGE_SIZE,
-      offset: 0,
+      limit,
+      offset,
     });
+  }),
+
+  /** `POST /parties` — قرارداد نهایی BE-024 (`createPartySchema`/`partySchema`). */
+  http.post('/api/parties', async ({ request }) => {
+    await delay(WRITE_DELAY_MS);
+
+    const key = request.headers.get('Idempotency-Key');
+    if (!key) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 'IDEMPOTENCY_KEY_REQUIRED',
+            message: 'هدر Idempotency-Key اجباری است',
+            fields: {},
+            requestId: crypto.randomUUID(),
+          },
+        },
+        { status: 400 },
+      );
+    }
+
+    const cached = idempotencyCache.get(key);
+    if (cached) return HttpResponse.json(cached, { status: 201 });
+
+    const body = (await request.json()) as {
+      type: Party['type'];
+      displayName: string;
+      mobile?: string;
+      nationalId?: string;
+      notes?: string;
+    };
+    const now = new Date().toISOString();
+    const created: Party = {
+      id: crypto.randomUUID(),
+      type: body.type,
+      displayName: body.displayName,
+      mobile: body.mobile ?? null,
+      nationalId: body.nationalId ?? null,
+      linkedTenantId: null,
+      status: 'ACTIVE',
+      notes: body.notes ?? null,
+      createdAt: now,
+      updatedAt: now,
+    };
+    partyList = [...partyList, created];
+    idempotencyCache.set(key, created);
+    return HttpResponse.json(created, { status: 201 });
   }),
 
   http.get('/api/parties/balance-summary', async () => {

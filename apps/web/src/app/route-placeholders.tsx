@@ -6,10 +6,6 @@ import { PlaceholderPage } from '@/components/common/PlaceholderPage';
  * بسته‌ی اولیه جدا بمانند — به‌جای اینکه هر مسیر chunk جداگانه بسازد.
  */
 
-export function PartiesPlaceholder() {
-  return <PlaceholderPage title="اشخاص" note="حساب اشخاص و مانده‌ها در گام‌های بعد می‌آید." />;
-}
-
 export function PartyDetailPlaceholder() {
   return <PlaceholderPage title="جزئیات شخص" note="مشخصات، مانده و صورت‌حساب در گام‌های بعد می‌آید." />;
 }

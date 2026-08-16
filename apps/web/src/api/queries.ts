@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { apiGet } from './client';
 import {
   itemListSchema,
@@ -8,6 +8,7 @@ import {
   priceQuoteSchema,
   profitReportSchema,
   transactionListSchema,
+  type PartyListQuery,
   type PriceQuoteType,
   type ProfitPeriod,
 } from './contracts';
@@ -81,6 +82,32 @@ export function usePartySearch(search: string) {
     queryFn: ({ signal }) =>
       apiGet(`/parties?search=${encodeURIComponent(search)}`, partyListSchema, signal),
     staleTime: MINUTE,
+  });
+}
+
+/**
+ * فهرست صفحه‌بندی‌شده‌ی اشخاص — `GET /parties` (BE-024، FE-032). برخلاف
+ * تاریخچه‌ی مظنه، اینجا صفحه‌بندی **سرور-محور** است (`partyListQuerySchema`
+ * واقعاً `limit`/`offset` می‌گیرد)، پس هیچ صفحه‌بندی سمت کلاینتی لازم نیست.
+ *
+ * `placeholderData: keepPreviousData` صفحه‌ی قبلی را حین رفتن به صفحه‌ی
+ * بعد/فیلتر تازه روی صفحه نگه می‌دارد تا هر کلیک یک flash اسکلت نسازد.
+ */
+export function useParties(query: PartyListQuery) {
+  return useQuery({
+    queryKey: queryKeys.parties.list(query),
+    queryFn: ({ signal }) => {
+      const params = new URLSearchParams({
+        limit: String(query.limit),
+        offset: String(query.offset),
+      });
+      if (query.search) params.set('search', query.search);
+      if (query.type) params.set('type', query.type);
+      if (query.status) params.set('status', query.status);
+      return apiGet(`/parties?${params.toString()}`, partyListSchema, signal);
+    },
+    staleTime: MINUTE,
+    placeholderData: keepPreviousData,
   });
 }
 

@@ -105,7 +105,8 @@ const pricingRoute = createRoute({
 const partiesRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/parties',
-  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'PartiesPlaceholder'),
+  // بدون beforeLoad نقش‌محور — GET /parties روی سرور بدون @Roles است (parties.controller.ts، BE-024)
+  component: lazyRouteComponent(() => import('@/features/parties/PartiesPage')),
 });
 
 const partyDetailRoute = createRoute({

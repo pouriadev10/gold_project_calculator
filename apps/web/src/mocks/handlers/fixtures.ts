@@ -77,13 +77,20 @@ export const coins = [
 const NOW = '2026-07-30T09:00:00+00:00';
 
 const parties = [
-  { id: 'a1000000-0000-4000-8000-000000000001', displayName: 'حسین مرادی', type: 'CONSUMER', nationalId: null, mobile: '09121234567', mg: 412_500 },
-  { id: 'a1000000-0000-4000-8000-000000000002', displayName: 'زهرا کریمی', type: 'CONSUMER', nationalId: null, mobile: '09127654321', mg: -86_000 },
-  { id: 'a1000000-0000-4000-8000-000000000003', displayName: 'مهدی صادقی', type: 'BUSINESS', nationalId: '0079123456', mobile: '09351112233', mg: 268_000 },
-  { id: 'a1000000-0000-4000-8000-000000000004', displayName: 'فاطمه یوسفی', type: 'CONSUMER', nationalId: null, mobile: null, mg: -154_300 },
-  { id: 'a1000000-0000-4000-8000-000000000005', displayName: 'علی‌رضا نجفی', type: 'BUSINESS', nationalId: null, mobile: '09193334455', mg: 559_000 },
-  { id: 'a1000000-0000-4000-8000-000000000006', displayName: 'سمیه احمدی', type: 'CONSUMER', nationalId: null, mobile: null, mg: -32_450 },
-  { id: 'a1000000-0000-4000-8000-000000000007', displayName: 'رضا کاظمی', type: 'BUSINESS', nationalId: null, mobile: '09141239876', mg: 91_200 },
+  { id: 'a1000000-0000-4000-8000-000000000001', displayName: 'حسین مرادی', type: 'CONSUMER', nationalId: null, mobile: '09121234567', mg: 412_500, status: 'ACTIVE' },
+  { id: 'a1000000-0000-4000-8000-000000000002', displayName: 'زهرا کریمی', type: 'CONSUMER', nationalId: null, mobile: '09127654321', mg: -86_000, status: 'ACTIVE' },
+  { id: 'a1000000-0000-4000-8000-000000000003', displayName: 'مهدی صادقی', type: 'BUSINESS', nationalId: '0079123456', mobile: '09351112233', mg: 268_000, status: 'ACTIVE' },
+  { id: 'a1000000-0000-4000-8000-000000000004', displayName: 'فاطمه یوسفی', type: 'CONSUMER', nationalId: null, mobile: null, mg: -154_300, status: 'ACTIVE' },
+  { id: 'a1000000-0000-4000-8000-000000000005', displayName: 'علی‌رضا نجفی', type: 'BUSINESS', nationalId: null, mobile: '09193334455', mg: 559_000, status: 'ACTIVE' },
+  { id: 'a1000000-0000-4000-8000-000000000006', displayName: 'سمیه احمدی', type: 'CONSUMER', nationalId: null, mobile: null, mg: -32_450, status: 'ACTIVE' },
+  { id: 'a1000000-0000-4000-8000-000000000007', displayName: 'رضا کاظمی', type: 'BUSINESS', nationalId: null, mobile: '09141239876', mg: 91_200, status: 'ACTIVE' },
+  { id: 'a1000000-0000-4000-8000-000000000008', displayName: 'آرش تقوی', type: 'CONSUMER', nationalId: null, mobile: '09120001122', mg: 75_000, status: 'ACTIVE' },
+  { id: 'a1000000-0000-4000-8000-000000000009', displayName: 'لیلا موسوی', type: 'CONSUMER', nationalId: null, mobile: null, mg: -12_800, status: 'ACTIVE' },
+  { id: 'a1000000-0000-4000-8000-000000000010', displayName: 'بابک شریفی', type: 'BUSINESS', nationalId: '0068889991', mobile: '09353334455', mg: 340_500, status: 'ACTIVE' },
+  { id: 'a1000000-0000-4000-8000-000000000011', displayName: 'نگار حیدری', type: 'CONSUMER', nationalId: null, mobile: '09190009988', mg: 0, status: 'INACTIVE' },
+  { id: 'a1000000-0000-4000-8000-000000000012', displayName: 'کامران فرهادی', type: 'CONSUMER', nationalId: null, mobile: '09121237788', mg: -5_600, status: 'ACTIVE' },
+  { id: 'a1000000-0000-4000-8000-000000000013', displayName: 'مریم رحیمی', type: 'BUSINESS', nationalId: null, mobile: null, mg: 128_900, status: 'ACTIVE' },
+  { id: 'a1000000-0000-4000-8000-000000000014', displayName: 'سعید ابراهیمی', type: 'CONSUMER', nationalId: null, mobile: '09120556677', mg: 0, status: 'INACTIVE' },
 ] as const;
 
 export const partyRecords: Party[] = parties.map((p) => ({
@@ -93,7 +100,7 @@ export const partyRecords: Party[] = parties.map((p) => ({
   mobile: p.mobile,
   nationalId: p.nationalId,
   linkedTenantId: null,
-  status: 'ACTIVE',
+  status: p.status,
   notes: null,
   createdAt: NOW,
   updatedAt: NOW,
