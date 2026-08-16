@@ -3,7 +3,9 @@ import { AuthModule } from '../../platform/auth/auth.module';
 import { UsersModule } from '../../platform/users/users.module';
 import { PricingModule } from '../pricing/pricing.module';
 import { PartyBalanceReportService } from './party-balance-report.service';
+import { DashboardService } from './dashboard.service';
 import { ReportingController } from './reporting.controller';
+import { ReportingDisplayService } from './reporting-display.service';
 
 /**
  * گزارش دو مقیاسه (طلا و ریال) — BE-058 تا BE-060.
@@ -13,6 +15,6 @@ import { ReportingController } from './reporting.controller';
 @Module({
   imports: [AuthModule, PricingModule, UsersModule],
   controllers: [ReportingController],
-  providers: [PartyBalanceReportService],
+  providers: [DashboardService, PartyBalanceReportService, ReportingDisplayService],
 })
 export class ReportingModule {}

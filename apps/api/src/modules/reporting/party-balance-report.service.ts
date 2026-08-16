@@ -3,9 +3,6 @@ import {
   comparableGoldBalanceNumerator,
   dualFromPure,
   dualFromRial,
-  gramRate1000,
-  karat,
-  rateDivisorFromMarketSettings,
   toSafeNumber,
 } from '@gold/core-calc';
 import { and, asc, eq, ilike } from 'drizzle-orm';
@@ -17,27 +14,16 @@ import {
   ledgerAccounts,
   ledgerEntries,
   parties,
-  priceQuotes,
 } from '../../platform/database/schema';
 import { withTenantTransaction } from '../../platform/database/tenant-transaction';
-import { VersionedSettingsService } from '../pricing/versioned-settings.service';
-import {
-  ReportingDisplaySettingInvalidError,
-  ReportingReferenceQuoteNotFoundError,
-} from './reporting.errors';
+import { ReportingDisplayService } from './reporting-display.service';
 import type { Database } from '../../platform/database/connect';
-import type { VersionedSetting, VersionedSettingValue } from '../../platform/database/schema';
 import type { TenantTransaction } from '../../platform/database/tenant-transaction';
 import type {
   PartyBalanceReport,
   PartyBalanceReportQuery,
   PartyReportDirection,
 } from '@gold/contracts';
-
-const SETTING_KEYS = {
-  baseQuoteKarat: 'pricing.base_quote_karat',
-  mithqalGrams: 'pricing.mithqal_grams',
-} as const;
 
 type ReportItem = PartyBalanceReport['items'][number];
 type RawBalances = ReportItem['rawBalances'];
@@ -51,52 +37,12 @@ interface PartyBalanceAccumulator {
   readonly coinsById: Map<string, { readonly id: string; readonly code: string; count: bigint }>;
 }
 
-interface ReferenceMazneh {
-  readonly response: PartyBalanceReport['referenceMazneh'];
-  readonly goldRatePerGramRial: bigint;
-}
-
 interface SortableReportItem {
   readonly item: ReportItem;
   readonly normalizedName: string;
   readonly comparableBalance: bigint;
   readonly hasDebtorCoin: boolean;
   readonly hasCreditorCoin: boolean;
-}
-
-function isSettingRecord(
-  value: VersionedSettingValue | undefined,
-): value is { readonly [key: string]: VersionedSettingValue } {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
-
-function settingString(setting: VersionedSetting | undefined, key: string): string {
-  const value = isSettingRecord(setting?.valueJson) ? setting.valueJson['value'] : undefined;
-  if (typeof value !== 'string') {
-    throw new ReportingDisplaySettingInvalidError(key);
-  }
-  return value;
-}
-
-function positiveIntegerSetting(setting: VersionedSetting | undefined, key: string): bigint {
-  const value = settingString(setting, key);
-  if (!/^\d+$/u.test(value)) {
-    throw new ReportingDisplaySettingInvalidError(key);
-  }
-  const parsed = BigInt(value);
-  if (parsed <= 0n) {
-    throw new ReportingDisplaySettingInvalidError(key);
-  }
-  return parsed;
-}
-
-function mithqalGramsX10k(setting: VersionedSetting | undefined): bigint {
-  const value = settingString(setting, SETTING_KEYS.mithqalGrams);
-  const match = /^(\d+)\.(\d{4})$/u.exec(value);
-  if (match === null || BigInt(match[1]!) <= 0n) {
-    throw new ReportingDisplaySettingInvalidError(SETTING_KEYS.mithqalGrams);
-  }
-  return BigInt(`${match[1]}${match[2]}`);
 }
 
 function directionFor(comparableBalance: bigint): ReportItem['convertibleDirection'] {
@@ -123,7 +69,7 @@ function compareBigInt(left: bigint, right: bigint): number {
 export class PartyBalanceReportService {
   constructor(
     @Inject(DRIZZLE) private readonly db: Database,
-    @Inject(VersionedSettingsService) private readonly settings: VersionedSettingsService,
+    @Inject(ReportingDisplayService) private readonly display: ReportingDisplayService,
   ) {}
 
   async getReport(
@@ -132,7 +78,7 @@ export class PartyBalanceReportService {
     query: PartyBalanceReportQuery,
   ): Promise<PartyBalanceReport> {
     return withTenantTransaction(this.db, tenantId, async (transaction) => {
-      const referenceMazneh = await this.loadReferenceMaznehInTransaction(
+      const referenceMazneh = await this.display.getReferenceMaznehInTransaction(
         transaction,
         tenantId,
         query.referenceQuoteId,
@@ -166,54 +112,6 @@ export class PartyBalanceReportService {
         offset: query.offset,
       };
     });
-  }
-
-  private async loadReferenceMaznehInTransaction(
-    transaction: TenantTransaction,
-    tenantId: string,
-    referenceQuoteId: string,
-  ): Promise<ReferenceMazneh> {
-    const [quote] = await transaction
-      .select()
-      .from(priceQuotes)
-      .where(and(eq(priceQuotes.tenantId, tenantId), eq(priceQuotes.id, referenceQuoteId)))
-      .limit(1);
-    if (quote === undefined || quote.quoteType !== 'MAZNEH' || quote.amountRial <= 0n) {
-      throw new ReportingReferenceQuoteNotFoundError();
-    }
-
-    const [baseQuoteKarat, mithqalGrams] = await Promise.all([
-      this.settings.getEffectiveInTransaction(
-        transaction,
-        tenantId,
-        SETTING_KEYS.baseQuoteKarat,
-        quote.observedAt,
-      ),
-      this.settings.getEffectiveInTransaction(
-        transaction,
-        tenantId,
-        SETTING_KEYS.mithqalGrams,
-        quote.observedAt,
-      ),
-    ]);
-    const baseKarat = positiveIntegerSetting(baseQuoteKarat, SETTING_KEYS.baseQuoteKarat);
-    if (baseKarat > BigInt(Number.MAX_SAFE_INTEGER)) {
-      throw new ReportingDisplaySettingInvalidError(SETTING_KEYS.baseQuoteKarat);
-    }
-    const goldRatePerGramRial = gramRate1000(
-      quote.amountRial,
-      rateDivisorFromMarketSettings(karat(Number(baseKarat)), mithqalGramsX10k(mithqalGrams)),
-    );
-
-    return {
-      response: {
-        id: quote.id,
-        amountRial: quote.amountRial.toString(),
-        observedAt: quote.observedAt.toISOString(),
-        goldRatePerGramRial: goldRatePerGramRial.toString(),
-      },
-      goldRatePerGramRial,
-    };
   }
 
   private async loadPartyBalancesInTransaction(

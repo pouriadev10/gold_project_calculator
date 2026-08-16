@@ -24,6 +24,11 @@ export const partyBalanceReportQuerySchema = paginationQuerySchema
   })
   .strict();
 
+/** The dashboard always uses the latest tenant mazneh; only presentation unit is selectable. */
+export const dashboardQuerySchema = z
+  .object({ displayUnit: reportingDisplayUnitSchema.default('GOLD') })
+  .strict();
+
 const partyReportCoinBalanceSchema = z.object({
   coinTypeId: uuidSchema,
   code: z.string().min(1),
@@ -67,7 +72,54 @@ export const partyBalanceReportSchema = paginatedSchema(partyReportItemSchema).e
   referenceMazneh: partyReportReferenceMaznehSchema,
 });
 
+const dashboardRawAmountSchema = z.object({
+  rial: bigIntStringSchema,
+  pureGoldMg: bigIntStringSchema,
+});
+
+const dashboardFinancialCardSchema = z.object({
+  /** Raw dimensions are never collapsed or persisted as a converted amount. */
+  raw: dashboardRawAmountSchema,
+  /** Null only while the tenant has no current mazneh for cross-unit display. */
+  displayAmount: bigIntStringSchema.nullable(),
+});
+
+const dashboardInventoryCoinSchema = z.object({
+  coinTypeId: uuidSchema,
+  code: z.string().min(1),
+  count: z.number().int(),
+});
+
+export const dashboardSchema = z.object({
+  asOf: z.string().datetime({ offset: true }),
+  dayStartsAt: z.string().datetime({ offset: true }),
+  dayEndsAt: z.string().datetime({ offset: true }),
+  displayUnit: reportingDisplayUnitSchema,
+  currentMazneh: partyReportReferenceMaznehSchema.nullable(),
+  today: z.object({
+    sales: dashboardFinancialCardSchema,
+    purchases: dashboardFinancialCardSchema,
+    receipts: dashboardFinancialCardSchema,
+    payments: dashboardFinancialCardSchema,
+    invoiceCount: z.number().int().nonnegative(),
+  }),
+  /** Null until a mazneh exists, because netting rial and gold would otherwise be invalid. */
+  partyBalances: z
+    .object({
+      debtors: dashboardFinancialCardSchema,
+      creditors: dashboardFinancialCardSchema,
+      coinsRemainSeparate: z.literal(true),
+    })
+    .nullable(),
+  inventory: z.object({
+    meltedGoldPureMg: bigIntStringSchema,
+    coins: z.array(dashboardInventoryCoinSchema),
+  }),
+});
+
 export type ReportingDisplayUnit = z.infer<typeof reportingDisplayUnitSchema>;
 export type PartyReportDirection = z.infer<typeof partyReportDirectionSchema>;
 export type PartyBalanceReportQuery = z.infer<typeof partyBalanceReportQuerySchema>;
 export type PartyBalanceReport = z.infer<typeof partyBalanceReportSchema>;
+export type DashboardQuery = z.infer<typeof dashboardQuerySchema>;
+export type Dashboard = z.infer<typeof dashboardSchema>;
