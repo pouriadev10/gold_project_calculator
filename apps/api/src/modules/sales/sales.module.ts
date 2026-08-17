@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuditModule } from '../../platform/audit/audit.module';
 import { AuthModule } from '../../platform/auth/auth.module';
+import { FilesModule } from '../../platform/files/files.module';
 import { IdempotencyModule } from '../../platform/idempotency/idempotency.module';
 import { UsersModule } from '../../platform/users/users.module';
 import { InventoryModule } from '../inventory/inventory.module';
@@ -10,11 +11,17 @@ import { PricingModule } from '../pricing/pricing.module';
 import { CoinSalesController } from './coin-sales.controller';
 import { CoinSalesService } from './coin-sales.service';
 import { DocumentCountersService } from './document-counters.service';
+import { InvoiceAmendmentsController } from './invoice-amendments.controller';
+import { InvoiceAmendmentsService } from './invoice-amendments.service';
+import { InvoiceHistoryController } from './invoice-history.controller';
+import { InvoiceHistoryService } from './invoice-history.service';
 import { JewelryCashSalesController } from './jewelry-cash-sales.controller';
 import { JewelryCashSalesService } from './jewelry-cash-sales.service';
 import { JewelryCreditSalesController } from './jewelry-credit-sales.controller';
 import { JewelryCreditSalesService } from './jewelry-credit-sales.service';
+import { InvoiceAmendmentPolicyService } from './invoice-amendment-policy.service';
 import { SalesInvoicesService } from './sales-invoices.service';
+import { SalesInvoicePdfService } from './sales-invoice-pdf.service';
 import { SalesPricingService } from './sales-pricing.service';
 
 /**
@@ -29,6 +36,7 @@ import { SalesPricingService } from './sales-pricing.service';
   imports: [
     AuditModule,
     AuthModule,
+    FilesModule,
     IdempotencyModule,
     InventoryModule,
     LedgerModule,
@@ -36,13 +44,23 @@ import { SalesPricingService } from './sales-pricing.service';
     PricingModule,
     UsersModule,
   ],
-  controllers: [CoinSalesController, JewelryCashSalesController, JewelryCreditSalesController],
+  controllers: [
+    CoinSalesController,
+    InvoiceAmendmentsController,
+    InvoiceHistoryController,
+    JewelryCashSalesController,
+    JewelryCreditSalesController,
+  ],
   providers: [
     CoinSalesService,
     DocumentCountersService,
     JewelryCashSalesService,
     JewelryCreditSalesService,
+    InvoiceAmendmentsService,
+    InvoiceHistoryService,
+    InvoiceAmendmentPolicyService,
     SalesInvoicesService,
+    SalesInvoicePdfService,
     SalesPricingService,
   ],
   exports: [
@@ -50,6 +68,9 @@ import { SalesPricingService } from './sales-pricing.service';
     DocumentCountersService,
     JewelryCashSalesService,
     JewelryCreditSalesService,
+    InvoiceAmendmentsService,
+    InvoiceHistoryService,
+    InvoiceAmendmentPolicyService,
     SalesInvoicesService,
     SalesPricingService,
   ],

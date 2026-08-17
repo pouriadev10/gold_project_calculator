@@ -135,6 +135,9 @@ export const salesInvoiceVersions = pgTable(
     salesInvoiceId: uuid().notNull(),
     version: integer().notNull(),
     reason: text(),
+    reasonDetail: text(),
+    /** The party on this immutable invoice version; it may differ after a PARTY_ERROR amendment. */
+    partyId: uuid().notNull(),
     totalsSnapshot: jsonb().$type<SalesInvoiceSnapshotValue>().notNull(),
     settingsSnapshot: jsonb().$type<SalesInvoiceSnapshotValue>().notNull(),
     createdBy: uuid().references(() => users.id, { onDelete: 'set null' }),
@@ -146,11 +149,20 @@ export const salesInvoiceVersions = pgTable(
       foreignColumns: [salesInvoices.tenantId, salesInvoices.id],
       name: 'sales_invoice_versions_tenant_invoice_fk',
     }).onDelete('cascade'),
+    foreignKey({
+      columns: [table.tenantId, table.partyId],
+      foreignColumns: [parties.tenantId, parties.id],
+      name: 'sales_invoice_versions_tenant_party_fk',
+    }).onDelete('cascade'),
 
     check('sales_invoice_versions_version_positive_check', sql`${table.version} >= 1`),
     check(
       'sales_invoice_versions_reason_on_amendment_check',
       sql`${table.version} = 1 OR ${table.reason} IS NOT NULL`,
+    ),
+    check(
+      'sales_invoice_versions_other_reason_detail_check',
+      sql`${table.reason} IS DISTINCT FROM 'OTHER' OR length(btrim(${table.reasonDetail})) > 0`,
     ),
 
     unique('sales_invoice_versions_tenant_id_id_unique').on(table.tenantId, table.id),
@@ -164,6 +176,7 @@ export const salesInvoiceVersions = pgTable(
       table.salesInvoiceId,
       table.version,
     ),
+    index('sales_invoice_versions_tenant_party_idx').on(table.tenantId, table.partyId),
   ],
 );
 

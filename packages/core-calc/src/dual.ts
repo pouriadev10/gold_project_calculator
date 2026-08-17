@@ -45,6 +45,19 @@ export function dualFromPure(pureMgAmount: bigint, rate1000: bigint): DualAmount
   };
 }
 
+/**
+ * Exact, unrounded numerator for comparing a mixed rial/pure-gold position at
+ * one reference rate. Its sign is the position's sign in either display unit;
+ * callers must not serialize it as a monetary or weight amount.
+ */
+export function comparableGoldBalanceNumerator(
+  pureMgAmount: bigint,
+  rialAmount: bigint,
+  rate1000: bigint,
+): bigint {
+  return pureMgAmount * rate1000 + rialAmount * MG_PER_GRAM;
+}
+
 /** قرینه — برای نمایش طرف مقابل یک سطر دفتر. */
 export function negateDual(amount: DualAmount): DualAmount {
   return {

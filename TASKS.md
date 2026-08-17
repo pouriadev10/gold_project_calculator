@@ -1689,7 +1689,7 @@ POST /parties/:partyId/settlements/rial
 
 ---
 
-## [ ] BE-046 — پرداخت با طلا
+## [x] BE-046 — پرداخت با طلا
 
 **endpoint**
 
@@ -1712,7 +1712,7 @@ POST /parties/:partyId/settlements/gold
 
 ---
 
-## [ ] BE-047 — پرداخت با سکه
+## [x] BE-047 — پرداخت با سکه
 
 **endpoint**
 
@@ -1735,7 +1735,7 @@ POST /parties/:partyId/settlements/coins
 
 ---
 
-## [ ] BE-048 — تسویه ترکیبی
+## [x] BE-048 — تسویه ترکیبی
 
 **endpoint**
 
@@ -1762,7 +1762,7 @@ POST /parties/:partyId/settlements/mixed
 
 # Milestone 10 — خرید از مصرف‌کننده
 
-## [ ] BE-049 — مدل خرید طلای دست‌دوم
+## [x] BE-049 — مدل خرید طلای دست‌دوم
 
 **جدول‌ها**
 
@@ -1790,7 +1790,7 @@ final_amount_rial · destination inventory type · identity snapshot · finalize
 
 ---
 
-## [ ] BE-050 — ثبت خرید طلای دست‌دوم
+## [x] BE-050 — ثبت خرید طلای دست‌دوم
 
 **endpoint**
 
@@ -1818,7 +1818,7 @@ POST /purchase/second-hand/gold
 
 ---
 
-## [ ] BE-051 — خرید سکه از مصرف‌کننده
+## [x] BE-051 — خرید سکه از مصرف‌کننده
 
 **endpoint**
 
@@ -1842,7 +1842,7 @@ POST /purchase/second-hand/coins
 
 ---
 
-## [ ] BE-052 — مرجوعی B2C به‌عنوان خرید دست‌دوم
+## [x] BE-052 — مرجوعی B2C به‌عنوان خرید دست‌دوم
 
 **هدف** — اتصال خرید دست‌دوم به فاکتور قبلی بدون ساخت ماژول Return مشترک.
 
@@ -1882,7 +1882,7 @@ POST /sales/invoices/:invoiceId/b2c-buyback
 
 # Milestone 11 — اصلاح فاکتور
 
-## [ ] BE-053 — سیاست اصلاح فاکتور
+## [x] BE-053 — سیاست اصلاح فاکتور
 
 **هدف** — پیاده‌سازی قواعد مجوز اصلاح.
 
@@ -1915,7 +1915,7 @@ OTHER
 
 ---
 
-## [ ] BE-054 — ساخت نسخه جدید فاکتور
+## [x] BE-054 — ساخت نسخه جدید فاکتور
 
 **endpoint**
 
@@ -1943,7 +1943,7 @@ POST /sales/invoices/:id/amend
 
 ---
 
-## [ ] BE-055 — تاریخچه اصلاحات
+## [x] BE-055 — تاریخچه اصلاحات
 
 **endpointها**
 
@@ -1965,7 +1965,7 @@ GET /sales/invoices/:id/amendments
 
 # Milestone 12 — حساب اشخاص و گزارش‌های پایه
 
-## [ ] BE-056 — مانده چندواحدی Party
+## [x] BE-056 — مانده چندواحدی Party
 
 **endpoint**
 
@@ -1991,7 +1991,7 @@ GET /parties/:id/balances
 
 ---
 
-## [ ] BE-057 — صورت‌حساب Party
+## [x] BE-057 — صورت‌حساب Party
 
 **endpoint**
 
@@ -2010,7 +2010,7 @@ running balance · نمایش snapshot نرخ هر رویداد
 
 ---
 
-## [ ] BE-058 — فهرست بدهکاران و بستانکاران
+## [x] BE-058 — فهرست بدهکاران و بستانکاران
 
 **endpointها**
 
@@ -2036,7 +2036,7 @@ pagination · جست‌وجوی Party
 
 ---
 
-## [ ] BE-059 — داشبورد پایه
+## [x] BE-059 — داشبورد پایه
 
 **endpoint**
 
@@ -2061,7 +2061,7 @@ GET /reporting/dashboard
 
 ---
 
-## [ ] BE-060 — گزارش سود پایه دو مقیاسه
+## [x] BE-060 — گزارش سود پایه دو مقیاسه
 
 **هدف** — گزارش اولیه سود فاز ۱ بدون پیچیدگی فازهای آینده.
 
@@ -2091,7 +2091,7 @@ GET /reporting/profit
 
 # Milestone 13 — رسید و Export
 
-## [ ] BE-061 — InvoiceExporter abstraction
+## [x] BE-061 — InvoiceExporter abstraction
 
 **هدف** — ایجاد abstraction موردنیاز برای خروجی اسناد.
 
@@ -2118,7 +2118,7 @@ interface InvoiceExporter {
 
 ---
 
-## [ ] BE-062 — API دریافت رسید PDF
+## [x] BE-062 — API دریافت رسید PDF
 
 **endpointها**
 

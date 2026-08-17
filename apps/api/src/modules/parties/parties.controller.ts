@@ -13,12 +13,15 @@ import {
   Post,
   Query,
   Req,
+  StreamableFile,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import {
   createPartySchema,
+  partyBalancesQuerySchema,
   partyListQuerySchema,
+  partyStatementQuerySchema,
   updatePartySchema,
   uuidSchema,
 } from '@gold/contracts';
@@ -31,11 +34,19 @@ import { IDEMPOTENCY_KEY_HEADER } from '../../platform/idempotency/idempotency-k
 import { IdempotencyService } from '../../platform/idempotency/idempotency.service';
 import { RequestContextService } from '../../platform/request-context/request-context.service';
 import { PartiesService, PartyNotFoundError } from './parties.service';
+import { PartyBalancesService } from './party-balances.service';
+import { PartyBalanceReferenceQuoteNotFoundError } from './party-balances.errors';
+import { PartyStatementsService } from './party-statements.service';
+import { PartyStatementPdfService } from './party-statement-pdf.service';
 import type {
   CreatePartyInput,
+  PartyBalances as PartyBalancesResponse,
+  PartyBalancesQuery,
   Party as PartyResponse,
   PartyList as PartyListResponse,
   PartyListQuery,
+  PartyStatement as PartyStatementResponse,
+  PartyStatementQuery,
   UpdatePartyInput,
 } from '@gold/contracts';
 import type { AccessTokenPayload } from '../../platform/auth/token.service';
@@ -78,6 +89,9 @@ export class PartiesController {
     @Inject(RequestContextService) private readonly context: RequestContextService,
     @Inject(IdempotencyService) private readonly idempotency: IdempotencyService,
     @Inject(PartiesService) private readonly parties: PartiesService,
+    @Inject(PartyBalancesService) private readonly balances: PartyBalancesService,
+    @Inject(PartyStatementsService) private readonly statements: PartyStatementsService,
+    @Inject(PartyStatementPdfService) private readonly statementPdf: PartyStatementPdfService,
   ) {}
 
   @Post()
@@ -121,6 +135,65 @@ export class PartiesController {
     const page = await this.parties.list(this.context.getTenantId(), query);
 
     return { ...page, items: page.items.map(toResponse) };
+  }
+
+  @Get(':id/balances')
+  async getBalances(
+    @Param('id', new ZodValidationPipe(uuidSchema)) id: string,
+    @Query(new ZodValidationPipe(partyBalancesQuerySchema)) query: PartyBalancesQuery,
+  ): Promise<PartyBalancesResponse> {
+    try {
+      return await this.balances.getBalances(this.context.getTenantId(), id, {
+        at: query.at === undefined ? new Date() : new Date(query.at),
+        referenceQuoteId: query.referenceQuoteId,
+      });
+    } catch (error) {
+      if (
+        error instanceof PartyNotFoundError ||
+        error instanceof PartyBalanceReferenceQuoteNotFoundError
+      ) {
+        throw new NotFoundException(error.message);
+      }
+      throw error;
+    }
+  }
+
+  @Get(':id/statement')
+  async getStatement(
+    @Param('id', new ZodValidationPipe(uuidSchema)) id: string,
+    @Query(new ZodValidationPipe(partyStatementQuerySchema)) query: PartyStatementQuery,
+  ): Promise<PartyStatementResponse> {
+    try {
+      return await this.statements.getStatement(this.context.getTenantId(), id, {
+        ...query,
+        from: query.from === undefined ? undefined : new Date(query.from),
+        to: query.to === undefined ? undefined : new Date(query.to),
+      });
+    } catch (error) {
+      if (
+        error instanceof PartyNotFoundError ||
+        error instanceof PartyBalanceReferenceQuoteNotFoundError
+      ) {
+        throw new NotFoundException(error.message);
+      }
+      throw error;
+    }
+  }
+
+  @Get(':id/statement/pdf')
+  async getStatementPdf(
+    @Param('id', new ZodValidationPipe(uuidSchema)) id: string,
+  ): Promise<StreamableFile> {
+    try {
+      const exported = await this.statementPdf.export(this.context.getTenantId(), id);
+      return new StreamableFile(exported.content, {
+        type: exported.contentType,
+        disposition: `attachment; filename="${exported.fileName}"`,
+      });
+    } catch (error) {
+      if (error instanceof PartyNotFoundError) throw new NotFoundException(error.message);
+      throw error;
+    }
   }
 
   @Get(':id')

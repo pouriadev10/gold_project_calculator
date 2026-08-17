@@ -72,7 +72,7 @@
   "70": ".agents/skills/design-system/scripts/generate-slide.py",
   "71": "fontSize",
   "72": ".create",
-  "73": "ThemeToggle.tsx",
+  "73": "router.tsx",
   "74": ".claude/skills/design-system/scripts/generate-slide.py",
   "75": "bigint-serialization.e2e-spec.ts",
   "76": "RoleCode",

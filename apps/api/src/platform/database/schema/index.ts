@@ -30,6 +30,7 @@ export * from './refresh-tokens';
 export * from './rls-probes';
 export * from './roles';
 export * from './sales-invoices';
+export * from './second-hand-purchases';
 export * from './settlements';
 export * from './tenant-memberships';
 export * from './tenants';

@@ -1,0 +1,1 @@
+ALTER TYPE "public"."inventory_movement_source_type" ADD VALUE 'SETTLEMENT' BEFORE 'CORRECTION';
