@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import { Plus, Search } from 'lucide-react';
-import type { PartyListQuery, PartyStatus, PartyType } from '@/api/contracts';
+import type { Party, PartyListQuery, PartyStatus, PartyType } from '@/api/contracts';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { CreatePartyDialog } from './CreatePartyDialog';
+import { PartyFormDialog } from './PartyFormDialog';
 import { PartyList } from './PartyList';
 
 /**
- * صفحه‌ی اشخاص — FE-032.
+ * صفحه‌ی اشخاص — FE-032 + FE-033.
  *
  * جست‌وجو با ۳۰۰ms تأخیر منتشر می‌شود (`useDebouncedValue`) تا هر ضربه‌ی
  * کیبورد یک درخواست تازه نسازد. تغییر هر فیلتر (جست‌وجو، نوع، وضعیت)
@@ -18,7 +19,14 @@ import { PartyList } from './PartyList';
  * درحالی‌که فیلتر تازه اصلاً به آن تعداد نتیجه نمی‌رسد.
  *
  * دکمه‌ی «افزودن شخص» با همان الگوی منطقه‌ی شست `HomePage.tsx` است —
- * ثابت، دقیقاً بالای نوار ناوبری، همیشه بدون اسکرول در دسترس.
+ * ثابت، دقیقاً بالای نوار ناوبری، همیشه بدون اسکرول در دسترس. عمداً هنوز
+ * همان `CreatePartyDialog` سریع سه‌فیلدی FE-032 را باز می‌کند، نه فرم
+ * کامل — متن خودِ آن گفت‌وگو همین را می‌گوید: «بقیه‌ی مشخصات را بعداً از
+ * صفحه‌ی شخص کامل کنید». آن «بعداً» همین‌جاست: دکمه‌ی ویرایش روی هر ردیف
+ * `PartyList`، `PartyFormDialog` (FE-033) را با همه‌ی پنج فیلد برای همان
+ * شخص باز می‌کند. `editingParty` را نه ID، بلکه خودِ شیء `Party` نگه
+ * می‌دارد — چون هیچ `useParty(id)` یا route جزئیات واقعی هنوز نیست
+ * (FE-034)؛ ردیفِ همین لیست تنها منبع داده‌ی در دسترس است.
  */
 
 const PAGE_SIZE = 10;
@@ -33,6 +41,7 @@ export default function PartiesPage() {
   const [status, setStatus] = useState<PartyStatus | ''>('');
   const [offset, setOffset] = useState(0);
   const [createOpen, setCreateOpen] = useState(false);
+  const [editingParty, setEditingParty] = useState<Party | null>(null);
   const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS).trim();
 
   const query: PartyListQuery = {
@@ -102,7 +111,7 @@ export default function PartiesPage() {
           </div>
         </div>
 
-        <PartyList query={query} onOffsetChange={setOffset} />
+        <PartyList query={query} onOffsetChange={setOffset} onEdit={setEditingParty} />
       </div>
 
       {/* منطقه‌ی شست — همان الگوی HomePage.tsx: ثابت، دقیقاً بالای نوار ناوبری */}
@@ -114,6 +123,17 @@ export default function PartiesPage() {
       </div>
 
       <CreatePartyDialog open={createOpen} onOpenChange={setCreateOpen} />
+
+      {editingParty ? (
+        <PartyFormDialog
+          key={editingParty.id}
+          open
+          onOpenChange={(open) => {
+            if (!open) setEditingParty(null);
+          }}
+          party={editingParty}
+        />
+      ) : null}
     </div>
   );
 }

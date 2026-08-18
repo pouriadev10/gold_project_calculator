@@ -370,6 +370,65 @@ export const handlers = [
     return HttpResponse.json(created, { status: 201 });
   }),
 
+  /** `PATCH /api/parties/:id` — قرارداد نهایی BE-024 (`updatePartySchema`/`partySchema`، FE-033). */
+  http.patch('/api/parties/:id', async ({ request, params }) => {
+    await delay(WRITE_DELAY_MS);
+
+    const key = request.headers.get('Idempotency-Key');
+    if (!key) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 'IDEMPOTENCY_KEY_REQUIRED',
+            message: 'هدر Idempotency-Key اجباری است',
+            fields: {},
+            requestId: crypto.randomUUID(),
+          },
+        },
+        { status: 400 },
+      );
+    }
+
+    const cached = idempotencyCache.get(key);
+    if (cached) return HttpResponse.json(cached, { status: 200 });
+
+    const id = params['id'] as string;
+    const existing = partyList.find((p) => p.id === id);
+    if (!existing) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 'NOT_FOUND',
+            message: 'شخص مورد نظر پیدا نشد',
+            fields: {},
+            requestId: crypto.randomUUID(),
+          },
+        },
+        { status: 404 },
+      );
+    }
+
+    const body = (await request.json()) as {
+      type?: Party['type'];
+      displayName?: string;
+      mobile?: string | null;
+      nationalId?: string | null;
+      notes?: string | null;
+    };
+    const updated: Party = {
+      ...existing,
+      ...(body.type !== undefined && { type: body.type }),
+      ...(body.displayName !== undefined && { displayName: body.displayName }),
+      ...(body.mobile !== undefined && { mobile: body.mobile }),
+      ...(body.nationalId !== undefined && { nationalId: body.nationalId }),
+      ...(body.notes !== undefined && { notes: body.notes }),
+      updatedAt: new Date().toISOString(),
+    };
+    partyList = partyList.map((p) => (p.id === id ? updated : p));
+    idempotencyCache.set(key, updated);
+    return HttpResponse.json(updated, { status: 200 });
+  }),
+
   http.get('/api/parties/balance-summary', async () => {
     await delay(READ_DELAY_MS);
     return HttpResponse.json(balanceSummary);

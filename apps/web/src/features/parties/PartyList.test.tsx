@@ -92,7 +92,7 @@ afterEach(() => {
 describe('PartyList — بارگذاری، خطا، خالی', () => {
   it('در حال بارگذاری: اسکلت نشان می‌دهد', () => {
     usePartiesMock.mockReturnValue({ data: undefined, isLoading: true, isError: false, refetch: vi.fn() });
-    const { container } = render(<PartyList query={baseQuery} onOffsetChange={vi.fn()} />);
+    const { container } = render(<PartyList query={baseQuery} onOffsetChange={vi.fn()} onEdit={vi.fn()} />);
     expect(container.querySelectorAll('[class*="animate-pulse"]').length).toBeGreaterThan(0);
   });
 
@@ -100,7 +100,7 @@ describe('PartyList — بارگذاری، خطا، خالی', () => {
     const refetch = vi.fn();
     usePartiesMock.mockReturnValue({ data: undefined, isLoading: false, isError: true, refetch });
     const user = userEvent.setup();
-    render(<PartyList query={baseQuery} onOffsetChange={vi.fn()} />);
+    render(<PartyList query={baseQuery} onOffsetChange={vi.fn()} onEdit={vi.fn()} />);
 
     expect(screen.getByText('دریافت فهرست اشخاص ناموفق بود.')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'تلاش دوباره' }));
@@ -109,7 +109,7 @@ describe('PartyList — بارگذاری، خطا، خالی', () => {
 
   it('فهرست خالی: پیام «شخصی پیدا نشد» را نشان می‌دهد', () => {
     usePartiesMock.mockReturnValue({ data: page([]), isLoading: false, isError: false, refetch: vi.fn() });
-    render(<PartyList query={baseQuery} onOffsetChange={vi.fn()} />);
+    render(<PartyList query={baseQuery} onOffsetChange={vi.fn()} onEdit={vi.fn()} />);
     expect(screen.getByText('شخصی پیدا نشد')).toBeInTheDocument();
   });
 });
@@ -126,7 +126,7 @@ describe('PartyList — نمای دسکتاپ (از ۶۴۰px به بالا)', ()
       isError: false,
       refetch: vi.fn(),
     });
-    render(<PartyList query={baseQuery} onOffsetChange={vi.fn()} />);
+    render(<PartyList query={baseQuery} onOffsetChange={vi.fn()} onEdit={vi.fn()} />);
 
     expect(screen.getByRole('table')).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'نام' })).toBeInTheDocument();
@@ -148,10 +148,40 @@ describe('PartyList — نمای موبایل (زیر ۶۴۰px، تمام است
       isError: false,
       refetch: vi.fn(),
     });
-    render(<PartyList query={baseQuery} onOffsetChange={vi.fn()} />);
+    render(<PartyList query={baseQuery} onOffsetChange={vi.fn()} onEdit={vi.fn()} />);
 
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: /حسین مرادی/ })).toHaveAttribute('href', '/parties/$partyId/p1');
+  });
+});
+
+describe('PartyList — دکمه‌ی ویرایش (FE-033)', () => {
+  it('نمای دسکتاپ: کلیک روی دکمه‌ی ویرایش ردیف، همان شخص را به onEdit می‌دهد', async () => {
+    mockViewport(true);
+    const onEdit = vi.fn();
+    const target = party({ id: 'p1', displayName: 'حسین مرادی' });
+    usePartiesMock.mockReturnValue({ data: page([target]), isLoading: false, isError: false, refetch: vi.fn() });
+    const user = userEvent.setup();
+    render(<PartyList query={baseQuery} onOffsetChange={vi.fn()} onEdit={onEdit} />);
+
+    await user.click(screen.getByRole('button', { name: 'ویرایش حسین مرادی' }));
+    expect(onEdit).toHaveBeenCalledWith(target);
+  });
+
+  it('نمای موبایل: دکمه‌ی ویرایش بیرون از لینک جزئیات است، نه تودرتویش', async () => {
+    mockViewport(false);
+    const onEdit = vi.fn();
+    const target = party({ id: 'p1', displayName: 'حسین مرادی' });
+    usePartiesMock.mockReturnValue({ data: page([target]), isLoading: false, isError: false, refetch: vi.fn() });
+    const user = userEvent.setup();
+    render(<PartyList query={baseQuery} onOffsetChange={vi.fn()} onEdit={onEdit} />);
+
+    const editButton = screen.getByRole('button', { name: 'ویرایش حسین مرادی' });
+    // بیرون از anchor — button تودرتوی a نامعتبر است
+    expect(editButton.closest('a')).toBeNull();
+
+    await user.click(editButton);
+    expect(onEdit).toHaveBeenCalledWith(target);
   });
 });
 
@@ -163,7 +193,7 @@ describe('PartyList — pagination سرور-محور', () => {
       isError: false,
       refetch: vi.fn(),
     });
-    render(<PartyList query={baseQuery} onOffsetChange={vi.fn()} />);
+    render(<PartyList query={baseQuery} onOffsetChange={vi.fn()} onEdit={vi.fn()} />);
     expect(screen.queryByRole('button', { name: /بعدی/ })).not.toBeInTheDocument();
   });
 
@@ -176,7 +206,7 @@ describe('PartyList — pagination سرور-محور', () => {
       refetch: vi.fn(),
     });
     const user = userEvent.setup();
-    render(<PartyList query={{ ...baseQuery, offset: 0 }} onOffsetChange={onOffsetChange} />);
+    render(<PartyList query={{ ...baseQuery, offset: 0 }} onOffsetChange={onOffsetChange} onEdit={vi.fn()} />);
 
     expect(screen.getByText('صفحه ۱ از ۲')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /قبلی/ })).toBeDisabled();
@@ -192,7 +222,7 @@ describe('PartyList — pagination سرور-محور', () => {
       isError: false,
       refetch: vi.fn(),
     });
-    render(<PartyList query={{ ...baseQuery, offset: 10 }} onOffsetChange={vi.fn()} />);
+    render(<PartyList query={{ ...baseQuery, offset: 10 }} onOffsetChange={vi.fn()} onEdit={vi.fn()} />);
 
     expect(screen.getByText('صفحه ۲ از ۲')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /بعدی/ })).toBeDisabled();

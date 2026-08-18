@@ -1,5 +1,5 @@
-import { apiPost } from './client';
-import { partySchema, type CreatePartyInput, type Party } from './contracts';
+import { apiPatch, apiPost } from './client';
+import { partySchema, type CreatePartyInput, type Party, type UpdatePartyInput } from './contracts';
 
 /**
  * ثبت شخص جدید — `POST /parties` (BE-024، FE-032).
@@ -14,4 +14,18 @@ export function createParty(
   signal?: AbortSignal,
 ): Promise<Party> {
   return apiPost('/parties', input, partySchema, idempotencyKey, signal);
+}
+
+/**
+ * ویرایش شخص — `PATCH /parties/:id` (BE-024، FE-033). همان الگوی
+ * `createParty`: `PartyFormDialog` مستقیماً با `useIdempotentSubmit`
+ * می‌پوشاند.
+ */
+export function updateParty(
+  id: string,
+  input: UpdatePartyInput,
+  idempotencyKey: string,
+  signal?: AbortSignal,
+): Promise<Party> {
+  return apiPatch(`/parties/${id}`, input, partySchema, idempotencyKey, signal);
 }

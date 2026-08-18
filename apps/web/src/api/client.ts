@@ -314,6 +314,34 @@ export function apiPost<S extends z.ZodTypeAny>(
 }
 
 /**
+ * ویرایش جزئی — همان قرارداد `apiPost` (`Idempotency-Key` خودکار)، فقط با
+ * متد `PATCH`. `PartyFormDialog` (FE-033) اولین مصرف‌کننده است.
+ */
+export function apiPatch<S extends z.ZodTypeAny>(
+  path: string,
+  body: unknown,
+  schema: S,
+  idempotencyKey: string = newIdempotencyKey(),
+  signal?: AbortSignal,
+  timeoutMs: number = DEFAULT_TIMEOUT_MS,
+): Promise<z.infer<S>> {
+  return request(
+    path,
+    schema,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Idempotency-Key': idempotencyKey,
+      },
+      body: JSON.stringify(body),
+    },
+    signal,
+    timeoutMs,
+  );
+}
+
+/**
  * نوشتن بدون تمدید خودکار — فقط برای `/auth/login`, `/auth/refresh`,
  * `/auth/logout` (`api/auth.ts`). این سه خودشان چرخه‌ی نشست‌اند؛ اگر از
  * مسیر معمول با تمدید خودکار عبور کنند، یک ۴۰۱ روی تمدید یعنی تلاش

@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { ChevronLeft, ChevronRight, Users } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Pencil, Users } from 'lucide-react';
 import { formatCount } from '@gold/core-calc';
 import { useParties } from '@/api/queries';
 import type { Party, PartyListQuery, PartyType } from '@/api/contracts';
@@ -26,6 +26,11 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
  * عددی که از سرور نیامده همان چیزی است که بخش ۲-۸ CLAUDE.md منع می‌کند.
  * به‌جایش وضعیت (فعال/غیرفعال) به‌عنوان چهارمین فیلد کلیدی نشان داده
  * می‌شود — FE-069 وقتی BE-056 آمد این را با مانده‌ی واقعی جایگزین می‌کند.
+ *
+ * دکمه‌ی ویرایش (FE-033) عمداً بیرون از `Link` جزئیات است، نه داخلش —
+ * `<button>` تودرتوی `<a>` HTML نامعتبر است و روی صفحه‌کلید هم رفتار
+ * فوکوس را می‌شکند. روی موبایل به همین دلیل کل کارت دیگر لینک نیست؛ فقط
+ * بخش نام/موبایل، درست مثل ستون نام در جدول دسکتاپ.
  */
 
 // باید با tailwind.config.ts → theme.screens.sm هم‌راستا بماند (همان ثابت ResponsiveDialog.tsx)
@@ -46,6 +51,8 @@ function ceilDivide(dividend: number, divisor: number): number {
 interface PartyListProps {
   query: PartyListQuery;
   onOffsetChange: (offset: number) => void;
+  /** باز کردن فرم کامل ویرایش (FE-033) روی همین شخص. */
+  onEdit: (party: Party) => void;
 }
 
 function PartyName({ party }: { party: Party }) {
@@ -65,7 +72,22 @@ function StatusBadge({ status }: { status: Party['status'] }) {
   return <Badge variant="secondary">غیرفعال</Badge>;
 }
 
-export function PartyList({ query, onOffsetChange }: PartyListProps) {
+/** دکمه‌ی ویرایش — همیشه بیرون از `Link` جزئیات، تا دو عنصر کلیک‌پذیر تودرتو نشوند. */
+function EditButton({ party, onEdit }: { party: Party; onEdit: (party: Party) => void }) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      aria-label={`ویرایش ${party.displayName}`}
+      onClick={() => onEdit(party)}
+    >
+      <Pencil className="size-4" aria-hidden="true" />
+    </Button>
+  );
+}
+
+export function PartyList({ query, onOffsetChange, onEdit }: PartyListProps) {
   const { data, isLoading, isError, refetch } = useParties(query);
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
 
@@ -107,6 +129,9 @@ export function PartyList({ query, onOffsetChange }: PartyListProps) {
                 <TableHead>موبایل</TableHead>
                 <TableHead>نوع</TableHead>
                 <TableHead>وضعیت</TableHead>
+                <TableHead className="w-0">
+                  <span className="sr-only">عملیات</span>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -124,6 +149,9 @@ export function PartyList({ query, onOffsetChange }: PartyListProps) {
                   <TableCell>
                     <StatusBadge status={party.status} />
                   </TableCell>
+                  <TableCell>
+                    <EditButton party={party} onEdit={onEdit} />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -132,27 +160,25 @@ export function PartyList({ query, onOffsetChange }: PartyListProps) {
       ) : (
         <div className="space-y-2">
           {data.items.map((party) => (
-            <Link
-              key={party.id}
-              to="/parties/$partyId"
-              params={{ partyId: party.id }}
-              className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              <Card className="transition-colors active:bg-muted/50">
-                <CardContent className="flex items-center justify-between gap-3 pt-6">
-                  <div className="min-w-0 space-y-1">
-                    <p className="truncate font-medium">{party.displayName}</p>
-                    <p className="tabular-nums text-xs text-muted-foreground" dir="ltr">
-                      {party.mobile ?? '—'}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <StatusBadge status={party.status} />
-                    <Badge variant="outline">{TYPE_LABEL[party.type]}</Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
+            <Card key={party.id}>
+              <CardContent className="flex items-center gap-3 pt-6">
+                <Link
+                  to="/parties/$partyId"
+                  params={{ partyId: party.id }}
+                  className="min-w-0 flex-1 space-y-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <p className="truncate font-medium">{party.displayName}</p>
+                  <p className="tabular-nums text-xs text-muted-foreground" dir="ltr">
+                    {party.mobile ?? '—'}
+                  </p>
+                </Link>
+                <div className="flex shrink-0 items-center gap-2">
+                  <StatusBadge status={party.status} />
+                  <Badge variant="outline">{TYPE_LABEL[party.type]}</Badge>
+                  <EditButton party={party} onEdit={onEdit} />
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}
