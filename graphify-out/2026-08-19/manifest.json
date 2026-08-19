@@ -1655,8 +1655,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/client.ts": {
-    "mtime": 1786966123.7875812,
-    "ast_hash": "a568fbc964383809421f6578f601a239",
+    "mtime": 1786965220.0341544,
+    "ast_hash": "878d8981843f3931f754722813eeee17",
     "semantic_hash": ""
   },
   "apps/web/src/api/contracts-package.test.ts": {
@@ -1665,8 +1665,8 @@
     "semantic_hash": "f0918d28c8b297bd1e16403c91156161"
   },
   "apps/web/src/api/contracts.ts": {
-    "mtime": 1786966109.0457504,
-    "ast_hash": "fc55ce61dc215bf01e03ea5ad160fddd",
+    "mtime": 1786965220.034672,
+    "ast_hash": "e6c8a436dc484430c2f772c7301437cf",
     "semantic_hash": ""
   },
   "apps/web/src/api/queries.ts": {
@@ -1905,8 +1905,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/mocks/handlers/index.ts": {
-    "mtime": 1786966179.8609056,
-    "ast_hash": "c35179f5cae7d058e61140401b6b7564",
+    "mtime": 1786965220.0739834,
+    "ast_hash": "a6d80c16973dc09c1d30ef33fe426734",
     "semantic_hash": ""
   },
   "apps/web/src/stores/theme-store.ts": {
@@ -2900,8 +2900,8 @@
     "semantic_hash": "57f3eade61064fcaf09a18164aacb4bc"
   },
   "FrontTasks.md": {
-    "mtime": 1787092181.5434535,
-    "ast_hash": "18e6a4c453e10645f053f3259ac650e7",
+    "mtime": 1786965219.9934194,
+    "ast_hash": "739cf4b0ccb215b9fbd6eb51ec4fa0e9",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
@@ -3520,8 +3520,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/parties.ts": {
-    "mtime": 1786966159.681828,
-    "ast_hash": "7d05cf19b700b045997a65b897757a87",
+    "mtime": 1786965220.0357037,
+    "ast_hash": "39ac9506c445f5a925a043e0d005e879",
     "semantic_hash": ""
   },
   "apps/web/src/api/pricing.ts": {
@@ -3660,18 +3660,18 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/parties/PartiesPage.tsx": {
-    "mtime": 1786968326.4157903,
-    "ast_hash": "e174f6e4cfc61cabb68d1aad8e042103",
+    "mtime": 1786965220.0569842,
+    "ast_hash": "e927eddf5dc3c96071f4459ad21a837f",
     "semantic_hash": ""
   },
   "apps/web/src/features/parties/PartyList.test.tsx": {
-    "mtime": 1786968446.8489509,
-    "ast_hash": "6890e405015d833f1aadbf285bc48c78",
+    "mtime": 1786965220.0579832,
+    "ast_hash": "88f8ac67a40c1941db6dc647eaad3640",
     "semantic_hash": ""
   },
   "apps/web/src/features/parties/PartyList.tsx": {
-    "mtime": 1786967373.027098,
-    "ast_hash": "d738664556cbc017aba4d551d2fb9905",
+    "mtime": 1786965220.0579832,
+    "ast_hash": "935adf06b8f47d466b75e57a4378578e",
     "semantic_hash": ""
   },
   "apps/web/src/features/pricing/ManualQuoteForm.test.tsx": {
@@ -3912,21 +3912,6 @@
   "packages/core-calc/test/second-hand-purchase.test.ts": {
     "mtime": 1786965220.166807,
     "ast_hash": "866a882a10cffeb4d67ac3bdf7cb2468",
-    "semantic_hash": ""
-  },
-  "apps/web/src/components/ui/textarea.tsx": {
-    "mtime": 1786967095.5466201,
-    "ast_hash": "75922b879c4d4749ed019b8ae6cbcf01",
-    "semantic_hash": ""
-  },
-  "apps/web/src/features/parties/PartyFormDialog.test.tsx": {
-    "mtime": 1786968549.3308065,
-    "ast_hash": "067ee3dd5a563555f9e5756e96dbbaa2",
-    "semantic_hash": ""
-  },
-  "apps/web/src/features/parties/PartyFormDialog.tsx": {
-    "mtime": 1786967205.2979164,
-    "ast_hash": "55b1bde65c304fa858311b2269b258f2",
     "semantic_hash": ""
   }
 }
