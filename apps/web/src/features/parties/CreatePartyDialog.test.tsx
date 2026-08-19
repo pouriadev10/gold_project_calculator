@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '@/api/api-error';
+import type { Party } from '@/api/contracts';
 import { useToastStore } from '@/stores/toast-store';
 import { CreatePartyDialog } from './CreatePartyDialog';
 
@@ -48,11 +49,11 @@ function mockDesktopViewport() {
   );
 }
 
-function renderDialog(onOpenChange = vi.fn()) {
+function renderDialog(onOpenChange = vi.fn(), onCreated?: (party: Party) => void) {
   const client = new QueryClient();
   render(
     <QueryClientProvider client={client}>
-      <CreatePartyDialog open onOpenChange={onOpenChange} />
+      <CreatePartyDialog open onOpenChange={onOpenChange} {...(onCreated ? { onCreated } : {})} />
     </QueryClientProvider>,
   );
   return onOpenChange;
@@ -145,6 +146,18 @@ describe('CreatePartyDialog — ثبت موفق (تمام است وقتی: شخ�
       { type: 'BUSINESS', displayName: 'مهدی صادقی' },
       expect.any(String),
     );
+  });
+
+  it('onCreated با شخص تازه‌ساخته‌شده صدا زده می‌شود — برای انتخاب خودکار در PartySelector', async () => {
+    createPartyMock.mockResolvedValue(PARTY_RESPONSE);
+    const onCreated = vi.fn();
+    const user = userEvent.setup();
+    renderDialog(vi.fn(), onCreated);
+
+    await fillName(user, 'حسین مرادی');
+    await user.click(screen.getByRole('button', { name: 'ثبت شخص' }));
+
+    await waitFor(() => expect(onCreated).toHaveBeenCalledWith(PARTY_RESPONSE));
   });
 });
 

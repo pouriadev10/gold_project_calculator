@@ -242,6 +242,11 @@ const devRoutes = import.meta.env.DEV
         path: '/_dev/keypad',
         component: lazyRouteComponent(() => import('@/features/dev/KeypadHarness')),
       }),
+      createRoute({
+        getParentRoute: () => appShellRoute,
+        path: '/_dev/party-selector',
+        component: lazyRouteComponent(() => import('@/features/dev/PartySelectorHarness')),
+      }),
     ]
   : [];
 

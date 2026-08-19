@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { createParty } from '@/api/parties';
 import { queryKeys } from '@/api/query-keys';
-import type { CreatePartyInput, PartyType } from '@/api/contracts';
+import type { CreatePartyInput, Party, PartyType } from '@/api/contracts';
 import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
 import { InlineError } from '@/components/common/InlineError';
 import {
@@ -55,9 +55,11 @@ function toCreatePartyInput(values: PartyFormValues): CreatePartyInput {
 export interface CreatePartyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** بعد از ثبت موفق با شخص تازه صدا زده می‌شود — مثلاً برای انتخاب خودکار در `PartySelector` (FE-035). */
+  onCreated?: (party: Party) => void;
 }
 
-export function CreatePartyDialog({ open, onOpenChange }: CreatePartyDialogProps) {
+export function CreatePartyDialog({ open, onOpenChange, onCreated }: CreatePartyDialogProps) {
   const queryClient = useQueryClient();
   const [submitError, setSubmitError] = useState<unknown>(null);
 
@@ -91,6 +93,7 @@ export function CreatePartyDialog({ open, onOpenChange }: CreatePartyDialogProps
       await queryClient.invalidateQueries({ queryKey: queryKeys.parties.all() });
       toast.success('شخص ثبت شد', party.displayName);
       resetKey();
+      onCreated?.(party);
       onOpenChange(false);
       resetFormValues();
     } catch (error) {

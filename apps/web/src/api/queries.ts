@@ -97,8 +97,12 @@ export function usePartySearch(search: string) {
  *
  * `placeholderData: keepPreviousData` صفحه‌ی قبلی را حین رفتن به صفحه‌ی
  * بعد/فیلتر تازه روی صفحه نگه می‌دارد تا هر کلیک یک flash اسکلت نسازد.
+ *
+ * `enabled` پیش‌فرض `true` است — برای موارد مثل `PartySelector` (FE-035)
+ * که تا کاربر چیزی تایپ نکرده اصلاً نباید این fetch برود (به‌جایش فهرست
+ * اخیر سمت کلاینت نشان داده می‌شود).
  */
-export function useParties(query: PartyListQuery) {
+export function useParties(query: PartyListQuery, enabled = true) {
   return useQuery({
     queryKey: queryKeys.parties.list(query),
     queryFn: ({ signal }) => {
@@ -113,6 +117,7 @@ export function useParties(query: PartyListQuery) {
     },
     staleTime: MINUTE,
     placeholderData: keepPreviousData,
+    enabled,
   });
 }
 
