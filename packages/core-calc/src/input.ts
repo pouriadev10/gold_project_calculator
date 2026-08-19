@@ -45,6 +45,8 @@ export const DIGIT_SPECS = {
   count: { decimals: 0, maxIntegerDigits: 6 },
   /** مظنه — ریال */
   mazneh: { decimals: 0, maxIntegerDigits: 15 },
+  /** درصد با دو رقم اعشار → مقیاس ×۱۰۰ صحیح (۷٫۵٪ → ۷۵۰) — قرارداد `PERCENT_X100` */
+  percent: { decimals: 2, maxIntegerDigits: 3 },
 } as const satisfies Record<string, DigitSpec>;
 
 export type NumericFieldKind = keyof typeof DIGIT_SPECS;

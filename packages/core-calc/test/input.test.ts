@@ -17,6 +17,7 @@ import { CalcError } from '../src/types.js';
 const WEIGHT = DIGIT_SPECS.weight;
 const KARAT = DIGIT_SPECS.karat;
 const RIAL = DIGIT_SPECS.rial;
+const PERCENT = DIGIT_SPECS.percent;
 
 /** شبیه‌سازی تایپ کاربر روی کیپد. */
 function type(keys: string, spec: DigitSpec = WEIGHT): string {
@@ -106,6 +107,13 @@ describe('تبدیل به bigint — بدون هیچ float', () => {
   it('عیار و ریال بدون اعشارند', () => {
     expect(digitsToBigInt('750', KARAT)).toBe(750n);
     expect(digitsToBigInt('12500000', RIAL)).toBe(12_500_000n);
+  });
+
+  it('درصد با دو رقم اعشار دقیقاً مقیاس PERCENT_X100 را می‌دهد', () => {
+    // ۷٫۵٪ باید همان ۷۵۰ ذخیره‌شده‌ی PERCENT_X100 در قرارداد اجرت زیورآلات باشد
+    expect(digitsToBigInt('7.5', PERCENT)).toBe(750n);
+    expect(digitsToBigInt('7', PERCENT)).toBe(700n);
+    expect(digitsToBigInt('0.25', PERCENT)).toBe(25n);
   });
 
   it('مبلغ فراتر از MAX_SAFE_INTEGER بدون افت دقت تبدیل می‌شود', () => {

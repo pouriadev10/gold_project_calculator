@@ -1,13 +1,14 @@
 import { searchKey } from '@gold/core-calc';
 import { DEFAULT_PAGE_SIZE } from '@gold/contracts';
 import { HttpResponse, http, delay } from 'msw';
-import type { Party } from '@/api/contracts';
+import type { JewelryItemVersion, Party } from '@/api/contracts';
 import {
   MAZNEH_RIAL,
   FETCHED_AT,
   articlePriceRial,
   balanceSummary,
   itemRecords,
+  jewelryItemVersionRecords,
   partyBalancesFor,
   partyMgById,
   partyRecords,
@@ -54,6 +55,15 @@ function matchesMobile(mobile: string | null, query: string | null): boolean {
  * همان الگوی `maznehQuoteHistory` برای مظنه.
  */
 let partyList: Party[] = [...partyRecords];
+
+/**
+ * فهرست قابل‌جهش کالای زیورآلات — `POST`/`PATCH` (FE-036) اینجا اضافه
+ * یا جایگزین می‌کنند تا `GET` بلافاصله بعد از invalidate تازه را ببیند.
+ * هر ردیف همیشه نسخه‌ی **باز** همان کالاست؛ این mock تاریخچه‌ی نسخه‌های
+ * قدیمی را نگه نمی‌دارد چون هیچ صفحه‌ای امروز آن را نمی‌خواهد.
+ */
+let jewelryItemList: JewelryItemVersion[] = [...jewelryItemVersionRecords];
+let jewelryItemVersionCounter = jewelryItemVersionRecords.length;
 
 let invoiceCounter = 122;
 
@@ -570,6 +580,162 @@ export const handlers = [
       (i) => (matchesQuery(i.name, query) || matchesQuery(i.code, query)) && (!kind || i.kind === kind),
     );
     return HttpResponse.json({ items: filtered, total: filtered.length });
+  }),
+
+  /**
+   * `GET /inventory/jewelry-items` — قرارداد نهایی BE-026
+   * (`jewelryItemQuerySchema`/`jewelryItemListSchema`): `search` کد **یا**
+   * عنوان را می‌گردد، `active` رشته‌ی `"true"`/`"false"` است (نه boolean
+   * خام — دقیقاً همان قرارداد واقعی)، `limit`/`offset` صفحه‌بندی
+   * سرور-محور واقعی. بدون فیلتر عیار — قرارداد واقعی چنین چیزی ندارد
+   * (`JewelryItemsPage` آن را خودش سمت کلاینت روی یک دسته‌ی بزرگ‌تر انجام
+   * می‌دهد، نه اینجا).
+   */
+  http.get('/api/inventory/jewelry-items', async ({ request }) => {
+    await delay(READ_DELAY_MS);
+    const params = new URL(request.url).searchParams;
+    const search = params.get('search');
+    const active = params.get('active');
+    const limit = Number.parseInt(params.get('limit') ?? String(DEFAULT_PAGE_SIZE), 10);
+    const offset = Number.parseInt(params.get('offset') ?? '0', 10);
+
+    const filtered = jewelryItemList
+      .filter((i) => (active === null ? true : i.active === (active === 'true')))
+      .filter((i) => matchesQuery(i.title, search) || matchesQuery(i.code, search))
+      .sort((a, b) => a.title.localeCompare(b.title, 'fa'));
+
+    return HttpResponse.json({
+      items: filtered.slice(offset, offset + limit),
+      total: filtered.length,
+      limit,
+      offset,
+    });
+  }),
+
+  /** `POST /inventory/jewelry-items` — قرارداد نهایی BE-026 (`createJewelryItemSchema`). */
+  http.post('/api/inventory/jewelry-items', async ({ request }) => {
+    await delay(WRITE_DELAY_MS);
+
+    const key = request.headers.get('Idempotency-Key');
+    if (!key) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 'IDEMPOTENCY_KEY_REQUIRED',
+            message: 'هدر Idempotency-Key اجباری است',
+            fields: {},
+            requestId: crypto.randomUUID(),
+          },
+        },
+        { status: 400 },
+      );
+    }
+
+    const cached = idempotencyCache.get(key);
+    if (cached) return HttpResponse.json(cached, { status: 201 });
+
+    const body = (await request.json()) as {
+      code: string;
+      title: string;
+      grossWeightMg: string;
+      karat: number;
+      stoneWeightMg?: string;
+      otherDeductionWeightMg?: string;
+      wageType: JewelryItemVersion['wageType'];
+      wageValue: string;
+      validFrom?: string;
+    };
+    const now = new Date().toISOString();
+    jewelryItemVersionCounter += 1;
+    const created: JewelryItemVersion = {
+      id: `g2000000-0000-4000-8000-${String(jewelryItemVersionCounter).padStart(12, '0')}`,
+      jewelryItemId: `g1000000-0000-4000-8000-${String(jewelryItemVersionCounter).padStart(12, '0')}`,
+      code: body.code,
+      title: body.title,
+      grossWeightMg: body.grossWeightMg,
+      karat: body.karat,
+      stoneWeightMg: body.stoneWeightMg ?? '0',
+      otherDeductionWeightMg: body.otherDeductionWeightMg ?? '0',
+      wageType: body.wageType,
+      wageValue: body.wageValue,
+      validFrom: body.validFrom ?? now,
+      validTo: null,
+      version: 1,
+      active: true,
+    };
+    jewelryItemList = [...jewelryItemList, created];
+    idempotencyCache.set(key, created);
+    return HttpResponse.json(created, { status: 201 });
+  }),
+
+  /**
+   * `PATCH /inventory/jewelry-items/:id` — قرارداد نهایی BE-026
+   * (`updateJewelryItemSchema`). سرور واقعی اینجا تصمیم می‌گیرد نسخه‌ی
+   * تازه بسازد یا فقط عنوان را جا‌به‌جا کند؛ این mock همیشه به‌روزرسانی
+   * درجا انجام می‌دهد چون هیچ صفحه‌ای امروز به تاریخچه‌ی نسخه‌ها نیاز ندارد
+   * — رفتار قابل‌مشاهده از بیرون (پاسخ PATCH) یکسان می‌ماند.
+   */
+  http.patch('/api/inventory/jewelry-items/:id', async ({ request, params }) => {
+    await delay(WRITE_DELAY_MS);
+
+    const key = request.headers.get('Idempotency-Key');
+    if (!key) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 'IDEMPOTENCY_KEY_REQUIRED',
+            message: 'هدر Idempotency-Key اجباری است',
+            fields: {},
+            requestId: crypto.randomUUID(),
+          },
+        },
+        { status: 400 },
+      );
+    }
+
+    const cached = idempotencyCache.get(key);
+    if (cached) return HttpResponse.json(cached, { status: 200 });
+
+    const id = params['id'] as string;
+    const existing = jewelryItemList.find((i) => i.jewelryItemId === id || i.id === id);
+    if (!existing) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 'NOT_FOUND',
+            message: 'کالا پیدا نشد',
+            fields: {},
+            requestId: crypto.randomUUID(),
+          },
+        },
+        { status: 404 },
+      );
+    }
+
+    const body = (await request.json()) as {
+      title?: string;
+      grossWeightMg?: string;
+      karat?: number;
+      stoneWeightMg?: string;
+      otherDeductionWeightMg?: string;
+      wageType?: JewelryItemVersion['wageType'];
+      wageValue?: string;
+    };
+    const updated: JewelryItemVersion = {
+      ...existing,
+      ...(body.title !== undefined && { title: body.title }),
+      ...(body.grossWeightMg !== undefined && { grossWeightMg: body.grossWeightMg }),
+      ...(body.karat !== undefined && { karat: body.karat }),
+      ...(body.stoneWeightMg !== undefined && { stoneWeightMg: body.stoneWeightMg }),
+      ...(body.otherDeductionWeightMg !== undefined && {
+        otherDeductionWeightMg: body.otherDeductionWeightMg,
+      }),
+      ...(body.wageType !== undefined && { wageType: body.wageType }),
+      ...(body.wageValue !== undefined && { wageValue: body.wageValue }),
+    };
+    jewelryItemList = jewelryItemList.map((i) => (i.jewelryItemId === id || i.id === id ? updated : i));
+    idempotencyCache.set(key, updated);
+    return HttpResponse.json(updated, { status: 200 });
   }),
 
   http.get('/api/reports/profit', async ({ request }) => {

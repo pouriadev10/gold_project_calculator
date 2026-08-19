@@ -143,6 +143,46 @@ export const itemRecords = items.map((i) => ({
   stockMg: i.stockMg === null ? null : i.stockMg.toString(),
 }));
 
+/* ── کالای زیورآلات (FE-036) ──────────────────────────────── */
+
+// TODO(real-data): از ماژول inventory (BE-025/BE-026)
+/**
+ * شکل دقیقاً `jewelryItemVersionSchema` واقعی است — کد و عنوان سه مورد
+ * اول عمداً با `itemRecords` بالا (I-001..I-003) یکسان مانده تا داده‌ی
+ * ساختگی کل برنامه یک مغازه‌ی واحد را توصیف کند. هر کالا اینجا فقط یک
+ * نسخه‌ی باز دارد (`version: 1، validTo: null`) — تاریخچه‌ی نسخه‌های
+ * قدیمی‌تر لازم نیست چون هیچ صفحه‌ای امروز آن را نمی‌خواهد.
+ */
+const jewelryItemsRaw = [
+  { itemId: '1', code: 'BR-750-12', title: 'دستبند ۱۸ عیار', grossMg: 12_350, karat: 750, stoneMg: 0, otherMg: 0, wageType: 'PER_GRAM' as const, wageValue: 3_500_000, active: true },
+  { itemId: '2', code: 'NK-750-41', title: 'سرویس کامل ۱۸ عیار', grossMg: 41_200, karat: 750, stoneMg: 850, otherMg: 0, wageType: 'PERCENT_X100' as const, wageValue: 1_200, active: true },
+  { itemId: '3', code: 'RG-750-04', title: 'انگشتر ۱۸ عیار نگین‌دار', grossMg: 4_180, karat: 750, stoneMg: 320, otherMg: 0, wageType: 'PERCENT_X100' as const, wageValue: 1_500, active: true },
+  { itemId: '4', code: 'ER-700-02', title: 'گوشواره عیار ۷۰۰', grossMg: 2_500, karat: 700, stoneMg: 0, otherMg: 0, wageType: 'FLAT' as const, wageValue: 8_000_000, active: true },
+  { itemId: '5', code: 'CH-750-08', title: 'زنجیر گردن ۱۸ عیار', grossMg: 8_900, karat: 750, stoneMg: 0, otherMg: 0, wageType: 'PER_GRAM' as const, wageValue: 2_800_000, active: true },
+  { itemId: '6', code: 'BR-585-06', title: 'النگو عیار ۱۴', grossMg: 6_100, karat: 585, stoneMg: 0, otherMg: 0, wageType: 'PERCENT_X100' as const, wageValue: 1_000, active: true },
+  { itemId: '7', code: 'PN-750-03', title: 'آویز طرح قلب', grossMg: 3_200, karat: 750, stoneMg: 150, otherMg: 0, wageType: 'PERCENT_X100' as const, wageValue: 1_800, active: true },
+  { itemId: '8', code: 'RG-700-05', title: 'انگشتر مردانه عیار ۷۰۰', grossMg: 5_600, karat: 700, stoneMg: 0, otherMg: 0, wageType: 'PER_GRAM' as const, wageValue: 2_200_000, active: false },
+  { itemId: '9', code: 'ST-750-20', title: 'ست کامل عروس', grossMg: 65_000, karat: 750, stoneMg: 3_200, otherMg: 0, wageType: 'PERCENT_X100' as const, wageValue: 2_000, active: true },
+  { itemId: '10', code: 'BC-750-15', title: 'دستبند مردانه کارتیه', grossMg: 15_800, karat: 750, stoneMg: 0, otherMg: 0, wageType: 'FLAT' as const, wageValue: 12_000_000, active: false },
+] as const;
+
+export const jewelryItemVersionRecords = jewelryItemsRaw.map((raw, index) => ({
+  id: `g2000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`,
+  jewelryItemId: `g1000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`,
+  code: raw.code,
+  title: raw.title,
+  grossWeightMg: raw.grossMg.toString(),
+  karat: raw.karat,
+  stoneWeightMg: raw.stoneMg.toString(),
+  otherDeductionWeightMg: raw.otherMg.toString(),
+  wageType: raw.wageType,
+  wageValue: raw.wageValue.toString(),
+  validFrom: NOW,
+  validTo: null,
+  version: 1,
+  active: raw.active,
+}));
+
 /* ── مانده‌ی کل ───────────────────────────────────────────── */
 
 const creditMg = parties.filter((p) => p.mg > 0).reduce((sum, p) => sum + BigInt(p.mg), 0n);

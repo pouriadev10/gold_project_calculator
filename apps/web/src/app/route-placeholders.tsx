@@ -10,10 +10,6 @@ export function InventoryPlaceholder() {
   return <PlaceholderPage title="موجودی" note="داشبورد موجودی در گام‌های بعد می‌آید." />;
 }
 
-export function InventoryJewelryPlaceholder() {
-  return <PlaceholderPage title="موجودی زیورآلات" note="فهرست مصنوعات در گام‌های بعد می‌آید." />;
-}
-
 export function InventoryCoinsPlaceholder() {
   return <PlaceholderPage title="موجودی سکه" note="فهرست موجودی سکه در گام‌های بعد می‌آید." />;
 }

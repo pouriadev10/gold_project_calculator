@@ -2,6 +2,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { apiGet } from './client';
 import {
   itemListSchema,
+  jewelryItemListSchema,
   partyBalanceSummarySchema,
   partyBalancesSchema,
   partyListSchema,
@@ -11,6 +12,7 @@ import {
   priceQuoteSchema,
   profitReportSchema,
   transactionListSchema,
+  type JewelryItemQuery,
   type PartyBalancesQuery,
   type PartyListQuery,
   type PartyStatementQuery,
@@ -189,5 +191,34 @@ export function useItemSearch(query: string, kind?: string) {
       return apiGet(`/items?${params.toString()}`, itemListSchema, signal);
     },
     staleTime: MINUTE,
+  });
+}
+
+/**
+ * فهرست کالای زیورآلات — `GET /inventory/jewelry-items` (BE-026، FE-036).
+ * هر ردیف نسخه‌ی **باز** (جاری) همان کالاست؛ `partyListQuerySchema`‑وار
+ * صفحه‌بندی سرور-محور دارد، پس همان الگوی `useParties` (`keepPreviousData`).
+ *
+ * قرارداد واقعی هیچ فیلتر عیار ندارد — فقط `search`/`active`. وقتی
+ * فیلتر عیار در `JewelryItemsPage` فعال است، آن صفحه عمداً `limit` را
+ * به سقف واقعی سرور (`MAX_PAGE_SIZE=200`) می‌برد و خودش عیار را روی
+ * نتیجه فیلتر/صفحه‌بندی می‌کند — همان راهی که `QuoteHistoryList` (FE-031)
+ * برای نبودِ صفحه‌بندی سرور-محور به کار برد؛ اینجا مسئولیت این hook
+ * فقط عبور صادقانه‌ی پارامترهای واقعی است.
+ */
+export function useJewelryItems(query: JewelryItemQuery) {
+  return useQuery({
+    queryKey: queryKeys.jewelryItems.list(query),
+    queryFn: ({ signal }) => {
+      const params = new URLSearchParams({
+        limit: String(query.limit),
+        offset: String(query.offset),
+      });
+      if (query.search) params.set('search', query.search);
+      if (query.active !== undefined) params.set('active', String(query.active));
+      return apiGet(`/inventory/jewelry-items?${params.toString()}`, jewelryItemListSchema, signal);
+    },
+    staleTime: MINUTE,
+    placeholderData: keepPreviousData,
   });
 }

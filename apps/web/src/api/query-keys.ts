@@ -1,4 +1,5 @@
 import type {
+  JewelryItemQuery,
   PartyBalancesQuery,
   PartyListQuery,
   PartyStatementQuery,
@@ -49,6 +50,12 @@ export const queryKeys = {
     all: () => ['items'] as const,
     search: (query: string, kind: string) =>
       [...queryKeys.items.all(), 'search', query, kind] as const,
+  },
+
+  /** کالای زیورآلات — `jewelryItemVersionSchema` واقعی (BE-026)، جدا از `items` بالا که هنوز mock تجمیعی است. */
+  jewelryItems: {
+    all: () => ['jewelry-items'] as const,
+    list: (query: JewelryItemQuery) => [...queryKeys.jewelryItems.all(), 'list', query] as const,
   },
 
   transactions: {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, type ReactNode } from 'react';
 import { Delete } from 'lucide-react';
-import type { NumericFieldKind } from '@gold/core-calc';
+import { DIGIT_SPECS, type NumericFieldKind } from '@gold/core-calc';
 import { cn } from '@/lib/utils';
 import { KeypadPreview } from './KeypadPreview';
 import { useKeypadStore } from './keypad-store';
@@ -25,6 +25,21 @@ import { SHORTCUTS_BY_KIND, type Shortcut } from './shortcuts';
  * ۳. **`visibility: hidden` در حالت بسته** — فقط `translate` کافی نیست:
  *    کلیدها با `Tab` قابل دسترس می‌ماندند و صفحه‌خوان آن‌ها را می‌خواند.
  */
+
+/**
+ * کیپد بیرون از هر Dialog/Drawer رندر می‌شود (یک نمونه‌ی سراسری، نه داخل
+ * پورتال گفت‌وگو). Radix/vaul با `modal` پیش‌فرض هر کلیک بیرون از محتوای
+ * خودشان را «بیرون» حساب می‌کنند و گفت‌وگو را می‌بندند — یعنی بدون این
+ * استثنا، ضربه‌زدن روی خودِ کیپد گفت‌وگو را می‌بست (و state فرم را با
+ * `resetForm` پاک می‌کرد). `ResponsiveDialog` با همین سلکتور، ضربه‌های
+ * داخل کیپد را از تشخیص «بیرون» معاف می‌کند.
+ */
+export const KEYPAD_ROOT_ATTRIBUTE = 'data-numeric-keypad-root';
+
+/** آیا هدف رویداد داخل خودِ کیپد است؟ برای `onInteractOutside` روی Dialog/Drawer. */
+export function isKeypadTarget(target: EventTarget | null): boolean {
+  return target instanceof Element && target.closest(`[${KEYPAD_ROOT_ATTRIBUTE}]`) !== null;
+}
 
 const DIGIT_ROWS = ['۷۸۹', '۴۵۶', '۱۲۳'] as const;
 
@@ -161,7 +176,10 @@ export function NumericKeypad({ shortcutsByKind = SHORTCUTS_BY_KIND }: NumericKe
   const movePrev = useKeypadStore((s) => s.movePrev);
   const close = useKeypadStore((s) => s.close);
 
-  const allowsDecimal = activeKind === 'weight';
+  // مشتق از خودِ DIGIT_SPECS، نه لیست ثابت نام‌ها — وگرنه هر کایند اعشاری تازه (مثل
+  // percent در FE-036) باید اینجا هم جداگانه اضافه شود و فراموش‌شدنش بی‌صدا کلید
+  // جداکننده را غیرفعال نگه می‌دارد (دقیقاً همین باگ پیش از این فیکس رخ داد).
+  const allowsDecimal = activeKind !== null && DIGIT_SPECS[activeKind].decimals > 0;
   const shortcuts = activeKind ? shortcutsByKind[activeKind] : [];
 
   /** کیبورد فیزیکی — دسکتاپ گالری‌دار هم باید کار کند. */
@@ -222,9 +240,18 @@ export function NumericKeypad({ shortcutsByKind = SHORTCUTS_BY_KIND }: NumericKe
       aria-label="صفحه‌کلید عددی"
       aria-hidden={!isOpen}
       data-testid="numeric-keypad"
+      {...{ [KEYPAD_ROOT_ATTRIBUTE]: '' }}
       className={cn(
         // fixed + transform ⇒ سهم CLS صفر
-        'bottom-above-nav fixed inset-x-0 z-40 border-t border-border bg-background shadow-lg',
+        // z-[60]: بالاتر از Dialog/Drawer (z-50, dialog.tsx/drawer.tsx) — عمداً، چون از
+        // FE-036 به بعد فیلد عددی می‌تواند داخل یک ResponsiveDialog باز باشد و کیپد باید
+        // رویش دیده شود، نه پشتش گم شود. پایین‌تر از Toast (z-[100]) که همیشه باید برنده بماند.
+        //
+        // pointer-events-auto: وقتی Dialog باز است، react-remove-scroll (داخل Radix Dialog)
+        // روی <body> خودِ صفحه pointer-events:none می‌گذارد و فقط محتوای خودِ دیالوگ را با
+        // pointer-events:auto صریح سوراخ می‌کند. کیپد بیرون از دیالوگ (هم‌سطحش) است، پس بدون
+        // این override با موس/لمس هم غیرقابل‌کلیک می‌شد — نه فقط از دید صفحه‌خوان.
+        'bottom-above-nav pointer-events-auto fixed inset-x-0 z-[60] border-t border-border bg-background shadow-lg',
         'transition-transform duration-200 motion-reduce:transition-none',
         isOpen ? 'visible translate-y-0' : 'invisible translate-y-full',
       )}

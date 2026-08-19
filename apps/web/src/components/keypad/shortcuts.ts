@@ -67,4 +67,6 @@ export const SHORTCUTS_BY_KIND: Record<NumericFieldKind, readonly Shortcut[]> = 
   rial: AMOUNT_SHORTCUTS,
   mazneh: AMOUNT_SHORTCUTS,
   count: COUNT_SHORTCUTS,
+  // بدون میان‌بر: هیچ درصد اجرت «رایج بین‌صنفی» ثابتی نیست که هاردکد کردنش توجیه داشته باشد.
+  percent: [],
 };

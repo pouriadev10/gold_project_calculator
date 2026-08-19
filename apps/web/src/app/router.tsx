@@ -145,7 +145,8 @@ const inventoryRoute = createRoute({
 const inventoryJewelryRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/inventory/jewelry',
-  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'InventoryJewelryPlaceholder'),
+  // بدون beforeLoad نقش‌محور — GET /inventory/jewelry-items روی سرور بدون @Roles است (jewelry-items.controller.ts، BE-026)
+  component: lazyRouteComponent(() => import('@/features/inventory/JewelryItemsPage')),
 });
 
 const inventoryCoinsRoute = createRoute({

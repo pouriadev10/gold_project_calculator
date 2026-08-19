@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { Home, Settings, ShoppingCart, Users, Wallet } from 'lucide-react';
+import { Gem, Home, Settings, ShoppingCart, Users, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -17,6 +17,7 @@ const ITEMS = [
   { to: '/dashboard', label: 'خانه', icon: Home },
   { to: '/sales/new', label: 'فروش', icon: ShoppingCart },
   { to: '/purchase/second-hand', label: 'خرید', icon: Wallet },
+  { to: '/inventory/jewelry', label: 'موجودی', icon: Gem },
   { to: '/parties', label: 'اشخاص', icon: Users },
   { to: '/settings', label: 'تنظیمات', icon: Settings },
 ] as const;

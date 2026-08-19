@@ -20,6 +20,7 @@ import {
   DrawerTrigger,
 } from '@/components/ui/drawer';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { isKeypadTarget } from '@/components/keypad/NumericKeypad';
 import { cn } from '@/lib/utils';
 
 /**
@@ -126,6 +127,18 @@ interface ResponsiveDialogContentProps {
 }
 
 /**
+ * `NumericKeypad` یک نمونه‌ی سراسری بیرون از این گفت‌وگو رندر می‌شود
+ * (`NumericKeypad.tsx`، مستندات همان‌جا). بدون این استثنا، Radix/vaul با
+ * `modal` پیش‌فرض ضربه روی کیپد را «کلیک بیرون از محتوا» حساب می‌کنند و
+ * گفت‌وگو را می‌بندند — یعنی هر فیلد عددی داخل هر گفت‌وگویی با اولین ضربه
+ * روی کیپد بسته می‌شد (و state فرم مصرف‌کننده‌اش، اگر مثل
+ * `JewelryItemFormDialog` روی close پاک می‌شود، از دست می‌رفت).
+ */
+function ignoreKeypadOutsideInteraction(event: { detail: { originalEvent: Event }; preventDefault: () => void }) {
+  if (isKeypadTarget(event.detail.originalEvent.target)) event.preventDefault();
+}
+
+/**
  * بدنه‌ی محتوا. اسکرول داخلی مستقل از صفحه‌ی پس‌زمینه است: خودِ
  * Radix/vaul صفحه‌ی پشت را قفل می‌کند، این wrapper فقط مطمئن می‌شود
  * محتوای بلند به‌جای هل‌دادن کل مودال بیرون از دید، در همان کادر اسکرول
@@ -142,7 +155,10 @@ const ResponsiveDialogContent = React.forwardRef<HTMLDivElement, ResponsiveDialo
 
     if (variant === 'sheet') {
       return (
-        <DrawerContent className="mt-0 h-dvh max-h-dvh rounded-t-xl border-none p-0">
+        <DrawerContent
+          className="mt-0 h-dvh max-h-dvh rounded-t-xl border-none p-0"
+          onInteractOutside={ignoreKeypadOutsideInteraction}
+        >
           <div ref={ref} className={cn('min-h-0 flex-1 overflow-y-auto p-4 pb-safe', className)}>
             {children}
           </div>
@@ -151,7 +167,7 @@ const ResponsiveDialogContent = React.forwardRef<HTMLDivElement, ResponsiveDialo
     }
 
     return (
-      <DialogContent className="flex max-h-[85vh] flex-col p-0">
+      <DialogContent className="flex max-h-[85vh] flex-col p-0" onInteractOutside={ignoreKeypadOutsideInteraction}>
         <div ref={ref} className={cn('min-h-0 flex-1 overflow-y-auto p-6', className)}>
           {children}
         </div>

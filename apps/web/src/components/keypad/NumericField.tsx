@@ -50,6 +50,7 @@ const UNIT_LABEL: Record<NumericFieldKind, string> = {
   rial: 'ریال',
   mazneh: 'ریال',
   count: 'عدد',
+  percent: '٪',
 };
 
 /** نمایش مقدار با قالب مناسب هر نوع. */
@@ -58,6 +59,7 @@ function displayValue(kind: NumericFieldKind, raw: string, value: bigint): strin
 
   switch (kind) {
     case 'weight':
+    case 'percent':
       // حین تایپ، خود بافر نمایش داده می‌شود تا «۱۲٫» و صفرهای انتهایی نپرند
       return toPersianDigits(raw.replace('.', '٫'));
     case 'karat':

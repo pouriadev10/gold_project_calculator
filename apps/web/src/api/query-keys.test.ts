@@ -19,6 +19,11 @@ describe('queryKeys', () => {
     ]);
     expect(queryKeys.parties.search('مهدی')).toEqual([...queryKeys.parties.all(), 'search', 'مهدی']);
     expect(queryKeys.items.search('x', 'coin')).toEqual([...queryKeys.items.all(), 'search', 'x', 'coin']);
+    expect(queryKeys.jewelryItems.list({ limit: 20, offset: 0 })).toEqual([
+      ...queryKeys.jewelryItems.all(),
+      'list',
+      { limit: 20, offset: 0 },
+    ]);
     expect(queryKeys.transactions.recent(5)).toEqual([...queryKeys.transactions.all(), 'recent', 5]);
     expect(queryKeys.reports.profit('today')).toEqual([...queryKeys.reports.all(), 'profit', 'today']);
   });
@@ -37,6 +42,7 @@ describe('queryKeys', () => {
     expect(queryKeys.pricing.all()).toEqual(['pricing']);
     expect(queryKeys.parties.all()).toEqual(['parties']);
     expect(queryKeys.items.all()).toEqual(['items']);
+    expect(queryKeys.jewelryItems.all()).toEqual(['jewelry-items']);
     expect(queryKeys.transactions.all()).toEqual(['transactions']);
     expect(queryKeys.reports.all()).toEqual(['reports']);
   });
