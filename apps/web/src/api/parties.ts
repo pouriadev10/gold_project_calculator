@@ -29,3 +29,17 @@ export function updateParty(
 ): Promise<Party> {
   return apiPatch(`/parties/${id}`, input, partySchema, idempotencyKey, signal);
 }
+
+/**
+ * غیرفعال‌سازی شخص — `POST /parties/:id/deactivate` (BE-024، FE-034).
+ * بدون بدنه (کنترلر واقعی `@Body()` نمی‌خواند). یک‌طرفه است — endpoint
+ * معکوس («فعال‌سازی») در فاز ۱ وجود ندارد (`parties.ts@gold/contracts`:
+ * «a party ... can only be made unavailable, not deleted»).
+ */
+export function deactivateParty(
+  id: string,
+  idempotencyKey: string,
+  signal?: AbortSignal,
+): Promise<Party> {
+  return apiPost(`/parties/${id}/deactivate`, {}, partySchema, idempotencyKey, signal);
+}

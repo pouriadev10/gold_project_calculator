@@ -116,7 +116,24 @@ const partyDetailRoute = createRoute({
     parse: (raw: { partyId: string }) => ({ partyId: uuidSchema.parse(raw.partyId) }),
     stringify: (parsed: { partyId: string }) => ({ partyId: parsed.partyId }),
   },
-  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'PartyDetailPlaceholder'),
+  component: lazyRouteComponent(() => import('@/features/parties/PartyDetailPage')),
+});
+
+/**
+ * جانگه‌دار «ثبت تسویه» شخص — مسیر واقعی طبق `FrontTasks.md` (FE-055)
+ * دقیقاً همین است: `/parties/:partyId/settlements/new`، نه مسیر تخت
+ * `/settlements/new` که پایین‌تر برای زمانی که هنوز شخص مشخص نبود مانده.
+ * بخش «ثبت تسویه»ی صفحه‌ی جزئیات شخص (FE-034) به همین‌جا لینک می‌دهد؛
+ * صفحه‌ی واقعی با فرم settlement lines کار خودِ FE-055 است.
+ */
+const partySettlementsNewRoute = createRoute({
+  getParentRoute: () => appShellRoute,
+  path: '/parties/$partyId/settlements/new',
+  params: {
+    parse: (raw: { partyId: string }) => ({ partyId: uuidSchema.parse(raw.partyId) }),
+    stringify: (parsed: { partyId: string }) => ({ partyId: parsed.partyId }),
+  },
+  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'SettlementsNewPlaceholder'),
 });
 
 const inventoryRoute = createRoute({
@@ -236,6 +253,7 @@ const routeTree = rootRoute.addChildren([
     pricingRoute,
     partiesRoute,
     partyDetailRoute,
+    partySettlementsNewRoute,
     inventoryRoute,
     inventoryJewelryRoute,
     inventoryCoinsRoute,

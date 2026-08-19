@@ -3,12 +3,17 @@ import { apiGet } from './client';
 import {
   itemListSchema,
   partyBalanceSummarySchema,
+  partyBalancesSchema,
   partyListSchema,
+  partySchema,
+  partyStatementSchema,
   priceQuoteListSchema,
   priceQuoteSchema,
   profitReportSchema,
   transactionListSchema,
+  type PartyBalancesQuery,
   type PartyListQuery,
+  type PartyStatementQuery,
   type PriceQuoteType,
   type ProfitPeriod,
 } from './contracts';
@@ -108,6 +113,65 @@ export function useParties(query: PartyListQuery) {
     },
     staleTime: MINUTE,
     placeholderData: keepPreviousData,
+  });
+}
+
+/** یک شخص — `GET /parties/:id` (BE-024، FE-034). fetch مستقیم با شناسه، نه از فهرست از پیش‌بارگذاری‌شده — چون این صفحه با لینک مستقیم/رفرش هم باید کار کند. */
+export function useParty(id: string) {
+  return useQuery({
+    queryKey: queryKeys.parties.detail(id),
+    queryFn: ({ signal }) => apiGet(`/parties/${id}`, partySchema, signal),
+    staleTime: MINUTE,
+  });
+}
+
+/**
+ * مانده‌ی چندواحدی شخص — `GET /parties/:id/balances` (BE-056، FE-034).
+ *
+ * `referenceQuoteId` باید صریح داده شود تا `convertedView` پر شود؛ بدونش
+ * سرور `null` برمی‌گرداند (`party-balances.service.ts`) — یعنی معادل
+ * طلایی/ریالی محاسبه‌ناپذیر است، نه صفر. صفحه‌ی جزئیات شخص همیشه با
+ * `referenceQuoteId` آخرین مظنه فراخوانی می‌کند و اگر مظنه‌ای هنوز ثبت
+ * نشده، `enabled: false` این query را اصلاً نمی‌فرستد.
+ */
+export function usePartyBalances(id: string, query: PartyBalancesQuery, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.parties.balances(id, query),
+    queryFn: ({ signal }) => {
+      const params = new URLSearchParams();
+      if (query.at) params.set('at', query.at);
+      if (query.referenceQuoteId) params.set('referenceQuoteId', query.referenceQuoteId);
+      const qs = params.toString();
+      return apiGet(`/parties/${id}/balances${qs ? `?${qs}` : ''}`, partyBalancesSchema, signal);
+    },
+    staleTime: MINUTE,
+    enabled,
+  });
+}
+
+/**
+ * صورت‌حساب شخص — `GET /parties/:id/statement` (BE-057، FE-034).
+ *
+ * اینجا فقط برای «آخرین معاملات» (`limit` کوچک، بدون فیلتر) استفاده
+ * می‌شود؛ صفحه‌ی کامل صورت‌حساب با بازه‌ی تاریخ/فیلتر نوع سند/بُعد کار
+ * FE-070 است.
+ */
+export function usePartyStatement(id: string, query: PartyStatementQuery) {
+  return useQuery({
+    queryKey: queryKeys.parties.statement(id, query),
+    queryFn: ({ signal }) => {
+      const params = new URLSearchParams({
+        limit: String(query.limit),
+        offset: String(query.offset),
+      });
+      if (query.from) params.set('from', query.from);
+      if (query.to) params.set('to', query.to);
+      if (query.dimensionId) params.set('dimensionId', query.dimensionId);
+      if (query.sourceType) params.set('sourceType', query.sourceType);
+      if (query.referenceQuoteId) params.set('referenceQuoteId', query.referenceQuoteId);
+      return apiGet(`/parties/${id}/statement?${params.toString()}`, partyStatementSchema, signal);
+    },
+    staleTime: MINUTE,
   });
 }
 

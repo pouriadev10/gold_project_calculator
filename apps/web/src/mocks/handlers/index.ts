@@ -8,7 +8,10 @@ import {
   articlePriceRial,
   balanceSummary,
   itemRecords,
+  partyBalancesFor,
+  partyMgById,
   partyRecords,
+  partyStatementEntriesFor,
   profitMonth,
   profitToday,
   recentTransactions,
@@ -148,6 +151,20 @@ function unauthorized(message: string) {
   return HttpResponse.json(
     { error: { code: 'UNAUTHORIZED', message, fields: {}, requestId: crypto.randomUUID() } },
     { status: 401 },
+  );
+}
+
+function partyNotFound() {
+  return HttpResponse.json(
+    {
+      error: {
+        code: 'NOT_FOUND',
+        message: 'شخص مورد نظر پیدا نشد',
+        fields: {},
+        requestId: crypto.randomUUID(),
+      },
+    },
+    { status: 404 },
   );
 }
 
@@ -432,6 +449,115 @@ export const handlers = [
   http.get('/api/parties/balance-summary', async () => {
     await delay(READ_DELAY_MS);
     return HttpResponse.json(balanceSummary);
+  }),
+
+  /*
+   * از این‌جا به بعد handlerهای الگودار `/api/parties/:id...` می‌آیند —
+   * عمداً **بعد از** `/api/parties/balance-summary`: MSW به ترتیب تعریف
+   * تطبیق می‌دهد، و `:id` روی رشته‌ی «balance-summary» هم به‌عنوان شناسه
+   * تطبیق پیدا می‌کند. اگر این ترتیب برعکس شود، آن endpoint شکسته می‌شود.
+   */
+
+  /** `GET /parties/:id` — قرارداد نهایی BE-024 (`partySchema`، FE-034). */
+  http.get('/api/parties/:id', async ({ params }) => {
+    await delay(READ_DELAY_MS);
+    const found = partyList.find((p) => p.id === params['id']);
+    return found ? HttpResponse.json(found) : partyNotFound();
+  }),
+
+  /**
+   * `GET /parties/:id/balances` — قرارداد نهایی BE-056 (`partyBalancesSchema`،
+   * FE-034). `referenceQuoteId` باید یکی از `maznehQuoteHistory` باشد؛ اگر
+   * داده نشده یا پیدا نشده، دقیقاً همان تفاوت رفتار سرور واقعی را می‌دهد
+   * (`convertedView: null` در برابر ۴۰۴).
+   */
+  http.get('/api/parties/:id/balances', async ({ params, request }) => {
+    await delay(READ_DELAY_MS);
+    const id = params['id'] as string;
+    const party = partyList.find((p) => p.id === id);
+    if (!party) return partyNotFound();
+
+    const referenceQuoteId = new URL(request.url).searchParams.get('referenceQuoteId');
+    if (referenceQuoteId) {
+      const quote = maznehQuoteHistory.find((q) => q.id === referenceQuoteId);
+      if (!quote) {
+        return HttpResponse.json(
+          {
+            error: {
+              code: 'NOT_FOUND',
+              message: 'مظنه‌ی مرجع پیدا نشد',
+              fields: {},
+              requestId: crypto.randomUUID(),
+            },
+          },
+          { status: 404 },
+        );
+      }
+      return HttpResponse.json(
+        partyBalancesFor({ id, mg: partyMgById[id] ?? 0 }, quote),
+      );
+    }
+
+    return HttpResponse.json(partyBalancesFor({ id, mg: partyMgById[id] ?? 0 }, undefined));
+  }),
+
+  /**
+   * `GET /parties/:id/statement` — قرارداد نهایی BE-057 (`partyStatementSchema`،
+   * FE-034). فیلترهای بازه/نوع سند/بُعد اینجا اعمال نمی‌شوند — «آخرین
+   * معاملات» فقط `limit` کوچک بدون فیلتر می‌فرستد؛ نسخه‌ی کامل فیلتردار
+   * کار FE-070 است.
+   */
+  http.get('/api/parties/:id/statement', async ({ params, request }) => {
+    await delay(READ_DELAY_MS);
+    const id = params['id'] as string;
+    const party = partyList.find((p) => p.id === id);
+    if (!party) return partyNotFound();
+
+    const searchParams = new URL(request.url).searchParams;
+    const limit = Number.parseInt(searchParams.get('limit') ?? '50', 10);
+    const offset = Number.parseInt(searchParams.get('offset') ?? '0', 10);
+    const entries = partyStatementEntriesFor({ id, mg: partyMgById[id] ?? 0 });
+
+    return HttpResponse.json({
+      items: entries.slice(offset, offset + limit),
+      total: entries.length,
+      limit,
+      offset,
+      partyId: id,
+      displayReferenceMazneh: null,
+    });
+  }),
+
+  /** `POST /parties/:id/deactivate` — قرارداد نهایی BE-024 (`partySchema`، FE-034). */
+  http.post('/api/parties/:id/deactivate', async ({ params, request }) => {
+    await delay(WRITE_DELAY_MS);
+
+    const key = request.headers.get('Idempotency-Key');
+    if (!key) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 'IDEMPOTENCY_KEY_REQUIRED',
+            message: 'هدر Idempotency-Key اجباری است',
+            fields: {},
+            requestId: crypto.randomUUID(),
+          },
+        },
+        { status: 400 },
+      );
+    }
+
+    const cached = idempotencyCache.get(key);
+    if (cached) return HttpResponse.json(cached, { status: 200 });
+
+    const id = params['id'] as string;
+    const existing = partyList.find((p) => p.id === id);
+    if (!existing) return partyNotFound();
+
+    const updated: Party = { ...existing, status: 'INACTIVE', updatedAt: new Date().toISOString() };
+    partyList = partyList.map((p) => (p.id === id ? updated : p));
+    idempotencyCache.set(key, updated);
+    return HttpResponse.json(updated, { status: 200 });
   }),
 
   http.get('/api/items', async ({ request }) => {

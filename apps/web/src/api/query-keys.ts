@@ -1,4 +1,10 @@
-import type { PartyListQuery, PriceQuoteType, ProfitPeriod } from './contracts';
+import type {
+  PartyBalancesQuery,
+  PartyListQuery,
+  PartyStatementQuery,
+  PriceQuoteType,
+  ProfitPeriod,
+} from './contracts';
 
 /**
  * کارخانه‌ی کلید Query — تنها منبع ساخت `queryKey` در کل فرانت.
@@ -32,6 +38,11 @@ export const queryKeys = {
     balanceSummary: () => [...queryKeys.parties.all(), 'balance-summary'] as const,
     search: (search: string) => [...queryKeys.parties.all(), 'search', search] as const,
     list: (query: PartyListQuery) => [...queryKeys.parties.all(), 'list', query] as const,
+    detail: (id: string) => [...queryKeys.parties.all(), 'detail', id] as const,
+    balances: (id: string, query: PartyBalancesQuery) =>
+      [...queryKeys.parties.all(), 'balances', id, query] as const,
+    statement: (id: string, query: PartyStatementQuery) =>
+      [...queryKeys.parties.all(), 'statement', id, query] as const,
   },
 
   items: {

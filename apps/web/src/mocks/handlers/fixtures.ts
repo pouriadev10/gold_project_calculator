@@ -24,6 +24,8 @@ export const FETCHED_AT = new Date('2026-07-30T09:12:00Z');
 /** میلی‌گرم — بدون هیچ ضرب شناوری، حتی در داده‌ی ساختگی */
 const mg = (milligrams: number): bigint => BigInt(milligrams);
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 /** سریالایز کردن مبلغ دومقیاسه به شکل روی سیم (رشته، نه عدد) */
 export function dualToWire(pureMg: bigint) {
   const dual = dualFromPure(pureMg, RATE_1000);
@@ -106,6 +108,17 @@ export const partyRecords: Party[] = parties.map((p) => ({
   updatedAt: NOW,
 }));
 
+/**
+ * جست‌وجوی `mg` فیکسچر با شناسه — `partyBalancesFor`/`partyStatementEntriesFor`
+ * (پایین همین فایل) به آن نیاز دارند اما `partyRecords`/`Party` واقعی این
+ * فیلد را ندارند (مانده بخشی از شکل `partySchema` نیست). شخصی که فقط از
+ * `POST /parties` (زمان اجرا) ساخته شده در این نگاشت نیست؛ `?? 0`
+ * صدایش می‌زند — یعنی مانده‌ی صفر، دقیقاً رفتار درست برای شخص تازه.
+ */
+export const partyMgById: Record<string, number> = Object.fromEntries(
+  parties.map((p) => [p.id, p.mg]),
+);
+
 /* ── کالا ─────────────────────────────────────────────────── */
 
 // TODO(real-data): از ماژول inventory
@@ -182,4 +195,141 @@ export const recentTransactions = [
 export function articlePriceRial(grossMg: bigint, k: number, wageRial: bigint): bigint {
   const rate = gramRate(MAZNEH_RIAL, karat(k));
   return mulDivHalfUp(grossMg, rate, 1000n) + wageRial;
+}
+
+/* ── مانده و صورت‌حساب یک شخص (FE-034) ───────────────────────── */
+
+// TODO(real-data): از party-balances.service.ts (BE-056)
+/**
+ * دو بُعد **مستقل** ریال و طلای خالص — نه یک جفت تبدیل‌شده از هم، دقیقاً
+ * مثل `rawBalances` واقعی. فقط شخص اول (حسین مرادی) مانده‌ی ریالی
+ * غیرصفر دارد تا هر دو ردیف در UI واقعاً قابل‌آزمون باشند؛ بقیه فقط
+ * همان `mg` که `balanceSummary` هم از آن می‌سازد.
+ */
+const PARTY_RIAL_BALANCE: Record<string, bigint> = {
+  'a1000000-0000-4000-8000-000000000001': 45_000_000n,
+};
+
+/** کد ملی-مانند نیست، شناسه‌ی نوع سکه — باید UUID باشد (`coinTypeId: uuidSchema`). */
+const COIN_TYPE = {
+  BAHAR: { id: 'd1000000-0000-4000-8000-000000000001', code: 'تمام بهار آزادی' },
+  NIM: { id: 'd1000000-0000-4000-8000-000000000002', code: 'نیم سکه' },
+} as const;
+
+const PARTY_COIN_BALANCE: Record<string, ReadonlyArray<{ coinTypeId: string; code: string; count: number }>> = {
+  'a1000000-0000-4000-8000-000000000001': [
+    { coinTypeId: COIN_TYPE.BAHAR.id, code: COIN_TYPE.BAHAR.code, count: 2 },
+    { coinTypeId: COIN_TYPE.NIM.id, code: COIN_TYPE.NIM.code, count: -1 },
+  ],
+  'a1000000-0000-4000-8000-000000000003': [
+    { coinTypeId: COIN_TYPE.BAHAR.id, code: COIN_TYPE.BAHAR.code, count: 1 },
+  ],
+};
+
+/**
+ * `GET /parties/:id/balances` — قرارداد نهایی BE-056. `referenceQuoteId`
+ * باید یک مظنه‌ی واقعی از `maznehQuoteHistory` باشد؛ اگر نبود همان خطای
+ * سرور واقعی (`PartyBalanceReferenceQuoteNotFoundError`) شبیه‌سازی
+ * می‌شود، نه یک عدد ساختگی صفر.
+ */
+export function partyBalancesFor(
+  party: { id: string; mg: number },
+  referenceQuote: { id: string; amountRial: string; observedAt: string } | undefined,
+) {
+  const rial = PARTY_RIAL_BALANCE[party.id] ?? 0n;
+  const pureGoldMg = mg(party.mg);
+  const coins = PARTY_COIN_BALANCE[party.id] ?? [];
+
+  const convertedView =
+    referenceQuote === undefined
+      ? null
+      : (() => {
+          const rate1000 = gramRate1000(BigInt(referenceQuote.amountRial));
+          const rialEquivalentPureGoldMg = dualFromRial(rial, rate1000).pureMg;
+          return {
+            displayUnit: 'GOLD' as const,
+            referenceMazneh: {
+              id: referenceQuote.id,
+              amountRial: referenceQuote.amountRial,
+              observedAt: referenceQuote.observedAt,
+              goldRatePerGramRial: rate1000.toString(),
+            },
+            rialEquivalentPureGoldMg: rialEquivalentPureGoldMg.toString(),
+            totalGoldDisplayPureMg: (pureGoldMg + rialEquivalentPureGoldMg).toString(),
+            coinsRemainSeparate: true as const,
+          };
+        })();
+
+  return {
+    partyId: party.id,
+    calculatedAt: new Date().toISOString(),
+    defaultDisplayUnit: 'GOLD' as const,
+    rawBalances: { rial: rial.toString(), pureGoldMg: pureGoldMg.toString(), coins },
+    convertedView,
+  };
+}
+
+// TODO(real-data): از party-statements.service.ts (BE-057)
+/**
+ * سه رویداد ساختگی در سه بُعد مختلف (ریال/طلا/سکه) برای هر شخص — کافی
+ * برای اینکه «آخرین معاملات» خالی نباشد و هر سه شکل نمایش (ریالی، وزنی،
+ * شمارشی) در همان صفحه واقعاً رندر شوند. `runningBalance` یک دنباله‌ی
+ * ساده‌ی نزولی از مانده‌ی فعلی است، نه بازسازی دقیق تاریخچه‌ی دفتر —
+ * برای یک mock کافی است.
+ */
+export function partyStatementEntriesFor(party: { id: string; mg: number }) {
+  const sign = party.mg >= 0 ? 1n : -1n;
+  const now = FETCHED_AT.getTime();
+  const base = mg(Math.abs(party.mg));
+
+  return [
+    {
+      ledgerTransactionId: `e1000000-0000-4000-8000-${party.id.slice(-12)}`,
+      source: { type: 'SALES_INVOICE' as const, id: `f1000000-0000-4000-8000-${party.id.slice(-12)}` },
+      effectiveAt: new Date(now - 1 * DAY_MS).toISOString(),
+      description: `Cash jewelry sale INV-${party.id.slice(-4)}`,
+      dimension: {
+        id: 'd2000000-0000-4000-8000-000000000001',
+        code: 'GOLD-1000',
+        kind: 'GOLD' as const,
+        coinTypeId: null,
+        coinCode: null,
+      },
+      quantity: (sign * (base / 4n)).toString(),
+      runningBalance: (sign * base).toString(),
+      documentRateSnapshots: [],
+    },
+    {
+      ledgerTransactionId: `e1000000-0000-4000-8000-${party.id.slice(-11)}0`,
+      source: { type: 'SETTLEMENT' as const, id: `f1000000-0000-4000-8000-${party.id.slice(-11)}0` },
+      effectiveAt: new Date(now - 5 * DAY_MS).toISOString(),
+      description: `Rial settlement ${party.id.slice(-8)}`,
+      dimension: {
+        id: 'd2000000-0000-4000-8000-000000000002',
+        code: 'RIAL',
+        kind: 'RIAL' as const,
+        coinTypeId: null,
+        coinCode: null,
+      },
+      quantity: (-sign * 12_000_000n).toString(),
+      runningBalance: (PARTY_RIAL_BALANCE[party.id] ?? 0n).toString(),
+      documentRateSnapshots: [],
+    },
+    {
+      ledgerTransactionId: `e1000000-0000-4000-8000-${party.id.slice(-10)}00`,
+      source: { type: 'SECOND_HAND_PURCHASE' as const, id: `f1000000-0000-4000-8000-${party.id.slice(-10)}00` },
+      effectiveAt: new Date(now - 12 * DAY_MS).toISOString(),
+      description: `Second-hand gold purchase P-${party.id.slice(-4)}`,
+      dimension: {
+        id: 'd2000000-0000-4000-8000-000000000003',
+        code: 'COIN-BAHAR',
+        kind: 'COIN' as const,
+        coinTypeId: COIN_TYPE.BAHAR.id,
+        coinCode: COIN_TYPE.BAHAR.code,
+      },
+      quantity: sign.toString(),
+      runningBalance: String(PARTY_COIN_BALANCE[party.id]?.[0]?.count ?? 0),
+      documentRateSnapshots: [],
+    },
+  ];
 }
