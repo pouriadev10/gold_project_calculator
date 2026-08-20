@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-20T19:27:09.573250+00:00",
+  "generated_at": "2026-08-20T19:50:01.134713+00:00",
   "nodes": {
     "apps_web_src_api_api_error_networkerror": {
       "code_fingerprint": "d64e3823aae9adabda9fd92020c433936fc9b06a75c1eca255cd510a0ad66cd9",
@@ -12,7 +12,7 @@
           "q": "Implement FE-009 API error management"
         }
       ],
-      "score": 0.812524499,
+      "score": 0.812226536,
       "source_file": "apps/web/src/api/api-error.ts",
       "status": "tentative",
       "uses": 1
@@ -28,7 +28,7 @@
           "q": "Implement FE-009 API error management"
         }
       ],
-      "score": 0.812524499,
+      "score": 0.812226536,
       "source_file": "apps/web/src/api/client.ts",
       "status": "tentative",
       "uses": 1
