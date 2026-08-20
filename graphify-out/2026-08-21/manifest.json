@@ -1695,8 +1695,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/app/router.tsx": {
-    "mtime": 1787256087.161443,
-    "ast_hash": "9c09549602ea240b70b8c113bf4b8c56",
+    "mtime": 1787255065.7172723,
+    "ast_hash": "fb81c548fcb129bf303ea82e4908baf2",
     "semantic_hash": ""
   },
   "apps/web/src/components/common/AmountDisplay.test.tsx": {
@@ -1825,8 +1825,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/home/HomePage.tsx": {
-    "mtime": 1787256029.9851959,
-    "ast_hash": "6039977d831d4ab91f2433e43c7849b7",
+    "mtime": 1786965220.0539837,
+    "ast_hash": "a6c48a75d160dde0762f39ef932926c0",
     "semantic_hash": ""
   },
   "apps/web/src/features/home/MaznehBar.tsx": {
@@ -2900,8 +2900,8 @@
     "semantic_hash": "57f3eade61064fcaf09a18164aacb4bc"
   },
   "FrontTasks.md": {
-    "mtime": 1787266785.1968813,
-    "ast_hash": "c8cc1fcce1f5dfdeceb698ea0497476b",
+    "mtime": 1787255368.1054251,
+    "ast_hash": "d0327a0204ef6699c579a6db5ee92e74",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
@@ -3130,8 +3130,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/app/route-placeholders.tsx": {
-    "mtime": 1787266293.4554849,
-    "ast_hash": "50fecd97f40dfa830f022b2a84b6a626",
+    "mtime": 1787255069.7288315,
+    "ast_hash": "75af525646f7a1809916c51783e8fb32",
     "semantic_hash": ""
   },
   "apps/web/src/components/common/CardSkeleton.tsx": {
@@ -4077,36 +4077,6 @@
   "apps/web/src/features/inventory/RecentMovementsCard.tsx": {
     "mtime": 1787254972.346148,
     "ast_hash": "095b33ff426acb867f6f93d27f295a7b",
-    "semantic_hash": ""
-  },
-  "apps/web/src/features/sales/SaleStepper.tsx": {
-    "mtime": 1787256004.5770173,
-    "ast_hash": "1dc6945d63a16f40823fccd17df72c8f",
-    "semantic_hash": ""
-  },
-  "apps/web/src/features/sales/SaleWizardPage.test.tsx": {
-    "mtime": 1787266560.1240115,
-    "ast_hash": "cd6d003b507f1382db2acf0ff3b5ce34",
-    "semantic_hash": ""
-  },
-  "apps/web/src/features/sales/SaleWizardPage.tsx": {
-    "mtime": 1787256077.9909074,
-    "ast_hash": "6c09c22f199bad98b59504b830b965d1",
-    "semantic_hash": ""
-  },
-  "apps/web/src/hooks/useOnlineStatus.ts": {
-    "mtime": 1787256017.7141707,
-    "ast_hash": "f15198f4455ec1cba4cd5972754d6030",
-    "semantic_hash": ""
-  },
-  "apps/web/src/stores/sale-draft-store.test.ts": {
-    "mtime": 1787266396.221537,
-    "ast_hash": "51425df0101b23f00a85a5fac9c0fe9c",
-    "semantic_hash": ""
-  },
-  "apps/web/src/stores/sale-draft-store.ts": {
-    "mtime": 1787266319.011561,
-    "ast_hash": "4fd7d375d15926d255a5c10f274befd9",
     "semantic_hash": ""
   }
 }
