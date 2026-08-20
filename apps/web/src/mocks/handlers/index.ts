@@ -9,7 +9,9 @@ import {
   balanceSummary,
   COIN_BALANCE_ROWS,
   COIN_TYPE_VERSIONS,
+  dashboardFor,
   itemRecords,
+  JEWELRY_BALANCE_ROWS,
   jewelryItemVersionRecords,
   partyBalancesFor,
   partyMgById,
@@ -17,6 +19,7 @@ import {
   partyStatementEntriesFor,
   profitMonth,
   profitToday,
+  RECENT_INVENTORY_MOVEMENTS,
   recentTransactions,
   rialToWire,
 } from './fixtures';
@@ -650,8 +653,8 @@ export const handlers = [
     const now = new Date().toISOString();
     jewelryItemVersionCounter += 1;
     const created: JewelryItemVersion = {
-      id: `g2000000-0000-4000-8000-${String(jewelryItemVersionCounter).padStart(12, '0')}`,
-      jewelryItemId: `g1000000-0000-4000-8000-${String(jewelryItemVersionCounter).padStart(12, '0')}`,
+      id: `b2000000-0000-4000-8000-${String(jewelryItemVersionCounter).padStart(12, '0')}`,
+      jewelryItemId: `b1000000-0000-4000-8000-${String(jewelryItemVersionCounter).padStart(12, '0')}`,
       code: body.code,
       title: body.title,
       grossWeightMg: body.grossWeightMg,
@@ -757,7 +760,9 @@ export const handlers = [
   http.get('/api/inventory/balances', async ({ request }) => {
     await delay(READ_DELAY_MS);
     const itemType = new URL(request.url).searchParams.get('itemType');
-    return HttpResponse.json(itemType === 'COIN' ? COIN_BALANCE_ROWS : []);
+    if (itemType === 'COIN') return HttpResponse.json(COIN_BALANCE_ROWS);
+    if (itemType === 'JEWELRY') return HttpResponse.json(JEWELRY_BALANCE_ROWS);
+    return HttpResponse.json([]);
   }),
 
   /**
@@ -798,6 +803,23 @@ export const handlers = [
     };
     idempotencyCache.set(key, created);
     return HttpResponse.json(created, { status: 201 });
+  }),
+
+  /** `GET /reporting/dashboard` — قرارداد نهایی BE-062ایش (FE-040). */
+  http.get('/api/reporting/dashboard', async ({ request }) => {
+    await delay(READ_DELAY_MS);
+    const displayUnit = new URL(request.url).searchParams.get('displayUnit') === 'RIAL' ? 'RIAL' : 'GOLD';
+    return HttpResponse.json(dashboardFor(displayUnit));
+  }),
+
+  /**
+   * `GET /inventory/movements/recent` — FE-040. ⚠️ بدون معادل بک‌اندی
+   * هنوز (توضیح در `api/contracts.ts`).
+   */
+  http.get('/api/inventory/movements/recent', async ({ request }) => {
+    await delay(READ_DELAY_MS);
+    const limit = Number.parseInt(new URL(request.url).searchParams.get('limit') ?? '5', 10);
+    return HttpResponse.json(RECENT_INVENTORY_MOVEMENTS.slice(0, limit));
   }),
 
   http.get('/api/reports/profit', async ({ request }) => {

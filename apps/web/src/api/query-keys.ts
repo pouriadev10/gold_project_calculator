@@ -6,6 +6,7 @@ import type {
   PartyStatementQuery,
   PriceQuoteType,
   ProfitPeriod,
+  ReportingDisplayUnit,
 } from './contracts';
 
 /**
@@ -69,6 +70,18 @@ export const queryKeys = {
     all: () => ['inventory-balances'] as const,
     byItemType: (itemType: InventoryItemType) =>
       [...queryKeys.inventoryBalances.all(), itemType] as const,
+  },
+
+  /** داشبورد گزارش‌گیری — `GET /reporting/dashboard` واقعی (BE-062‌ish، FE-040). */
+  dashboard: {
+    all: () => ['dashboard'] as const,
+    byUnit: (displayUnit: ReportingDisplayUnit) => [...queryKeys.dashboard.all(), displayUnit] as const,
+  },
+
+  /** آخرین حرکات موجودی — بدون endpoint واقعی هنوز (FE-040). */
+  inventoryMovements: {
+    all: () => ['inventory-movements'] as const,
+    recent: (limit: number) => [...queryKeys.inventoryMovements.all(), 'recent', limit] as const,
   },
 
   transactions: {

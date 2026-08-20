@@ -139,7 +139,8 @@ const partySettlementsNewRoute = createRoute({
 const inventoryRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/inventory',
-  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'InventoryPlaceholder'),
+  // بدون beforeLoad نقش‌محور — GET /reporting/dashboard روی سرور بدون @Roles است (reporting.controller.ts)
+  component: lazyRouteComponent(() => import('@/features/inventory/InventoryDashboardPage')),
 });
 
 const inventoryJewelryRoute = createRoute({

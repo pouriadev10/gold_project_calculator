@@ -17,7 +17,7 @@ const ITEMS = [
   { to: '/dashboard', label: 'خانه', icon: Home },
   { to: '/sales/new', label: 'فروش', icon: ShoppingCart },
   { to: '/purchase/second-hand', label: 'خرید', icon: Wallet },
-  { to: '/inventory/jewelry', label: 'موجودی', icon: Gem },
+  { to: '/inventory', label: 'موجودی', icon: Gem },
   { to: '/parties', label: 'اشخاص', icon: Users },
   { to: '/settings', label: 'تنظیمات', icon: Settings },
 ] as const;

@@ -5,6 +5,7 @@ import {
   gramRate1000,
   karat,
   mulDivHalfUp,
+  toSafeNumber,
 } from '@gold/core-calc';
 import type { Party } from '@/api/contracts';
 
@@ -167,8 +168,8 @@ const jewelryItemsRaw = [
 ] as const;
 
 export const jewelryItemVersionRecords = jewelryItemsRaw.map((raw, index) => ({
-  id: `g2000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`,
-  jewelryItemId: `g1000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`,
+  id: `b2000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`,
+  jewelryItemId: `b1000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`,
   code: raw.code,
   title: raw.title,
   grossWeightMg: raw.grossMg.toString(),
@@ -182,6 +183,31 @@ export const jewelryItemVersionRecords = jewelryItemsRaw.map((raw, index) => ({
   version: 1,
   active: raw.active,
 }));
+
+/**
+ * مانده‌ی موجودی زیورآلات — `inventoryBalanceSchema` واقعی (BE-028)، همان
+ * `GET /inventory/balances?itemType=JEWELRY`. عمداً «گوشواره عیار ۷۰۰»
+ * (کد `ER-700-02`) را نمی‌آورد — نوعی که هرگز حرکتی نداشته، دقیقاً همان
+ * قاعده‌ای که `COIN_BALANCE_ROWS` برای «سکه گرمی» رعایت می‌کند (FE-038).
+ * بقیه با تعداد کم (۱ یا ۲) عمداً برای بخش «اقلام کم‌موجود» (FE-040) هستند.
+ */
+const JEWELRY_STOCK_BY_CODE: Record<string, number> = {
+  'BR-750-12': 5,
+  'NK-750-41': 1,
+  'RG-750-04': 8,
+  'CH-750-08': 3,
+  'BR-585-06': 12,
+  'PN-750-03': 2,
+  'ST-750-20': 1,
+};
+
+export const JEWELRY_BALANCE_ROWS = jewelryItemVersionRecords
+  .filter((item) => item.code in JEWELRY_STOCK_BY_CODE)
+  .map((item) => ({
+    itemType: 'JEWELRY' as const,
+    itemId: item.jewelryItemId,
+    quantity: String(JEWELRY_STOCK_BY_CODE[item.code]),
+  }));
 
 /* ── مانده‌ی کل ───────────────────────────────────────────── */
 
@@ -413,3 +439,115 @@ export function partyStatementEntriesFor(party: { id: string; mg: number }) {
     },
   ];
 }
+
+/* ── داشبورد موجودی (FE-040) ──────────────────────────────── */
+
+/** `dashboardFinancialCardSchema` واقعی — `{raw:{rial,pureGoldMg}, displayAmount}`. */
+function dashboardCard(rial: bigint, displayUnit: 'GOLD' | 'RIAL') {
+  const dual = dualFromRial(rial, RATE_1000);
+  return {
+    raw: { rial: dual.rial.toString(), pureGoldMg: dual.pureMg.toString() },
+    displayAmount: (displayUnit === 'GOLD' ? dual.pureMg : dual.rial).toString(),
+  };
+}
+
+/**
+ * `GET /reporting/dashboard` واقعی (BE-062‌ish). فقط `inventory` و
+ * `currentMazneh` را `InventoryDashboardPage` (FE-040) واقعاً می‌خواند؛
+ * بخش‌های مالی (`today`/`partyBalances`) هم برای معتبربودن پاسخ کنار
+ * `dashboardSchema` واقعی پر شده‌اند، نه چون این صفحه نمایششان می‌دهد.
+ *
+ * `inventory.coins` دقیقاً همان چیزی است که `COIN_BALANCE_ROWS` (FE-038)
+ * برمی‌گرداند — این دو mock باید هم‌خوان بمانند، چون در بک‌اند واقعی هر دو
+ * از یک منبع (`InventoryMovementsService.balances`) می‌آیند.
+ */
+export function dashboardFor(displayUnit: 'GOLD' | 'RIAL') {
+  const { start, end } = { start: new Date(FETCHED_AT), end: new Date(FETCHED_AT.getTime() + DAY_MS) };
+  start.setUTCHours(0, 0, 0, 0);
+
+  return {
+    asOf: FETCHED_AT.toISOString(),
+    dayStartsAt: start.toISOString(),
+    dayEndsAt: end.toISOString(),
+    displayUnit,
+    currentMazneh: {
+      id: 'c1000000-0000-4000-8000-000000000001',
+      amountRial: MAZNEH_RIAL.toString(),
+      observedAt: FETCHED_AT.toISOString(),
+      goldRatePerGramRial: RATE_1000.toString(),
+    },
+    today: {
+      sales: dashboardCard(85_000_000n, displayUnit),
+      purchases: dashboardCard(32_000_000n, displayUnit),
+      receipts: dashboardCard(50_000_000n, displayUnit),
+      payments: dashboardCard(12_000_000n, displayUnit),
+      invoiceCount: 6,
+    },
+    partyBalances: {
+      debtors: dashboardCard(creditMg > 0n ? (creditMg * RATE_1000) / 1000n : 0n, displayUnit),
+      creditors: dashboardCard(debitMg < 0n ? (-debitMg * RATE_1000) / 1000n : 0n, displayUnit),
+      coinsRemainSeparate: true as const,
+    },
+    inventory: {
+      meltedGoldPureMg: '320000',
+      coins: COIN_BALANCE_ROWS.map((row) => {
+        const coinType = COIN_TYPE_VERSIONS.find((c) => c.coinTypeId === row.itemId);
+        return {
+          coinTypeId: row.itemId,
+          code: coinType?.code ?? row.itemId,
+          count: toSafeNumber(BigInt(row.quantity)),
+        };
+      }),
+    },
+  };
+}
+
+/* ── آخرین حرکات موجودی (FE-040) ──────────────────────────── */
+
+/**
+ * ⚠️ بدون معادل بک‌اندی هنوز (توضیح در `api/contracts.ts`،
+ * `recentInventoryMovementSchema`). سه نوع `sourceType` مختلف عمداً کنار
+ * هم‌اند تا آیکون/برچسب هرکدام روی صفحه واقعاً آزموده شود.
+ */
+export const RECENT_INVENTORY_MOVEMENTS = [
+  {
+    id: 'm1000000-0000-4000-8000-000000000001',
+    sourceType: 'SALE' as const,
+    itemType: 'JEWELRY' as const,
+    itemLabel: 'دستبند ۱۸ عیار',
+    quantity: '-1',
+    occurredAt: new Date(FETCHED_AT.getTime() - 2 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'm1000000-0000-4000-8000-000000000002',
+    sourceType: 'SALE' as const,
+    itemType: 'COIN' as const,
+    itemLabel: 'تمام بهار آزادی',
+    quantity: '-1',
+    occurredAt: new Date(FETCHED_AT.getTime() - 5 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'm1000000-0000-4000-8000-000000000003',
+    sourceType: 'PURCHASE' as const,
+    itemType: 'MELTED_GOLD' as const,
+    itemLabel: 'آبشده',
+    quantity: '45000',
+    occurredAt: new Date(FETCHED_AT.getTime() - DAY_MS).toISOString(),
+  },
+  {
+    id: 'm1000000-0000-4000-8000-000000000004',
+    sourceType: 'CORRECTION' as const,
+    itemType: 'JEWELRY' as const,
+    itemLabel: 'انگشتر ۱۸ عیار نگین‌دار',
+    quantity: '-1',
+    occurredAt: new Date(FETCHED_AT.getTime() - 2 * DAY_MS).toISOString(),
+  },
+  {
+    id: 'm1000000-0000-4000-8000-000000000005',
+    sourceType: 'OPENING_BALANCE' as const,
+    itemType: 'COIN' as const,
+    itemLabel: 'نیم سکه',
+    quantity: '2',
+    occurredAt: new Date(FETCHED_AT.getTime() - 20 * DAY_MS).toISOString(),
+  },
+] as const;

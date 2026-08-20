@@ -2,6 +2,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { apiGet } from './client';
 import {
   coinTypeListSchema,
+  dashboardSchema,
   inventoryBalanceListSchema,
   itemListSchema,
   jewelryItemListSchema,
@@ -13,6 +14,7 @@ import {
   priceQuoteListSchema,
   priceQuoteSchema,
   profitReportSchema,
+  recentInventoryMovementListSchema,
   transactionListSchema,
   type InventoryItemType,
   type JewelryItemQuery,
@@ -21,6 +23,7 @@ import {
   type PartyStatementQuery,
   type PriceQuoteType,
   type ProfitPeriod,
+  type ReportingDisplayUnit,
 } from './contracts';
 import { queryKeys } from './query-keys';
 
@@ -198,18 +201,6 @@ export function useItemSearch(query: string, kind?: string) {
 }
 
 /**
- * فهرست کالای زیورآلات — `GET /inventory/jewelry-items` (BE-026، FE-036).
- * هر ردیف نسخه‌ی **باز** (جاری) همان کالاست؛ `partyListQuerySchema`‑وار
- * صفحه‌بندی سرور-محور دارد، پس همان الگوی `useParties` (`keepPreviousData`).
- *
- * قرارداد واقعی هیچ فیلتر عیار ندارد — فقط `search`/`active`. وقتی
- * فیلتر عیار در `JewelryItemsPage` فعال است، آن صفحه عمداً `limit` را
- * به سقف واقعی سرور (`MAX_PAGE_SIZE=200`) می‌برد و خودش عیار را روی
- * نتیجه فیلتر/صفحه‌بندی می‌کند — همان راهی که `QuoteHistoryList` (FE-031)
- * برای نبودِ صفحه‌بندی سرور-محور به کار برد؛ اینجا مسئولیت این hook
- * فقط عبور صادقانه‌ی پارامترهای واقعی است.
- */
-/**
  * کاتالوگ نوع سکه — `GET /inventory/coin-types` (FE-038).
  * ⚠️ بدون معادل بک‌اندی هنوز — فقط MSW پاسخ می‌دهد (توضیح در `api/contracts.ts`).
  */
@@ -231,6 +222,18 @@ export function useInventoryBalances(itemType: InventoryItemType) {
   });
 }
 
+/**
+ * فهرست کالای زیورآلات — `GET /inventory/jewelry-items` (BE-026، FE-036).
+ * هر ردیف نسخه‌ی **باز** (جاری) همان کالاست؛ `partyListQuerySchema`‑وار
+ * صفحه‌بندی سرور-محور دارد، پس همان الگوی `useParties` (`keepPreviousData`).
+ *
+ * قرارداد واقعی هیچ فیلتر عیار ندارد — فقط `search`/`active`. وقتی
+ * فیلتر عیار در `JewelryItemsPage` فعال است، آن صفحه عمداً `limit` را
+ * به سقف واقعی سرور (`MAX_PAGE_SIZE=200`) می‌برد و خودش عیار را روی
+ * نتیجه فیلتر/صفحه‌بندی می‌کند — همان راهی که `QuoteHistoryList` (FE-031)
+ * برای نبودِ صفحه‌بندی سرور-محور به کار برد؛ اینجا مسئولیت این hook
+ * فقط عبور صادقانه‌ی پارامترهای واقعی است.
+ */
 export function useJewelryItems(query: JewelryItemQuery) {
   return useQuery({
     queryKey: queryKeys.jewelryItems.list(query),
@@ -245,5 +248,34 @@ export function useJewelryItems(query: JewelryItemQuery) {
     },
     staleTime: MINUTE,
     placeholderData: keepPreviousData,
+  });
+}
+
+/**
+ * داشبورد موجودی/گزارش‌گیری — `GET /reporting/dashboard` واقعی (FE-040).
+ * `displayUnit` فقط نحوه‌ی نمایش کارت‌های مالی سمت سرور را عوض می‌کند
+ * (`dashboard.today`/`partyBalances`) — بخش `inventory` (وزن آبشده،
+ * تعداد سکه) که این تسک استفاده می‌کند مستقل از این پارامتر همیشه خام
+ * است، پس هیچ منطق واحدی سمت کلاینت لازم ندارد.
+ */
+export function useDashboard(displayUnit: ReportingDisplayUnit = 'GOLD') {
+  return useQuery({
+    queryKey: queryKeys.dashboard.byUnit(displayUnit),
+    queryFn: ({ signal }) =>
+      apiGet(`/reporting/dashboard?displayUnit=${displayUnit}`, dashboardSchema, signal),
+    staleTime: MINUTE,
+  });
+}
+
+/**
+ * آخرین حرکات موجودی — FE-040.
+ * ⚠️ بدون معادل بک‌اندی هنوز — فقط MSW پاسخ می‌دهد (توضیح در `api/contracts.ts`).
+ */
+export function useRecentInventoryMovements(limit = 5) {
+  return useQuery({
+    queryKey: queryKeys.inventoryMovements.recent(limit),
+    queryFn: ({ signal }) =>
+      apiGet(`/inventory/movements/recent?limit=${limit}`, recentInventoryMovementListSchema, signal),
+    staleTime: MINUTE,
   });
 }

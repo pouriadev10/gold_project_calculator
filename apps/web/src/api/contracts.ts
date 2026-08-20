@@ -3,6 +3,7 @@ import {
   bigIntStringSchema,
   coinTypeVersionSchema,
   inventoryBalanceSchema,
+  inventoryItemTypeSchema,
   isoDateTimeSchema,
   priceQuoteAmountRialSchema,
   priceQuoteSchema as sharedPriceQuoteSchema,
@@ -75,6 +76,9 @@ export {
   openingBalanceLineSchema,
   createOpeningBalanceSchema,
   openingBalanceSchema,
+  dashboardSchema,
+  dashboardQuerySchema,
+  reportingDisplayUnitSchema,
   type LoginInput,
   type SessionResponse,
   type RefreshInput,
@@ -94,6 +98,9 @@ export {
   type OpeningBalanceLine,
   type CreateOpeningBalanceInput,
   type OpeningBalance,
+  type Dashboard,
+  type DashboardQuery,
+  type ReportingDisplayUnit,
 } from '@gold/contracts';
 
 /** `@gold/contracts` این‌ها را جدا export نمی‌کند؛ اینجا از خودِ `Party` گرفته می‌شوند. */
@@ -268,6 +275,44 @@ export type Transaction = z.infer<typeof transactionSchema>;
 export const transactionListSchema = z.object({
   items: z.array(transactionSchema),
 });
+
+/* ── GET /api/inventory/movements/recent — FE-040 ────────────── */
+
+/**
+ * ⚠️ بدون معادل بک‌اندی هنوز. `inventoryMovementSchema` واقعی
+ * (`@gold/contracts`) با `itemId` خام (uuid یا null) کار می‌کند —
+ * درست برای دفتر کل، ولی برای نمایش «آخرین حرکات» به تنهایی کافی
+ * نیست: کاربر باید بی‌واسطه بفهمد کدام کالا، نه یک uuid. این view model
+ * محلی، دقیقاً مثل `transactionSchema` بالا، برچسب کالا را از قبل حل‌شده
+ * حمل می‌کند — همان تجمیع UI-محور، نه یک DTO سیمی بک‌اندی.
+ *
+ * برخلاف کامنت‌های `profitReportSchema`/`transactionSchema` بالا («دفتر
+ * کل اسکلت خالی است»)، این دیگر درست نیست — دفتر کل کامل است
+ * (Milestone 7 تا 13 انجام شده). فقط **فهرست‌کردن** حرکات موجودی هیچ
+ * controller‌ای ندارد؛ `InventoryMovementsService` فقط `.balance()` و
+ * `.balances()` (تجمیع) را expose می‌کند، نه رکوردهای خام.
+ */
+export const recentInventoryMovementSourceSchema = z.enum([
+  'OPENING_BALANCE',
+  'SALE',
+  'PURCHASE',
+  'CORRECTION',
+]);
+export type RecentInventoryMovementSource = z.infer<typeof recentInventoryMovementSourceSchema>;
+
+export const recentInventoryMovementSchema = z.object({
+  id: z.string(),
+  sourceType: recentInventoryMovementSourceSchema,
+  itemType: inventoryItemTypeSchema,
+  /** برچسب حل‌شده برای نمایش — «تمام بهار آزادی»، «دستبند ۱۸ عیار»، یا «آبشده» */
+  itemLabel: z.string(),
+  /** رشته‌ی صحیح علامت‌دار — واحدش به itemType بستگی دارد، دقیقاً مثل inventoryQuantitySchema واقعی */
+  quantity: bigIntStringSchema,
+  occurredAt: isoDateTimeSchema,
+});
+export type RecentInventoryMovement = z.infer<typeof recentInventoryMovementSchema>;
+
+export const recentInventoryMovementListSchema = z.array(recentInventoryMovementSchema);
 
 /* ── POST /api/invoices ────────────────────────────────────── */
 
