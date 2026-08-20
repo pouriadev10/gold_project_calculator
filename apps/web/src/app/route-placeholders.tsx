@@ -10,10 +10,6 @@ export function InventoryPlaceholder() {
   return <PlaceholderPage title="موجودی" note="داشبورد موجودی در گام‌های بعد می‌آید." />;
 }
 
-export function InventoryCoinsPlaceholder() {
-  return <PlaceholderPage title="موجودی سکه" note="فهرست موجودی سکه در گام‌های بعد می‌آید." />;
-}
-
 export function SalesNewPlaceholder() {
   return <PlaceholderPage title="فروش جدید" note="ثبت فاکتور فروش زیورآلات و سکه در گام‌های بعد می‌آید." />;
 }

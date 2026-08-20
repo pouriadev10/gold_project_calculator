@@ -254,7 +254,47 @@ const PARTY_RIAL_BALANCE: Record<string, bigint> = {
 const COIN_TYPE = {
   BAHAR: { id: 'd1000000-0000-4000-8000-000000000001', code: 'تمام بهار آزادی' },
   NIM: { id: 'd1000000-0000-4000-8000-000000000002', code: 'نیم سکه' },
+  ROB: { id: 'd1000000-0000-4000-8000-000000000003', code: 'ربع سکه' },
+  GERAMI: { id: 'd1000000-0000-4000-8000-000000000004', code: 'سکه گرمی' },
 } as const;
+
+/**
+ * فهرست نسخه‌ی جاری هر نوع سکه — `coinTypeVersionSchema` واقعی (BE-020).
+ * ⚠️ FE-038: بدون endpoint واقعی هنوز، فقط `GET /api/inventory/coin-types`
+ * mock (توضیح در `api/contracts.ts`). وزن‌ها از بخش ۳ `CLAUDE.md` (میکروگرم
+ * — تنها استثنای مجاز `bigint` غیرمیلی‌گرمی، دقیقاً برای همین مشخصات مرجع).
+ */
+export const COIN_TYPE_VERSIONS = [
+  { key: COIN_TYPE.BAHAR, versionId: 'e1000000-0000-4000-8000-000000000001', grossWeightUg: 8_133_000n, karat: 900 },
+  { key: COIN_TYPE.NIM, versionId: 'e1000000-0000-4000-8000-000000000002', grossWeightUg: 4_066_500n, karat: 900 },
+  { key: COIN_TYPE.ROB, versionId: 'e1000000-0000-4000-8000-000000000003', grossWeightUg: 2_033_200n, karat: 900 },
+  { key: COIN_TYPE.GERAMI, versionId: 'e1000000-0000-4000-8000-000000000004', grossWeightUg: 1_016_600n, karat: 900 },
+].map(({ key, versionId, grossWeightUg, karat: k }) => ({
+  id: versionId,
+  coinTypeId: key.id,
+  code: key.code,
+  title: key.code,
+  grossWeightUg: grossWeightUg.toString(),
+  karat: k,
+  validFrom: NOW,
+  validTo: null,
+  version: 1,
+  active: true,
+  mintType: 'CENTRAL_BANK' as const,
+  isCentralBankMinted: true as const,
+}));
+
+/**
+ * مانده‌ی موجودی سکه — `inventoryBalanceSchema` واقعی (BE-028)، همان
+ * `GET /inventory/balances?itemType=COIN`. عمداً «سکه گرمی» را نمی‌آورد:
+ * نوعی که هرگز حرکتی نداشته اصلاً در پاسخ واقعی نیست، نه اینکه صفر باشد
+ * — merge سمت `CoinInventoryPage` باید همین غیاب را صفر بخواند.
+ */
+export const COIN_BALANCE_ROWS = [
+  { itemType: 'COIN' as const, itemId: COIN_TYPE.BAHAR.id, quantity: '3' },
+  { itemType: 'COIN' as const, itemId: COIN_TYPE.NIM.id, quantity: '-1' },
+  { itemType: 'COIN' as const, itemId: COIN_TYPE.ROB.id, quantity: '0' },
+];
 
 const PARTY_COIN_BALANCE: Record<string, ReadonlyArray<{ coinTypeId: string; code: string; count: number }>> = {
   'a1000000-0000-4000-8000-000000000001': [

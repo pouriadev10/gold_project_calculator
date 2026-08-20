@@ -7,6 +7,8 @@ import {
   FETCHED_AT,
   articlePriceRial,
   balanceSummary,
+  COIN_BALANCE_ROWS,
+  COIN_TYPE_VERSIONS,
   itemRecords,
   jewelryItemVersionRecords,
   partyBalancesFor,
@@ -736,6 +738,26 @@ export const handlers = [
     jewelryItemList = jewelryItemList.map((i) => (i.jewelryItemId === id || i.id === id ? updated : i));
     idempotencyCache.set(key, updated);
     return HttpResponse.json(updated, { status: 200 });
+  }),
+
+  /**
+   * `GET /inventory/coin-types` — FE-038. ⚠️ بدون معادل بک‌اندی هنوز
+   * (توضیح در `api/contracts.ts`) — فقط کاتالوگ ساختگی برمی‌گرداند.
+   */
+  http.get('/api/inventory/coin-types', async () => {
+    await delay(READ_DELAY_MS);
+    return HttpResponse.json(COIN_TYPE_VERSIONS);
+  }),
+
+  /**
+   * `GET /inventory/balances` — قرارداد نهایی BE-028. فقط `itemType=COIN`
+   * پیاده‌سازی شده چون فعلاً تنها مصرف‌کننده `CoinInventoryPage` (FE-038)
+   * است؛ سایر itemTypeها آرایه‌ی خالی می‌گیرند تا شکل واقعی حفظ شود.
+   */
+  http.get('/api/inventory/balances', async ({ request }) => {
+    await delay(READ_DELAY_MS);
+    const itemType = new URL(request.url).searchParams.get('itemType');
+    return HttpResponse.json(itemType === 'COIN' ? COIN_BALANCE_ROWS : []);
   }),
 
   http.get('/api/reports/profit', async ({ request }) => {

@@ -152,7 +152,8 @@ const inventoryJewelryRoute = createRoute({
 const inventoryCoinsRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/inventory/coins',
-  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'InventoryCoinsPlaceholder'),
+  // بدون beforeLoad نقش‌محور — همان استدلال inventoryJewelryRoute، خواندن موجودی محدود به نقش نیست
+  component: lazyRouteComponent(() => import('@/features/inventory/CoinInventoryPage')),
 });
 
 const salesNewRoute = createRoute({

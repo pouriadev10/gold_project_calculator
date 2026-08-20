@@ -1,6 +1,8 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { apiGet } from './client';
 import {
+  coinTypeListSchema,
+  inventoryBalanceListSchema,
   itemListSchema,
   jewelryItemListSchema,
   partyBalanceSummarySchema,
@@ -12,6 +14,7 @@ import {
   priceQuoteSchema,
   profitReportSchema,
   transactionListSchema,
+  type InventoryItemType,
   type JewelryItemQuery,
   type PartyBalancesQuery,
   type PartyListQuery,
@@ -206,6 +209,28 @@ export function useItemSearch(query: string, kind?: string) {
  * برای نبودِ صفحه‌بندی سرور-محور به کار برد؛ اینجا مسئولیت این hook
  * فقط عبور صادقانه‌ی پارامترهای واقعی است.
  */
+/**
+ * کاتالوگ نوع سکه — `GET /inventory/coin-types` (FE-038).
+ * ⚠️ بدون معادل بک‌اندی هنوز — فقط MSW پاسخ می‌دهد (توضیح در `api/contracts.ts`).
+ */
+export function useCoinTypes() {
+  return useQuery({
+    queryKey: queryKeys.coinTypes.all(),
+    queryFn: ({ signal }) => apiGet('/inventory/coin-types', coinTypeListSchema, signal),
+    staleTime: MINUTE,
+  });
+}
+
+/** مانده‌ی موجودی به تفکیک نوع کالا — `GET /inventory/balances` (BE-028، FE-038). */
+export function useInventoryBalances(itemType: InventoryItemType) {
+  return useQuery({
+    queryKey: queryKeys.inventoryBalances.byItemType(itemType),
+    queryFn: ({ signal }) =>
+      apiGet(`/inventory/balances?itemType=${itemType}`, inventoryBalanceListSchema, signal),
+    staleTime: MINUTE,
+  });
+}
+
 export function useJewelryItems(query: JewelryItemQuery) {
   return useQuery({
     queryKey: queryKeys.jewelryItems.list(query),

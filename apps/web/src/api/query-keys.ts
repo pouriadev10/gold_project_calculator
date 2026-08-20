@@ -1,4 +1,5 @@
 import type {
+  InventoryItemType,
   JewelryItemQuery,
   PartyBalancesQuery,
   PartyListQuery,
@@ -56,6 +57,18 @@ export const queryKeys = {
   jewelryItems: {
     all: () => ['jewelry-items'] as const,
     list: (query: JewelryItemQuery) => [...queryKeys.jewelryItems.all(), 'list', query] as const,
+  },
+
+  /** کاتالوگ نوع سکه — `coinTypeVersionSchema` (BE-020)، بدون endpoint واقعی هنوز (FE-038). */
+  coinTypes: {
+    all: () => ['coin-types'] as const,
+  },
+
+  /** مانده‌ی موجودی — `GET /inventory/balances` واقعی (BE-028). */
+  inventoryBalances: {
+    all: () => ['inventory-balances'] as const,
+    byItemType: (itemType: InventoryItemType) =>
+      [...queryKeys.inventoryBalances.all(), itemType] as const,
   },
 
   transactions: {
