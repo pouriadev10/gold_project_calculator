@@ -1665,13 +1665,13 @@
     "semantic_hash": "f0918d28c8b297bd1e16403c91156161"
   },
   "apps/web/src/api/contracts.ts": {
-    "mtime": 1787120334.3464437,
-    "ast_hash": "f481d7ccd9fb720dd35a0fa729fc22c1",
+    "mtime": 1787241979.229464,
+    "ast_hash": "cc182612374cf9b279da861c826b70a8",
     "semantic_hash": ""
   },
   "apps/web/src/api/queries.ts": {
-    "mtime": 1787120683.64468,
-    "ast_hash": "e380491abe08adea5aadbba81469bcf1",
+    "mtime": 1787241572.1201258,
+    "ast_hash": "ab0ca76083c482fdd7e1b0279d34cb1b",
     "semantic_hash": ""
   },
   "apps/web/src/api/query-client.test.ts": {
@@ -1690,13 +1690,13 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/query-keys.ts": {
-    "mtime": 1787120407.3717227,
-    "ast_hash": "9320f58f932d69b5f6e1a7eee0692388",
+    "mtime": 1787241524.3375025,
+    "ast_hash": "7e859d3251148450618bad358c732a57",
     "semantic_hash": ""
   },
   "apps/web/src/app/router.tsx": {
-    "mtime": 1787124277.509262,
-    "ast_hash": "b99e233703b514014699b6e5295c1760",
+    "mtime": 1787241596.4639359,
+    "ast_hash": "451ecd572e931cdd7c7c18e4e39aa4b8",
     "semantic_hash": ""
   },
   "apps/web/src/components/common/AmountDisplay.test.tsx": {
@@ -1900,13 +1900,13 @@
     "semantic_hash": "09ab1fdcc6420b8bd6cf17a2183f67ed"
   },
   "apps/web/src/mocks/handlers/fixtures.ts": {
-    "mtime": 1787121692.4235375,
-    "ast_hash": "8b5a858b632ca909a386c06f19c03f93",
+    "mtime": 1787241877.7860017,
+    "ast_hash": "d0b0e3ab620e0f5f64f4ebf3cfccef4b",
     "semantic_hash": ""
   },
   "apps/web/src/mocks/handlers/index.ts": {
-    "mtime": 1787122686.2634134,
-    "ast_hash": "5d9c2eaddb779af9fed9fd9d8b66123e",
+    "mtime": 1787241950.9492333,
+    "ast_hash": "b90fe329927eb5cef8d0e8aae2c52303",
     "semantic_hash": ""
   },
   "apps/web/src/stores/theme-store.ts": {
@@ -2900,8 +2900,8 @@
     "semantic_hash": "57f3eade61064fcaf09a18164aacb4bc"
   },
   "FrontTasks.md": {
-    "mtime": 1787238345.9215906,
-    "ast_hash": "4dcab0ba5e87b3169bcf92e66d4fd989",
+    "mtime": 1787249449.170603,
+    "ast_hash": "80134e489716a258b8773615f7f3ec38",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
@@ -3130,8 +3130,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/app/route-placeholders.tsx": {
-    "mtime": 1787124370.7264717,
-    "ast_hash": "7e3df68c6bec502c68db909037a5bb44",
+    "mtime": 1787241657.7805243,
+    "ast_hash": "4f3aed691ca43e0a8b5580f541adbb8c",
     "semantic_hash": ""
   },
   "apps/web/src/components/common/CardSkeleton.tsx": {
@@ -4007,6 +4007,21 @@
   "apps/web/src/features/inventory/JewelryItemsPage.tsx": {
     "mtime": 1787124134.130659,
     "ast_hash": "dad316ed78f68957de4cf5a1c7b27aeb",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/inventory/CoinInventoryList.tsx": {
+    "mtime": 1787249053.1388924,
+    "ast_hash": "c21f4665ff1a9a655d0bb7969219f7b8",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/inventory/CoinInventoryPage.test.tsx": {
+    "mtime": 1787249331.0062191,
+    "ast_hash": "327061a929eb22321d834b0c31bf2b1a",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/inventory/CoinInventoryPage.tsx": {
+    "mtime": 1787248554.9811933,
+    "ast_hash": "9d7c4463f3dbb9088423f7ece6c37a94",
     "semantic_hash": ""
   }
 }
