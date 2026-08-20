@@ -169,7 +169,8 @@ const inventoryOpeningBalanceRoute = createRoute({
 const salesNewRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/sales/new',
-  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'SalesNewPlaceholder'),
+  // بدون beforeLoad نقش‌محور — شروع فروش برای هر نقشی باز است
+  component: lazyRouteComponent(() => import('@/features/sales/SaleWizardPage')),
 });
 
 const salesInvoicesRoute = createRoute({

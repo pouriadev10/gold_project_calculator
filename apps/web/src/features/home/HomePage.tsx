@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Minus, Plus } from 'lucide-react';
 import { useBalanceSummary, useRecentTransactions } from '@/api/queries';
@@ -6,6 +5,7 @@ import { RequireRole } from '@/components/common/RequireRole';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { UnitToggle } from '@/components/common/UnitToggle';
 import { Button } from '@/components/ui/button';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { PROFIT_REPORT_ROLES } from '@/lib/permissions';
 import { BalanceCard } from './BalanceCard';
 import { MaznehBar } from './MaznehBar';
@@ -82,23 +82,4 @@ export function HomePage() {
       </div>
     </div>
   );
-}
-
-/** وضعیت اتصال — برای نشانگر نوار مظنه. */
-function useOnlineStatus(): boolean {
-  const [isOnline, setIsOnline] = useState(() => navigator.onLine);
-
-  useEffect(() => {
-    const goOnline = () => setIsOnline(true);
-    const goOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', goOnline);
-    window.addEventListener('offline', goOffline);
-    return () => {
-      window.removeEventListener('online', goOnline);
-      window.removeEventListener('offline', goOffline);
-    };
-  }, []);
-
-  return isOnline;
 }
