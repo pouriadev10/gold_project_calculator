@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
-import { toPersianDigits } from '@gold/core-calc';
+import { formatGram, toPersianDigits } from '@gold/core-calc';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '@/api/api-error';
 import type { JewelryItemVersion } from '@/api/contracts';
@@ -11,7 +11,8 @@ import { useToastStore } from '@/stores/toast-store';
 import { JewelryItemFormDialog } from './JewelryItemFormDialog';
 
 /**
- * FE-036 — فرم ایجاد/ویرایش کالای زیورآلات.
+ * FE-036 — فرم ایجاد/ویرایش کالای زیورآلات. FE-037 پوشش وزن نگین، سایر
+ * کسورات و پیش‌نمایش دقیق (با کسورات) را اضافه کرد.
  *
  * `createJewelryItem`/`updateJewelryItem` مستقیم mock می‌شوند (الگوی
  * `PartyFormDialog.test.tsx`). برخلاف آن فرم، فیلدهای عددی اینجا
@@ -137,9 +138,7 @@ describe('JewelryItemFormDialog — حالت ایجاد (بدون item)', () => 
         title: 'دستبند ۱۸ عیار',
         grossWeightMg: '12350',
         karat: 750,
-        // پیش‌فرض‌های خودِ zod schema (`.default('0')`) — این فرم عمداً این دو فیلد
-        // را نمی‌فرستد، schema خودش پرشان می‌کند (کامنت بالای validation در
-        // JewelryItemFormDialog.tsx)
+        // دست‌نخورده مانده‌اند (پیش‌فرض state، نه schema) — این تست نگینی تایپ نمی‌کند
         stoneWeightMg: '0',
         otherDeductionWeightMg: '0',
         wageType: 'PER_GRAM',
@@ -147,6 +146,50 @@ describe('JewelryItemFormDialog — حالت ایجاد (بدون item)', () => 
       },
       expect.any(String),
     );
+  });
+
+  it('با وزن نگین و سایر کسورات، وزن خالص را با کسر آن‌ها پیش‌نمایش و ارسال می‌کند', async () => {
+    createJewelryItemMock.mockResolvedValue(EXISTING_ITEM);
+    const user = setupUser();
+    renderDialog();
+
+    await user.type(screen.getByLabelText('کد کالا'), 'BR-750-12');
+    await user.type(screen.getByLabelText('عنوان'), 'دستبند ۱۸ عیار');
+    await tapDigits(user, 'وزن ناخالص', '12.35');
+    await tapDigits(user, 'عیار', '750');
+    await tapDigits(user, 'وزن نگین', '0.35');
+    await tapDigits(user, 'مقدار اجرت', '3500000');
+
+    // chargeable = 12350 − 350 − 0 = 12000mg؛ خالص = 12000 × 750 ÷ 1000 = 9000mg = ۹ گرم
+    expect(screen.getByText(`وزن خالص: ${formatGram(9000n)}`)).toBeInTheDocument();
+
+    const submitButton = screen.getByRole('button', { name: 'ثبت کالا' });
+    expect(submitButton).not.toBeDisabled();
+    await user.click(submitButton);
+
+    await waitFor(() => expect(createJewelryItemMock).toHaveBeenCalledTimes(1));
+    expect(createJewelryItemMock).toHaveBeenCalledWith(
+      expect.objectContaining({ stoneWeightMg: '350', otherDeductionWeightMg: '0' }),
+      expect.any(String),
+    );
+  });
+
+  it('وقتی مجموع کسورات از وزن ناخالص بیشتر شود، پیش‌نمایش قطع و ثبت غیرفعال می‌شود', async () => {
+    const user = setupUser();
+    renderDialog();
+
+    // بقیه‌ی فرم را هم معتبر پر می‌کند تا تنها خطای روی صفحه همان خطای کسورات باشد،
+    // نه خطای عمومی «فیلد لازم است» روی کد/عنوان خالی.
+    await user.type(screen.getByLabelText('کد کالا'), 'BR-1');
+    await user.type(screen.getByLabelText('عنوان'), 'تست');
+    await tapDigits(user, 'وزن ناخالص', '1');
+    await tapDigits(user, 'عیار', '750');
+    await tapDigits(user, 'وزن نگین', '0.6');
+    await tapDigits(user, 'سایر کسورات', '0.5');
+
+    expect(screen.queryByText(/وزن خالص:/)).not.toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent('مجموع کسورات از وزن ناخالص بیشتر است');
+    expect(screen.getByRole('button', { name: 'ثبت کالا' })).toBeDisabled();
   });
 
   it('انتخاب نوع اجرت درصدی، فیلد را به PercentInput عوض و مقدار قبلی را صفر می‌کند', async () => {
@@ -235,6 +278,8 @@ describe('JewelryItemFormDialog — حالت ویرایش (با item)', () => {
     expect(screen.getByLabelText('عنوان')).toHaveValue('دستبند ۱۸ عیار');
     expect(screen.getByLabelText('وزن ناخالص')).toHaveAttribute('data-value', '12350');
     expect(screen.getByLabelText('عیار')).toHaveAttribute('data-value', '750');
+    expect(screen.getByLabelText('وزن نگین')).toHaveAttribute('data-value', '0');
+    expect(screen.getByLabelText('سایر کسورات')).toHaveAttribute('data-value', '0');
     expect(screen.getByLabelText('مقدار اجرت')).toHaveAttribute('data-value', '3500000');
     expect(screen.getByRole('button', { name: 'ذخیره تغییرات' })).toBeInTheDocument();
   });
@@ -256,6 +301,8 @@ describe('JewelryItemFormDialog — حالت ویرایش (با item)', () => {
         title: 'دستبند ویرایش‌شده',
         grossWeightMg: '12350',
         karat: 750,
+        stoneWeightMg: '0',
+        otherDeductionWeightMg: '0',
         wageType: 'PER_GRAM',
         wageValue: '3500000',
       },

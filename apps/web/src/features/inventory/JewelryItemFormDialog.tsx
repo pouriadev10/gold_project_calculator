@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import { formatGram, toSafeNumber } from '@gold/core-calc';
+import { articlePureMg, CalcError, formatGram, grossMg, karat as toKarat, toSafeNumber } from '@gold/core-calc';
 import {
   createJewelryItemSchema,
   updateJewelryItemSchema,
@@ -33,18 +33,21 @@ import { useIdempotentSubmit } from '@/hooks/useIdempotentSubmit';
 import { toast } from '@/stores/toast-store';
 
 /**
- * فرم ایجاد/ویرایش کالای زیورآلات — FE-036.
+ * فرم ایجاد/ویرایش کالای زیورآلات — FE-036 (شش فیلد اصلی) + FE-037 (تکمیل
+ * با وزن نگین، سایر کسورات و پیش‌نمایش دقیق).
  *
- * عمداً فقط شش فیلد اصلی (کد، عنوان، وزن ناخالص، عیار، نوع و مقدار
- * اجرت) دارد — نه نُه فیلد کامل `createJewelryItemSchema`. وزن نگین و
- * سایر کسورات اینجا نیستند، دقیقاً همان مرزی که خودِ `WeightInput`
- * (FE-020) از قبل مستند کرده: «دغدغه‌ی فرم کالای زیورآلات (FE-037) است،
- * نه این کامپوننت پایه». قرارداد واقعی هم این حذف را عمداً پیش‌بینی
- * کرده — `createJewelryItemSchema` این دو فیلد را `.default('0')` دارد،
- * یعنی نفرستادنشان از روز اول یک حالت معتبر و پیش‌بینی‌شده است، نه یک
- * میان‌بر ناقص. پیش‌نمایش وزن خالص اینجا فقط از `WeightInput`ی که خودش
- * می‌سازد می‌آید (بدون کسر نگین) — پیش‌نمایش **دقیق** (با کسورات) کار
- * FE-037 است.
+ * هر هشت فیلد مالی/هویتی `createJewelryItemSchema` اینجا هستند — فقط
+ * `validFrom` عمداً نیست: شروع اعتبار نسخه‌ی مالی برای این فرم ساده‌ی
+ * خرده‌فروشی مفهوم پیشرفته‌ای است (پیش‌فرض سرور «همین حالا»ست)، و هیچ
+ * فیلد دیگری در این فرم هم به آن نیاز ندارد.
+ *
+ * پیش‌نمایش وزن خالص از خودِ `articlePureMg` (`@gold/core-calc`) می‌آید —
+ * همان تابعی که BE-025/BE-040 صدا می‌زنند: وزن قابل‌محاسبه (ناخالص منهای
+ * نگین و سایر کسورات) پیش از اعمال عیار. فرمول اینجا تکرار نمی‌شود؛ اگر
+ * کسورات از وزن ناخالص بیشتر شود، همان `CalcError` واقعی گرفته و پیامش
+ * نمایش داده می‌شود — نه یک پیام محلی جداگانه. طبق قاعده‌ی خودِ فرانت
+ * («فرانت محاسبات نهایی مالی را معتبر فرض نکند»)، این فقط یک بازخورد
+ * زودهنگام است؛ تأیید نهایی همیشه با سرور است.
  *
  * اعتبارسنجی مستقیم روی خودِ schema واقعی (`createJewelryItemSchema`/
  * `updateJewelryItemSchema`) اجرا می‌شود، نه یک schema محلی — همان الگوی
@@ -91,6 +94,10 @@ export function JewelryItemFormDialog({ open, onOpenChange, item }: JewelryItemF
   const [title, setTitle] = useState(item?.title ?? '');
   const [grossWeightMg, setGrossWeightMg] = useState(item ? BigInt(item.grossWeightMg) : 0n);
   const [karat, setKarat] = useState(item ? BigInt(item.karat) : 0n);
+  const [stoneWeightMg, setStoneWeightMg] = useState(item ? BigInt(item.stoneWeightMg) : 0n);
+  const [otherDeductionWeightMg, setOtherDeductionWeightMg] = useState(
+    item ? BigInt(item.otherDeductionWeightMg) : 0n,
+  );
   const [wageType, setWageType] = useState<JewelryWageType>(item?.wageType ?? 'PER_GRAM');
   const [wageValue, setWageValue] = useState(item ? BigInt(item.wageValue) : 0n);
   const [submitError, setSubmitError] = useState<unknown>(null);
@@ -103,21 +110,35 @@ export function JewelryItemFormDialog({ open, onOpenChange, item }: JewelryItemF
         title: trimmedTitle,
         grossWeightMg: grossWeightMg.toString(),
         karat: toSafeNumber(karat),
+        stoneWeightMg: stoneWeightMg.toString(),
+        otherDeductionWeightMg: otherDeductionWeightMg.toString(),
         wageType,
         wageValue: wageValue.toString(),
       } satisfies UpdateJewelryItemInput)
-    : // بدون `satisfies CreateJewelryItemInput`: آن نوع **پس از** اعمال پیش‌فرض‌های
-      // zod است (`stoneWeightMg`/`otherDeductionWeightMg` همیشه رشته‌اند)، ولی اینجا
-      // عمداً نفرستادنشان به خودِ schema سپرده می‌شود — دقیقاً همان چیزی که
-      // `createJewelryItemSchema`ی واقعی هم برایش `.default('0')` گذاشته.
-      createJewelryItemSchema.safeParse({
+    : createJewelryItemSchema.safeParse({
         code: trimmedCode,
         title: trimmedTitle,
         grossWeightMg: grossWeightMg.toString(),
         karat: toSafeNumber(karat),
+        stoneWeightMg: stoneWeightMg.toString(),
+        otherDeductionWeightMg: otherDeductionWeightMg.toString(),
         wageType,
         wageValue: wageValue.toString(),
-      });
+      } satisfies CreateJewelryItemInput);
+
+  let pureMgPreview: bigint | undefined;
+  let deductionError: string | undefined;
+  if (grossWeightMg > 0n && karat >= 1n && karat <= 1000n) {
+    try {
+      pureMgPreview = articlePureMg(
+        grossMg(grossWeightMg),
+        { stone: grossMg(stoneWeightMg), other: grossMg(otherDeductionWeightMg) },
+        toKarat(toSafeNumber(karat)),
+      );
+    } catch (err) {
+      deductionError = err instanceof CalcError ? err.message : undefined;
+    }
+  }
 
   const { submit, isSubmitting, reset: resetKey } = useIdempotentSubmit((key: string) => {
     // در عمل هرگز رخ نمی‌دهد — دکمه‌ی ثبت تا وقتی validation.success نشود disabled است؛
@@ -133,6 +154,8 @@ export function JewelryItemFormDialog({ open, onOpenChange, item }: JewelryItemF
     setTitle(item?.title ?? '');
     setGrossWeightMg(item ? BigInt(item.grossWeightMg) : 0n);
     setKarat(item ? BigInt(item.karat) : 0n);
+    setStoneWeightMg(item ? BigInt(item.stoneWeightMg) : 0n);
+    setOtherDeductionWeightMg(item ? BigInt(item.otherDeductionWeightMg) : 0n);
     setWageType(item?.wageType ?? 'PER_GRAM');
     setWageValue(item ? BigInt(item.wageValue) : 0n);
     setSubmitError(null);
@@ -152,7 +175,7 @@ export function JewelryItemFormDialog({ open, onOpenChange, item }: JewelryItemF
 
   const onSubmit = async () => {
     setSubmitError(null);
-    if (!validation.success) return;
+    if (!validation.success || deductionError !== undefined) return;
     try {
       const result = await submit(undefined);
       if (!result) return; // ضربه‌ی دوم حین ارسال قبلی — بی‌اثر، نه خطا
@@ -168,11 +191,6 @@ export function JewelryItemFormDialog({ open, onOpenChange, item }: JewelryItemF
     }
   };
 
-  const pureMgPreview =
-    grossWeightMg > 0n && karat >= 1n && karat <= 1000n
-      ? (grossWeightMg * karat) / 1000n
-      : undefined;
-
   return (
     <ResponsiveDialog open={open} onOpenChange={(next) => (next ? onOpenChange(true) : close())}>
       <ResponsiveDialogContent>
@@ -181,7 +199,7 @@ export function JewelryItemFormDialog({ open, onOpenChange, item }: JewelryItemF
           <ResponsiveDialogDescription>
             {isEdit
               ? 'تغییر وزن، عیار یا اجرت یک نسخه‌ی تازه می‌سازد — نسخه‌ی قبلی و فاکتورهای قدیمی دست‌نخورده می‌مانند.'
-              : 'وزن نگین و سایر کسورات را می‌شود بعداً از فرم کامل کالا اضافه کرد.'}
+              : 'کد کالا پس از ثبت قابل‌تغییر نیست.'}
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
 
@@ -219,11 +237,31 @@ export function JewelryItemFormDialog({ open, onOpenChange, item }: JewelryItemF
             label="وزن ناخالص"
             value={grossWeightMg}
             onChange={setGrossWeightMg}
-            karat={karat}
             disabled={isSubmitting}
           />
 
           <KaratInput label="عیار" value={karat} onChange={setKarat} disabled={isSubmitting} />
+
+          <WeightInput
+            label="وزن نگین"
+            value={stoneWeightMg}
+            onChange={setStoneWeightMg}
+            disabled={isSubmitting}
+          />
+
+          <WeightInput
+            label="سایر کسورات"
+            value={otherDeductionWeightMg}
+            onChange={setOtherDeductionWeightMg}
+            hint="قفل غیرطلا، مینا، رزین و هر چیزی که طلا حساب نمی‌شود"
+            disabled={isSubmitting}
+          />
+
+          {pureMgPreview !== undefined ? (
+            <p className="text-xs text-muted-foreground tabular-nums">وزن خالص: {formatGram(pureMgPreview)}</p>
+          ) : null}
+
+          {deductionError ? <InlineError message={deductionError} /> : null}
 
           <div>
             <label htmlFor="jewelry-wage-type" className="mb-1.5 block text-sm font-medium">
@@ -255,12 +293,6 @@ export function JewelryItemFormDialog({ open, onOpenChange, item }: JewelryItemF
             />
           )}
 
-          {pureMgPreview !== undefined ? (
-            <p className="text-xs text-muted-foreground tabular-nums">
-              وزن خالص (بدون کسر نگین): {formatGram(pureMgPreview)}
-            </p>
-          ) : null}
-
           {!validation.success && (trimmedCode || trimmedTitle || grossWeightMg > 0n) ? (
             <InlineError message={validation.error.issues[0]?.message ?? 'مقادیر فرم معتبر نیست'} />
           ) : null}
@@ -272,7 +304,11 @@ export function JewelryItemFormDialog({ open, onOpenChange, item }: JewelryItemF
           <Button type="button" variant="outline" disabled={isSubmitting} onClick={close}>
             انصراف
           </Button>
-          <Button type="button" disabled={isSubmitting || !validation.success} onClick={() => void onSubmit()}>
+          <Button
+            type="button"
+            disabled={isSubmitting || !validation.success || deductionError !== undefined}
+            onClick={() => void onSubmit()}
+          >
             {isSubmitting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
             {isEdit ? 'ذخیره تغییرات' : 'ثبت کالا'}
           </Button>
