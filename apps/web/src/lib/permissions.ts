@@ -19,3 +19,12 @@ export const PROFIT_REPORT_ROLES: readonly RoleCode[] = ['OWNER', 'MANAGER'];
  * عوض شود نباید دیگری را با خودش عوض کند.
  */
 export const MANUAL_QUOTE_ENTRY_ROLES: readonly RoleCode[] = ['OWNER', 'MANAGER'];
+
+/**
+ * `@Roles('OWNER', 'MANAGER')` روی `POST /inventory/opening-balances`
+ * (`opening-balances.controller.ts`, BE-028). سند موجودی افتتاحیه
+ * غیرقابل‌ویرایش است و مبنای همه‌ی گزارش‌های بعدی — دسترسی محدودتر از
+ * فروش/خرید روزمره، ولی تصادفاً همان دو نقش `PROFIT_REPORT_ROLES` را
+ * دارد؛ باز هم ثابت جدا، به همان استدلال بالا.
+ */
+export const OPENING_BALANCE_ROLES: readonly RoleCode[] = ['OWNER', 'MANAGER'];

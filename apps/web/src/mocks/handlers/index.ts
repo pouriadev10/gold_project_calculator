@@ -760,6 +760,46 @@ export const handlers = [
     return HttpResponse.json(itemType === 'COIN' ? COIN_BALANCE_ROWS : []);
   }),
 
+  /**
+   * `POST /inventory/opening-balances` — قرارداد نهایی BE-028 (FE-039).
+   * بدون endpoint اصلاح یا حذف — سند واقعی هم همین‌طور است (بخش ۲-۷
+   * CLAUDE.md، دفتر کل append-only)، پس این mock هم چیزی برای «ویرایش»
+   * ندارد؛ فقط ثبت و پاسخ.
+   */
+  http.post('/api/inventory/opening-balances', async ({ request }) => {
+    await delay(WRITE_DELAY_MS);
+
+    const key = request.headers.get('Idempotency-Key');
+    if (!key) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 'IDEMPOTENCY_KEY_REQUIRED',
+            message: 'هدر Idempotency-Key اجباری است',
+            fields: {},
+            requestId: crypto.randomUUID(),
+          },
+        },
+        { status: 400 },
+      );
+    }
+
+    const cached = idempotencyCache.get(key);
+    if (cached) return HttpResponse.json(cached, { status: 201 });
+
+    const body = (await request.json()) as { effectiveAt: string; description: string };
+    const now = new Date().toISOString();
+    const created = {
+      id: crypto.randomUUID(),
+      ledgerTransactionId: crypto.randomUUID(),
+      effectiveAt: body.effectiveAt,
+      description: body.description,
+      createdAt: now,
+    };
+    idempotencyCache.set(key, created);
+    return HttpResponse.json(created, { status: 201 });
+  }),
+
   http.get('/api/reports/profit', async ({ request }) => {
     await delay(READ_DELAY_MS);
     const period = new URL(request.url).searchParams.get('period');

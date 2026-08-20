@@ -1,11 +1,26 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type * as ReactRouter from '@tanstack/react-router';
+import type { ReactNode } from 'react';
 import { consumeDeliberateLogoutFlag, useSessionStore } from '@/stores/session-store';
 import { SettingsPage } from './SettingsPage';
 
 const logoutMock = vi.fn();
 vi.mock('@/api/auth', () => ({ logout: (...args: unknown[]) => logoutMock(...args) }));
+
+/** `Link` واقعی به `RouterProvider` نیاز دارد — همان جایگزینی `PartyList.test.tsx`. */
+vi.mock('@tanstack/react-router', async (importOriginal) => {
+  const actual = await importOriginal<typeof ReactRouter>();
+  return {
+    ...actual,
+    Link: ({ to, children, ...rest }: { to: string; children?: ReactNode }) => (
+      <a href={to} {...rest}>
+        {children}
+      </a>
+    ),
+  };
+});
 
 const SESSION = {
   accessToken: 'a',

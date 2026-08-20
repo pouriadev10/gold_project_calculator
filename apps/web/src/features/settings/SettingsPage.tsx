@@ -1,10 +1,13 @@
-import { Coins, LogOut, Palette } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
+import { ClipboardList, Coins, LogOut, Palette } from 'lucide-react';
 import { PageHeader } from '@/components/common/PageHeader';
+import { RequireRole } from '@/components/common/RequireRole';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { UnitToggle } from '@/components/common/UnitToggle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useLogout } from '@/hooks/useLogout';
+import { OPENING_BALANCE_ROLES } from '@/lib/permissions';
 import { useSessionStore } from '@/stores/session-store';
 
 /**
@@ -68,6 +71,30 @@ export function SettingsPage() {
           hint="«سیستم» از تنظیم روشن/تیره‌ی خود دستگاه پیروی می‌کند."
           control={<ThemeToggle />}
         />
+
+        <RequireRole roles={OPENING_BALANCE_ROLES}>
+          <Card>
+            <CardContent className="flex flex-col gap-3 pt-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <span
+                  className="grid size-10 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground"
+                  aria-hidden="true"
+                >
+                  <ClipboardList className="size-5" />
+                </span>
+                <div>
+                  <p className="text-sm font-medium">موجودی افتتاحیه</p>
+                  <p className="text-xs text-muted-foreground">
+                    ثبت اولین موجودی تنظیم می‌شود — یک‌بارمصرف و غیرقابل‌ویرایش.
+                  </p>
+                </div>
+              </div>
+              <Button type="button" variant="outline" asChild>
+                <Link to="/inventory/opening-balance">ثبت</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </RequireRole>
 
         {session ? (
           <Card>

@@ -72,6 +72,9 @@ export {
   coinTypeVersionSchema,
   inventoryItemTypeSchema,
   inventoryBalanceSchema,
+  openingBalanceLineSchema,
+  createOpeningBalanceSchema,
+  openingBalanceSchema,
   type LoginInput,
   type SessionResponse,
   type RefreshInput,
@@ -88,6 +91,9 @@ export {
   type CoinTypeVersion,
   type InventoryItemType,
   type InventoryBalance,
+  type OpeningBalanceLine,
+  type CreateOpeningBalanceInput,
+  type OpeningBalance,
 } from '@gold/contracts';
 
 /** `@gold/contracts` این‌ها را جدا export نمی‌کند؛ اینجا از خودِ `Party` گرفته می‌شوند. */

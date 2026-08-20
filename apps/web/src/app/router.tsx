@@ -18,7 +18,7 @@ import { SettingsPage } from '@/features/settings/SettingsPage';
 import { useSessionGuard } from '@/hooks/useSessionGuard';
 import { useTheme } from '@/hooks/useTheme';
 import { useUnit } from '@/hooks/useUnit';
-import { PROFIT_REPORT_ROLES } from '@/lib/permissions';
+import { OPENING_BALANCE_ROLES, PROFIT_REPORT_ROLES } from '@/lib/permissions';
 
 /**
  * ریشه‌ی بدون پوسته — فقط `<Outlet />`. مسیرهایی که نباید ناوبری برنامه
@@ -156,6 +156,15 @@ const inventoryCoinsRoute = createRoute({
   component: lazyRouteComponent(() => import('@/features/inventory/CoinInventoryPage')),
 });
 
+const inventoryOpeningBalanceRoute = createRoute({
+  getParentRoute: () => appShellRoute,
+  path: '/inventory/opening-balance',
+  // نقش‌محور — FE-039. @Roles('OWNER', 'MANAGER') روی POST /inventory/opening-balances هم هست
+  // (opening-balances.controller.ts، BE-028)؛ اینجا فقط همان تصمیم را زودتر تکرار می‌کند.
+  beforeLoad: requireRole(OPENING_BALANCE_ROLES),
+  component: lazyRouteComponent(() => import('@/features/inventory/OpeningBalanceFormPage')),
+});
+
 const salesNewRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/sales/new',
@@ -264,6 +273,7 @@ const routeTree = rootRoute.addChildren([
     inventoryRoute,
     inventoryJewelryRoute,
     inventoryCoinsRoute,
+    inventoryOpeningBalanceRoute,
     salesNewRoute,
     salesInvoicesRoute,
     salesInvoiceDetailRoute,
