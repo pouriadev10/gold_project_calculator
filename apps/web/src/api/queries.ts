@@ -233,8 +233,12 @@ export function useInventoryBalances(itemType: InventoryItemType) {
  * نتیجه فیلتر/صفحه‌بندی می‌کند — همان راهی که `QuoteHistoryList` (FE-031)
  * برای نبودِ صفحه‌بندی سرور-محور به کار برد؛ اینجا مسئولیت این hook
  * فقط عبور صادقانه‌ی پارامترهای واقعی است.
+ *
+ * `enabled` پیش‌فرض `true` است — دقیقاً همان دلیل `useParties` (FE-035):
+ * `JewelryItemSelector` (FE-042) تا کاربر چیزی تایپ نکرده اصلاً نباید
+ * این fetch برود، به‌جایش فهرست اخیر سمت کلاینت نشان داده می‌شود.
  */
-export function useJewelryItems(query: JewelryItemQuery) {
+export function useJewelryItems(query: JewelryItemQuery, enabled = true) {
   return useQuery({
     queryKey: queryKeys.jewelryItems.list(query),
     queryFn: ({ signal }) => {
@@ -248,6 +252,7 @@ export function useJewelryItems(query: JewelryItemQuery) {
     },
     staleTime: MINUTE,
     placeholderData: keepPreviousData,
+    enabled,
   });
 }
 

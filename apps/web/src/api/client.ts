@@ -44,13 +44,16 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api';
 const DEFAULT_TIMEOUT_MS = 15_000;
 
 /**
- * تولید شناسه‌ی یکتا — هم برای `Idempotency-Key` هم برای `X-Request-Id`.
+ * تولید شناسه‌ی یکتا — هم برای `Idempotency-Key` هم برای `X-Request-Id`،
+ * هم (از `export`ش، FE-042) کلیدهای کاملاً محلی مثل `lineId` سبد فروش
+ * که هرگز روی سیم نمی‌روند — همان تابع، چون فالبک زمینه‌ی ناامن پایینش
+ * برای هردو مصرف یکسان لازم است.
  *
  * `crypto.randomUUID` در همه‌ی مرورگرهای هدف موجود است، ولی فقط در
  * زمینه‌ی امن (https یا localhost). جایگزین برای زمینه‌ی ناامن لازم است
  * وگرنه ثبت فاکتور روی http داخلی مغازه می‌شکند.
  */
-function generateUuid(): string {
+export function generateUuid(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
   }

@@ -12,21 +12,70 @@ import type { PartySelection } from './recent-parties-store';
  * یک فروش واقعی است — نباید روزها بعد در تب دیگری سر و کله‌اش پیدا شود.
  * بستن تب/مرورگر یعنی پاک‌شدن، دقیقاً همان معنای «session».
  *
- * فقط دو مرحله‌ی اول (مظنه، مشتری) اینجا state واقعی دارند. اقلام/پرداخت
- * shape خودشان را در تسک‌های اختصاصی خودشان می‌گیرند (FE-042 تا FE-044)
- * — طراحی زودهنگام شکلشان اینجا حدس‌زدن بدون داده است.
+ * فقط سه مرحله‌ی اول (مظنه، مشتری، اقلام) اینجا state واقعی دارند.
+ * پرداخت shape خودش را در تسک اختصاصی خودش می‌گیرد (FE-044) — طراحی
+ * زودهنگام شکلش اینجا حدس‌زدن بدون داده است.
  */
 
 export const SALE_STEPS = ['QUOTE', 'PARTY', 'ITEMS', 'PAYMENT', 'REVIEW'] as const;
 export type SaleStep = (typeof SALE_STEPS)[number];
 
+/**
+ * یک ردیف انتخاب‌شده در مرحله‌ی اقلام — FE-042.
+ *
+ * `CATALOG` فقط ارجاع نگه می‌دارد (`jewelryItemId` + کد/عنوان برای
+ * نمایش سبد) — مشخصات مالی کامل (وزن، عیار، کسورات، اجرت) را FE-043
+ * («ویرایش ردیف فروش زیورآلات») خودش دوباره از همان کالا می‌خواند و
+ * قابل‌ویرایش می‌کند. نگه‌داشتن یک رونوشت از آن‌ها همین‌جا یعنی دو منبع
+ * حقیقت که می‌توانند از هم جدا بیفتند — دقیقاً همان چیزی که مستندات
+ * `jewelryItemVersionSchema` درباره‌ی وزن خالص هشدار می‌دهد.
+ *
+ * `ADHOC` برخلافش هیچ `jewelryItemId`ای برای رجوع دوباره ندارد — پس
+ * هرچه «ورود سریع وزن» (تمام‌است‌وقتی این تسک) همین‌جا گرفته (وزن،
+ * عیار) باید همین‌جا نگه داشته شود، وگرنه در FE-043 گم می‌شود. کسورات و
+ * اجرت کالای موردی هم دقیقاً مثل کاتالوگ به FE-043 موکول شده‌اند — این
+ * تسک فقط «ورود سریع وزن» می‌خواهد، نه یک فرم مالی کامل.
+ *
+ * تکرار یک `jewelryItemId` در چند ردیف عمدی و مجاز است: هر ردیف یک
+ * قطعه‌ی فیزیکی مجزاست (بخش ۲-۲ CLAUDE.md به‌طور مشابه درباره‌ی سکه) —
+ * فروش دو انگشتر هم‌کد یعنی دو ردیف، نه یک ردیف با «تعداد ۲»، چون
+ * `createJewelryCashSaleSchema`/`createJewelryCreditSaleSchema` واقعی
+ * (`packages/contracts/src/sales`) اصلاً فیلد تعداد ندارند و هرکدام
+ * دقیقاً یک `jewelryItemId` می‌پذیرند.
+ *
+ * ⚠️ همان دو قرارداد واقعی امروز فقط یک `jewelryItemId` **واحد** در هر
+ * فروش می‌پذیرند و هیچ مفهوم «کالای موردی» ندارند. تطبیق این سبد
+ * چندقلمی با آن قرارداد تک‌قلمی صریحاً کار FE-045/FE-047 است — همان‌جا
+ * که mock چندخطیِ منسوخ `invoiceLineInputSchema` (`api/contracts.ts`)
+ * هم از قبل همین را مستند کرده.
+ */
+export type SaleDraftItemLine =
+  | {
+      readonly lineId: string;
+      readonly kind: 'CATALOG';
+      readonly jewelryItemId: string;
+      readonly code: string;
+      readonly title: string;
+    }
+  | {
+      readonly lineId: string;
+      readonly kind: 'ADHOC';
+      readonly jewelryItemId: null;
+      readonly code: string;
+      readonly title: string;
+      readonly grossWeightMg: string;
+      readonly karat: number;
+    };
+
 interface SaleDraftState {
   readonly step: SaleStep;
   readonly party: PartySelection | null;
+  readonly items: readonly SaleDraftItemLine[];
   readonly goToStep: (step: SaleStep) => void;
   readonly next: () => void;
   readonly back: () => void;
   readonly setParty: (party: PartySelection | null) => void;
+  readonly setItems: (items: readonly SaleDraftItemLine[]) => void;
   readonly reset: () => void;
 }
 
@@ -37,6 +86,7 @@ export const useSaleDraftStore = create<SaleDraftState>()(
     (set, get) => ({
       step: 'QUOTE',
       party: null,
+      items: [],
       goToStep: (step) => set({ step }),
       next: () => {
         const index = SALE_STEPS.indexOf(get().step);
@@ -48,7 +98,8 @@ export const useSaleDraftStore = create<SaleDraftState>()(
         if (index > 0) set({ step: SALE_STEPS[index - 1]! });
       },
       setParty: (party) => set({ party }),
-      reset: () => set({ step: 'QUOTE', party: null }),
+      setItems: (items) => set({ items }),
+      reset: () => set({ step: 'QUOTE', party: null, items: [] }),
     }),
     {
       name: SALE_DRAFT_STORAGE_KEY,
@@ -61,6 +112,6 @@ export const useSaleDraftStore = create<SaleDraftState>()(
  * آیا واقعاً چیزی برای از‌دست‌دادن هست؟ ماندن روی مرحله‌ی اول بدون هیچ
  * انتخابی «هنوز شروع نشده» است، نه یک draft — هشدار خروج برایش بی‌معناست.
  */
-export function hasSaleDraftProgress(state: Pick<SaleDraftState, 'step' | 'party'>): boolean {
-  return state.step !== 'QUOTE' || state.party !== null;
+export function hasSaleDraftProgress(state: Pick<SaleDraftState, 'step' | 'party' | 'items'>): boolean {
+  return state.step !== 'QUOTE' || state.party !== null || state.items.length > 0;
 }

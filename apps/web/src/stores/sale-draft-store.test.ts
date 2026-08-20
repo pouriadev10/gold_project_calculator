@@ -4,6 +4,7 @@ import {
   SALE_DRAFT_STORAGE_KEY,
   SALE_STEPS,
   useSaleDraftStore,
+  type SaleDraftItemLine,
 } from './sale-draft-store';
 import type { PartySelection } from './recent-parties-store';
 
@@ -21,6 +22,14 @@ const PARTY: PartySelection = {
   mobile: '09121234567',
   type: 'CONSUMER',
   status: 'ACTIVE',
+};
+
+const ITEM: SaleDraftItemLine = {
+  lineId: 'l1',
+  kind: 'CATALOG',
+  jewelryItemId: 'j1',
+  code: 'R-100',
+  title: 'انگشتر سادگی',
 };
 
 beforeEach(() => {
@@ -60,6 +69,14 @@ describe('useSaleDraftStore — پیمایش مراحل', () => {
 
     expect(useSaleDraftStore.getState().party).toEqual(PARTY);
   });
+
+  it('رفت‌وبرگشت مراحل، اقلام انتخاب‌شده را از بین نمی‌برد', () => {
+    useSaleDraftStore.getState().setItems([ITEM]);
+    useSaleDraftStore.getState().goToStep('PAYMENT');
+    useSaleDraftStore.getState().goToStep('ITEMS');
+
+    expect(useSaleDraftStore.getState().items).toEqual([ITEM]);
+  });
 });
 
 describe('useSaleDraftStore — hasSaleDraftProgress', () => {
@@ -77,13 +94,20 @@ describe('useSaleDraftStore — hasSaleDraftProgress', () => {
     expect(hasSaleDraftProgress(useSaleDraftStore.getState())).toBe(true);
   });
 
+  it('افزودن قلم یعنی draft شروع شده، حتی روی مرحله‌ی اول', () => {
+    useSaleDraftStore.getState().setItems([ITEM]);
+    expect(hasSaleDraftProgress(useSaleDraftStore.getState())).toBe(true);
+  });
+
   it('reset، draft را کاملاً پاک می‌کند', () => {
     useSaleDraftStore.getState().setParty(PARTY);
+    useSaleDraftStore.getState().setItems([ITEM]);
     useSaleDraftStore.getState().goToStep('ITEMS');
     useSaleDraftStore.getState().reset();
 
     expect(useSaleDraftStore.getState().step).toBe('QUOTE');
     expect(useSaleDraftStore.getState().party).toBeNull();
+    expect(useSaleDraftStore.getState().items).toEqual([]);
     expect(hasSaleDraftProgress(useSaleDraftStore.getState())).toBe(false);
   });
 });
@@ -99,5 +123,12 @@ describe('useSaleDraftStore — ماندگاری فقط در sessionStorage', ()
     const persisted = JSON.parse(sessionStorage.getItem(SALE_DRAFT_STORAGE_KEY)!);
     expect(persisted.state.step).toBe('PARTY');
     expect(persisted.state.party).toEqual(PARTY);
+  });
+
+  it('اقلام هم در sessionStorage نوشته می‌شوند', () => {
+    useSaleDraftStore.getState().setItems([ITEM]);
+
+    const persisted = JSON.parse(sessionStorage.getItem(SALE_DRAFT_STORAGE_KEY)!);
+    expect(persisted.state.items).toEqual([ITEM]);
   });
 });

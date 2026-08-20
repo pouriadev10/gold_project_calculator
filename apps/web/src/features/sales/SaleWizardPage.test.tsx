@@ -35,10 +35,14 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
 
 const useLatestPriceQuoteMock = vi.fn();
 const usePartiesMock = vi.fn();
+const useJewelryItemsMock = vi.fn();
+const useInventoryBalancesMock = vi.fn();
 vi.mock('@/api/queries', async (importOriginal) => ({
   ...(await importOriginal<typeof Queries>()),
   useLatestPriceQuote: (...args: unknown[]) => useLatestPriceQuoteMock(...args),
   useParties: (...args: unknown[]) => usePartiesMock(...args),
+  useJewelryItems: (...args: unknown[]) => useJewelryItemsMock(...args),
+  useInventoryBalances: (...args: unknown[]) => useInventoryBalancesMock(...args),
 }));
 
 function priceQuote(): PriceQuote {
@@ -83,10 +87,29 @@ beforeEach(() => {
   useBlockerMock.mockReset();
   useLatestPriceQuoteMock.mockReset();
   usePartiesMock.mockReset();
+  useJewelryItemsMock.mockReset();
+  useInventoryBalancesMock.mockReset();
 
   useLatestPriceQuoteMock.mockReturnValue({ data: priceQuote(), isLoading: false, isSuccess: true });
   usePartiesMock.mockReturnValue({ data: { items: [party()] }, isLoading: false, isError: false, refetch: vi.fn() });
+  useJewelryItemsMock.mockReturnValue({
+    data: { items: [], total: 0, limit: 20, offset: 0 },
+    isLoading: false,
+    isError: false,
+    refetch: vi.fn(),
+  });
+  useInventoryBalancesMock.mockReturnValue({ data: [], isLoading: false, isError: false });
 });
+
+/** به مرحله‌ی «اقلام» می‌رسد: بعدی (مظنه) → انتخاب مشتری → بعدی (مشتری). */
+async function goToItemsStep(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('button', { name: 'بعدی' })); // مشتری
+  await user.click(screen.getByLabelText('مشتری'));
+  await user.type(screen.getByLabelText('جست‌وجوی نام یا موبایل'), 'حسین');
+  await waitFor(() => expect(screen.getByText('حسین مرادی')).toBeInTheDocument());
+  await user.click(screen.getByText('حسین مرادی'));
+  await user.click(screen.getByRole('button', { name: 'بعدی' })); // اقلام
+}
 
 describe('SaleWizardPage — شروع و پیشرفت مراحل', () => {
   it('با مرحله‌ی «مظنه» شروع می‌شود و نشانگر پیشرفت آن را نشان می‌دهد', () => {
@@ -120,7 +143,7 @@ describe('SaleWizardPage — مرحله‌ی مشتری', () => {
     expect(screen.getByRole('button', { name: 'بعدی' })).toBeDisabled();
   });
 
-  it('انتخاب مشتری «بعدی» را فعال می‌کند و به مرحله‌ی اقلام (جانگه‌دار) می‌رود', async () => {
+  it('انتخاب مشتری «بعدی» را فعال می‌کند و به مرحله‌ی اقلام می‌رود', async () => {
     const user = userEvent.setup();
     renderPage();
     await user.click(screen.getByRole('button', { name: 'بعدی' })); // مشتری
@@ -133,7 +156,65 @@ describe('SaleWizardPage — مرحله‌ی مشتری', () => {
 
     await user.click(screen.getByRole('button', { name: 'بعدی' })); // اقلام
     expect(screen.getByText('مرحله ۳ از ۵ — اقلام')).toBeInTheDocument();
-    expect(screen.getByText('این بخش هنوز ساخته نشده است')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'افزودن کالا' })).toBeInTheDocument();
+  });
+});
+
+describe('SaleWizardPage — مرحله‌ی اقلام', () => {
+  it('بدون هیچ قلمی، «بعدی» غیرفعال است', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await goToItemsStep(user);
+
+    expect(screen.getByRole('button', { name: 'بعدی' })).toBeDisabled();
+  });
+
+  it('افزودن یک کالا از نتایج جست‌وجو «بعدی» را فعال می‌کند', async () => {
+    useJewelryItemsMock.mockReturnValue({
+      data: {
+        items: [
+          {
+            id: 'v1',
+            jewelryItemId: 'j1',
+            code: 'R-100',
+            title: 'انگشتر سادگی',
+            grossWeightMg: '5000',
+            karat: 750,
+            stoneWeightMg: '0',
+            otherDeductionWeightMg: '0',
+            wageType: 'PER_GRAM',
+            wageValue: '0',
+            validFrom: '2026-01-01T00:00:00+00:00',
+            validTo: null,
+            version: 1,
+            active: true,
+          },
+        ],
+        total: 1,
+        limit: 20,
+        offset: 0,
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+    const user = userEvent.setup();
+    renderPage();
+    await goToItemsStep(user);
+
+    expect(screen.getByRole('button', { name: 'بعدی' })).toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: 'افزودن کالا' }));
+    await user.type(screen.getByLabelText('جست‌وجوی کد یا عنوان'), 'انگشتر');
+    await user.click(await screen.findByRole('option', { name: /انگشتر سادگی/ }));
+
+    // گفت‌وگو چندانتخابی است و بعد از افزودن باز می‌ماند (FE-042) — بقیه‌ی
+    // صفحه تا وقتی باز است aria-hidden می‌ماند؛ کاربر واقعی هم پیش از
+    // زدن «بعدی» باید گفت‌وگو را ببندد.
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+
+    expect(screen.getByRole('button', { name: 'بعدی' })).not.toBeDisabled();
   });
 });
 
