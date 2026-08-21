@@ -1,9 +1,10 @@
 import { useEffect, useId, useState } from 'react';
 import type { KeyboardEvent } from 'react';
-import { Gem, Plus, Search, X } from 'lucide-react';
-import { formatCount, formatGram, formatKarat, toSafeNumber } from '@gold/core-calc';
+import { Gem, Pencil, Plus, Search, X } from 'lucide-react';
+import { dualFromRial, formatCount, formatGram, formatKarat, toSafeNumber } from '@gold/core-calc';
 import { generateUuid } from '@/api/client';
 import { useInventoryBalances, useJewelryItems } from '@/api/queries';
+import { AmountDisplay } from '@/components/common/AmountDisplay';
 import { CardSkeleton } from '@/components/common/CardSkeleton';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorState } from '@/components/common/ErrorState';
@@ -20,10 +21,13 @@ import { Input } from '@/components/ui/input';
 import { WeightInput } from '@/components/keypad/WeightInput';
 import { KaratInput } from '@/components/keypad/KaratInput';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useMazneh, type MaznehSnapshot } from '@/features/home/useMazneh';
 import { normalizeTextForStorage } from '@/lib/persian-text';
 import { cn } from '@/lib/utils';
 import { useRecentJewelryItemsStore, type RecentJewelryItem } from '@/stores/recent-jewelry-items-store';
-import type { SaleDraftItemLine } from '@/stores/sale-draft-store';
+import type { SaleDraftItemLine, SaleLinePricingInput } from '@/stores/sale-draft-store';
+import { calculateLinePricing } from './sale-line-pricing';
+import { SaleLinePricingDialog } from './SaleLinePricingDialog';
 
 /**
  * انتخاب‌گر کالای فروش زیورآلات — FE-042.
@@ -80,6 +84,9 @@ export function JewelryItemSelector({ items, onChange, disabled = false }: Jewel
   const [adhocCode, setAdhocCode] = useState('');
   const [adhocWeight, setAdhocWeight] = useState(0n);
   const [adhocKarat, setAdhocKarat] = useState(0n);
+  const [editingLineId, setEditingLineId] = useState<string | null>(null);
+
+  const mazneh = useMazneh();
 
   const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS).trim();
   const isSearching = debouncedSearch.length > 0;
@@ -137,7 +144,14 @@ export function JewelryItemSelector({ items, onChange, disabled = false }: Jewel
     });
     onChange([
       ...items,
-      { lineId: generateUuid(), kind: 'CATALOG', jewelryItemId: row.jewelryItemId, code: row.code, title: row.title },
+      {
+        lineId: generateUuid(),
+        kind: 'CATALOG',
+        jewelryItemId: row.jewelryItemId,
+        code: row.code,
+        title: row.title,
+        pricing: null,
+      },
     ]);
     // گفت‌وگو باز می‌ماند — چندانتخابی، همان الگوی JewelryLineSelector
   }
@@ -156,6 +170,7 @@ export function JewelryItemSelector({ items, onChange, disabled = false }: Jewel
         title: normalizeTextForStorage(adhocTitle.trim()),
         grossWeightMg: adhocWeight.toString(),
         karat: toSafeNumber(adhocKarat),
+        pricing: null,
       },
     ]);
     setAdhocTitle('');
@@ -167,6 +182,13 @@ export function JewelryItemSelector({ items, onChange, disabled = false }: Jewel
   function removeLine(lineId: string) {
     onChange(items.filter((line) => line.lineId !== lineId));
   }
+
+  function saveLinePricing(lineId: string, pricing: SaleLinePricingInput) {
+    onChange(items.map((line) => (line.lineId === lineId ? { ...line, pricing } : line)));
+    setEditingLineId(null);
+  }
+
+  const editingLine = items.find((line) => line.lineId === editingLineId) ?? null;
 
   function onSearchKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (results.length === 0) return;
@@ -212,17 +234,30 @@ export function JewelryItemSelector({ items, onChange, disabled = false }: Jewel
                   </p>
                 ) : null}
                 {line.kind === 'ADHOC' ? <Badge variant="outline">موردی</Badge> : null}
+                <LinePricingSummary pricing={line.pricing} mazneh={mazneh.data} />
               </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                disabled={disabled}
-                aria-label={`حذف ${line.title}`}
-                onClick={() => removeLine(line.lineId)}
-              >
-                <X className="size-4" aria-hidden="true" />
-              </Button>
+              <div className="flex shrink-0 items-center gap-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  disabled={disabled}
+                  aria-label={`ویرایش قیمت ${line.title}`}
+                  onClick={() => setEditingLineId(line.lineId)}
+                >
+                  <Pencil className="size-4" aria-hidden="true" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  disabled={disabled}
+                  aria-label={`حذف ${line.title}`}
+                  onClick={() => removeLine(line.lineId)}
+                >
+                  <X className="size-4" aria-hidden="true" />
+                </Button>
+              </div>
             </li>
           ))}
         </ul>
@@ -361,6 +396,38 @@ export function JewelryItemSelector({ items, onChange, disabled = false }: Jewel
           </div>
         </ResponsiveDialogContent>
       </ResponsiveDialog>
+
+      <SaleLinePricingDialog
+        open={editingLine !== null}
+        onOpenChange={(next) => {
+          if (!next) setEditingLineId(null);
+        }}
+        line={editingLine}
+        onSave={(pricing) => {
+          if (editingLine) saveLinePricing(editingLine.lineId, pricing);
+        }}
+      />
     </div>
   );
+}
+
+/** خلاصه‌ی یک‌خطی قیمت ردیف — FE-043. تا وقتی ویرایش نشده، فقط راهنماست؛ بعدش مبلغ کل زنده محاسبه می‌شود. */
+function LinePricingSummary({
+  pricing,
+  mazneh,
+}: {
+  pricing: SaleDraftItemLine['pricing'];
+  mazneh: MaznehSnapshot | null | undefined;
+}) {
+  if (pricing === null) {
+    return <p className="text-xs text-warning">قیمت‌گذاری نشده</p>;
+  }
+  if (!mazneh) return null;
+
+  const result = calculateLinePricing(pricing, mazneh.mazneh);
+  if (!result.ok) {
+    return <p className="text-xs text-destructive">{result.error}</p>;
+  }
+  // `dualFromRial` نرخ گرم عیار ۱۰۰۰ (طلای خالص) می‌خواهد، نه نرخ عیار خودِ کالا — این دو معمولاً برابر نیستند
+  return <AmountDisplay amount={dualFromRial(result.calc.payableRial, mazneh.gram1000)} size="sm" />;
 }

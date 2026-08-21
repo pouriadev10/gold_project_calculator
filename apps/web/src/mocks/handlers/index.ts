@@ -617,6 +617,34 @@ export const handlers = [
     });
   }),
 
+  /**
+   * `GET /inventory/jewelry-items/:id` — قرارداد نهایی BE-026
+   * (`jewelryItemDetailQuerySchema`/`jewelryItemVersionSchema`). این mock
+   * پارامتر اختیاری `at` (نسخه‌ی مؤثر در گذشته) را نادیده می‌گیرد و همیشه
+   * نسخه‌ی باز جاری را برمی‌گرداند — تنها مصرف‌کننده‌ی امروز
+   * (`SaleLinePricingDialog`، FE-043) هم فقط همین را می‌خواهد. الگوی
+   * تطبیق `id` عیناً همان `PATCH` زیر است.
+   */
+  http.get('/api/inventory/jewelry-items/:id', async ({ params }) => {
+    await delay(READ_DELAY_MS);
+    const id = params['id'] as string;
+    const found = jewelryItemList.find((i) => i.jewelryItemId === id || i.id === id);
+    if (!found) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 'NOT_FOUND',
+            message: 'کالا پیدا نشد',
+            fields: {},
+            requestId: crypto.randomUUID(),
+          },
+        },
+        { status: 404 },
+      );
+    }
+    return HttpResponse.json(found);
+  }),
+
   /** `POST /inventory/jewelry-items` — قرارداد نهایی BE-026 (`createJewelryItemSchema`). */
   http.post('/api/inventory/jewelry-items', async ({ request }) => {
     await delay(WRITE_DELAY_MS);

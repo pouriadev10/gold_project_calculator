@@ -8,6 +8,7 @@ import type * as Queries from '@/api/queries';
 import { useKeypadStore } from '@/components/keypad/keypad-store';
 import { NumericKeypad } from '@/components/keypad/NumericKeypad';
 import { useRecentJewelryItemsStore } from '@/stores/recent-jewelry-items-store';
+import { useUnitStore } from '@/stores/unit-store';
 import type { SaleDraftItemLine } from '@/stores/sale-draft-store';
 import { JewelryItemSelector } from './JewelryItemSelector';
 
@@ -26,10 +27,18 @@ import { JewelryItemSelector } from './JewelryItemSelector';
 
 const useJewelryItemsMock = vi.fn();
 const useInventoryBalancesMock = vi.fn();
+const useJewelryItemMock = vi.fn();
 vi.mock('@/api/queries', async (importOriginal) => ({
   ...(await importOriginal<typeof Queries>()),
   useJewelryItems: (...args: unknown[]) => useJewelryItemsMock(...args),
   useInventoryBalances: (...args: unknown[]) => useInventoryBalancesMock(...args),
+  useJewelryItem: (...args: unknown[]) => useJewelryItemMock(...args),
+}));
+
+// `SaleLinePricingDialog` (رندرشده همیشه، هرچند بسته) خودش `useMazneh` را صدا می‌زند
+const useMaznehMock = vi.fn();
+vi.mock('@/features/home/useMazneh', () => ({
+  useMazneh: () => useMaznehMock(),
 }));
 
 function mockViewport(desktop: boolean) {
@@ -78,7 +87,15 @@ function idleJewelryItems(items: JewelryItemVersion[] = []) {
 }
 
 function catalogLine(overrides: Partial<Extract<SaleDraftItemLine, { kind: 'CATALOG' }>> = {}): SaleDraftItemLine {
-  return { lineId: 'l1', kind: 'CATALOG', jewelryItemId: 'j1', code: 'R-100', title: 'انگشتر سادگی', ...overrides };
+  return {
+    lineId: 'l1',
+    kind: 'CATALOG',
+    jewelryItemId: 'j1',
+    code: 'R-100',
+    title: 'انگشتر سادگی',
+    pricing: null,
+    ...overrides,
+  };
 }
 
 function adhocLine(overrides: Partial<Extract<SaleDraftItemLine, { kind: 'ADHOC' }>> = {}): SaleDraftItemLine {
@@ -90,6 +107,7 @@ function adhocLine(overrides: Partial<Extract<SaleDraftItemLine, { kind: 'ADHOC'
     title: 'طلای دست‌دوم',
     grossWeightMg: '3500',
     karat: 740,
+    pricing: null,
     ...overrides,
   };
 }
@@ -118,14 +136,31 @@ async function tapDigits(user: ReturnType<typeof setupUser>, label: string, digi
   }
 }
 
+/** بدون مظنه، تنها چیزی که پیش‌نمایش قیمت را می‌بندد — پیش‌فرض تست‌ها یک مظنه‌ی معتبر است. */
+function maznehSnapshot() {
+  return {
+    mazneh: 100_000_000n,
+    gram750: 23_085_080n,
+    gram1000: 30_780_106n,
+    source: 'MANUAL' as const,
+    observedAt: new Date(),
+    isStale: false,
+  };
+}
+
 beforeEach(() => {
   mockViewport(true);
   useJewelryItemsMock.mockReset();
   useJewelryItemsMock.mockReturnValue(idleJewelryItems());
   useInventoryBalancesMock.mockReset();
   useInventoryBalancesMock.mockReturnValue({ data: [], isLoading: false, isError: false });
+  useJewelryItemMock.mockReset();
+  useJewelryItemMock.mockReturnValue({ data: undefined, isLoading: false, isError: false });
+  useMaznehMock.mockReset();
+  useMaznehMock.mockReturnValue({ data: maznehSnapshot(), isLoading: false, isError: false, isEmpty: false });
   useRecentJewelryItemsStore.setState({ recent: [] });
   useKeypadStore.setState({ isOpen: false, fields: [], activeId: null, buffers: {} });
+  useUnitStore.setState({ unit: 'gold' });
   localStorage.clear();
 });
 
@@ -323,5 +358,110 @@ describe('JewelryItemSelector — کالای موردی (تمام است وقت�
       expect.objectContaining({ kind: 'ADHOC', jewelryItemId: null, title: 'طلای دست‌دوم', karat: 740 }),
     ]);
     expect(screen.getByLabelText('عنوان کالای موردی')).toHaveValue('');
+  });
+});
+
+describe('JewelryItemSelector — ویرایش قیمت ردیف (FE-043)', () => {
+  it('ردیف بدون قیمت‌گذاری راهنمای «قیمت‌گذاری نشده» نشان می‌دهد', () => {
+    renderSelector({ items: [catalogLine()] });
+    expect(screen.getByText('قیمت‌گذاری نشده')).toBeInTheDocument();
+  });
+
+  it('کلیک روی ویرایش، ویرایشگر را با عنوان همان ردیف باز می‌کند', async () => {
+    const user = setupUser();
+    renderSelector({ items: [catalogLine({ title: 'انگشتر سادگی' })] });
+
+    await user.click(screen.getByRole('button', { name: 'ویرایش قیمت انگشتر سادگی' }));
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText('ویرایش قیمت — انگشتر سادگی')).toBeInTheDocument();
+  });
+
+  it('ردیف موردی بدون pricing با وزن/عیار «ورود سریع» خودش پر می‌شود', async () => {
+    const user = setupUser();
+    renderSelector({ items: [adhocLine({ grossWeightMg: '3500', karat: 740 })] });
+
+    await user.click(screen.getByRole('button', { name: 'ویرایش قیمت طلای دست‌دوم' }));
+    await screen.findByRole('dialog');
+
+    expect(document.querySelector('input[data-kind="weight"]')).toHaveAttribute('data-value', '3500');
+    expect(document.querySelector('input[data-kind="karat"]')).toHaveAttribute('data-value', '740');
+  });
+
+  it('ردیف کاتالوگ بدون pricing با نسخه‌ی واکشی‌شده از useJewelryItem پر می‌شود', async () => {
+    useJewelryItemMock.mockReturnValue({
+      data: {
+        id: 'v1',
+        jewelryItemId: 'j1',
+        code: 'R-100',
+        title: 'انگشتر سادگی',
+        grossWeightMg: '12000',
+        karat: 750,
+        stoneWeightMg: '2000',
+        otherDeductionWeightMg: '0',
+        wageType: 'PER_GRAM',
+        wageValue: '350000',
+        validFrom: '2026-01-01T00:00:00+00:00',
+        validTo: null,
+        version: 1,
+        active: true,
+      },
+      isLoading: false,
+      isError: false,
+    });
+    const user = setupUser();
+    renderSelector({ items: [catalogLine({ jewelryItemId: 'j1' })] });
+
+    await user.click(screen.getByRole('button', { name: 'ویرایش قیمت انگشتر سادگی' }));
+    await screen.findByRole('dialog');
+
+    expect(useJewelryItemMock).toHaveBeenCalledWith('j1');
+    expect(document.querySelector('input[data-kind="weight"]')).toHaveAttribute('data-value', '12000');
+    await waitFor(() => expect(screen.getByRole('button', { name: 'ذخیره' })).not.toBeDisabled());
+  });
+
+  it('ذخیره، pricing ردیف را در سبد به‌روز می‌کند و گفت‌وگو را می‌بندد', async () => {
+    const user = setupUser();
+    const onChange = renderSelector({ items: [adhocLine({ lineId: 'l2', grossWeightMg: '3500', karat: 740 })] });
+
+    await user.click(screen.getByRole('button', { name: 'ویرایش قیمت طلای دست‌دوم' }));
+    await screen.findByRole('dialog');
+    await waitFor(() => expect(screen.getByRole('button', { name: 'ذخیره' })).not.toBeDisabled());
+
+    await user.click(screen.getByRole('button', { name: 'ذخیره' }));
+
+    expect(onChange).toHaveBeenCalledWith([
+      expect.objectContaining({
+        lineId: 'l2',
+        pricing: expect.objectContaining({ grossWeightMg: '3500', karat: 740, wageType: 'PER_GRAM' }),
+      }),
+    ]);
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
+  it('ردیف قیمت‌گذاری‌شده مبلغ کل محاسبه‌شده را نشان می‌دهد', () => {
+    // پیش‌فرض واحد سراسری «طلا»ست (بخش ۲-۴ CLAUDE.md) — برای سنجش مقدار
+    // ریالی دقیق (همان Golden case در sale-line-pricing.test.ts)، پیش از
+    // رندر صریح به ریال سوییچ می‌شود؛ AmountDisplay از همین استور می‌خواند.
+    useUnitStore.setState({ unit: 'rial' });
+    renderSelector({
+      items: [
+        adhocLine({
+          pricing: {
+            grossWeightMg: '12000',
+            karat: 750,
+            stoneWeightMg: '2000',
+            otherDeductionWeightMg: '0',
+            wageType: 'PER_GRAM',
+            wageValue: '350000',
+            profitRateBps: '700',
+            taxRateBps: '1000',
+          },
+        }),
+      ],
+    });
+
+    expect(screen.queryByText('قیمت‌گذاری نشده')).not.toBeInTheDocument();
+    expect(document.querySelector('[data-raw="252746000"]')).toBeInTheDocument();
   });
 });

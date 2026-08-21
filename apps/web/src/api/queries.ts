@@ -6,6 +6,7 @@ import {
   inventoryBalanceListSchema,
   itemListSchema,
   jewelryItemListSchema,
+  jewelryItemVersionSchema,
   partyBalanceSummarySchema,
   partyBalancesSchema,
   partyListSchema,
@@ -253,6 +254,22 @@ export function useJewelryItems(query: JewelryItemQuery, enabled = true) {
     staleTime: MINUTE,
     placeholderData: keepPreviousData,
     enabled,
+  });
+}
+
+/**
+ * جزئیات یک کالای زیورآلات — `GET /inventory/jewelry-items/:id` (BE-026،
+ * FE-043). همیشه نسخه‌ی **باز** (جاری) را می‌خواهد — پارامتر اختیاری `at`
+ * قرارداد واقعی (`jewelryItemDetailQuerySchema`) اینجا لازم نیست، چون
+ * `SaleLinePricingDialog` فقط برای پیش‌پرکردن ویرایشگر با آخرین مشخصات
+ * کاتالوگ صدایش می‌زند، نه بازسازی یک لحظه‌ی گذشته.
+ */
+export function useJewelryItem(id: string | null) {
+  return useQuery({
+    queryKey: queryKeys.jewelryItems.detail(id ?? ''),
+    queryFn: ({ signal }) => apiGet(`/inventory/jewelry-items/${id}`, jewelryItemVersionSchema, signal),
+    staleTime: MINUTE,
+    enabled: id !== null,
   });
 }
 

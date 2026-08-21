@@ -30,6 +30,7 @@ const ITEM: SaleDraftItemLine = {
   jewelryItemId: 'j1',
   code: 'R-100',
   title: 'انگشتر سادگی',
+  pricing: null,
 };
 
 beforeEach(() => {

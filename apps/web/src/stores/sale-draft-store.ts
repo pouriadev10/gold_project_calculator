@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import type { JewelryWageType } from '@/api/contracts';
 import type { PartySelection } from './recent-parties-store';
 
 /**
@@ -48,7 +49,27 @@ export type SaleStep = (typeof SALE_STEPS)[number];
  * چندقلمی با آن قرارداد تک‌قلمی صریحاً کار FE-045/FE-047 است — همان‌جا
  * که mock چندخطیِ منسوخ `invoiceLineInputSchema` (`api/contracts.ts`)
  * هم از قبل همین را مستند کرده.
+ *
+ * `pricing` — FE-043 («ویرایش ردیف فروش زیورآلات») — تا وقتی کاربر
+ * ویرایشگر ردیف را باز نکرده `null` است. مشخصات مالی کامل و
+ * قابل‌ویرایش را نگه می‌دارد (وزن، عیار، کسورات، اجرت، نرخ سود، نرخ
+ * مالیات) — نه نتیجه‌ی محاسبه‌شده: مبلغ‌های نهایی («نتیجه نهایی
+ * server-authoritative» طبق قاعده‌ی خودِ FE-043) هرگز اینجا ذخیره
+ * نمی‌شوند، همیشه از روی `pricing` + مظنه‌ی زنده با
+ * `calculateLinePricing` (`features/sales/sale-line-pricing.ts`)
+ * دوباره محاسبه می‌شوند، هرجا لازم باشد.
  */
+export interface SaleLinePricingInput {
+  readonly grossWeightMg: string;
+  readonly karat: number;
+  readonly stoneWeightMg: string;
+  readonly otherDeductionWeightMg: string;
+  readonly wageType: JewelryWageType;
+  readonly wageValue: string;
+  readonly profitRateBps: string;
+  readonly taxRateBps: string;
+}
+
 export type SaleDraftItemLine =
   | {
       readonly lineId: string;
@@ -56,6 +77,7 @@ export type SaleDraftItemLine =
       readonly jewelryItemId: string;
       readonly code: string;
       readonly title: string;
+      readonly pricing: SaleLinePricingInput | null;
     }
   | {
       readonly lineId: string;
@@ -65,6 +87,7 @@ export type SaleDraftItemLine =
       readonly title: string;
       readonly grossWeightMg: string;
       readonly karat: number;
+      readonly pricing: SaleLinePricingInput | null;
     };
 
 interface SaleDraftState {
