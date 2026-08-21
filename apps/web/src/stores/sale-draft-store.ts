@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import type { JewelryWageType } from '@/api/contracts';
+import type { JewelryWageType, PriceQuoteSource } from '@/api/contracts';
 import type { PartySelection } from './recent-parties-store';
 
 /**
@@ -13,9 +13,9 @@ import type { PartySelection } from './recent-parties-store';
  * یک فروش واقعی است — نباید روزها بعد در تب دیگری سر و کله‌اش پیدا شود.
  * بستن تب/مرورگر یعنی پاک‌شدن، دقیقاً همان معنای «session».
  *
- * فقط سه مرحله‌ی اول (مظنه، مشتری، اقلام) اینجا state واقعی دارند.
- * پرداخت shape خودش را در تسک اختصاصی خودش می‌گیرد (FE-044) — طراحی
- * زودهنگام شکلش اینجا حدس‌زدن بدون داده است.
+ * فقط مظنه (قفل‌شونده)، مشتری و اقلام اینجا state واقعی دارند. پرداخت
+ * shape خودش را در تسک اختصاصی خودش می‌گیرد (FE-050) — طراحی زودهنگام
+ * شکلش اینجا حدس‌زدن بدون داده است.
  */
 
 export const SALE_STEPS = ['QUOTE', 'PARTY', 'ITEMS', 'PAYMENT', 'REVIEW'] as const;
@@ -70,6 +70,27 @@ export interface SaleLinePricingInput {
   readonly taxRateBps: string;
 }
 
+/**
+ * مظنه‌ی قفل‌شده برای مرحله‌ی مرور — FE-044.
+ *
+ * فقط رکورد خام (`mazneh` = مظنه‌ی مثقالی ریالی، همانی که `calculateLinePricing`
+ * به‌عنوان `maznehRial` می‌خواهد)، نه هیچ عدد مشتق‌شده‌ای — نرخ گرم و
+ * مبلغ‌های نهایی همیشه دوباره با `calculateLinePricing`/`gramRate1000`
+ * از روی همین یک عدد محاسبه می‌شوند (دقیقاً همان قاعده‌ی «نتیجه نهایی
+ * server-authoritative، هیچ عدد مشتق‌شده‌ای ذخیره نشود» که `SaleLinePricingInput`
+ * هم از آن پیروی می‌کند).
+ *
+ * اولین باری که کاربر به مرحله‌ی «مرور» می‌رسد، مظنه‌ی زنده‌ی همان لحظه
+ * اینجا قفل می‌شود (`lockMazneh`) و تا `reset` تغییر نمی‌کند — حتی اگر
+ * کاربر برگردد و دوباره به مرور بیاید. این دقیقاً همان چیزی است که تسک
+ * می‌خواهد: «تغییر مظنه بازار preview ثبت‌شده را بی‌صدا عوض نکند».
+ */
+export interface LockedMazneh {
+  readonly mazneh: string;
+  readonly source: PriceQuoteSource;
+  readonly observedAt: string;
+}
+
 export type SaleDraftItemLine =
   | {
       readonly lineId: string;
@@ -94,11 +115,14 @@ interface SaleDraftState {
   readonly step: SaleStep;
   readonly party: PartySelection | null;
   readonly items: readonly SaleDraftItemLine[];
+  readonly lockedMazneh: LockedMazneh | null;
   readonly goToStep: (step: SaleStep) => void;
   readonly next: () => void;
   readonly back: () => void;
   readonly setParty: (party: PartySelection | null) => void;
   readonly setItems: (items: readonly SaleDraftItemLine[]) => void;
+  /** فقط یک‌بار برای هر پیش‌نویس اثر می‌کند — فراخوانی دوباره بعد از اولین قفل، بی‌صدا نادیده گرفته می‌شود. */
+  readonly lockMazneh: (snapshot: LockedMazneh) => void;
   readonly reset: () => void;
 }
 
@@ -110,6 +134,7 @@ export const useSaleDraftStore = create<SaleDraftState>()(
       step: 'QUOTE',
       party: null,
       items: [],
+      lockedMazneh: null,
       goToStep: (step) => set({ step }),
       next: () => {
         const index = SALE_STEPS.indexOf(get().step);
@@ -122,7 +147,11 @@ export const useSaleDraftStore = create<SaleDraftState>()(
       },
       setParty: (party) => set({ party }),
       setItems: (items) => set({ items }),
-      reset: () => set({ step: 'QUOTE', party: null, items: [] }),
+      lockMazneh: (snapshot) => {
+        if (get().lockedMazneh !== null) return;
+        set({ lockedMazneh: snapshot });
+      },
+      reset: () => set({ step: 'QUOTE', party: null, items: [], lockedMazneh: null }),
     }),
     {
       name: SALE_DRAFT_STORAGE_KEY,

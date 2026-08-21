@@ -3,6 +3,7 @@ import { Construction } from 'lucide-react';
 import { PartySelector } from '@/components/common/PartySelector';
 import { PageHeader } from '@/components/common/PageHeader';
 import { EmptyState } from '@/components/common/EmptyState';
+import { UnitToggle } from '@/components/common/UnitToggle';
 import { Button } from '@/components/ui/button';
 import { NumericKeypad } from '@/components/keypad/NumericKeypad';
 import { useMazneh } from '@/features/home/useMazneh';
@@ -11,6 +12,7 @@ import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { hasSaleDraftProgress, SALE_STEPS, useSaleDraftStore, type SaleStep } from '@/stores/sale-draft-store';
 import { JewelryItemSelector } from './JewelryItemSelector';
 import { SaleStepper } from './SaleStepper';
+import { SaleSummary } from './SaleSummary';
 
 /**
  * صفحه‌ی شروع فروش — shell جریان فروش سریع (FE-041).
@@ -23,8 +25,10 @@ import { SaleStepper } from './SaleStepper';
  * - **اقلام**: `JewelryItemSelector` (FE-042) — بدون حداقل یک قلم،
  *   «بعدی» غیرفعال است؛ فروش بدون کالا معنا ندارد.
  *
- * پرداخت/مرور هنوز جانگه‌دارند — کار FE-044/FE-045. «بعدی» رویشان
- * همیشه فعال است چون چیزی برای اعتبارسنجی هنوز وجود ندارد.
+ * مرور با `SaleSummary` (FE-044) کار واقعی دارد — خلاصه‌ی فاکتور، شامل
+ * مظنه‌ی قفل‌شده. پرداخت هنوز جانگه‌دار است — کار FE-050. «بعدی» روی
+ * هر دو همیشه فعال بود؛ حالا فقط پرداخت این‌طور مانده چون چیزی برای
+ * اعتبارسنجی‌اش هنوز وجود ندارد.
  *
  * دقیقاً یک `<NumericKeypad />` اینجا mount می‌شود — قاعده‌ی مستندشده در
  * `JewelryItemFormDialog.tsx` (FE-036): هر صفحه‌ای که فیلد کیپدی
@@ -39,9 +43,8 @@ import { SaleStepper } from './SaleStepper';
  * هشدار رد شود، draft از دست نمی‌رود.
  */
 
-const STEP_PLACEHOLDER: Record<Extract<SaleStep, 'PAYMENT' | 'REVIEW'>, string> = {
+const STEP_PLACEHOLDER: Record<Extract<SaleStep, 'PAYMENT'>, string> = {
   PAYMENT: 'ثبت روش پرداخت در تسک بعد اضافه می‌شود.',
-  REVIEW: 'مرور نهایی و ثبت فاکتور در تسک بعد اضافه می‌شود.',
 };
 
 export default function SaleWizardPage() {
@@ -71,16 +74,17 @@ export default function SaleWizardPage() {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <PageHeader title="فروش جدید" />
+      <PageHeader title="فروش جدید">{step === 'REVIEW' ? <UnitToggle /> : null}</PageHeader>
       <SaleStepper current={step} />
 
       <div className="flex-1 space-y-4 p-4 pb-32">
         {step === 'QUOTE' ? <MaznehBar isOnline={isOnline} /> : null}
         {step === 'PARTY' ? <PartySelector label="مشتری" value={party} onChange={setParty} /> : null}
         {step === 'ITEMS' ? <JewelryItemSelector items={items} onChange={setItems} /> : null}
-        {step === 'PAYMENT' || step === 'REVIEW' ? (
-          <EmptyState icon={Construction} title="این بخش هنوز ساخته نشده است" description={STEP_PLACEHOLDER[step]} />
+        {step === 'PAYMENT' ? (
+          <EmptyState icon={Construction} title="این بخش هنوز ساخته نشده است" description={STEP_PLACEHOLDER.PAYMENT} />
         ) : null}
+        {step === 'REVIEW' ? <SaleSummary /> : null}
       </div>
 
       {/* اقدام اصلی پایین صفحه — منطقه‌ی شست، همیشه بدون اسکرول دیده می‌شود */}

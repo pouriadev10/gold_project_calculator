@@ -80,6 +80,35 @@ describe('useSaleDraftStore — پیمایش مراحل', () => {
   });
 });
 
+describe('useSaleDraftStore — قفل مظنه‌ی مرور (lockMazneh)', () => {
+  const SNAPSHOT_1 = { mazneh: '324885150', source: 'MANUAL' as const, observedAt: '2026-08-01T08:00:00.000Z' };
+  const SNAPSHOT_2 = { mazneh: '400000000', source: 'FEED' as const, observedAt: '2026-08-02T08:00:00.000Z' };
+
+  it('پیش از فراخوانی، مقدار null است', () => {
+    expect(useSaleDraftStore.getState().lockedMazneh).toBeNull();
+  });
+
+  it('اولین فراخوانی مقدار را قفل می‌کند', () => {
+    useSaleDraftStore.getState().lockMazneh(SNAPSHOT_1);
+    expect(useSaleDraftStore.getState().lockedMazneh).toEqual(SNAPSHOT_1);
+  });
+
+  it('فراخوانی دوباره بعد از قفل‌شدن، مقدار اول را بی‌صدا نگه می‌دارد', () => {
+    useSaleDraftStore.getState().lockMazneh(SNAPSHOT_1);
+    useSaleDraftStore.getState().lockMazneh(SNAPSHOT_2);
+    expect(useSaleDraftStore.getState().lockedMazneh).toEqual(SNAPSHOT_1);
+  });
+
+  it('reset قفل را پاک می‌کند تا فروش بعدی بتواند دوباره قفل کند', () => {
+    useSaleDraftStore.getState().lockMazneh(SNAPSHOT_1);
+    useSaleDraftStore.getState().reset();
+    expect(useSaleDraftStore.getState().lockedMazneh).toBeNull();
+
+    useSaleDraftStore.getState().lockMazneh(SNAPSHOT_2);
+    expect(useSaleDraftStore.getState().lockedMazneh).toEqual(SNAPSHOT_2);
+  });
+});
+
 describe('useSaleDraftStore — hasSaleDraftProgress', () => {
   it('مرحله‌ی اول بدون مشتری یعنی هنوز شروع نشده', () => {
     expect(hasSaleDraftProgress(useSaleDraftStore.getState())).toBe(false);
