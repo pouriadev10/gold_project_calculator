@@ -1655,8 +1655,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/client.ts": {
-    "mtime": 1786966123.7875812,
-    "ast_hash": "a568fbc964383809421f6578f601a239",
+    "mtime": 1787268401.9427888,
+    "ast_hash": "ff00d9d3fee0c6b860ad076c5ca4e674",
     "semantic_hash": ""
   },
   "apps/web/src/api/contracts-package.test.ts": {
@@ -1670,8 +1670,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/queries.ts": {
-    "mtime": 1787254677.442485,
-    "ast_hash": "9e3aff4b58b18dfdf9950765460a7b76",
+    "mtime": 1787268415.135391,
+    "ast_hash": "5577fc90b8159b907f6f0ea10b985434",
     "semantic_hash": ""
   },
   "apps/web/src/api/query-client.test.ts": {
@@ -1695,8 +1695,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/app/router.tsx": {
-    "mtime": 1787255065.7172723,
-    "ast_hash": "fb81c548fcb129bf303ea82e4908baf2",
+    "mtime": 1787256087.161443,
+    "ast_hash": "9c09549602ea240b70b8c113bf4b8c56",
     "semantic_hash": ""
   },
   "apps/web/src/components/common/AmountDisplay.test.tsx": {
@@ -1825,8 +1825,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/home/HomePage.tsx": {
-    "mtime": 1786965220.0539837,
-    "ast_hash": "a6c48a75d160dde0762f39ef932926c0",
+    "mtime": 1787256029.9851959,
+    "ast_hash": "6039977d831d4ab91f2433e43c7849b7",
     "semantic_hash": ""
   },
   "apps/web/src/features/home/MaznehBar.tsx": {
@@ -2900,8 +2900,8 @@
     "semantic_hash": "57f3eade61064fcaf09a18164aacb4bc"
   },
   "FrontTasks.md": {
-    "mtime": 1787255368.1054251,
-    "ast_hash": "d0327a0204ef6699c579a6db5ee92e74",
+    "mtime": 1787269925.910313,
+    "ast_hash": "81a7b847663e021c79d40be09ff9a218",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
@@ -3130,8 +3130,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/app/route-placeholders.tsx": {
-    "mtime": 1787255069.7288315,
-    "ast_hash": "75af525646f7a1809916c51783e8fb32",
+    "mtime": 1787266293.4554849,
+    "ast_hash": "50fecd97f40dfa830f022b2a84b6a626",
     "semantic_hash": ""
   },
   "apps/web/src/components/common/CardSkeleton.tsx": {
@@ -4077,6 +4077,56 @@
   "apps/web/src/features/inventory/RecentMovementsCard.tsx": {
     "mtime": 1787254972.346148,
     "ast_hash": "095b33ff426acb867f6f93d27f295a7b",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/sales/SaleStepper.tsx": {
+    "mtime": 1787256004.5770173,
+    "ast_hash": "1dc6945d63a16f40823fccd17df72c8f",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/sales/SaleWizardPage.test.tsx": {
+    "mtime": 1787268978.2261739,
+    "ast_hash": "5ceba43b149973571ec237617dab3080",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/sales/SaleWizardPage.tsx": {
+    "mtime": 1787268664.4417148,
+    "ast_hash": "22ce28a5b4bc771387868fd753e3f101",
+    "semantic_hash": ""
+  },
+  "apps/web/src/hooks/useOnlineStatus.ts": {
+    "mtime": 1787256017.7141707,
+    "ast_hash": "f15198f4455ec1cba4cd5972754d6030",
+    "semantic_hash": ""
+  },
+  "apps/web/src/stores/sale-draft-store.test.ts": {
+    "mtime": 1787268512.1412992,
+    "ast_hash": "2398cac026772b8eddb8e555908cfcb7",
+    "semantic_hash": ""
+  },
+  "apps/web/src/stores/sale-draft-store.ts": {
+    "mtime": 1787268483.085718,
+    "ast_hash": "c4ab0846e78622a8eb6b352cf72a34ad",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/sales/JewelryItemSelector.test.tsx": {
+    "mtime": 1787268901.0030277,
+    "ast_hash": "c4b8766079759d3f34e34ff8c80b69bf",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/sales/JewelryItemSelector.tsx": {
+    "mtime": 1787268625.079068,
+    "ast_hash": "3a71211700623a37ca0690f65a1277d2",
+    "semantic_hash": ""
+  },
+  "apps/web/src/stores/recent-jewelry-items-store.test.ts": {
+    "mtime": 1787268441.8320222,
+    "ast_hash": "8018aa99cde0b7dc4bd2cd4c27f824e0",
+    "semantic_hash": ""
+  },
+  "apps/web/src/stores/recent-jewelry-items-store.ts": {
+    "mtime": 1787268429.846956,
+    "ast_hash": "54b7895de071589344bee28141ab7947",
     "semantic_hash": ""
   }
 }
