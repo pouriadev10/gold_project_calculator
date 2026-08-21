@@ -1670,8 +1670,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/queries.ts": {
-    "mtime": 1787268415.135391,
-    "ast_hash": "5577fc90b8159b907f6f0ea10b985434",
+    "mtime": 1787287904.6266062,
+    "ast_hash": "72070cb459e4602432ec874e5e2766bd",
     "semantic_hash": ""
   },
   "apps/web/src/api/query-client.test.ts": {
@@ -1690,8 +1690,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/query-keys.ts": {
-    "mtime": 1787254625.3783205,
-    "ast_hash": "3c55ba98b9bee25c305a47b2fede717a",
+    "mtime": 1787287877.9805343,
+    "ast_hash": "b2e60310f62496934d2e9ab0f598628c",
     "semantic_hash": ""
   },
   "apps/web/src/app/router.tsx": {
@@ -1905,8 +1905,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/mocks/handlers/index.ts": {
-    "mtime": 1787254908.8982496,
-    "ast_hash": "7e45eaeafd3ea20e767a0be0f394730d",
+    "mtime": 1787287929.3223126,
+    "ast_hash": "14e2c6d5e91b3c311c38b514c479d78c",
     "semantic_hash": ""
   },
   "apps/web/src/stores/theme-store.ts": {
@@ -2900,8 +2900,8 @@
     "semantic_hash": "57f3eade61064fcaf09a18164aacb4bc"
   },
   "FrontTasks.md": {
-    "mtime": 1787269925.910313,
-    "ast_hash": "81a7b847663e021c79d40be09ff9a218",
+    "mtime": 1787290369.0073574,
+    "ast_hash": "ae072b2277e4daf3c17b8bac3602ed33",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
@@ -3600,7 +3600,7 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/keypad/WeightInput.tsx": {
-    "mtime": 1786965220.0469818,
+    "mtime": 1787289577.8692737,
     "ast_hash": "f5cd13ff9c36cce5836bb9d57d3a055d",
     "semantic_hash": ""
   },
@@ -4100,23 +4100,23 @@
     "semantic_hash": ""
   },
   "apps/web/src/stores/sale-draft-store.test.ts": {
-    "mtime": 1787268512.1412992,
-    "ast_hash": "2398cac026772b8eddb8e555908cfcb7",
+    "mtime": 1787288278.0415194,
+    "ast_hash": "7728f756291612a416c9d3dcae596b3c",
     "semantic_hash": ""
   },
   "apps/web/src/stores/sale-draft-store.ts": {
-    "mtime": 1787268483.085718,
-    "ast_hash": "c4ab0846e78622a8eb6b352cf72a34ad",
+    "mtime": 1787288043.9525995,
+    "ast_hash": "434fc06ce24bfac90ebb940e49cd266b",
     "semantic_hash": ""
   },
   "apps/web/src/features/sales/JewelryItemSelector.test.tsx": {
-    "mtime": 1787268901.0030277,
-    "ast_hash": "c4b8766079759d3f34e34ff8c80b69bf",
+    "mtime": 1787289844.4321198,
+    "ast_hash": "d2e5a9246309ddc084a613a0b8cc3fff",
     "semantic_hash": ""
   },
   "apps/web/src/features/sales/JewelryItemSelector.tsx": {
-    "mtime": 1787268625.079068,
-    "ast_hash": "3a71211700623a37ca0690f65a1277d2",
+    "mtime": 1787288234.3325546,
+    "ast_hash": "e024727f26adcd7af9ad2aec98bb06ea",
     "semantic_hash": ""
   },
   "apps/web/src/stores/recent-jewelry-items-store.test.ts": {
@@ -4127,6 +4127,26 @@
   "apps/web/src/stores/recent-jewelry-items-store.ts": {
     "mtime": 1787268429.846956,
     "ast_hash": "54b7895de071589344bee28141ab7947",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/sales/SaleLinePricingDialog.test.tsx": {
+    "mtime": 1787289778.3934116,
+    "ast_hash": "e9ffdd5867a2568aee7b751f66fd4ce0",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/sales/SaleLinePricingDialog.tsx": {
+    "mtime": 1787289634.314388,
+    "ast_hash": "325c46190feff34df1244056d0de4096",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/sales/sale-line-pricing.test.ts": {
+    "mtime": 1787287989.0360446,
+    "ast_hash": "5e1a671a6cdd58614622ed5952b8b3c6",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/sales/sale-line-pricing.ts": {
+    "mtime": 1787287957.9741018,
+    "ast_hash": "7da9865e7366cc9d01d97c6084b3f2b4",
     "semantic_hash": ""
   }
 }
