@@ -1665,13 +1665,13 @@
     "semantic_hash": "f0918d28c8b297bd1e16403c91156161"
   },
   "apps/web/src/api/contracts.ts": {
-    "mtime": 1787424610.6361055,
-    "ast_hash": "ad23017c1db002e47151502e879dc700",
+    "mtime": 1787427162.2081137,
+    "ast_hash": "030c548637929410dd537624787d9884",
     "semantic_hash": ""
   },
   "apps/web/src/api/queries.ts": {
-    "mtime": 1787287904.6266062,
-    "ast_hash": "72070cb459e4602432ec874e5e2766bd",
+    "mtime": 1787426478.9838643,
+    "ast_hash": "6a3bea608376fbac6efd56d848189e40",
     "semantic_hash": ""
   },
   "apps/web/src/api/query-client.test.ts": {
@@ -1690,8 +1690,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/query-keys.ts": {
-    "mtime": 1787287877.9805343,
-    "ast_hash": "b2e60310f62496934d2e9ab0f598628c",
+    "mtime": 1787426478.9832518,
+    "ast_hash": "f66f245094d0637eaba9854eafb2899a",
     "semantic_hash": ""
   },
   "apps/web/src/app/router.tsx": {
@@ -1905,8 +1905,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/mocks/handlers/index.ts": {
-    "mtime": 1787425155.4344847,
-    "ast_hash": "df454e58d0c72c109690dde891249fff",
+    "mtime": 1787427915.2823637,
+    "ast_hash": "680da2d26765ceb3e19f8e48ad50e30c",
     "semantic_hash": ""
   },
   "apps/web/src/stores/theme-store.ts": {
@@ -2900,8 +2900,8 @@
     "semantic_hash": "57f3eade61064fcaf09a18164aacb4bc"
   },
   "FrontTasks.md": {
-    "mtime": 1787426020.1967447,
-    "ast_hash": "7b609744d624ee00469f244a1d4a3542",
+    "mtime": 1787428177.5086832,
+    "ast_hash": "213be7addd7464bf396f660952850859",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
@@ -4085,13 +4085,13 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/sales/SaleWizardPage.test.tsx": {
-    "mtime": 1787425413.7475076,
-    "ast_hash": "ccfba2b591e19d529d7da3f30650bee1",
+    "mtime": 1787427975.0382888,
+    "ast_hash": "a45f377312be5e4dd4e1a08e32e4b600",
     "semantic_hash": ""
   },
   "apps/web/src/features/sales/SaleWizardPage.tsx": {
-    "mtime": 1787424999.7379034,
-    "ast_hash": "1235baba3ae1a544595c486f4c1742cc",
+    "mtime": 1787427424.5870092,
+    "ast_hash": "fc4817143c7ebedcbf412713bb66b4ab",
     "semantic_hash": ""
   },
   "apps/web/src/hooks/useOnlineStatus.ts": {
@@ -4105,8 +4105,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/stores/sale-draft-store.ts": {
-    "mtime": 1787424570.0308368,
-    "ast_hash": "c8f4f0c17e6f5bc8e7f4f6359744e6ae",
+    "mtime": 1787427162.2103553,
+    "ast_hash": "0802c990ace1f3980b3e46eb9459e901",
     "semantic_hash": ""
   },
   "apps/web/src/features/sales/JewelryItemSelector.test.tsx": {
@@ -4160,28 +4160,38 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/sales.ts": {
-    "mtime": 1787424640.9469352,
-    "ast_hash": "5682860cf0cdace8de8a67720219621a",
-    "semantic_hash": ""
-  },
-  "apps/web/src/features/sales/SaleSubmitResult.tsx": {
-    "mtime": 1787424875.5545661,
-    "ast_hash": "9f9ee701237d70699aee530a9d59ca3d",
+    "mtime": 1787427162.208682,
+    "ast_hash": "550a4428e5120cd77949f4bbb153e5eb",
     "semantic_hash": ""
   },
   "apps/web/src/features/sales/sale-submit.test.ts": {
-    "mtime": 1787425220.2425978,
-    "ast_hash": "149c864d18c627b1b24eff81b2913629",
+    "mtime": 1787427496.6498997,
+    "ast_hash": "4e4ec23d1287e5ae25de9d2cde1a2850",
     "semantic_hash": ""
   },
   "apps/web/src/features/sales/sale-submit.ts": {
-    "mtime": 1787424695.697993,
-    "ast_hash": "14038ff53b30f6464a33cdeec77fe9ff",
+    "mtime": 1787427228.165791,
+    "ast_hash": "e8dd0343f42163457bdd55d7695c955f",
     "semantic_hash": ""
   },
-  "apps/web/src/features/sales/useJewelryCashSaleSubmit.ts": {
-    "mtime": 1787424845.5710144,
-    "ast_hash": "72877231fe65095d776d2d33c90cd004",
+  "apps/web/src/features/sales/SalePaymentInput.tsx": {
+    "mtime": 1787428066.8519654,
+    "ast_hash": "15c17537a942c57918431740d7818272",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/sales/SaleReceipt.test.tsx": {
+    "mtime": 1787427496.6498997,
+    "ast_hash": "da4f9f5da76f9b72cd73dc1d3ded92b6",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/sales/SaleReceipt.tsx": {
+    "mtime": 1787427409.1211758,
+    "ast_hash": "13b60353c414fbc5718c180e3898b611",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/sales/useJewelrySaleSubmit.ts": {
+    "mtime": 1787427287.1216588,
+    "ast_hash": "a681a0b4c2404ebb58aabc9cde80a135",
     "semantic_hash": ""
   }
 }
