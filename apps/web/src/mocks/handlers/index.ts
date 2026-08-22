@@ -5,6 +5,8 @@ import type { JewelryItemVersion, Party } from '@/api/contracts';
 import {
   MAZNEH_RIAL,
   FETCHED_AT,
+  MOCK_PROFIT_RATE_BPS,
+  MOCK_TAX_RATE_BPS,
   priceJewelryFromVersion,
   balanceSummary,
   COIN_BALANCE_ROWS,
@@ -70,6 +72,16 @@ let jewelryItemList: JewelryItemVersion[] = [...jewelryItemVersionRecords];
 let jewelryItemVersionCounter = jewelryItemVersionRecords.length;
 
 let invoiceCounter = 122;
+
+/**
+ * فاکتورهای ثبت‌شده در همین نشست — کلید `invoiceId`.
+ *
+ * `GET /sales/invoices/:id/versions` (FE-046) باید **همان** چیزی را
+ * برگرداند که `POST` ثبت کرده، نه یک fixture ثابت؛ وگرنه رسید چیزی نشان
+ * می‌دهد که هیچ‌وقت ثبت نشده و کل قاعده‌ی «رسید = پاسخ سرور» در توسعه
+ * ساختگی می‌شود.
+ */
+const salesInvoiceVersions = new Map<string, unknown>();
 
 /** حافظه‌ی کلیدهای idempotency — تکرار همان کلید همان پاسخ را می‌دهد */
 const idempotencyCache = new Map<string, unknown>();
@@ -931,11 +943,79 @@ export const handlers = [
       inventoryMovementId: crypto.randomUUID(),
     };
 
+    salesInvoiceVersions.set(result.invoiceId, {
+      invoiceId: result.invoiceId,
+      invoiceNumber: result.invoiceNumber,
+      versions: [
+        {
+          version: 1,
+          reason: null,
+          reasonDetail: null,
+          partyId: body.partyId,
+          actor: { id: 'c1000000-0000-4000-8000-000000000002', displayName: 'مدیر فروشگاه' },
+          createdAt: body.effectiveAt,
+          payableRial: calc.payableRial.toString(),
+          pureWeightMg: calc.pureWeightMg.toString(),
+          karat: version.karat,
+          items: [
+            {
+              itemType: 'JEWELRY',
+              itemId: body.jewelryItemId,
+              quantity: '1',
+              pureWeightMg: calc.pureWeightMg.toString(),
+              karat: version.karat,
+            },
+          ],
+          totalsSnapshot: {
+            payableRial: calc.payableRial.toString(),
+            goldValueRial: calc.goldValueRial.toString(),
+            wageRial: calc.wageRial.toString(),
+            profitRial: calc.profitRial.toString(),
+            taxRial: calc.taxRial.toString(),
+            pureWeightMg: calc.pureWeightMg.toString(),
+          },
+          settingsSnapshot: {
+            profitRateBps: MOCK_PROFIT_RATE_BPS.toString(),
+            taxRateBps: MOCK_TAX_RATE_BPS.toString(),
+          },
+          ledgerEffects: [],
+          inventoryEffects: [],
+        },
+      ],
+    });
+
     // فروش یک قطعه‌ی فیزیکی است — همان کالا دیگر در انبار نیست
     jewelryItemList = jewelryItemList.filter((item) => item.jewelryItemId !== body.jewelryItemId);
 
     idempotencyCache.set(key, result);
     return HttpResponse.json(result, { status: 201 });
+  }),
+
+  /**
+   * `GET /sales/invoices/:invoiceId/versions` — قرارداد نهایی BE-043
+   * (`salesInvoiceVersionHistorySchema`)، FE-046.
+   *
+   * فقط فاکتورهایی را می‌شناسد که در همین نشست ثبت شده‌اند — دقیقاً همان
+   * چیزی که رسید لازم دارد. فهرست فاکتورهای قدیمی کار FE-064/FE-065 است.
+   */
+  http.get('/api/sales/invoices/:invoiceId/versions', async ({ params }) => {
+    await delay(READ_DELAY_MS);
+
+    const found = salesInvoiceVersions.get(String(params.invoiceId));
+    if (!found) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 'NOT_FOUND',
+            message: 'فاکتور مورد نظر پیدا نشد',
+            fields: {},
+            requestId: crypto.randomUUID(),
+          },
+        },
+        { status: 404 },
+      );
+    }
+    return HttpResponse.json(found);
   }),
 ];
 

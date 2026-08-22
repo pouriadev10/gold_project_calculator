@@ -16,6 +16,7 @@ import {
   priceQuoteSchema,
   profitReportSchema,
   recentInventoryMovementListSchema,
+  salesInvoiceVersionHistorySchema,
   transactionListSchema,
   type InventoryItemType,
   type JewelryItemQuery,
@@ -286,6 +287,29 @@ export function useDashboard(displayUnit: ReportingDisplayUnit = 'GOLD') {
     queryFn: ({ signal }) =>
       apiGet(`/reporting/dashboard?displayUnit=${displayUnit}`, dashboardSchema, signal),
     staleTime: MINUTE,
+  });
+}
+
+/**
+ * نسخه‌های یک فاکتور فروش — `GET /sales/invoices/:id/versions` (BE-043، FE-046).
+ *
+ * **تنها منبع رسید.** پاسخ ثبت (`POST /sales/invoices/jewelry`) فقط
+ * شماره و مبلغ می‌دهد؛ اقلام، زمان و شماره‌ی نسخه از همین‌جا می‌آیند —
+ * یعنی رسید چیزی را نشان می‌دهد که واقعاً روی سرور ثبت شده، نه بازسازی
+ * محلیِ چیزی که کاربر لحظه‌ای پیش روی صفحه دیده.
+ *
+ * `staleTime: Infinity` — فاکتور ثبت‌شده append-only است (قاعده‌ی ۲-۷)؛
+ * نسخه‌ی موجود هرگز عوض نمی‌شود، فقط ممکن است نسخه‌ی تازه‌ای **اضافه**
+ * شود، و آن هم از مسیر اصلاح فاکتور می‌آید که خودش این کلید را باطل
+ * می‌کند (FE-067). تازه‌سازی دوره‌ای اینجا فقط ترافیک بی‌فایده است.
+ */
+export function useInvoiceVersions(invoiceId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.salesInvoices.versions(invoiceId ?? ''),
+    queryFn: ({ signal }) =>
+      apiGet(`/sales/invoices/${invoiceId}/versions`, salesInvoiceVersionHistorySchema, signal),
+    staleTime: Infinity,
+    enabled: invoiceId !== null,
   });
 }
 

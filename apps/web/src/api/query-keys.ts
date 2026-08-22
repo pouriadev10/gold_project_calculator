@@ -85,6 +85,12 @@ export const queryKeys = {
     recent: (limit: number) => [...queryKeys.inventoryMovements.all(), 'recent', limit] as const,
   },
 
+  /** فاکتور فروش — `GET /sales/invoices/:id/versions` واقعی (BE-043، FE-046). */
+  salesInvoices: {
+    all: () => ['sales-invoices'] as const,
+    versions: (invoiceId: string) => [...queryKeys.salesInvoices.all(), 'versions', invoiceId] as const,
+  },
+
   transactions: {
     all: () => ['transactions'] as const,
     recent: (limit: number) => [...queryKeys.transactions.all(), 'recent', limit] as const,

@@ -13,7 +13,7 @@ import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { hasSaleDraftProgress, SALE_STEPS, useSaleDraftStore, type SaleStep } from '@/stores/sale-draft-store';
 import { JewelryItemSelector } from './JewelryItemSelector';
 import { SaleStepper } from './SaleStepper';
-import { SaleSubmitResult } from './SaleSubmitResult';
+import { SaleReceipt } from './SaleReceipt';
 import { SaleSummary } from './SaleSummary';
 import { useJewelryCashSaleSubmit } from './useJewelryCashSaleSubmit';
 
@@ -38,10 +38,10 @@ import { useJewelryCashSaleSubmit } from './useJewelryCashSaleSubmit';
  * اگر کاربر بتواند وسط درخواست به مرحله‌ی اقلام برگردد و قلمی عوض کند،
  * payloadی که در راه است دیگر با چیزی که روی صفحه می‌بیند نمی‌خواند.
  *
- * **پس از موفقیت**، به‌جای مراحل، نتیجه‌ی سرور (`SaleSubmitResult`) نشان
- * داده می‌شود و تنها اقدام صفحه «فروش جدید» است. پیش‌نویس همان لحظه پاک
- * شده، ولی نتیجه در state هوک زنده مانده — رسید با پاک‌شدن پیش‌نویس گم
- * نمی‌شود.
+ * **پس از موفقیت**، به‌جای مراحل، رسید (`SaleReceipt`، FE-046) نشان داده
+ * می‌شود و تنها اقدام صفحه «فروش جدید» است. پیش‌نویس همان لحظه پاک شده،
+ * ولی `outcome` در state هوک زنده مانده — شناسه‌ی فاکتور که رسید با آن
+ * سند ثبت‌شده را از سرور می‌خواند با پاک‌شدن پیش‌نویس گم نمی‌شود.
  *
  * دقیقاً یک `<NumericKeypad />` اینجا mount می‌شود — قاعده‌ی مستندشده در
  * `JewelryItemFormDialog.tsx` (FE-036): هر صفحه‌ای که فیلد کیپدی
@@ -100,7 +100,7 @@ export default function SaleWizardPage() {
         </PageHeader>
 
         <div className="flex-1 space-y-4 p-4 pb-32">
-          <SaleSubmitResult outcome={outcome} />
+          <SaleReceipt outcome={outcome} />
         </div>
 
         <div className="fixed inset-x-0 bottom-above-nav z-20 border-t border-border bg-background/95 px-4 py-3 backdrop-blur-sm lg:static lg:border-0 lg:bg-transparent">

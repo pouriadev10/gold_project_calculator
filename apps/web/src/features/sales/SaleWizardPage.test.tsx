@@ -54,12 +54,14 @@ const useLatestPriceQuoteMock = vi.fn();
 const usePartiesMock = vi.fn();
 const useJewelryItemsMock = vi.fn();
 const useInventoryBalancesMock = vi.fn();
+const useInvoiceVersionsMock = vi.fn();
 vi.mock('@/api/queries', async (importOriginal) => ({
   ...(await importOriginal<typeof Queries>()),
   useLatestPriceQuote: (...args: unknown[]) => useLatestPriceQuoteMock(...args),
   useParties: (...args: unknown[]) => usePartiesMock(...args),
   useJewelryItems: (...args: unknown[]) => useJewelryItemsMock(...args),
   useInventoryBalances: (...args: unknown[]) => useInventoryBalancesMock(...args),
+  useInvoiceVersions: (...args: unknown[]) => useInvoiceVersionsMock(...args),
 }));
 
 function priceQuote(): PriceQuote {
@@ -136,6 +138,38 @@ function seedReadyDraft(items: SaleDraftItemLine[] = [catalogLine()]) {
   store.goToStep('REVIEW');
 }
 
+/** پاسخ `GET /sales/invoices/:id/versions` — تنها منبع اعداد رسید (FE-046). */
+const SERVER_VERSIONS = {
+  invoiceId: 'd1000000-0000-4000-8000-000000000001',
+  invoiceNumber: 123,
+  versions: [
+    {
+      version: 1,
+      reason: null,
+      reasonDetail: null,
+      partyId: 'a1000000-0000-4000-8000-000000000001',
+      actor: null,
+      createdAt: '2026-08-22T10:30:00+00:00',
+      payableRial: '1478445000',
+      pureWeightMg: '7500',
+      karat: 750,
+      items: [
+        {
+          itemType: 'JEWELRY' as const,
+          itemId: JEWELRY_ITEM_ID,
+          quantity: '1',
+          pureWeightMg: '7500',
+          karat: 750,
+        },
+      ],
+      totalsSnapshot: {},
+      settingsSnapshot: {},
+      ledgerEffects: [],
+      inventoryEffects: [],
+    },
+  ],
+};
+
 const SERVER_SALE = {
   invoiceId: 'd1000000-0000-4000-8000-000000000001',
   invoiceNumber: 123,
@@ -158,6 +192,7 @@ beforeEach(() => {
   sessionStorage.clear();
   useBlockerMock.mockReset();
   createJewelryCashSaleMock.mockReset();
+  useInvoiceVersionsMock.mockReset();
   useLatestPriceQuoteMock.mockReset();
   usePartiesMock.mockReset();
   useJewelryItemsMock.mockReset();
@@ -172,6 +207,12 @@ beforeEach(() => {
     refetch: vi.fn(),
   });
   useInventoryBalancesMock.mockReturnValue({ data: [], isLoading: false, isError: false });
+  useInvoiceVersionsMock.mockReturnValue({
+    data: SERVER_VERSIONS,
+    isLoading: false,
+    isError: false,
+    error: null,
+  });
 });
 
 /** به مرحله‌ی «اقلام» می‌رسد: بعدی (مظنه) → انتخاب مشتری → بعدی (مشتری). */
@@ -336,7 +377,7 @@ describe('SaleWizardPage — ثبت فروش (FE-045)', () => {
 
     await user.click(screen.getByRole('button', { name: 'ثبت فروش' }));
 
-    await waitFor(() => expect(screen.getByText('فروش با موفقیت ثبت شد')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('رسید فروش')).toBeInTheDocument());
     expect(createJewelryCashSaleMock).toHaveBeenCalledTimes(1);
     expect(createJewelryCashSaleMock.mock.calls[0]?.[0]).toEqual({
       partyId: 'a1000000-0000-4000-8000-000000000001',
@@ -346,7 +387,7 @@ describe('SaleWizardPage — ثبت فروش (FE-045)', () => {
     });
     // کلید Idempotency اجباری است — بدون آن سرور فاکتور دوم می‌سازد
     expect(createJewelryCashSaleMock.mock.calls[0]?.[1]).toEqual(expect.any(String));
-    expect(screen.getByText(/فاکتور شماره ۱۲۳/)).toBeInTheDocument();
+    expect(screen.getByText('شماره فاکتور').parentElement).toHaveTextContent('۱۲۳');
   });
 
   it('پس از موفقیت، پیش‌نویس پاک می‌شود ولی رسید سر جایش می‌ماند', async () => {
@@ -356,7 +397,7 @@ describe('SaleWizardPage — ثبت فروش (FE-045)', () => {
     renderPage();
 
     await user.click(screen.getByRole('button', { name: 'ثبت فروش' }));
-    await waitFor(() => expect(screen.getByText('فروش با موفقیت ثبت شد')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('رسید فروش')).toBeInTheDocument());
 
     expect(useSaleDraftStore.getState().items).toHaveLength(0);
     expect(useSaleDraftStore.getState().party).toBeNull();
@@ -378,13 +419,13 @@ describe('SaleWizardPage — ثبت فروش (FE-045)', () => {
 
     await user.click(screen.getByRole('button', { name: 'ثبت فروش' }));
 
-    expect(screen.queryByText('فروش با موفقیت ثبت شد')).not.toBeInTheDocument();
+    expect(screen.queryByText('رسید فروش')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /در حال ثبت/ })).toBeDisabled();
     // تغییر فرم حین ارسال مسدود است
     expect(screen.getByRole('button', { name: 'قبلی' })).toBeDisabled();
 
     release(SERVER_SALE);
-    await waitFor(() => expect(screen.getByText('فروش با موفقیت ثبت شد')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('رسید فروش')).toBeInTheDocument());
   });
 
   it('ضربه‌ی دوم حین ارسال، فاکتور دوم نمی‌سازد', async () => {
@@ -408,7 +449,7 @@ describe('SaleWizardPage — ثبت فروش (FE-045)', () => {
     expect(createJewelryCashSaleMock).toHaveBeenCalledTimes(1);
 
     release(SERVER_SALE);
-    await waitFor(() => expect(screen.getByText('فروش با موفقیت ثبت شد')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('رسید فروش')).toBeInTheDocument());
   });
 
   it('خطای سرور پیش‌نویس را دست‌نخورده نگه می‌دارد و اجازه‌ی تلاش دوباره می‌دهد', async () => {
@@ -422,7 +463,7 @@ describe('SaleWizardPage — ثبت فروش (FE-045)', () => {
     await user.click(screen.getByRole('button', { name: 'ثبت فروش' }));
 
     await waitFor(() => expect(screen.getByText('خطا در انجام عملیات')).toBeInTheDocument());
-    expect(screen.queryByText('فروش با موفقیت ثبت شد')).not.toBeInTheDocument();
+    expect(screen.queryByText('رسید فروش')).not.toBeInTheDocument();
     expect(useSaleDraftStore.getState().items).toHaveLength(1);
     expect(useSaleDraftStore.getState().party).not.toBeNull();
     expect(screen.getByRole('button', { name: 'ثبت فروش' })).not.toBeDisabled();
@@ -439,7 +480,7 @@ describe('SaleWizardPage — ثبت فروش (FE-045)', () => {
     await user.click(screen.getByRole('button', { name: 'ثبت فروش' }));
     await waitFor(() => expect(screen.getByText('خطا در انجام عملیات')).toBeInTheDocument());
     await user.click(screen.getByRole('button', { name: 'ثبت فروش' }));
-    await waitFor(() => expect(screen.getByText('فروش با موفقیت ثبت شد')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('رسید فروش')).toBeInTheDocument());
 
     expect(createJewelryCashSaleMock).toHaveBeenCalledTimes(2);
     expect(createJewelryCashSaleMock.mock.calls[0]?.[1]).toBe(createJewelryCashSaleMock.mock.calls[1]?.[1]);
@@ -453,8 +494,8 @@ describe('SaleWizardPage — ثبت فروش (FE-045)', () => {
 
     await user.click(screen.getByRole('button', { name: 'ثبت فروش' }));
 
-    await waitFor(() => expect(screen.getByText('فروش با موفقیت ثبت شد')).toBeInTheDocument());
-    expect(screen.getByText(/مبلغ نهایی سرور با پیش‌نمایش این صفحه یکی نیست/)).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('رسید فروش')).toBeInTheDocument());
+    expect(screen.getByText(/مبلغ ثبت‌شده با پیش‌نمایش مرحله‌ی مرور یکی نیست/)).toBeInTheDocument();
   });
 
   it('سبد چندقلمی ثبت نمی‌شود — به‌جای انداختن بی‌صدای قلم‌ها، دلیل را می‌گوید', () => {
@@ -473,11 +514,11 @@ describe('SaleWizardPage — ثبت فروش (FE-045)', () => {
     renderPage();
 
     await user.click(screen.getByRole('button', { name: 'ثبت فروش' }));
-    await waitFor(() => expect(screen.getByText('فروش با موفقیت ثبت شد')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('رسید فروش')).toBeInTheDocument());
     await user.click(screen.getByRole('button', { name: 'فروش جدید' }));
 
     expect(screen.getByText('مرحله ۱ از ۵ — مظنه')).toBeInTheDocument();
-    expect(screen.queryByText('فروش با موفقیت ثبت شد')).not.toBeInTheDocument();
+    expect(screen.queryByText('رسید فروش')).not.toBeInTheDocument();
   });
 });
 
