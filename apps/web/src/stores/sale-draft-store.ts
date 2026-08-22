@@ -47,8 +47,9 @@ export type SaleStep = (typeof SALE_STEPS)[number];
  * ⚠️ همان دو قرارداد واقعی امروز فقط یک `jewelryItemId` **واحد** در هر
  * فروش می‌پذیرند و هیچ مفهوم «کالای موردی» ندارند. تطبیق این سبد
  * چندقلمی با آن قرارداد تک‌قلمی صریحاً کار FE-045/FE-047 است — همان‌جا
- * که mock چندخطیِ منسوخ `invoiceLineInputSchema` (`api/contracts.ts`)
- * هم از قبل همین را مستند کرده.
+ * که FE-045 برای فروش نقدی همین کار را کرد: هر ثبت دقیقاً یک ردیف
+ * کاتالوگی می‌فرستد و سبد چندقلمی/موردی صریحاً مسدود می‌شود
+ * (`features/sales/sale-submit.ts`)، نه اینکه بی‌صدا قلم‌ها را بیندازد.
  *
  * `pricing` — FE-043 («ویرایش ردیف فروش زیورآلات») — تا وقتی کاربر
  * ویرایشگر ردیف را باز نکرده `null` است. مشخصات مالی کامل و
@@ -86,6 +87,13 @@ export interface SaleLinePricingInput {
  * می‌خواهد: «تغییر مظنه بازار preview ثبت‌شده را بی‌صدا عوض نکند».
  */
 export interface LockedMazneh {
+  /**
+   * شناسه‌ی رکورد مظنه روی سرور — همان چیزی که `createJewelryCashSaleSchema`
+   * به‌عنوان `quoteId` می‌خواهد (FE-045). `mazneh` زیرش فقط برای **نمایش**
+   * همین صفحه و محاسبه‌ی پیش‌نمایش است؛ مبلغ نهایی سند را سرور از روی
+   * همین شناسه می‌سازد، نه از عددی که کلاینت فرستاده.
+   */
+  readonly quoteId: string;
   readonly mazneh: string;
   readonly source: PriceQuoteSource;
   readonly observedAt: string;

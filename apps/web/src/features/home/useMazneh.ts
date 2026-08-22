@@ -25,6 +25,13 @@ const DISPLAY_KARAT = karat(750);
 const STALE_THRESHOLD_MS = 60 * 60 * 1000;
 
 export interface MaznehSnapshot {
+  /**
+   * شناسه‌ی همان رکورد مظنه روی سرور. فروش (FE-045) این را در payload
+   * می‌فرستد تا سرور **دقیقاً** با همان نرخی قیمت بزند که کاربر دیده —
+   * فرستادن مبلغ مظنه به‌جای شناسه یعنی اجازه‌دادن به کلاینت برای تعیین
+   * نرخ سند، که قاعده‌ی ۲-۸ CLAUDE.md را از سمت دیگر می‌شکند.
+   */
+  readonly quoteId: string;
   readonly mazneh: bigint;
   readonly gram750: bigint;
   readonly gram1000: bigint;
@@ -38,6 +45,7 @@ function toSnapshot(quote: PriceQuote | null | undefined): MaznehSnapshot | null
 
   const observedAt = new Date(quote.observedAt);
   return {
+    quoteId: quote.id,
     mazneh: quote.amountRial,
     gram750: gramRate(quote.amountRial, DISPLAY_KARAT),
     gram1000: gramRate1000(quote.amountRial),

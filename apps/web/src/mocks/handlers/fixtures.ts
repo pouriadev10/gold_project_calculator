@@ -1,12 +1,16 @@
 import {
+  calculateJewelrySale,
+  DEFAULT_ROUNDING_UNIT,
   dualFromPure,
   dualFromRial,
   gramRate,
   gramRate1000,
+  grossMg,
   karat,
-  mulDivHalfUp,
+  RATE_DIVISOR,
   toSafeNumber,
 } from '@gold/core-calc';
+import type { JewelrySaleCalculation } from '@gold/core-calc';
 import type { Party } from '@/api/contracts';
 
 /**
@@ -257,10 +261,48 @@ export const recentTransactions = [
   occurredAt: t.at,
 }));
 
-/** قیمت یک قلم مصنوع — برای پاسخ POST /api/invoices */
-export function articlePriceRial(grossMg: bigint, k: number, wageRial: bigint): bigint {
-  const rate = gramRate(MAZNEH_RIAL, karat(k));
-  return mulDivHalfUp(grossMg, rate, 1000n) + wageRial;
+/**
+ * قیمت‌گذاری سمت «سرور» برای `POST /sales/invoices/jewelry` (FE-045).
+ *
+ * عمداً همان `calculateJewelrySale` واقعی را صدا می‌زند که
+ * `SalesPricingService.priceJewelryInTransaction` سمت بک‌اند صدا می‌زند —
+ * mock نباید فرمول دومی داشته باشد، وگرنه اختلافی که در توسعه دیده
+ * می‌شود ساختگی است، نه واقعی.
+ *
+ * ورودی از **نسخه‌ی کالا** می‌آید، نه از درخواست: قرارداد واقعی هیچ فیلد
+ * وزن/اجرت در بدنه ندارد، پس ویرایش‌های ردیف (FE-043) اینجا هم مثل سرور
+ * واقعی نادیده گرفته می‌شوند. نرخ سود و مالیات همان مقدار seed مستأجر
+ * (`tenant-initial-settings.ts`) است.
+ */
+export const MOCK_PROFIT_RATE_BPS = 700n;
+export const MOCK_TAX_RATE_BPS = 1000n;
+
+export function priceJewelryFromVersion(
+  version: {
+    grossWeightMg: string;
+    karat: number;
+    stoneWeightMg: string;
+    otherDeductionWeightMg: string;
+    wageType: 'PER_GRAM' | 'FLAT' | 'PERCENT_X100';
+    wageValue: string;
+  },
+  maznehRial: bigint,
+): JewelrySaleCalculation {
+  return calculateJewelrySale({
+    grossWeightMg: BigInt(version.grossWeightMg),
+    karat: karat(version.karat),
+    deductions: {
+      stone: grossMg(BigInt(version.stoneWeightMg)),
+      other: grossMg(BigInt(version.otherDeductionWeightMg)),
+    },
+    wageType: version.wageType,
+    wageValue: BigInt(version.wageValue),
+    maznehRial,
+    profitRateBps: MOCK_PROFIT_RATE_BPS,
+    taxRateBps: MOCK_TAX_RATE_BPS,
+    roundingUnitRial: DEFAULT_ROUNDING_UNIT,
+    rateDivisor: RATE_DIVISOR,
+  });
 }
 
 /* ── مانده و صورت‌حساب یک شخص (FE-034) ───────────────────────── */

@@ -7,6 +7,7 @@ import {
   isoDateTimeSchema,
   priceQuoteAmountRialSchema,
   priceQuoteSchema as sharedPriceQuoteSchema,
+  jewelryCashSaleSchema as sharedJewelryCashSaleSchema,
   type Party,
 } from '@gold/contracts';
 
@@ -79,6 +80,8 @@ export {
   dashboardSchema,
   dashboardQuerySchema,
   reportingDisplayUnitSchema,
+  createJewelryCashSaleSchema,
+  type CreateJewelryCashSaleInput,
   type LoginInput,
   type SessionResponse,
   type RefreshInput,
@@ -314,46 +317,28 @@ export type RecentInventoryMovement = z.infer<typeof recentInventoryMovementSche
 
 export const recentInventoryMovementListSchema = z.array(recentInventoryMovementSchema);
 
-/* ── POST /api/invoices ────────────────────────────────────── */
+/* ══════════════ بازگشت به @gold/contracts — فروش ══════════════ */
+
+/* ── POST /api/sales/invoices/jewelry — FE-045/BE-041 ───────── */
 
 /**
- * ⚠️ این mock قدیمی‌تر از قرارداد واقعی فروش است و دیگر شکلش را ندارد —
- * از قبل از این‌که `@gold/contracts` قرارداد فروش داشته باشد ساخته شده.
+ * پاسخ ثبت فروش نقدی زیورآلات.
  *
- * قرارداد واقعی دو endpoint جدا دارد، هرکدام **یک قلم کالا** و یک
- * `quoteId` می‌گیرند، نه آرایه‌ای از خطوط با مظنه‌ی خام:
- * `createJewelryCashSaleSchema` / `jewelryCashSaleSchema` (نقدی) و
- * `createJewelryCreditSaleSchema` / `jewelryCreditSaleSchema` (نسیه) —
- * هر دو در `@gold/contracts`.
+ * آینه‌ی `jewelryCashSaleSchema` واقعی (`@gold/contracts`)، فقط با
+ * `payableRial` تبدیل‌شده به `bigint` — همان یک قدمی که
+ * `priceQuoteSchema` بالاتر هم برمی‌دارد. قرارداد پایه از بک‌اند می‌آید و
+ * اینجا دوباره تعریف نمی‌شود.
  *
- * جایگزینی این mock کار FE-045 (وابسته به BE-041) و FE-047 (وابسته به
- * BE-042) است، نه یک import-swap ساده در همین تسک — چون شکل درخواست هم
- * عوض می‌شود، نه فقط نام فیلدها. فعلاً هیچ صفحه‌ای این endpoint را صدا
- * نمی‌زند (بدون مصرف‌کننده‌ی UI).
+ * این مبلغ **تنها مبلغ معتبر** فاکتور است: سرور خودش از روی نسخه‌ی کالا و
+ * `quoteId` قیمت می‌زند (`SalesPricingService.priceJewelryInTransaction`)
+ * و پیش‌نمایش کلاینت هیچ سهمی در آن ندارد. هرجا این دو نخوانند، عدد سرور
+ * درست است و اختلاف باید به کاربر نشان داده شود، نه پنهان شود.
+ *
+ * ⚠️ mock قدیمی `POST /api/invoices` (آرایه‌ای از خطوط + مظنه‌ی خام) که
+ * جای همین قرارداد را نگه داشته بود، در همین تسک حذف شد — هیچ صفحه‌ای
+ * صدایش نمی‌زد و شکلش هم دیگر شکل بک‌اند نبود.
  */
-export const invoiceLineInputSchema = z.object({
-  itemId: z.string(),
-  /** برای سکه تعداد، برای بقیه `null` */
-  count: z.number().int().positive().nullable(),
-  /** برای مصنوع و آبشده میلی‌گرم، برای سکه `null` */
-  grossMg: bigintString.nullable(),
-  karat: karatNumber.nullable(),
-  wageRial: bigintString,
+export const jewelryCashSaleSchema = sharedJewelryCashSaleSchema.extend({
+  payableRial: bigintString,
 });
-
-export const createInvoiceInputSchema = z.object({
-  partyId: z.string(),
-  lines: z.array(invoiceLineInputSchema).min(1),
-  /** مظنه‌ی لحظه‌ی ثبت — سند نرخ خودش را حمل می‌کند */
-  maznehRial: bigintString,
-});
-export type CreateInvoiceInput = z.infer<typeof createInvoiceInputSchema>;
-
-export const createInvoiceResultSchema = z.object({
-  id: z.string(),
-  /** شماره‌ی بدون شکاف — بخش ۵ CLAUDE.md */
-  number: z.string(),
-  total: dualAmountSchema,
-  createdAt: isoDateTimeSchema,
-});
-export type CreateInvoiceResult = z.infer<typeof createInvoiceResultSchema>;
+export type JewelryCashSale = z.infer<typeof jewelryCashSaleSchema>;

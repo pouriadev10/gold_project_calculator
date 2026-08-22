@@ -100,6 +100,7 @@ export function SaleSummary() {
   useEffect(() => {
     if (lockedMazneh === null && mazneh.data) {
       lockMazneh({
+        quoteId: mazneh.data.quoteId,
         mazneh: mazneh.data.mazneh.toString(),
         source: mazneh.data.source,
         observedAt: mazneh.data.observedAt.toISOString(),

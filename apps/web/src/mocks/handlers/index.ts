@@ -5,7 +5,7 @@ import type { JewelryItemVersion, Party } from '@/api/contracts';
 import {
   MAZNEH_RIAL,
   FETCHED_AT,
-  articlePriceRial,
+  priceJewelryFromVersion,
   balanceSummary,
   COIN_BALANCE_ROWS,
   COIN_TYPE_VERSIONS,
@@ -21,7 +21,6 @@ import {
   profitToday,
   RECENT_INVENTORY_MOVEMENTS,
   recentTransactions,
-  rialToWire,
 } from './fixtures';
 
 /**
@@ -863,7 +862,19 @@ export const handlers = [
     return HttpResponse.json({ items: recentTransactions.slice(0, limit) });
   }),
 
-  http.post('/api/invoices', async ({ request }) => {
+  /**
+   * `POST /sales/invoices/jewelry` — قرارداد نهایی BE-041
+   * (`createJewelryCashSaleSchema`/`jewelryCashSaleSchema`)، FE-045.
+   *
+   * جایگزین mock منسوخ `POST /api/invoices` شد (آرایه‌ای از خطوط + مظنه‌ی
+   * خام) که هیچ‌وقت شکل بک‌اند واقعی را نداشت.
+   *
+   * مثل سرور واقعی: بدنه فقط ارجاع می‌فرستد (`partyId`, `jewelryItemId`,
+   * `quoteId`) و **قیمت اینجا محاسبه می‌شود**، از روی نسخه‌ی کالا و همان
+   * مظنه‌ای که `quoteId` نشان می‌دهد — نه از هیچ عددی که کلاینت فرستاده.
+   * شماره‌ی فاکتور هم بدون شکاف از یک شمارنده می‌آید.
+   */
+  http.post('/api/sales/invoices/jewelry', async ({ request }) => {
     await delay(WRITE_DELAY_MS);
 
     const key = request.headers.get('Idempotency-Key');
@@ -883,32 +894,48 @@ export const handlers = [
 
     // همان کلید = همان عملیات. فاکتور دوم ساخته نمی‌شود.
     const cached = idempotencyCache.get(key);
-    if (cached) return HttpResponse.json(cached);
+    if (cached) return HttpResponse.json(cached, { status: 201 });
 
     const body = (await request.json()) as {
-      lines: { grossMg: string | null; karat: number | null; wageRial: string; count: number | null }[];
+      partyId: string;
+      jewelryItemId: string;
+      quoteId: string;
+      effectiveAt: string;
     };
 
-    let totalRial = 0n;
-    for (const line of body.lines) {
-      const wage = BigInt(line.wageRial);
-      if (line.grossMg && line.karat) {
-        totalRial += articlePriceRial(BigInt(line.grossMg), line.karat, wage);
-      } else {
-        totalRial += wage;
-      }
+    const version = jewelryItemList.find((item) => item.jewelryItemId === body.jewelryItemId);
+    const quote = maznehQuoteHistory.find((q) => q.id === body.quoteId);
+    if (!version || !quote) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 'NOT_FOUND',
+            message: !version ? 'کالای انتخاب‌شده پیدا نشد' : 'مظنه‌ی انتخاب‌شده پیدا نشد',
+            fields: {},
+            requestId: crypto.randomUUID(),
+          },
+        },
+        { status: 404 },
+      );
     }
+
+    const calc = priceJewelryFromVersion(version, BigInt(quote.amountRial));
 
     invoiceCounter += 1;
     const result = {
-      id: `INV-${invoiceCounter}`,
+      invoiceId: crypto.randomUUID(),
       // شماره‌ی بدون شکاف — سرور واقعی با جدول شمارنده و SELECT ... FOR UPDATE
-      number: `1405-${String(invoiceCounter).padStart(6, '0')}`,
-      total: rialToWire(totalRial),
-      createdAt: new Date().toISOString(),
+      invoiceNumber: invoiceCounter,
+      payableRial: calc.payableRial.toString(),
+      ledgerTransactionId: crypto.randomUUID(),
+      inventoryMovementId: crypto.randomUUID(),
     };
+
+    // فروش یک قطعه‌ی فیزیکی است — همان کالا دیگر در انبار نیست
+    jewelryItemList = jewelryItemList.filter((item) => item.jewelryItemId !== body.jewelryItemId);
 
     idempotencyCache.set(key, result);
     return HttpResponse.json(result, { status: 201 });
   }),
 ];
+

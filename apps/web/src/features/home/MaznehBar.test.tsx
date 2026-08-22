@@ -24,6 +24,7 @@ vi.mock('./useMazneh', () => ({ useMazneh: () => useManznehMock() }));
 import { MaznehBar } from './MaznehBar';
 
 const SNAPSHOT: MaznehSnapshot = {
+  quoteId: 'c1000000-0000-4000-8000-000000000001',
   mazneh: 480_000_000n,
   gram750: 110_808_388n,
   gram1000: 147_744_518n,

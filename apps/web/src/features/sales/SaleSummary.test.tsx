@@ -19,12 +19,14 @@ vi.mock('@/features/home/useMazneh', () => ({
   useMazneh: () => useMaznehMock(),
 }));
 
+const QUOTE_ID = 'c1000000-0000-4000-8000-000000000001';
 const MAZNEH_RIAL_1 = 100_000_000n;
 const MAZNEH_RIAL_2 = 250_000_000n;
 
 function maznehSnapshot(maznehRial: bigint, overrides: Partial<{ source: 'MANUAL' | 'FEED'; observedAt: Date }> = {}) {
   return {
     data: {
+      quoteId: QUOTE_ID,
       mazneh: maznehRial,
       gram750: gramRate1000(maznehRial), // مقدار دقیقش اینجا برای تست بی‌اهمیت است
       gram1000: gramRate1000(maznehRial),
@@ -126,6 +128,7 @@ describe('SaleSummary — قفل نرخ', () => {
     render(<SaleSummary />);
 
     expect(useSaleDraftStore.getState().lockedMazneh).toEqual({
+      quoteId: QUOTE_ID,
       mazneh: MAZNEH_RIAL_1.toString(),
       source: 'MANUAL',
       observedAt: '2026-08-10T09:00:00.000Z',
@@ -135,6 +138,7 @@ describe('SaleSummary — قفل نرخ', () => {
 
   it('اگر از قبل قفل شده بود، mount دوباره آن را عوض نمی‌کند', () => {
     useSaleDraftStore.getState().lockMazneh({
+      quoteId: QUOTE_ID,
       mazneh: MAZNEH_RIAL_1.toString(),
       source: 'MANUAL',
       observedAt: '2026-08-01T00:00:00.000Z',
@@ -148,6 +152,7 @@ describe('SaleSummary — قفل نرخ', () => {
 
   it('وقتی مظنه‌ی بازار از نرخ قفل‌شده جلوتر می‌رود، فقط هشدار نشان می‌دهد — نرخ فاکتور عوض نمی‌شود', () => {
     useSaleDraftStore.getState().lockMazneh({
+      quoteId: QUOTE_ID,
       mazneh: MAZNEH_RIAL_1.toString(),
       source: 'MANUAL',
       observedAt: '2026-08-01T00:00:00.000Z',
@@ -161,6 +166,7 @@ describe('SaleSummary — قفل نرخ', () => {
 
   it('وقتی مظنه‌ی بازار همان نرخ قفل‌شده است، هشداری نشان نمی‌دهد', () => {
     useSaleDraftStore.getState().lockMazneh({
+      quoteId: QUOTE_ID,
       mazneh: MAZNEH_RIAL_1.toString(),
       source: 'MANUAL',
       observedAt: '2026-08-01T00:00:00.000Z',
