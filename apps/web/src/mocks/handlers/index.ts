@@ -194,6 +194,124 @@ function partyNotFound() {
   );
 }
 
+/**
+ * ثبت فروش زیورآلات — مشترک میان مسیر نقدی (BE-041) و نسیه (BE-042).
+ *
+ * یک تابع، نه دو handler موازی: تفاوت واقعی این دو سمت سرور فقط سند
+ * حسابداری و دو فیلد پرداخت است، نه قیمت‌گذاری، شماره‌گذاری یا اثر
+ * موجودی — دو نسخه‌ی جدا یعنی دو جای مستقل برای واگرا شدن.
+ */
+async function registerJewelrySale(request: Request, mode: 'CASH' | 'CREDIT') {
+
+await delay(WRITE_DELAY_MS);
+
+const key = request.headers.get('Idempotency-Key');
+if (!key) {
+  return HttpResponse.json(
+    {
+      error: {
+        code: 'IDEMPOTENCY_KEY_REQUIRED',
+        message: 'هدر Idempotency-Key اجباری است',
+        fields: {},
+        requestId: crypto.randomUUID(),
+      },
+    },
+    { status: 400 },
+  );
+}
+
+// همان کلید = همان عملیات. فاکتور دوم ساخته نمی‌شود.
+const cached = idempotencyCache.get(key);
+if (cached) return HttpResponse.json(cached, { status: 201 });
+
+const body = (await request.json()) as {
+  partyId: string;
+  jewelryItemId: string;
+  quoteId: string;
+  effectiveAt: string;
+  paidRial?: string;
+};
+
+const version = jewelryItemList.find((item) => item.jewelryItemId === body.jewelryItemId);
+const quote = maznehQuoteHistory.find((q) => q.id === body.quoteId);
+if (!version || !quote) {
+  return HttpResponse.json(
+    {
+      error: {
+        code: 'NOT_FOUND',
+        message: !version ? 'کالای انتخاب‌شده پیدا نشد' : 'مظنه‌ی انتخاب‌شده پیدا نشد',
+        fields: {},
+        requestId: crypto.randomUUID(),
+      },
+    },
+    { status: 404 },
+  );
+}
+
+const calc = priceJewelryFromVersion(version, BigInt(quote.amountRial));
+
+invoiceCounter += 1;
+const paidRial = mode === 'CASH' ? calc.payableRial : BigInt(body.paidRial ?? '0');
+// مانده هرگز منفی نمی‌شود — قرارداد `nonNegativeBigIntStringSchema` است
+const receivableRial = calc.payableRial > paidRial ? calc.payableRial - paidRial : 0n;
+const result = {
+  invoiceId: crypto.randomUUID(),
+  // شماره‌ی بدون شکاف — سرور واقعی با جدول شمارنده و SELECT ... FOR UPDATE
+  invoiceNumber: invoiceCounter,
+  payableRial: calc.payableRial.toString(),
+  ...(mode === 'CREDIT' ? { receivableRial: receivableRial.toString() } : {}),
+  ledgerTransactionId: crypto.randomUUID(),
+  inventoryMovementId: crypto.randomUUID(),
+};
+
+salesInvoiceVersions.set(result.invoiceId, {
+  invoiceId: result.invoiceId,
+  invoiceNumber: result.invoiceNumber,
+  versions: [
+    {
+      version: 1,
+      reason: null,
+      reasonDetail: null,
+      partyId: body.partyId,
+      actor: { id: 'c1000000-0000-4000-8000-000000000002', displayName: 'مدیر فروشگاه' },
+      createdAt: body.effectiveAt,
+      payableRial: calc.payableRial.toString(),
+      pureWeightMg: calc.pureWeightMg.toString(),
+      karat: version.karat,
+      items: [
+        {
+          itemType: 'JEWELRY',
+          itemId: body.jewelryItemId,
+          quantity: '1',
+          pureWeightMg: calc.pureWeightMg.toString(),
+          karat: version.karat,
+        },
+      ],
+      totalsSnapshot: {
+        payableRial: calc.payableRial.toString(),
+        goldValueRial: calc.goldValueRial.toString(),
+        wageRial: calc.wageRial.toString(),
+        profitRial: calc.profitRial.toString(),
+        taxRial: calc.taxRial.toString(),
+        pureWeightMg: calc.pureWeightMg.toString(),
+      },
+      settingsSnapshot: {
+        profitRateBps: MOCK_PROFIT_RATE_BPS.toString(),
+        taxRateBps: MOCK_TAX_RATE_BPS.toString(),
+      },
+      ledgerEffects: [],
+      inventoryEffects: [],
+    },
+  ],
+});
+
+// فروش یک قطعه‌ی فیزیکی است — همان کالا دیگر در انبار نیست
+jewelryItemList = jewelryItemList.filter((item) => item.jewelryItemId !== body.jewelryItemId);
+
+idempotencyCache.set(key, result);
+return HttpResponse.json(result, { status: 201 });
+}
+
 export const handlers = [
   http.post('/api/auth/login', async ({ request }) => {
     await delay(WRITE_DELAY_MS);
@@ -886,110 +1004,19 @@ export const handlers = [
    * مظنه‌ای که `quoteId` نشان می‌دهد — نه از هیچ عددی که کلاینت فرستاده.
    * شماره‌ی فاکتور هم بدون شکاف از یک شمارنده می‌آید.
    */
-  http.post('/api/sales/invoices/jewelry', async ({ request }) => {
-    await delay(WRITE_DELAY_MS);
+  http.post('/api/sales/invoices/jewelry', ({ request }) => registerJewelrySale(request, 'CASH')),
 
-    const key = request.headers.get('Idempotency-Key');
-    if (!key) {
-      return HttpResponse.json(
-        {
-          error: {
-            code: 'IDEMPOTENCY_KEY_REQUIRED',
-            message: 'هدر Idempotency-Key اجباری است',
-            fields: {},
-            requestId: crypto.randomUUID(),
-          },
-        },
-        { status: 400 },
-      );
-    }
-
-    // همان کلید = همان عملیات. فاکتور دوم ساخته نمی‌شود.
-    const cached = idempotencyCache.get(key);
-    if (cached) return HttpResponse.json(cached, { status: 201 });
-
-    const body = (await request.json()) as {
-      partyId: string;
-      jewelryItemId: string;
-      quoteId: string;
-      effectiveAt: string;
-    };
-
-    const version = jewelryItemList.find((item) => item.jewelryItemId === body.jewelryItemId);
-    const quote = maznehQuoteHistory.find((q) => q.id === body.quoteId);
-    if (!version || !quote) {
-      return HttpResponse.json(
-        {
-          error: {
-            code: 'NOT_FOUND',
-            message: !version ? 'کالای انتخاب‌شده پیدا نشد' : 'مظنه‌ی انتخاب‌شده پیدا نشد',
-            fields: {},
-            requestId: crypto.randomUUID(),
-          },
-        },
-        { status: 404 },
-      );
-    }
-
-    const calc = priceJewelryFromVersion(version, BigInt(quote.amountRial));
-
-    invoiceCounter += 1;
-    const result = {
-      invoiceId: crypto.randomUUID(),
-      // شماره‌ی بدون شکاف — سرور واقعی با جدول شمارنده و SELECT ... FOR UPDATE
-      invoiceNumber: invoiceCounter,
-      payableRial: calc.payableRial.toString(),
-      ledgerTransactionId: crypto.randomUUID(),
-      inventoryMovementId: crypto.randomUUID(),
-    };
-
-    salesInvoiceVersions.set(result.invoiceId, {
-      invoiceId: result.invoiceId,
-      invoiceNumber: result.invoiceNumber,
-      versions: [
-        {
-          version: 1,
-          reason: null,
-          reasonDetail: null,
-          partyId: body.partyId,
-          actor: { id: 'c1000000-0000-4000-8000-000000000002', displayName: 'مدیر فروشگاه' },
-          createdAt: body.effectiveAt,
-          payableRial: calc.payableRial.toString(),
-          pureWeightMg: calc.pureWeightMg.toString(),
-          karat: version.karat,
-          items: [
-            {
-              itemType: 'JEWELRY',
-              itemId: body.jewelryItemId,
-              quantity: '1',
-              pureWeightMg: calc.pureWeightMg.toString(),
-              karat: version.karat,
-            },
-          ],
-          totalsSnapshot: {
-            payableRial: calc.payableRial.toString(),
-            goldValueRial: calc.goldValueRial.toString(),
-            wageRial: calc.wageRial.toString(),
-            profitRial: calc.profitRial.toString(),
-            taxRial: calc.taxRial.toString(),
-            pureWeightMg: calc.pureWeightMg.toString(),
-          },
-          settingsSnapshot: {
-            profitRateBps: MOCK_PROFIT_RATE_BPS.toString(),
-            taxRateBps: MOCK_TAX_RATE_BPS.toString(),
-          },
-          ledgerEffects: [],
-          inventoryEffects: [],
-        },
-      ],
-    });
-
-    // فروش یک قطعه‌ی فیزیکی است — همان کالا دیگر در انبار نیست
-    jewelryItemList = jewelryItemList.filter((item) => item.jewelryItemId !== body.jewelryItemId);
-
-    idempotencyCache.set(key, result);
-    return HttpResponse.json(result, { status: 201 });
-  }),
+  /**
+   * `POST /sales/invoices/jewelry/credit` — قرارداد نهایی BE-042
+   * (`createJewelryCreditSaleSchema`/`jewelryCreditSaleSchema`)، FE-047.
+   *
+   * همان جریان نقدی، فقط `paidRial` می‌گیرد و `receivableRial`
+   * برمی‌گرداند — **سرور** تفریق را انجام می‌دهد، نه کلاینت. مانده هرگز
+   * منفی نمی‌شود، چون قرارداد `nonNegativeBigIntStringSchema` است.
+   */
+  http.post('/api/sales/invoices/jewelry/credit', ({ request }) =>
+    registerJewelrySale(request, 'CREDIT'),
+  ),
 
   /**
    * `GET /sales/invoices/:invoiceId/versions` — قرارداد نهایی BE-043

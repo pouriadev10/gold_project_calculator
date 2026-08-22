@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 import type { LockedMazneh, SaleDraftItemLine, SaleLinePricingInput } from '@/stores/sale-draft-store';
 import type { PartySelection } from '@/stores/recent-parties-store';
 import { calculateLinePricing } from './sale-line-pricing';
-import { prepareJewelryCashSale, type SaleDraftSnapshot } from './sale-submit';
+import { prepareJewelrySale, type SaleDraftSnapshot } from './sale-submit';
 
 /**
- * FE-045 — ساخت payload ثبت فروش نقدی از پیش‌نویس.
+ * FE-045 (نقدی) و FE-047 (نسیه) — ساخت payload ثبت فروش از پیش‌نویس.
  *
  * تابع خالص است و هیچ mockای لازم ندارد؛ `effectiveAt` هم آرگومان است،
  * پس هیچ‌جا به ساعت سیستم دست نمی‌خوریم.
@@ -65,29 +65,32 @@ function adhocLine(): SaleDraftItemLine {
 }
 
 function draft(overrides: Partial<SaleDraftSnapshot> = {}): SaleDraftSnapshot {
-  return { party: PARTY, items: [catalogLine()], lockedMazneh: LOCKED, ...overrides };
+  return { party: PARTY, items: [catalogLine()], lockedMazneh: LOCKED, paidRial: null, ...overrides };
 }
 
-describe('prepareJewelryCashSale — payload معتبر', () => {
+describe('prepareJewelrySale — payload نقدی', () => {
   it('از یک ردیف کاتالوگی قیمت‌گذاری‌شده، دقیقاً چهار فیلد قرارداد را می‌سازد', () => {
-    const result = prepareJewelryCashSale(draft(), EFFECTIVE_AT);
+    const result = prepareJewelrySale(draft(), EFFECTIVE_AT);
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.plan.payload).toEqual({
-      partyId: PARTY.id,
-      jewelryItemId: 'b1000000-0000-4000-8000-000000000001',
-      quoteId: LOCKED.quoteId,
-      effectiveAt: '2026-08-22T10:30:00.000Z',
+      mode: 'CASH',
+      input: {
+        partyId: PARTY.id,
+        jewelryItemId: 'b1000000-0000-4000-8000-000000000001',
+        quoteId: LOCKED.quoteId,
+        effectiveAt: '2026-08-22T10:30:00.000Z',
+      },
     });
   });
 
   it('هیچ عدد وزنی یا مالی در payload نمی‌گذارد — سرور خودش قیمت می‌زند', () => {
-    const result = prepareJewelryCashSale(draft(), EFFECTIVE_AT);
+    const result = prepareJewelrySale(draft(), EFFECTIVE_AT);
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(Object.keys(result.plan.payload).sort()).toEqual([
+    expect(Object.keys(result.plan.payload.input).sort()).toEqual([
       'effectiveAt',
       'jewelryItemId',
       'partyId',
@@ -100,7 +103,7 @@ describe('prepareJewelryCashSale — payload معتبر', () => {
     expect(expected.ok).toBe(true);
     if (!expected.ok) return;
 
-    const result = prepareJewelryCashSale(draft(), EFFECTIVE_AT);
+    const result = prepareJewelrySale(draft(), EFFECTIVE_AT);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.plan.previewPayableRial).toBe(expected.calc.payableRial);
@@ -109,7 +112,7 @@ describe('prepareJewelryCashSale — payload معتبر', () => {
   it('اگر محاسبه‌ی محلی خطا بدهد، ثبت همچنان مجاز است و فقط پیش‌نمایش خالی می‌ماند', () => {
     // عیار صفر — `calculateJewelrySale` ردش می‌کند، ولی سرور از نسخه‌ی واقعی کالا قیمت می‌زند
     const broken = { ...PRICING, karat: 0 };
-    const result = prepareJewelryCashSale(draft({ items: [catalogLine({ pricing: broken })] }), EFFECTIVE_AT);
+    const result = prepareJewelrySale(draft({ items: [catalogLine({ pricing: broken })] }), EFFECTIVE_AT);
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -117,24 +120,70 @@ describe('prepareJewelryCashSale — payload معتبر', () => {
   });
 });
 
-describe('prepareJewelryCashSale — حالت‌های مسدود', () => {
+describe('prepareJewelrySale — payload نسیه (FE-047)', () => {
+  it('هر مبلغ پرداختی — حتی صفر — مسیر نسیه را انتخاب می‌کند', () => {
+    const result = prepareJewelrySale(draft({ paidRial: '0' }), EFFECTIVE_AT);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.plan.payload).toEqual({
+      mode: 'CREDIT',
+      input: {
+        partyId: PARTY.id,
+        jewelryItemId: 'b1000000-0000-4000-8000-000000000001',
+        quoteId: LOCKED.quoteId,
+        effectiveAt: '2026-08-22T10:30:00.000Z',
+        paidRial: '0',
+      },
+    });
+  });
+
+  it('پرداخت جزئی همان رشته را بدون دست‌کاری می‌فرستد', () => {
+    const result = prepareJewelrySale(draft({ paidRial: '250000000' }), EFFECTIVE_AT);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.plan.payload.mode).toBe('CREDIT');
+    expect(result.plan.payload).toMatchObject({ input: { paidRial: '250000000' } });
+  });
+
+  it('`null` یعنی پرداخت کامل، نه نسیه‌ی صفر', () => {
+    const result = prepareJewelrySale(draft({ paidRial: null }), EFFECTIVE_AT);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.plan.payload.mode).toBe('CASH');
+  });
+
+  it('پرداخت بیشتر از جمع کل پیش‌نمایش رد نمی‌شود — تصمیمش با سرور است', () => {
+    const result = prepareJewelrySale(draft({ paidRial: '99999999999' }), EFFECTIVE_AT);
+    expect(result.ok).toBe(true);
+  });
+
+  it('پرداخت منفی مسدود می‌شود', () => {
+    const result = prepareJewelrySale(draft({ paidRial: '-1' }), EFFECTIVE_AT);
+    expect(result).toMatchObject({ ok: false, reason: 'NEGATIVE_PAYMENT' });
+  });
+});
+
+describe('prepareJewelrySale — حالت‌های مسدود', () => {
   it('بدون مشتری ثبت نمی‌شود', () => {
-    const result = prepareJewelryCashSale(draft({ party: null }), EFFECTIVE_AT);
+    const result = prepareJewelrySale(draft({ party: null }), EFFECTIVE_AT);
     expect(result).toMatchObject({ ok: false, reason: 'NO_PARTY' });
   });
 
   it('بدون نرخ قفل‌شده ثبت نمی‌شود — `quoteId` وجود ندارد که فرستاده شود', () => {
-    const result = prepareJewelryCashSale(draft({ lockedMazneh: null }), EFFECTIVE_AT);
+    const result = prepareJewelrySale(draft({ lockedMazneh: null }), EFFECTIVE_AT);
     expect(result).toMatchObject({ ok: false, reason: 'NO_QUOTE' });
   });
 
   it('بدون هیچ قلمی ثبت نمی‌شود', () => {
-    const result = prepareJewelryCashSale(draft({ items: [] }), EFFECTIVE_AT);
+    const result = prepareJewelrySale(draft({ items: [] }), EFFECTIVE_AT);
     expect(result).toMatchObject({ ok: false, reason: 'NO_ITEMS' });
   });
 
   it('با بیش از یک قلم مسدود می‌شود — قلم‌ها بی‌صدا انداخته نمی‌شوند', () => {
-    const result = prepareJewelryCashSale(
+    const result = prepareJewelrySale(
       draft({ items: [catalogLine(), catalogLine({ lineId: 'l9' })] }),
       EFFECTIVE_AT,
     );
@@ -142,12 +191,12 @@ describe('prepareJewelryCashSale — حالت‌های مسدود', () => {
   });
 
   it('قلم موردی مسدود می‌شود — قرارداد فقط `jewelryItemId` می‌پذیرد', () => {
-    const result = prepareJewelryCashSale(draft({ items: [adhocLine()] }), EFFECTIVE_AT);
+    const result = prepareJewelrySale(draft({ items: [adhocLine()] }), EFFECTIVE_AT);
     expect(result).toMatchObject({ ok: false, reason: 'ADHOC_ITEM' });
   });
 
   it('ردیف قیمت‌گذاری‌نشده مسدود می‌شود', () => {
-    const result = prepareJewelryCashSale(draft({ items: [catalogLine({ pricing: null })] }), EFFECTIVE_AT);
+    const result = prepareJewelrySale(draft({ items: [catalogLine({ pricing: null })] }), EFFECTIVE_AT);
     expect(result).toMatchObject({ ok: false, reason: 'ITEM_NOT_PRICED' });
   });
 
@@ -159,10 +208,11 @@ describe('prepareJewelryCashSale — حالت‌های مسدود', () => {
       draft({ items: [catalogLine(), catalogLine({ lineId: 'l9' })] }),
       draft({ items: [adhocLine()] }),
       draft({ items: [catalogLine({ pricing: null })] }),
+      draft({ paidRial: '-1' }),
     ];
 
     for (const candidate of blockedDrafts) {
-      const result = prepareJewelryCashSale(candidate, EFFECTIVE_AT);
+      const result = prepareJewelrySale(candidate, EFFECTIVE_AT);
       expect(result.ok).toBe(false);
       if (result.ok) continue;
       expect(result.message.length).toBeGreaterThan(0);

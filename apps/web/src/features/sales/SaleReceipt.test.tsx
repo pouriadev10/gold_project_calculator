@@ -4,7 +4,7 @@ import type * as Queries from '@/api/queries';
 import { ApiError } from '@/api/api-error';
 import { useUnitStore } from '@/stores/unit-store';
 import { SaleReceipt } from './SaleReceipt';
-import type { SaleSubmitOutcome } from './useJewelryCashSaleSubmit';
+import type { SaleSubmitOutcome } from './useJewelrySaleSubmit';
 
 /**
  * FE-046 — رسید فروش.
@@ -46,6 +46,9 @@ const OUTCOME: SaleSubmitOutcome = {
     observedAt: '2026-08-22T09:00:00.000Z',
   },
   previewMismatchRial: undefined,
+  mode: 'CASH',
+  paidRial: 1_478_445_000n,
+  receivableRial: 0n,
 };
 
 function versionHistory(overrides: Record<string, unknown> = {}) {
@@ -157,12 +160,35 @@ describe('SaleReceipt — پاسخ سرور جای محاسبه‌ی محلی ر
     expect(screen.getByText('a1000000-0000-4000-8000-000000000099')).toBeInTheDocument();
   });
 
-  it('فروش نقدی مانده‌ی صفر نشان می‌دهد', () => {
+  it('فروش نقدی مانده‌ی صفر و برچسب «تسویه» نشان می‌دهد', () => {
     mockQuery(versionHistory());
     render(<SaleReceipt outcome={OUTCOME} />);
 
     expect(screen.getByText('پرداخت‌شده (نقدی)')).toBeInTheDocument();
-    expect(screen.getByText('مانده').parentElement).toHaveTextContent('۰');
+    expect(screen.getByText('مانده').parentElement).toHaveTextContent('تسویه');
+    expect(screen.queryByText(/این فروش نسیه ثبت شد/)).not.toBeInTheDocument();
+  });
+
+  it('فروش نسیه مانده‌ی سرور را با برچسب «بدهکار» نشان می‌دهد', () => {
+    mockQuery(versionHistory());
+    useUnitStore.setState({ unit: 'rial' });
+    render(
+      <SaleReceipt
+        outcome={{ ...OUTCOME, mode: 'CREDIT', paidRial: 478_445_000n, receivableRial: 1_000_000_000n }}
+      />,
+    );
+
+    // مانده از پاسخ سرور می‌آید، نه از تفریق سمت کلاینت
+    expect(screen.getByText('مانده').parentElement).toHaveTextContent('۱٬۰۰۰٬۰۰۰٬۰۰۰');
+    expect(screen.getByText('مانده').parentElement).toHaveTextContent('بدهکار');
+    expect(screen.getByText('پرداخت‌شده').parentElement).toHaveTextContent('۴۷۸٬۴۴۵٬۰۰۰');
+  });
+
+  it('روی فروش نسیه، بدهی مشتری صریح اعلام می‌شود', () => {
+    mockQuery(versionHistory());
+    render(<SaleReceipt outcome={{ ...OUTCOME, mode: 'CREDIT', paidRial: 0n, receivableRial: 1_478_445_000n }} />);
+
+    expect(screen.getByText(/این فروش نسیه ثبت شد/)).toHaveTextContent('حسین مرادی');
   });
 
   it('اختلاف با پیش‌نمایش مرحله‌ی مرور را اعلام می‌کند', () => {

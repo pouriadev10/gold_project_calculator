@@ -124,6 +124,16 @@ interface SaleDraftState {
   readonly party: PartySelection | null;
   readonly items: readonly SaleDraftItemLine[];
   readonly lockedMazneh: LockedMazneh | null;
+  /**
+   * مبلغ ریالی که مشتری همین حالا می‌پردازد — FE-047.
+   *
+   * `null` یعنی «پرداخت کامل» و مسیر **نقدی** را انتخاب می‌کند؛ هر عدد
+   * دیگری مسیر **نسیه** را. عمداً `null` است و نه یک عدد پیش‌فرضِ برابر
+   * جمع کل: جمع کل کلاینت فقط پیش‌نمایش است و مبلغ واقعی سند را سرور
+   * می‌زند، پس «کامل» باید یک نیت صریح باشد، نه عددی که ممکن است با
+   * مبلغ واقعی فاکتور یکی نباشد.
+   */
+  readonly paidRial: string | null;
   readonly goToStep: (step: SaleStep) => void;
   readonly next: () => void;
   readonly back: () => void;
@@ -131,6 +141,7 @@ interface SaleDraftState {
   readonly setItems: (items: readonly SaleDraftItemLine[]) => void;
   /** فقط یک‌بار برای هر پیش‌نویس اثر می‌کند — فراخوانی دوباره بعد از اولین قفل، بی‌صدا نادیده گرفته می‌شود. */
   readonly lockMazneh: (snapshot: LockedMazneh) => void;
+  readonly setPaidRial: (paidRial: string | null) => void;
   readonly reset: () => void;
 }
 
@@ -143,6 +154,7 @@ export const useSaleDraftStore = create<SaleDraftState>()(
       party: null,
       items: [],
       lockedMazneh: null,
+      paidRial: null,
       goToStep: (step) => set({ step }),
       next: () => {
         const index = SALE_STEPS.indexOf(get().step);
@@ -159,7 +171,8 @@ export const useSaleDraftStore = create<SaleDraftState>()(
         if (get().lockedMazneh !== null) return;
         set({ lockedMazneh: snapshot });
       },
-      reset: () => set({ step: 'QUOTE', party: null, items: [], lockedMazneh: null }),
+      setPaidRial: (paidRial) => set({ paidRial }),
+      reset: () => set({ step: 'QUOTE', party: null, items: [], lockedMazneh: null, paidRial: null }),
     }),
     {
       name: SALE_DRAFT_STORAGE_KEY,

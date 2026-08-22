@@ -1,5 +1,12 @@
 import { apiPost } from './client';
-import { jewelryCashSaleSchema, type CreateJewelryCashSaleInput, type JewelryCashSale } from './contracts';
+import {
+  jewelryCashSaleSchema,
+  jewelryCreditSaleSchema,
+  type CreateJewelryCashSaleInput,
+  type CreateJewelryCreditSaleInput,
+  type JewelryCashSale,
+  type JewelryCreditSale,
+} from './contracts';
 
 /**
  * ثبت فروش نقدی زیورآلات — `POST /sales/invoices/jewelry` (BE-041، FE-045).
@@ -21,4 +28,21 @@ export function createJewelryCashSale(
   signal?: AbortSignal,
 ): Promise<JewelryCashSale> {
   return apiPost('/sales/invoices/jewelry', input, jewelryCashSaleSchema, idempotencyKey, signal);
+}
+
+/**
+ * ثبت فروش نسیه‌ی زیورآلات — `POST /sales/invoices/jewelry/credit`
+ * (BE-042، FE-047).
+ *
+ * endpoint جداست، نه یک پرچم روی همان مسیر نقدی — چون سمت سرور هم
+ * سرویس و سند حسابداری جداگانه‌ای دارد (`JewelryCreditSalesService`:
+ * بخش پرداخت‌نشده به حساب دریافتنی همان شخص می‌نشیند، نه به صندوق).
+ * `idempotencyKey` به همان دلیل نقدی اجباری است.
+ */
+export function createJewelryCreditSale(
+  input: CreateJewelryCreditSaleInput,
+  idempotencyKey: string,
+  signal?: AbortSignal,
+): Promise<JewelryCreditSale> {
+  return apiPost('/sales/invoices/jewelry/credit', input, jewelryCreditSaleSchema, idempotencyKey, signal);
 }

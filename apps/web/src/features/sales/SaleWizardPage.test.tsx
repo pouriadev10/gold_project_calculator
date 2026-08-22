@@ -46,8 +46,10 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
  * می‌کنند — mock کردنشان یعنی تست چیزی را نمی‌سنجد.
  */
 const createJewelryCashSaleMock = vi.fn();
+const createJewelryCreditSaleMock = vi.fn();
 vi.mock('@/api/sales', () => ({
   createJewelryCashSale: (...args: unknown[]) => createJewelryCashSaleMock(...args),
+  createJewelryCreditSale: (...args: unknown[]) => createJewelryCreditSaleMock(...args),
 }));
 
 const useLatestPriceQuoteMock = vi.fn();
@@ -124,7 +126,7 @@ function catalogLine(lineId = 'l1'): SaleDraftItemLine {
 }
 
 /** پیش‌نویسی که همه‌ی شرط‌های ثبت را دارد و روی مرحله‌ی «مرور» ایستاده. */
-function seedReadyDraft(items: SaleDraftItemLine[] = [catalogLine()]) {
+function seedReadyDraft(items: SaleDraftItemLine[] = [catalogLine()], paidRial: string | null = null) {
   const store = useSaleDraftStore.getState();
   store.setParty({
     id: 'a1000000-0000-4000-8000-000000000001',
@@ -135,6 +137,7 @@ function seedReadyDraft(items: SaleDraftItemLine[] = [catalogLine()]) {
   });
   store.setItems(items);
   store.lockMazneh(LOCKED_MAZNEH);
+  store.setPaidRial(paidRial);
   store.goToStep('REVIEW');
 }
 
@@ -192,6 +195,7 @@ beforeEach(() => {
   sessionStorage.clear();
   useBlockerMock.mockReset();
   createJewelryCashSaleMock.mockReset();
+  createJewelryCreditSaleMock.mockReset();
   useInvoiceVersionsMock.mockReset();
   useLatestPriceQuoteMock.mockReset();
   usePartiesMock.mockReset();
@@ -505,6 +509,55 @@ describe('SaleWizardPage — ثبت فروش (FE-045)', () => {
     expect(screen.getByRole('button', { name: 'ثبت فروش' })).toBeDisabled();
     expect(screen.getByRole('alert')).toHaveTextContent('فروش نقدی فعلاً فقط با یک قلم کالا ثبت می‌شود');
     expect(createJewelryCashSaleMock).not.toHaveBeenCalled();
+  });
+
+  it('پرداخت ناقص به endpoint نسیه می‌رود، نه نقدی', async () => {
+    createJewelryCreditSaleMock.mockResolvedValue({ ...SERVER_SALE, receivableRial: 1_000_000_000n });
+    const user = userEvent.setup();
+    seedReadyDraft([catalogLine()], '478445000');
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: 'ثبت فروش' }));
+
+    await waitFor(() => expect(screen.getByText('رسید فروش')).toBeInTheDocument());
+    expect(createJewelryCashSaleMock).not.toHaveBeenCalled();
+    expect(createJewelryCreditSaleMock).toHaveBeenCalledTimes(1);
+    expect(createJewelryCreditSaleMock.mock.calls[0]?.[0]).toEqual({
+      partyId: 'a1000000-0000-4000-8000-000000000001',
+      jewelryItemId: JEWELRY_ITEM_ID,
+      quoteId: QUOTE_ID,
+      effectiveAt: expect.any(String),
+      paidRial: '478445000',
+    });
+  });
+
+  it('پرداخت کامل به endpoint نقدی می‌رود، نه نسیه', async () => {
+    createJewelryCashSaleMock.mockResolvedValue(SERVER_SALE);
+    const user = userEvent.setup();
+    seedReadyDraft();
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: 'ثبت فروش' }));
+
+    await waitFor(() => expect(screen.getByText('رسید فروش')).toBeInTheDocument());
+    expect(createJewelryCreditSaleMock).not.toHaveBeenCalled();
+    expect(createJewelryCashSaleMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('«پرداخت ناقص (نسیه)» فرم مبلغ را باز می‌کند و مسیر را عوض می‌کند', async () => {
+    createJewelryCreditSaleMock.mockResolvedValue({ ...SERVER_SALE, receivableRial: 1_478_445_000n });
+    const user = userEvent.setup();
+    seedReadyDraft();
+    renderPage();
+
+    expect(screen.queryByLabelText('مبلغ دریافتی')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'پرداخت ناقص (نسیه)' }));
+    expect(screen.getByLabelText('مبلغ دریافتی')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'ثبت فروش' }));
+    await waitFor(() => expect(createJewelryCreditSaleMock).toHaveBeenCalledTimes(1));
+    // بدون تایپ هیچ رقمی، نسیه‌ی صفر ثبت می‌شود — نه «پرداخت کامل»
+    expect(createJewelryCreditSaleMock.mock.calls[0]?.[0]).toMatchObject({ paidRial: '0' });
   });
 
   it('«فروش جدید» رسید را می‌بندد و به مرحله‌ی اول برمی‌گردد', async () => {

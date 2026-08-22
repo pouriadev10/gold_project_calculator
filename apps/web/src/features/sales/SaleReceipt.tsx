@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatJalaliDateTime } from '@/lib/date';
-import type { SaleSubmitOutcome } from './useJewelryCashSaleSubmit';
+import type { SaleSubmitOutcome } from './useJewelrySaleSubmit';
 
 /**
  * رسید فروش — FE-046.
@@ -39,10 +39,12 @@ import type { SaleSubmitOutcome } from './useJewelryCashSaleSubmit';
  *   `outcome` (لحظه‌ی ثبت) نشان داده می‌شود و صریح «نرخ قفل‌شده‌ی همین
  *   فروش» برچسب می‌خورد؛ روی رسیدی که از فهرست فاکتورها باز شود (FE-065)
  *   این ردیف بدون یک فیلد تازه در قرارداد قابل ساخت نیست.
- * - **پرداخت و مانده**: فروش نقدی طبق تعریف کامل پرداخت‌شده و مانده‌ی
- *   صفر دارد، ولی نسیه (FE-047) این‌طور نیست. تا وقتی قرارداد
- *   `paidRial` را برنگرداند، «پرداخت کامل» برای نقدی از **نوع خودِ
- *   فروش** نتیجه می‌شود، نه از حدس‌زدن روی اعداد.
+ * - **پرداخت و مانده**: `salesInvoiceVersionHistorySchema` هیچ‌کدام را
+ *   ندارد؛ هر دو از `outcome` می‌آیند که خودش آن‌ها را از پاسخ ثبت
+ *   می‌گیرد — برای نسیه `receivableRial` **محاسبه‌ی سرور** است، نه
+ *   تفریق `payable − paid` سمت کلاینت (FE-047). روی رسیدی که از فهرست
+ *   فاکتورها باز شود این دو ردیف هم به یک فیلد تازه در قرارداد نیاز
+ *   دارند.
  * - **چاپ/PDF**: `GET /sales/invoices/:id/pdf` واقعاً وجود دارد
  *   (`InvoiceHistoryController`)، ولی دانلود فایل جریان و تست خودش را
  *   می‌خواهد — تسک هم صریح می‌گوید «اقدام چاپ یا PDF **در آینده**». دکمه
@@ -51,6 +53,19 @@ import type { SaleSubmitOutcome } from './useJewelryCashSaleSubmit';
  */
 
 const ITEM_TYPE_LABEL: Record<'JEWELRY' | 'COIN', string> = { JEWELRY: 'زیورآلات', COIN: 'سکه' };
+
+/**
+ * برچسب مانده — آینه‌ی `debtorCreditorLabel` در `PartyDetailPage` و
+ * پشت آن `directionFor` واقعی (`party-balance-report.service.ts`): مثبت
+ * یعنی مشتری به فروشگاه بدهکار است. `receivableRial` قرارداد
+ * `nonNegativeBigIntStringSchema` است، پس عملاً فقط دو حالت اول رخ
+ * می‌دهند؛ شاخه‌ی سوم برای همان تطابق یک‌به‌یک با منبع نگه داشته شده.
+ */
+function balanceLabel(receivableRial: bigint): string {
+  if (receivableRial > 0n) return 'بدهکار';
+  if (receivableRial < 0n) return 'بستانکار';
+  return 'تسویه';
+}
 
 function ReceiptRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -188,14 +203,32 @@ export function SaleReceipt({ outcome }: { readonly outcome: SaleSubmitOutcome }
                 <ReceiptRow label="جمع فاکتور">
                   <AmountDisplay amount={dualFromRial(payableRial, rate1000)} size="lg" />
                 </ReceiptRow>
-                {/* فروش نقدی طبق تعریفش کامل پرداخت می‌شود — از نوع فروش نتیجه می‌شود، نه از مقایسه‌ی اعداد */}
-                <ReceiptRow label="پرداخت‌شده (نقدی)">
-                  <AmountDisplay amount={dualFromRial(payableRial, rate1000)} size="sm" />
+                <ReceiptRow label={outcome.mode === 'CASH' ? 'پرداخت‌شده (نقدی)' : 'پرداخت‌شده'}>
+                  <AmountDisplay amount={dualFromRial(outcome.paidRial, rate1000)} size="sm" />
                 </ReceiptRow>
                 <ReceiptRow label="مانده">
-                  <AmountDisplay amount={dualFromRial(0n, rate1000)} size="sm" />
+                  <div className="flex items-center gap-2">
+                    <AmountDisplay amount={dualFromRial(outcome.receivableRial, rate1000)} size="sm" />
+                    <span
+                      className={
+                        outcome.receivableRial > 0n
+                          ? 'text-xs font-medium text-debit'
+                          : 'text-xs font-medium text-muted-foreground'
+                      }
+                    >
+                      {balanceLabel(outcome.receivableRial)}
+                    </span>
+                  </div>
                 </ReceiptRow>
               </div>
+
+              {outcome.receivableRial > 0n ? (
+                <p className="flex items-start gap-1.5 text-xs text-warning">
+                  <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+                  این فروش نسیه ثبت شد؛ مبلغ بالا به‌عنوان بدهی {outcome.party.displayName} در حساب همین
+                  مشتری نشست.
+                </p>
+              ) : null}
             </>
           )}
 

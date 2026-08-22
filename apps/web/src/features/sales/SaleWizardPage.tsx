@@ -13,9 +13,10 @@ import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { hasSaleDraftProgress, SALE_STEPS, useSaleDraftStore, type SaleStep } from '@/stores/sale-draft-store';
 import { JewelryItemSelector } from './JewelryItemSelector';
 import { SaleStepper } from './SaleStepper';
+import { SalePaymentInput } from './SalePaymentInput';
 import { SaleReceipt } from './SaleReceipt';
 import { SaleSummary } from './SaleSummary';
-import { useJewelryCashSaleSubmit } from './useJewelryCashSaleSubmit';
+import { useJewelrySaleSubmit } from './useJewelrySaleSubmit';
 
 /**
  * صفحه‌ی شروع فروش — shell جریان فروش سریع (FE-041).
@@ -30,7 +31,7 @@ import { useJewelryCashSaleSubmit } from './useJewelryCashSaleSubmit';
  *
  * مرور با `SaleSummary` (FE-044) کار واقعی دارد — خلاصه‌ی فاکتور، شامل
  * مظنه‌ی قفل‌شده — و از FE-045 دکمه‌ی پایین همان مرحله واقعاً ثبت می‌کند
- * (`useJewelryCashSaleSubmit`). پرداخت هنوز جانگه‌دار است — کار FE-050؛
+ * (`useJewelrySaleSubmit`). پرداخت هنوز جانگه‌دار است — کار FE-050؛
  * «بعدی» رویش همیشه فعال است چون چیزی برای اعتبارسنجی‌اش هنوز وجود ندارد.
  *
  * **حین ثبت، صفحه قفل می‌شود** (`isSubmitting`): «قبلی» و «ثبت» هر دو
@@ -71,7 +72,7 @@ export default function SaleWizardPage() {
   const setParty = useSaleDraftStore((s) => s.setParty);
   const setItems = useSaleDraftStore((s) => s.setItems);
 
-  const { preparation, isSubmitting, error, outcome, submit, startNewSale } = useJewelryCashSaleSubmit();
+  const { preparation, isSubmitting, error, outcome, submit, startNewSale } = useJewelrySaleSubmit();
 
   /*
    * حین ارسال هم مسدود می‌ماند حتی اگر پیش‌نویس «پیشرفت» نداشته باشد —
@@ -127,6 +128,14 @@ export default function SaleWizardPage() {
         {step === 'REVIEW' ? (
           <>
             <SaleSummary />
+            {/*
+              «چقدر الان پرداخت می‌شود» — FE-047. اینجا و نه در مرحله‌ی
+              «پرداخت»، چون آن مرحله روش پرداخت را می‌پرسد (FE-050) و هنوز
+              ساخته نشده؛ مبلغ باید کنار جمع کلی باشد که به آن مربوط است.
+            */}
+            <SalePaymentInput
+              previewPayableRial={preparation.ok ? preparation.plan.previewPayableRial : undefined}
+            />
             {/*
               خطای ثبت در بدنه‌ی صفحه می‌ماند، نه در toast: عملیات مالی
               شکست‌خورده نباید بعد از چند ثانیه ناپدید شود. پیش‌نویس هم

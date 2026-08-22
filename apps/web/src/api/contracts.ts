@@ -8,6 +8,7 @@ import {
   priceQuoteAmountRialSchema,
   priceQuoteSchema as sharedPriceQuoteSchema,
   jewelryCashSaleSchema as sharedJewelryCashSaleSchema,
+  jewelryCreditSaleSchema as sharedJewelryCreditSaleSchema,
   type Party,
 } from '@gold/contracts';
 
@@ -81,8 +82,10 @@ export {
   dashboardQuerySchema,
   reportingDisplayUnitSchema,
   createJewelryCashSaleSchema,
+  createJewelryCreditSaleSchema,
   salesInvoiceVersionHistorySchema,
   type CreateJewelryCashSaleInput,
+  type CreateJewelryCreditSaleInput,
   type SalesInvoiceVersionHistory,
   type LoginInput,
   type SessionResponse,
@@ -344,3 +347,20 @@ export const jewelryCashSaleSchema = sharedJewelryCashSaleSchema.extend({
   payableRial: bigintString,
 });
 export type JewelryCashSale = z.infer<typeof jewelryCashSaleSchema>;
+
+/* ── POST /api/sales/invoices/jewelry/credit — FE-047/BE-042 ─── */
+
+/**
+ * پاسخ ثبت فروش نسیه. همان شکل نقدی، به‌اضافه‌ی `receivableRial` —
+ * **مانده‌ی این فاکتور، محاسبه‌شده‌ی سرور**، نه تفریق کلاینت.
+ *
+ * چرا مهم است: مبلغ نهایی را سرور می‌زند (نسخه‌ی کالا + `quoteId`)، پس
+ * `payable − paid` سمت کلاینت با عددی حساب می‌شود که ممکن است مبلغ واقعی
+ * سند نباشد. مانده‌ای که به مشتری نشان داده می‌شود باید همانی باشد که در
+ * حساب او نشسته.
+ */
+export const jewelryCreditSaleSchema = sharedJewelryCreditSaleSchema.extend({
+  payableRial: bigintString,
+  receivableRial: bigintString,
+});
+export type JewelryCreditSale = z.infer<typeof jewelryCreditSaleSchema>;
