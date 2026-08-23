@@ -1,4 +1,16 @@
-import { bubble, coinPositionValue, gramRate1000, grossUg, intrinsicValue, karat, rial, searchKey } from '@gold/core-calc';
+import {
+  bubble,
+  coinPositionValue,
+  gramRate1000,
+  grossMg,
+  grossUg,
+  intrinsicValue,
+  karat,
+  rial,
+  searchKey,
+  toPureMg,
+  valueOfPure,
+} from '@gold/core-calc';
 import type { CoinType } from '@gold/core-calc';
 import { DEFAULT_PAGE_SIZE } from '@gold/contracts';
 import { HttpResponse, http, delay } from 'msw';
@@ -866,6 +878,79 @@ export const handlers = [
       settlementId: crypto.randomUUID(),
       ledgerTransactionId: crypto.randomUUID(),
       amountRial: body.amountRial,
+    };
+
+    idempotencyCache.set(key, result);
+    return HttpResponse.json(result, { status: 201 });
+  }),
+
+  /**
+   * `POST /parties/:partyId/settlements/gold` — قرارداد نهایی BE-046
+   * (`createGoldSettlementSchema`/`goldSettlementSchema`)، FE-052.
+   *
+   * دریافت طلا برای تسویه — سرور خودش وزن خالص و مبلغ را از روی
+   * `quoteId` قفل‌شده حساب می‌کند، نه از عددی که کلاینت پیش‌نمایش داده.
+   */
+  http.post('/api/parties/:partyId/settlements/gold', async ({ request, params }) => {
+    await delay(WRITE_DELAY_MS);
+
+    const key = request.headers.get('Idempotency-Key');
+    if (!key) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 'IDEMPOTENCY_KEY_REQUIRED',
+            message: 'هدر Idempotency-Key اجباری است',
+            fields: {},
+            requestId: crypto.randomUUID(),
+          },
+        },
+        { status: 400 },
+      );
+    }
+
+    const cached = idempotencyCache.get(key);
+    if (cached) return HttpResponse.json(cached, { status: 201 });
+
+    const partyId = params['partyId'] as string;
+    const party = partyList.find((p) => p.id === partyId);
+    if (!party) return partyNotFound();
+
+    const body = (await request.json()) as {
+      grossWeightMg: string;
+      karat: number;
+      quoteId: string;
+      effectiveAt: string;
+    };
+    const quote = maznehQuoteHistory.find((q) => q.id === body.quoteId);
+    if (!quote) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 'NOT_FOUND',
+            message: 'مظنه‌ی انتخاب‌شده پیدا نشد',
+            fields: {},
+            requestId: crypto.randomUUID(),
+          },
+        },
+        { status: 404 },
+      );
+    }
+
+    const rate1000 = gramRate1000(BigInt(quote.amountRial));
+    const pureWeightMg = toPureMg(grossMg(BigInt(body.grossWeightMg)), karat(body.karat));
+    const settledRial = valueOfPure(pureWeightMg, rate1000);
+
+    // بدهکار کم می‌شود؛ رد شدن از صفر یعنی شخص بستانکار می‌شود — طبیعی است
+    PARTY_RIAL_BALANCE[partyId] = (PARTY_RIAL_BALANCE[partyId] ?? 0n) - settledRial;
+
+    const result = {
+      settlementId: crypto.randomUUID(),
+      ledgerTransactionId: crypto.randomUUID(),
+      inventoryMovementId: crypto.randomUUID(),
+      pureWeightMg: pureWeightMg.toString(),
+      settledRial: settledRial.toString(),
+      goldRatePerGramRial: rate1000.toString(),
     };
 
     idempotencyCache.set(key, result);

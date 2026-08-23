@@ -11,6 +11,7 @@ import {
   jewelryCreditSaleSchema as sharedJewelryCreditSaleSchema,
   coinSaleSchema as sharedCoinSaleSchema,
   rialSettlementSchema as sharedRialSettlementSchema,
+  goldSettlementSchema as sharedGoldSettlementSchema,
   type Party,
 } from '@gold/contracts';
 
@@ -87,11 +88,13 @@ export {
   createJewelryCreditSaleSchema,
   createCoinSaleSchema,
   createRialSettlementSchema,
+  createGoldSettlementSchema,
   salesInvoiceVersionHistorySchema,
   type CreateJewelryCashSaleInput,
   type CreateJewelryCreditSaleInput,
   type CreateCoinSaleInput,
   type CreateRialSettlementInput,
+  type CreateGoldSettlementInput,
   type SalesInvoiceVersionHistory,
   type LoginInput,
   type SessionResponse,
@@ -403,3 +406,18 @@ export const rialSettlementSchema = sharedRialSettlementSchema.extend({
   amountRial: bigintString,
 });
 export type RialSettlement = z.infer<typeof rialSettlementSchema>;
+
+/* ── POST /api/parties/:partyId/settlements/gold — FE-052/BE-046 ─── */
+
+/**
+ * پاسخ ثبت دریافت طلا برای تسویه. `goldRatePerGramRial` همان `rate1000`ی
+ * است که سرور از `quoteId` قفل کرده (`gramRate1000` واقعی) — دقیقاً همان
+ * نرخی که برای `AmountDisplay`/`dualFromRial` لازم است، پس این پاسخ خودش
+ * کافی است و به یک fetch مظنه‌ی جداگانه بعد از ثبت نیاز نیست.
+ */
+export const goldSettlementSchema = sharedGoldSettlementSchema.extend({
+  pureWeightMg: bigintString,
+  settledRial: bigintString,
+  goldRatePerGramRial: bigintString,
+});
+export type GoldSettlement = z.infer<typeof goldSettlementSchema>;
