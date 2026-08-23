@@ -2,10 +2,13 @@ import { apiPost } from './client';
 import {
   jewelryCashSaleSchema,
   jewelryCreditSaleSchema,
+  coinSaleSchema,
   type CreateJewelryCashSaleInput,
   type CreateJewelryCreditSaleInput,
+  type CreateCoinSaleInput,
   type JewelryCashSale,
   type JewelryCreditSale,
+  type CoinSale,
 } from './contracts';
 
 /**
@@ -45,4 +48,21 @@ export function createJewelryCreditSale(
   signal?: AbortSignal,
 ): Promise<JewelryCreditSale> {
   return apiPost('/sales/invoices/jewelry/credit', input, jewelryCreditSaleSchema, idempotencyKey, signal);
+}
+
+/**
+ * ثبت فروش سکه — `POST /sales/invoices/coins` (BE-043، FE-048).
+ *
+ * برخلاف زیورآلات یک endpoint واحد برای نقدی و نسیه است: `paidRial`
+ * همیشه اجباری است (صفر یا کامل یا هرچیز بین این دو)، و سرور خودش
+ * `receivableRial` را برمی‌گرداند. اگر `paidRial` از مبلغ محاسبه‌شده
+ * بیشتر باشد سرور رد می‌کند (`CoinSalePaidRialExceedsPayableError`) —
+ * برخلاف فروش نسیه‌ی زیورآلات که این حالت را می‌پذیرد.
+ */
+export function createCoinSale(
+  input: CreateCoinSaleInput,
+  idempotencyKey: string,
+  signal?: AbortSignal,
+): Promise<CoinSale> {
+  return apiPost('/sales/invoices/coins', input, coinSaleSchema, idempotencyKey, signal);
 }

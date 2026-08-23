@@ -1,4 +1,5 @@
-import { searchKey } from '@gold/core-calc';
+import { bubble, coinPositionValue, gramRate1000, grossUg, intrinsicValue, karat, rial, searchKey } from '@gold/core-calc';
+import type { CoinType } from '@gold/core-calc';
 import { DEFAULT_PAGE_SIZE } from '@gold/contracts';
 import { HttpResponse, http, delay } from 'msw';
 import type { JewelryItemVersion, Party } from '@/api/contracts';
@@ -310,6 +311,123 @@ jewelryItemList = jewelryItemList.filter((item) => item.jewelryItemId !== body.j
 
 idempotencyCache.set(key, result);
 return HttpResponse.json(result, { status: 201 });
+}
+
+function toCoinType(fixture: (typeof COIN_TYPE_VERSIONS)[number]): CoinType {
+  const shared = {
+    kind: 'coin' as const,
+    id: fixture.coinTypeId,
+    label: fixture.title,
+    grossWeightUg: grossUg(BigInt(fixture.grossWeightUg)),
+    karat: karat(fixture.karat),
+  };
+  return fixture.isCentralBankMinted ? { ...shared, isCentralBankMinted: true } : { ...shared, isCentralBankMinted: false };
+}
+
+/**
+ * ثبت فروش سکه — BE-043، FE-048. برخلاف زیورآلات یک endpoint واحد است:
+ * `paidRial` همیشه در بدنه است (صفر یا کامل یا بین این دو)، نه دو مسیر
+ * جدا برای نقدی/نسیه.
+ */
+async function registerCoinSale(request: Request) {
+  await delay(WRITE_DELAY_MS);
+
+  const key = request.headers.get('Idempotency-Key');
+  if (!key) {
+    return HttpResponse.json(
+      {
+        error: {
+          code: 'IDEMPOTENCY_KEY_REQUIRED',
+          message: 'هدر Idempotency-Key اجباری است',
+          fields: {},
+          requestId: crypto.randomUUID(),
+        },
+      },
+      { status: 400 },
+    );
+  }
+
+  const cached = idempotencyCache.get(key);
+  if (cached) return HttpResponse.json(cached, { status: 201 });
+
+  const body = (await request.json()) as {
+    partyId: string;
+    coinTypeId: string;
+    count: number;
+    marketUnitPriceRial: string;
+    quoteId: string;
+    effectiveAt: string;
+    paidRial: string;
+  };
+
+  const fixture = COIN_TYPE_VERSIONS.find((c) => c.coinTypeId === body.coinTypeId);
+  const quote = maznehQuoteHistory.find((q) => q.id === body.quoteId);
+  if (!fixture || !quote) {
+    return HttpResponse.json(
+      {
+        error: {
+          code: 'NOT_FOUND',
+          message: !fixture ? 'نوع سکه‌ی انتخاب‌شده پیدا نشد' : 'مظنه‌ی انتخاب‌شده پیدا نشد',
+          fields: {},
+          requestId: crypto.randomUUID(),
+        },
+      },
+      { status: 404 },
+    );
+  }
+
+  const coin = toCoinType(fixture);
+  const rate1000 = gramRate1000(BigInt(quote.amountRial));
+  const marketUnitPriceRial = rial(BigInt(body.marketUnitPriceRial));
+  const intrinsicValueRial = intrinsicValue(coin, rate1000);
+  const bubbleRial = coin.isCentralBankMinted ? bubble(coin, marketUnitPriceRial, rate1000) : null;
+  const payableRial = coinPositionValue(body.count, marketUnitPriceRial);
+  const paidRial = BigInt(body.paidRial);
+
+  // آینه‌ی CoinSalePaidRialExceedsPayableError واقعی — برخلاف نسیه‌ی زیورآلات، اینجا رد می‌شود نه پذیرفته
+  if (paidRial > payableRial) {
+    return HttpResponse.json(
+      {
+        error: {
+          code: 'COIN_SALE_PAID_RIAL_EXCEEDS_PAYABLE',
+          message: 'مبلغ پرداختی نمی‌تواند از مبلغ قابل‌پرداخت بیشتر باشد',
+          fields: {},
+          requestId: crypto.randomUUID(),
+        },
+      },
+      { status: 422 },
+    );
+  }
+  const receivableRial = payableRial - paidRial;
+
+  invoiceCounter += 1;
+  const result = {
+    invoiceId: crypto.randomUUID(),
+    invoiceNumber: invoiceCounter,
+    payableRial: payableRial.toString(),
+    receivableRial: receivableRial.toString(),
+    intrinsicValueRial: intrinsicValueRial.toString(),
+    bubbleRial: bubbleRial === null ? null : bubbleRial.toString(),
+    ledgerTransactionId: crypto.randomUUID(),
+    inventoryMovementId: crypto.randomUUID(),
+  };
+
+  // موجودی همان نوع کم می‌شود — منفی هم می‌تواند بشود، دقیقاً مثل موجودی واقعی
+  const existingBalance = COIN_BALANCE_ROWS.find((row) => row.itemId === body.coinTypeId);
+  if (existingBalance) {
+    existingBalance.quantity = (BigInt(existingBalance.quantity) - BigInt(body.count)).toString();
+  } else {
+    // `itemId` در نوع استنتاج‌شده‌ی COIN_BALANCE_ROWS محدود به سه شناسه‌ی اولیه است؛
+    // اینجا هر نوع سکه‌ی معتبری می‌تواند برای اولین بار حرکت بگیرد.
+    (COIN_BALANCE_ROWS as { itemType: 'COIN'; itemId: string; quantity: string }[]).push({
+      itemType: 'COIN',
+      itemId: body.coinTypeId,
+      quantity: (-BigInt(body.count)).toString(),
+    });
+  }
+
+  idempotencyCache.set(key, result);
+  return HttpResponse.json(result, { status: 201 });
 }
 
 export const handlers = [
@@ -1017,6 +1135,16 @@ export const handlers = [
   http.post('/api/sales/invoices/jewelry/credit', ({ request }) =>
     registerJewelrySale(request, 'CREDIT'),
   ),
+
+  /**
+   * `POST /sales/invoices/coins` — قرارداد نهایی BE-043
+   * (`createCoinSaleSchema`/`coinSaleSchema`)، FE-048.
+   *
+   * تعداد `integer` می‌ماند (`body.count`)، هرگز به وزن تبدیل نمی‌شود.
+   * `intrinsicValueRial`/`bubbleRial` مقدار **یک سکه** است؛ `payableRial`
+   * تعداد × قیمت بازار. `bubbleRial` فقط برای نوع بانک‌مرکزی مقدار دارد.
+   */
+  http.post('/api/sales/invoices/coins', ({ request }) => registerCoinSale(request)),
 
   /**
    * `GET /sales/invoices/:invoiceId/versions` — قرارداد نهایی BE-043

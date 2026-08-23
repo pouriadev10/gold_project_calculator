@@ -173,6 +173,13 @@ const salesNewRoute = createRoute({
   component: lazyRouteComponent(() => import('@/features/sales/SaleWizardPage')),
 });
 
+const salesCoinsNewRoute = createRoute({
+  getParentRoute: () => appShellRoute,
+  path: '/sales/coins/new',
+  // بدون beforeLoad نقش‌محور — همان استدلال salesNewRoute، شروع فروش برای هر نقشی باز است
+  component: lazyRouteComponent(() => import('@/features/sales/CoinSaleForm')),
+});
+
 const salesInvoicesRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/sales/invoices',
@@ -277,6 +284,7 @@ const routeTree = rootRoute.addChildren([
     inventoryCoinsRoute,
     inventoryOpeningBalanceRoute,
     salesNewRoute,
+    salesCoinsNewRoute,
     salesInvoicesRoute,
     salesInvoiceDetailRoute,
     purchaseSecondHandRoute,

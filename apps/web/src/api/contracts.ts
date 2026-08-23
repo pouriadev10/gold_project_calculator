@@ -9,6 +9,7 @@ import {
   priceQuoteSchema as sharedPriceQuoteSchema,
   jewelryCashSaleSchema as sharedJewelryCashSaleSchema,
   jewelryCreditSaleSchema as sharedJewelryCreditSaleSchema,
+  coinSaleSchema as sharedCoinSaleSchema,
   type Party,
 } from '@gold/contracts';
 
@@ -83,9 +84,11 @@ export {
   reportingDisplayUnitSchema,
   createJewelryCashSaleSchema,
   createJewelryCreditSaleSchema,
+  createCoinSaleSchema,
   salesInvoiceVersionHistorySchema,
   type CreateJewelryCashSaleInput,
   type CreateJewelryCreditSaleInput,
+  type CreateCoinSaleInput,
   type SalesInvoiceVersionHistory,
   type LoginInput,
   type SessionResponse,
@@ -364,3 +367,23 @@ export const jewelryCreditSaleSchema = sharedJewelryCreditSaleSchema.extend({
   receivableRial: bigintString,
 });
 export type JewelryCreditSale = z.infer<typeof jewelryCreditSaleSchema>;
+
+/* ── POST /api/sales/invoices/coins — FE-048/BE-043 ─────────── */
+
+/**
+ * پاسخ ثبت فروش سکه. برخلاف زیورآلات یک endpoint واحد است، نه نقدی/نسیه‌ی
+ * جدا — چون `CoinSalesService` خودش `paidRial` را همیشه می‌گیرد و
+ * `receivableRial` را همیشه برمی‌گرداند (صفر یعنی نقدی کامل).
+ *
+ * `intrinsicValueRial`/`bubbleRial` مقدار **یک سکه** است، نه کل معامله —
+ * دقیقاً همان چیزی که `SalesPricingService.priceCoinInTransaction` واقعی
+ * می‌سازد (`intrinsicValue`/`bubble` روی یک `CoinType`، نه ضرب‌شده در
+ * تعداد). `bubbleRial` فقط برای سکه‌ی بانک مرکزی مقدار دارد — قانون حباب.
+ */
+export const coinSaleSchema = sharedCoinSaleSchema.extend({
+  payableRial: bigintString,
+  receivableRial: bigintString,
+  intrinsicValueRial: bigintString,
+  bubbleRial: bigIntStringSchema.nullable().transform((value) => (value === null ? null : BigInt(value))),
+});
+export type CoinSale = z.infer<typeof coinSaleSchema>;
