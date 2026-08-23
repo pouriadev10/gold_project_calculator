@@ -1,13 +1,11 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  bubble,
   coinPositionValue,
   dualFromRial,
   formatCount,
   formatRial,
   grossUg,
-  intrinsicValue,
   karat as toKarat,
   rial,
   toSafeNumber,
@@ -34,6 +32,7 @@ import { useMazneh } from '@/features/home/useMazneh';
 import { useIdempotentSubmit } from '@/hooks/useIdempotentSubmit';
 import { toast } from '@/stores/toast-store';
 import type { PartySelection } from '@/stores/recent-parties-store';
+import { CoinPositionSummary } from './CoinPositionSummary';
 
 /**
  * فرم فروش سکه — FE-048.
@@ -50,18 +49,18 @@ import type { PartySelection } from '@/stores/recent-parties-store';
  * (تنها استثنای این قاعده در کل سیستم که در `createCoinSaleSchema` واقعی
  * هم همین‌طور تعریف شده، نه `bigint` رشته‌ای).
  *
- * **قانون حباب** با همان الگوی `CoinInventoryList` (FE-038) اجرا می‌شود:
- * `toCoinType` اینجا هم یک کپی محلی است (نه import مشترک) — یک تابع
- * خالص هشت‌خطی، تکرارش ارزان‌تر از یک انتزاع مشترک زودهنگام است.
- * `bubble()` فقط `CentralBankMintedCoinType` می‌پذیرد، پس نوع غیرمجاز
- * اصلاً امکان محاسبه ندارد، نه اینکه شرط زمان اجرا آن را مخفی کند.
+ * **موقعیت، ارزش ذاتی و حباب** — از `CoinPositionSummary` (FE-049) می‌آید،
+ * یک کامپوننت گزارشی خالص که تعداد قبل/فروش/بعد و ارزش بازار/ذاتی/حباب را
+ * از روی `coin`، موجودی جاری و ورودی‌های همین فرم می‌سازد؛ اینجا فقط
+ * `toCoinType` (کپی محلی هشت‌خطی، همان الگوی `CoinInventoryList` FE-038)
+ * برای تبدیل کاتالوگ به `CoinType` است. قانون حباب همان‌جا با امضای
+ * `bubble()` اجبار می‌شود، نه با شرط زمان اجرا اینجا.
  *
- * **موجودی همان نوع** فقط نمایش داده می‌شود (موجودی فعلی و موجودی پس از
- * فروش)، ثبت را مسدود نمی‌کند — نه «تمام است وقتی» و نه سرویس واقعی
- * (`CoinSalesService`) چنین سقفی ندارند؛ فقط سرویس واقعی روی «پرداختی
- * بیشتر از مبلغ فاکتور» رد می‌کند (`CoinSalePaidRialExceedsPayableError`)
- * که همینجا هم پیش از ارسال بررسی می‌شود تا کاربر زودتر از پاسخ سرور
- * بفهمد.
+ * **موجودی همان نوع** فقط نمایش داده می‌شود، ثبت را مسدود نمی‌کند — نه
+ * «تمام است وقتی» و نه سرویس واقعی (`CoinSalesService`) چنین سقفی ندارند؛
+ * فقط سرویس واقعی روی «پرداختی بیشتر از مبلغ فاکتور» رد می‌کند
+ * (`CoinSalePaidRialExceedsPayableError`) که همینجا هم پیش از ارسال بررسی
+ * می‌شود تا کاربر زودتر از پاسخ سرور بفهمد.
  *
  * **مظنه قفل نمی‌شود** — برخلاف `SaleSummary` (FE-044) این یک صفحه‌ی
  * تک‌مرحله‌ای است، نه یک مرور پس از چند قدم؛ نرخ زنده تا لحظه‌ی ثبت
@@ -131,19 +130,11 @@ export default function CoinSaleForm() {
   const coin = selectedType ? toCoinType(selectedType) : undefined;
   const rate1000 = mazneh.data?.gram1000;
 
-  const intrinsicValueRial = coin && rate1000 !== undefined ? intrinsicValue(coin, rial(rate1000)) : undefined;
-  const bubbleRial =
-    coin && !coin.isCentralBankMinted
-      ? null
-      : coin && rate1000 !== undefined && marketUnitPriceRial > 0n
-        ? bubble(coin, rial(marketUnitPriceRial), rial(rate1000))
-        : undefined;
   const payableRial =
     count > 0n && marketUnitPriceRial > 0n ? coinPositionValue(toSafeNumber(count), rial(marketUnitPriceRial)) : undefined;
 
   const currentBalance = balancesQuery.data?.find((b) => b.itemId === coinTypeId);
   const currentCount = currentBalance ? toSafeNumber(BigInt(currentBalance.quantity)) : 0;
-  const projectedCount = currentCount - toSafeNumber(count);
 
   function blockReason(): SubmitBlockReason | null {
     if (party === null) return 'NO_PARTY';
@@ -284,50 +275,21 @@ export default function CoinSaleForm() {
               </div>
             )}
 
-            {coinTypeId !== null ? (
-              <p className="text-xs text-muted-foreground">
-                موجودی فعلی: <span className="tabular-nums">{formatCount(currentCount)}</span> عدد — پس از این
-                فروش:{' '}
-                <span className={`tabular-nums ${projectedCount < 0 ? 'text-debit' : ''}`}>
-                  {formatCount(projectedCount)}
-                </span>{' '}
-                عدد
-              </p>
-            ) : null}
-
             <CountInput label="تعداد" value={count} onChange={setCount} />
             <MoneyInput label="قیمت واحد بازار" value={marketUnitPriceRial} onChange={setMarketUnitPriceRial} />
-
-            <div className="space-y-2 border-t border-border pt-3 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">جمع قیمت</span>
-                {payableRial !== undefined && rate1000 !== undefined ? (
-                  <AmountDisplay amount={dualFromRial(payableRial, rate1000)} size="sm" />
-                ) : (
-                  <span className="text-xs text-muted-foreground">—</span>
-                )}
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">ارزش ذاتی (هر سکه)</span>
-                {intrinsicValueRial !== undefined && rate1000 !== undefined ? (
-                  <AmountDisplay amount={dualFromRial(intrinsicValueRial, rate1000)} size="sm" />
-                ) : (
-                  <span className="text-xs text-muted-foreground">مظنه در دسترس نیست</span>
-                )}
-              </div>
-              {coin?.isCentralBankMinted ? (
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">حباب (هر سکه)</span>
-                  {bubbleRial !== undefined && bubbleRial !== null && rate1000 !== undefined ? (
-                    <AmountDisplay amount={dualFromRial(bubbleRial, rate1000)} signed size="sm" />
-                  ) : (
-                    <span className="text-xs text-muted-foreground">قیمت بازار را وارد کنید</span>
-                  )}
-                </div>
-              ) : null}
-            </div>
           </CardContent>
         </Card>
+
+        {/* خلاصه‌ی موقعیت — FE-049. گزارش خالص است؛ storage را دست نمی‌زند */}
+        {coin ? (
+          <CoinPositionSummary
+            coin={coin}
+            countBefore={currentCount}
+            countSold={toSafeNumber(count)}
+            marketUnitPriceRial={marketUnitPriceRial}
+            rate1000={rate1000}
+          />
+        ) : null}
 
         <Card>
           <CardHeader>

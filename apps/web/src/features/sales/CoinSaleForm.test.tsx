@@ -164,29 +164,25 @@ describe('CoinSaleForm — فرم فروش سکه (FE-048)', () => {
     renderForm();
 
     await selectCoinType(user, BAHAR.title);
-    expect(screen.getByText('حباب (هر سکه)')).toBeInTheDocument();
+    expect(screen.getByText('حباب نمایشی')).toBeInTheDocument();
 
     await selectCoinType(user, PRIVATE.title);
-    expect(screen.queryByText('حباب (هر سکه)')).not.toBeInTheDocument();
+    expect(screen.queryByText('حباب نمایشی')).not.toBeInTheDocument();
   });
 
-  it('موجودی فعلی و موجودی پس از فروش همان نوع را با ارقام فارسی نشان می‌دهد', async () => {
+  it('موجودی جاری را به‌عنوان «تعداد قبل» به خلاصه‌ی موقعیت (FE-049) وصل می‌کند', async () => {
     const user = userEvent.setup();
     renderForm();
 
     await selectCoinType(user, BAHAR.title);
-    expect(
-      screen.getByText((_, node) => node?.textContent === 'موجودی فعلی: ۵ عدد — پس از این فروش: ۵ عدد'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('تعداد قبل').nextElementSibling).toHaveTextContent('۵');
+    expect(screen.getByText('تعداد بعد').nextElementSibling).toHaveTextContent('۵');
 
     await user.click(screen.getByLabelText('تعداد'));
     await typeDigits(user, '3');
 
-    await waitFor(() =>
-      expect(
-        screen.getByText((_, node) => node?.textContent === 'موجودی فعلی: ۵ عدد — پس از این فروش: ۲ عدد'),
-      ).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText('تعداد فروش').nextElementSibling).toHaveTextContent('۳'));
+    expect(screen.getByText('تعداد بعد').nextElementSibling).toHaveTextContent('۲');
   });
 
   it('فروش یک نوع سکه را با payload درست ثبت می‌کند — تعداد number، نه رشته‌ی وزن', async () => {
