@@ -314,7 +314,7 @@ export function priceJewelryFromVersion(
  * غیرصفر دارد تا هر دو ردیف در UI واقعاً قابل‌آزمون باشند؛ بقیه فقط
  * همان `mg` که `balanceSummary` هم از آن می‌سازد.
  */
-const PARTY_RIAL_BALANCE: Record<string, bigint> = {
+export const PARTY_RIAL_BALANCE: Record<string, bigint> = {
   'a1000000-0000-4000-8000-000000000001': 45_000_000n,
 };
 

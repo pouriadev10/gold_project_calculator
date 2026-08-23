@@ -16,6 +16,7 @@ import {
   itemRecords,
   JEWELRY_BALANCE_ROWS,
   jewelryItemVersionRecords,
+  PARTY_RIAL_BALANCE,
   partyBalancesFor,
   partyMgById,
   partyRecords,
@@ -820,6 +821,55 @@ export const handlers = [
     partyList = partyList.map((p) => (p.id === id ? updated : p));
     idempotencyCache.set(key, updated);
     return HttpResponse.json(updated, { status: 200 });
+  }),
+
+  /**
+   * `POST /parties/:partyId/settlements/rial` — قرارداد نهایی BE-045
+   * (`createRialSettlementSchema`/`rialSettlementSchema`)، FE-051.
+   *
+   * تک‌بعدی — بدون تبدیل واحد، بدون سقف: سرور واقعی (`RialSettlementsService`)
+   * هیچ مقایسه‌ای با مانده‌ی جاری ندارد؛ پرداخت بیشتر از طلب فقط شخص را از
+   * بدهکار به بستانکار می‌برد، خطا نیست.
+   */
+  http.post('/api/parties/:partyId/settlements/rial', async ({ request, params }) => {
+    await delay(WRITE_DELAY_MS);
+
+    const key = request.headers.get('Idempotency-Key');
+    if (!key) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 'IDEMPOTENCY_KEY_REQUIRED',
+            message: 'هدر Idempotency-Key اجباری است',
+            fields: {},
+            requestId: crypto.randomUUID(),
+          },
+        },
+        { status: 400 },
+      );
+    }
+
+    const cached = idempotencyCache.get(key);
+    if (cached) return HttpResponse.json(cached, { status: 201 });
+
+    const partyId = params['partyId'] as string;
+    const party = partyList.find((p) => p.id === partyId);
+    if (!party) return partyNotFound();
+
+    const body = (await request.json()) as { amountRial: string; effectiveAt: string };
+    const amountRial = BigInt(body.amountRial);
+
+    // بدهکار کم می‌شود؛ رد شدن از صفر یعنی شخص بستانکار می‌شود — طبیعی است
+    PARTY_RIAL_BALANCE[partyId] = (PARTY_RIAL_BALANCE[partyId] ?? 0n) - amountRial;
+
+    const result = {
+      settlementId: crypto.randomUUID(),
+      ledgerTransactionId: crypto.randomUUID(),
+      amountRial: body.amountRial,
+    };
+
+    idempotencyCache.set(key, result);
+    return HttpResponse.json(result, { status: 201 });
   }),
 
   http.get('/api/items', async ({ request }) => {

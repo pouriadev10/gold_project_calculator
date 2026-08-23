@@ -10,6 +10,7 @@ import {
   jewelryCashSaleSchema as sharedJewelryCashSaleSchema,
   jewelryCreditSaleSchema as sharedJewelryCreditSaleSchema,
   coinSaleSchema as sharedCoinSaleSchema,
+  rialSettlementSchema as sharedRialSettlementSchema,
   type Party,
 } from '@gold/contracts';
 
@@ -85,10 +86,12 @@ export {
   createJewelryCashSaleSchema,
   createJewelryCreditSaleSchema,
   createCoinSaleSchema,
+  createRialSettlementSchema,
   salesInvoiceVersionHistorySchema,
   type CreateJewelryCashSaleInput,
   type CreateJewelryCreditSaleInput,
   type CreateCoinSaleInput,
+  type CreateRialSettlementInput,
   type SalesInvoiceVersionHistory,
   type LoginInput,
   type SessionResponse,
@@ -387,3 +390,16 @@ export const coinSaleSchema = sharedCoinSaleSchema.extend({
   bubbleRial: bigIntStringSchema.nullable().transform((value) => (value === null ? null : BigInt(value))),
 });
 export type CoinSale = z.infer<typeof coinSaleSchema>;
+
+/* ── POST /api/parties/:partyId/settlements/rial — FE-051/BE-045 ─── */
+
+/**
+ * پاسخ ثبت پرداخت ریالی روی مانده‌ی شخص. تک‌بعدی است — بدون تبدیل واحد،
+ * بدون اثر موجودی (`RialSettlementsService` واقعی). `amountRial` همان
+ * مبلغی است که ارسال شد؛ سرور آن را echo می‌کند چون خودِ endpoint چیزی
+ * محاسبه‌شده‌ای برنمی‌گرداند (برخلاف فروش، اینجا قیمتی در کار نیست).
+ */
+export const rialSettlementSchema = sharedRialSettlementSchema.extend({
+  amountRial: bigintString,
+});
+export type RialSettlement = z.infer<typeof rialSettlementSchema>;
