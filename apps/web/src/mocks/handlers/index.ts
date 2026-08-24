@@ -1050,6 +1050,172 @@ export const handlers = [
     return HttpResponse.json(result, { status: 201 });
   }),
 
+  /**
+   * `POST /parties/:partyId/settlements/mixed` — قرارداد نهایی BE-048
+   * (`createMixedSettlementSchema`/`mixedSettlementSchema`)، FE-054.
+   *
+   * یک درخواست، یک تراکنش: همه‌ی ردیف‌ها اول اعتبارسنجی می‌شوند (نوع سکه،
+   * مظنه، سقف اعتبار `CREDIT`) و فقط اگر همه معتبر بودند موجودی/مانده
+   * جابه‌جا می‌شود — نه نیمه‌کاره، دقیقاً «submit اتمیک».
+   */
+  http.post('/api/parties/:partyId/settlements/mixed', async ({ request, params }) => {
+    await delay(WRITE_DELAY_MS);
+
+    const key = request.headers.get('Idempotency-Key');
+    if (!key) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 'IDEMPOTENCY_KEY_REQUIRED',
+            message: 'هدر Idempotency-Key اجباری است',
+            fields: {},
+            requestId: crypto.randomUUID(),
+          },
+        },
+        { status: 400 },
+      );
+    }
+
+    const cached = idempotencyCache.get(key);
+    if (cached) return HttpResponse.json(cached, { status: 201 });
+
+    const partyId = params['partyId'] as string;
+    const party = partyList.find((p) => p.id === partyId);
+    if (!party) return partyNotFound();
+
+    type MixedLineBody =
+      | { type: 'RIAL'; amountRial: string }
+      | { type: 'CREDIT'; amountRial: string }
+      | { type: 'GOLD'; grossWeightMg: string; karat: number; quoteId: string }
+      | { type: 'COIN'; coinTypeId: string; count: number; marketUnitPriceRial: string; quoteId: string };
+    const body = (await request.json()) as { lines: MixedLineBody[]; effectiveAt: string };
+
+    // گذر اول — فقط اعتبارسنجی و محاسبه، بدون هیچ جهش
+    let totalSettledRial = 0n;
+    let creditAppliedRial = 0n;
+    const resultLines: Record<string, unknown>[] = [];
+    const coinDeltas = new Map<string, bigint>();
+
+    for (const line of body.lines) {
+      if (line.type === 'RIAL') {
+        const amount = BigInt(line.amountRial);
+        totalSettledRial += amount;
+        resultLines.push({ type: 'RIAL', settledRial: amount.toString() });
+        continue;
+      }
+      if (line.type === 'CREDIT') {
+        const amount = BigInt(line.amountRial);
+        creditAppliedRial += amount;
+        totalSettledRial += amount;
+        resultLines.push({ type: 'CREDIT', settledRial: amount.toString() });
+        continue;
+      }
+      if (line.type === 'GOLD') {
+        const quote = maznehQuoteHistory.find((q) => q.id === line.quoteId);
+        if (!quote) {
+          return HttpResponse.json(
+            {
+              error: {
+                code: 'NOT_FOUND',
+                message: 'مظنه‌ی انتخاب‌شده پیدا نشد',
+                fields: {},
+                requestId: crypto.randomUUID(),
+              },
+            },
+            { status: 404 },
+          );
+        }
+        const rate1000 = gramRate1000(BigInt(quote.amountRial));
+        const pureWeightMg = toPureMg(grossMg(BigInt(line.grossWeightMg)), karat(line.karat));
+        const settledRial = valueOfPure(pureWeightMg, rate1000);
+        totalSettledRial += settledRial;
+        resultLines.push({
+          type: 'GOLD',
+          inventoryMovementId: crypto.randomUUID(),
+          pureWeightMg: pureWeightMg.toString(),
+          settledRial: settledRial.toString(),
+          goldRatePerGramRial: rate1000.toString(),
+        });
+        continue;
+      }
+      // COIN
+      const fixture = COIN_TYPE_VERSIONS.find((c) => c.coinTypeId === line.coinTypeId);
+      const quote = maznehQuoteHistory.find((q) => q.id === line.quoteId);
+      if (!fixture || !quote) {
+        return HttpResponse.json(
+          {
+            error: {
+              code: 'NOT_FOUND',
+              message: !fixture ? 'نوع سکه‌ی انتخاب‌شده پیدا نشد' : 'مظنه‌ی انتخاب‌شده پیدا نشد',
+              fields: {},
+              requestId: crypto.randomUUID(),
+            },
+          },
+          { status: 404 },
+        );
+      }
+      const coin = toCoinType(fixture);
+      const rate1000 = gramRate1000(BigInt(quote.amountRial));
+      const marketUnitPriceRial = rial(BigInt(line.marketUnitPriceRial));
+      const intrinsicValueRial = intrinsicValue(coin, rate1000);
+      const bubbleRial = coin.isCentralBankMinted ? bubble(coin, marketUnitPriceRial, rate1000) : null;
+      const settledRial = coinPositionValue(line.count, marketUnitPriceRial);
+      totalSettledRial += settledRial;
+      coinDeltas.set(line.coinTypeId, (coinDeltas.get(line.coinTypeId) ?? 0n) + BigInt(line.count));
+      resultLines.push({
+        type: 'COIN',
+        inventoryMovementId: crypto.randomUUID(),
+        coinTypeId: line.coinTypeId,
+        count: line.count,
+        settledRial: settledRial.toString(),
+        intrinsicValueRial: intrinsicValueRial.toString(),
+        bubbleRial: bubbleRial === null ? null : bubbleRial.toString(),
+      });
+    }
+
+    // آینه‌ی MixedSettlementInsufficientCreditError واقعی
+    const currentBalance = PARTY_RIAL_BALANCE[partyId] ?? 0n;
+    const availableCreditRial = currentBalance < 0n ? -currentBalance : 0n;
+    if (creditAppliedRial > availableCreditRial) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 'MIXED_SETTLEMENT_INSUFFICIENT_CREDIT',
+            message: 'مانده‌ی اعتباری شخص برای این ردیف کافی نیست',
+            fields: {},
+            requestId: crypto.randomUUID(),
+          },
+        },
+        { status: 422 },
+      );
+    }
+
+    // گذر دوم — همه معتبرند، حالا موجودی/مانده جابه‌جا می‌شود
+    PARTY_RIAL_BALANCE[partyId] = currentBalance - totalSettledRial;
+    for (const [coinTypeId, delta] of coinDeltas) {
+      const existingBalance = COIN_BALANCE_ROWS.find((row) => row.itemId === coinTypeId);
+      if (existingBalance) {
+        existingBalance.quantity = (BigInt(existingBalance.quantity) + delta).toString();
+      } else {
+        (COIN_BALANCE_ROWS as { itemType: 'COIN'; itemId: string; quantity: string }[]).push({
+          itemType: 'COIN',
+          itemId: coinTypeId,
+          quantity: delta.toString(),
+        });
+      }
+    }
+
+    const result = {
+      settlementId: crypto.randomUUID(),
+      ledgerTransactionId: crypto.randomUUID(),
+      totalSettledRial: totalSettledRial.toString(),
+      lines: resultLines,
+    };
+
+    idempotencyCache.set(key, result);
+    return HttpResponse.json(result, { status: 201 });
+  }),
+
   http.get('/api/items', async ({ request }) => {
     await delay(READ_DELAY_MS);
     const url = new URL(request.url);

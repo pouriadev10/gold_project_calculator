@@ -9,6 +9,9 @@ import {
   type GoldSettlement,
   type CreateCoinSettlementInput,
   type CoinSettlement,
+  mixedSettlementSchema,
+  type CreateMixedSettlementInput,
+  type MixedSettlement,
 } from './contracts';
 
 /**
@@ -49,4 +52,18 @@ export function createCoinSettlement(
   signal?: AbortSignal,
 ): Promise<CoinSettlement> {
   return apiPost(`/parties/${partyId}/settlements/coins`, input, coinSettlementSchema, idempotencyKey, signal);
+}
+
+/**
+ * ثبت تسویه‌ی ترکیبی — `POST /parties/:partyId/settlements/mixed`
+ * (BE-048، FE-054). یک درخواست، یک `Idempotency-Key`، برای همه‌ی
+ * ردیف‌ها با هم — سرور یک تراکنش اتمیک از روی کل آرایه‌ی `lines` می‌سازد.
+ */
+export function createMixedSettlement(
+  partyId: string,
+  input: CreateMixedSettlementInput,
+  idempotencyKey: string,
+  signal?: AbortSignal,
+): Promise<MixedSettlement> {
+  return apiPost(`/parties/${partyId}/settlements/mixed`, input, mixedSettlementSchema, idempotencyKey, signal);
 }

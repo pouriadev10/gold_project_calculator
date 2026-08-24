@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   bigIntStringSchema,
+  uuidSchema,
   coinTypeVersionSchema,
   inventoryBalanceSchema,
   inventoryItemTypeSchema,
@@ -91,6 +92,7 @@ export {
   createRialSettlementSchema,
   createGoldSettlementSchema,
   createCoinSettlementSchema,
+  createMixedSettlementSchema,
   salesInvoiceVersionHistorySchema,
   type CreateJewelryCashSaleInput,
   type CreateJewelryCreditSaleInput,
@@ -98,6 +100,7 @@ export {
   type CreateRialSettlementInput,
   type CreateGoldSettlementInput,
   type CreateCoinSettlementInput,
+  type CreateMixedSettlementInput,
   type SalesInvoiceVersionHistory,
   type LoginInput,
   type SessionResponse,
@@ -438,3 +441,47 @@ export const coinSettlementSchema = sharedCoinSettlementSchema.extend({
   bubbleRial: bigIntStringSchema.nullable().transform((value) => (value === null ? null : BigInt(value))),
 });
 export type CoinSettlement = z.infer<typeof coinSettlementSchema>;
+
+/* ── POST /api/parties/:partyId/settlements/mixed — FE-054/BE-048 ─── */
+
+/**
+ * پاسخ ثبت تسویه‌ی ترکیبی. `mixedSettlementResultLineSchema` واقعی یک
+ * discriminated union است؛ `.extend()` مستقیم روی union ممکن نیست، پس هر
+ * چهار شکل اینجا جدا با `bigintString` بازسازی می‌شوند — نه یک تعریف
+ * جدید، فقط همان قرارداد با تبدیل رشته→`bigint`.
+ */
+const mixedRialSettlementResultLine = z.object({ type: z.literal('RIAL'), settledRial: bigintString });
+const mixedGoldSettlementResultLine = z.object({
+  type: z.literal('GOLD'),
+  inventoryMovementId: uuidSchema,
+  pureWeightMg: bigintString,
+  settledRial: bigintString,
+  goldRatePerGramRial: bigintString,
+});
+const mixedCoinSettlementResultLine = z.object({
+  type: z.literal('COIN'),
+  inventoryMovementId: uuidSchema,
+  coinTypeId: uuidSchema,
+  count: z.number().int().positive(),
+  settledRial: bigintString,
+  intrinsicValueRial: bigintString,
+  bubbleRial: bigIntStringSchema.nullable().transform((value) => (value === null ? null : BigInt(value))),
+});
+const mixedCreditSettlementResultLine = z.object({ type: z.literal('CREDIT'), settledRial: bigintString });
+
+export const mixedSettlementResultLineSchema = z.discriminatedUnion('type', [
+  mixedRialSettlementResultLine,
+  mixedGoldSettlementResultLine,
+  mixedCoinSettlementResultLine,
+  mixedCreditSettlementResultLine,
+]);
+
+export const mixedSettlementSchema = z.object({
+  settlementId: uuidSchema,
+  ledgerTransactionId: uuidSchema,
+  totalSettledRial: bigintString,
+  lines: z.array(mixedSettlementResultLineSchema).min(1),
+});
+
+export type MixedSettlementResultLine = z.infer<typeof mixedSettlementResultLineSchema>;
+export type MixedSettlement = z.infer<typeof mixedSettlementSchema>;
