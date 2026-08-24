@@ -12,6 +12,7 @@ import {
 } from '@gold/core-calc';
 import type { CreateGoldSettlementInput, GoldSettlement } from '@/api/contracts';
 import { createGoldSettlement } from '@/api/settlements';
+import { usePartyBalances } from '@/api/queries';
 import { queryKeys } from '@/api/query-keys';
 import { AmountDisplay } from '@/components/common/AmountDisplay';
 import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
@@ -42,6 +43,11 @@ import { toast } from '@/stores/toast-store';
  * `GoldSettlementsService` واقعی حساب می‌کند؛ طلا هیچ‌وقت حباب ندارد
  * (بخش ۲-۳)، پس این فرمول همیشه دقیق است، نه فقط تقریبی. مبلغ نهایی و
  * «نرخ ردیف» بعد از ثبت از پاسخ سرور می‌آیند، نه از این پیش‌نمایش.
+ *
+ * «مانده پس از این پرداخت» (FE-055، «preview مانده بعد») از
+ * `receivableRial - previewSettledRial` می‌آید — این فرم برای همین
+ * خودش `usePartyBalances` را می‌خواند، نه اینکه صفحه‌ی میزبان مقدار
+ * زنده‌ی وسط تایپ را از این فرم بیرون بکشد.
  */
 
 export interface GoldSettlementFormProps {
@@ -50,6 +56,7 @@ export interface GoldSettlementFormProps {
 }
 
 export function GoldSettlementForm({ partyId, onSuccess }: GoldSettlementFormProps) {
+  const balancesQuery = usePartyBalances(partyId, {});
   const mazneh = useMazneh();
   const queryClient = useQueryClient();
 
@@ -72,6 +79,7 @@ export function GoldSettlementForm({ partyId, onSuccess }: GoldSettlementFormPro
     grossWeightMg > 0n && karatValid && lockedQuote !== null
       ? bullionPrice(grossMg(grossWeightMg), toKarat(toSafeNumber(karatValue)), rial(lockedQuote.gram1000))
       : undefined;
+  const receivableRial = balancesQuery.data ? BigInt(balancesQuery.data.rawBalances.rial) : undefined;
 
   const reason: string | null =
     grossWeightMg <= 0n
@@ -171,6 +179,12 @@ export function GoldSettlementForm({ partyId, onSuccess }: GoldSettlementFormPro
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>نرخ ردیف</span>
               <span className="tabular-nums">{formatRial(lockedQuote.gram1000)} ریال/گرم</span>
+            </div>
+          ) : null}
+          {receivableRial !== undefined && previewSettledRial !== undefined ? (
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>مانده پس از این پرداخت</span>
+              <AmountDisplay amount={dualFromRial(receivableRial - previewSettledRial, lockedQuote!.gram1000)} signed size="sm" />
             </div>
           ) : null}
         </div>

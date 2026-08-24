@@ -2,9 +2,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { formatGram, toPersianDigits } from '@gold/core-calc';
+import { dualFromRial, formatGram, toPersianDigits } from '@gold/core-calc';
 import type * as Queries from '@/api/queries';
-import type { CoinTypeVersion, PriceQuote } from '@/api/contracts';
+import type { CoinTypeVersion, PartyBalances, PriceQuote } from '@/api/contracts';
 import { NumericKeypad } from '@/components/keypad/NumericKeypad';
 import { CoinSettlementForm } from './CoinSettlementForm';
 
@@ -23,11 +23,23 @@ vi.mock('@/api/settlements', () => ({
 
 const useCoinTypesMock = vi.fn();
 const useLatestPriceQuoteMock = vi.fn();
+const usePartyBalancesMock = vi.fn();
 vi.mock('@/api/queries', async (importOriginal) => ({
   ...(await importOriginal<typeof Queries>()),
   useCoinTypes: () => useCoinTypesMock(),
   useLatestPriceQuote: (...args: unknown[]) => useLatestPriceQuoteMock(...args),
+  usePartyBalances: (...args: unknown[]) => usePartyBalancesMock(...args),
 }));
+
+function balances(rial: string): PartyBalances {
+  return {
+    partyId: TEST_PARTY_ID,
+    calculatedAt: new Date().toISOString(),
+    defaultDisplayUnit: 'GOLD',
+    rawBalances: { rial, pureGoldMg: '0', coins: [] },
+    convertedView: null,
+  };
+}
 
 const BAHAR: CoinTypeVersion = {
   id: 'v-bahar',
@@ -97,9 +109,11 @@ beforeEach(() => {
   createCoinSettlementMock.mockReset();
   useCoinTypesMock.mockReset();
   useLatestPriceQuoteMock.mockReset();
+  usePartyBalancesMock.mockReset();
 
   useCoinTypesMock.mockReturnValue({ data: [BAHAR, PRIVATE], isLoading: false, isError: false, refetch: vi.fn() });
   useLatestPriceQuoteMock.mockReturnValue({ data: priceQuote(), isLoading: false, isSuccess: true });
+  usePartyBalancesMock.mockReturnValue({ data: balances('45000000'), isLoading: false, isError: false });
 });
 
 describe('CoinSettlementForm — پرداخت با سکه (FE-053)', () => {
@@ -217,5 +231,21 @@ describe('CoinSettlementForm — پرداخت با سکه (FE-053)', () => {
   it('بدون انتخاب نوع سکه، دکمه‌ی ثبت غیرفعال است', () => {
     renderForm();
     expect(screen.getByRole('button', { name: 'ثبت پرداخت' })).toBeDisabled();
+  });
+
+  it('«مانده پس از این پرداخت» را از موجودی جاری منهای معادل نمایشی می‌سازد (FE-055)', async () => {
+    const user = userEvent.setup();
+    renderForm();
+
+    await selectCoinType(user, BAHAR.title);
+    await user.click(screen.getByLabelText('تعداد'));
+    await typeDigits(user, '3');
+    await user.click(screen.getByLabelText('نرخ بازار'));
+    await typeDigits(user, '1000000000');
+
+    // مانده فعلی ۴۵٬۰۰۰٬۰۰۰ − معادل نمایشی ۳٬۰۰۰٬۰۰۰٬۰۰۰ = ۲٬۹۵۵٬۰۰۰٬۰۰۰ منفی
+    await waitFor(() => expect(screen.getByText('مانده پس از این پرداخت')).toBeInTheDocument());
+    const dualGram = formatGram(dualFromRial(-2_955_000_000n, 100_000_000n).pureMg);
+    expect(screen.getByText(dualGram)).toBeInTheDocument();
   });
 });

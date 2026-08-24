@@ -120,11 +120,10 @@ const partyDetailRoute = createRoute({
 });
 
 /**
- * جانگه‌دار «ثبت تسویه» شخص — مسیر واقعی طبق `FrontTasks.md` (FE-055)
- * دقیقاً همین است: `/parties/:partyId/settlements/new`، نه مسیر تخت
- * `/settlements/new` که پایین‌تر برای زمانی که هنوز شخص مشخص نبود مانده.
- * بخش «ثبت تسویه»ی صفحه‌ی جزئیات شخص (FE-034) به همین‌جا لینک می‌دهد؛
- * صفحه‌ی واقعی با فرم settlement lines کار خودِ FE-055 است.
+ * «ثبت تسویه» شخص — FE-055. مسیر واقعی طبق `FrontTasks.md` دقیقاً همین
+ * است: `/parties/:partyId/settlements/new`، نه مسیر تخت `/settlements/new`
+ * که پایین‌تر برای زمانی که هنوز شخص مشخص نبود مانده (همچنان جانگه‌دار).
+ * بخش «ثبت تسویه»ی صفحه‌ی جزئیات شخص (FE-034) به همین‌جا لینک می‌دهد.
  */
 const partySettlementsNewRoute = createRoute({
   getParentRoute: () => appShellRoute,
@@ -133,7 +132,7 @@ const partySettlementsNewRoute = createRoute({
     parse: (raw: { partyId: string }) => ({ partyId: uuidSchema.parse(raw.partyId) }),
     stringify: (parsed: { partyId: string }) => ({ partyId: parsed.partyId }),
   },
-  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'SettlementsNewPlaceholder'),
+  component: lazyRouteComponent(() => import('@/features/parties/SettlementsNewPage')),
 });
 
 const inventoryRoute = createRoute({

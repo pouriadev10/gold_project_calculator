@@ -15,7 +15,7 @@ import {
 } from '@gold/core-calc';
 import type { CoinSettlement, CoinTypeVersion, CreateCoinSettlementInput } from '@/api/contracts';
 import { createCoinSettlement } from '@/api/settlements';
-import { useCoinTypes } from '@/api/queries';
+import { useCoinTypes, usePartyBalances } from '@/api/queries';
 import { queryKeys } from '@/api/query-keys';
 import { AmountDisplay } from '@/components/common/AmountDisplay';
 import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
@@ -47,6 +47,10 @@ import { toast } from '@/stores/toast-store';
  * **«تبدیل به وزن فقط نمایشی»** — `grossWeightMg` زیر تعداد فقط برای
  * چشم کاربر است؛ نه در payload می‌رود نه جایی ذخیره می‌شود (بخش ۲-۲
  * CLAUDE.md — سکه هرگز در لایه‌ی ذخیره‌سازی به وزن تبدیل نمی‌شود).
+ *
+ * «مانده پس از این پرداخت» (FE-055، «preview مانده بعد») از
+ * `receivableRial - settledRial` می‌آید — این فرم برای همین خودش
+ * `usePartyBalances` را می‌خواند.
  */
 
 export interface CoinSettlementFormProps {
@@ -69,6 +73,7 @@ function toCoinType(version: CoinTypeVersion): CoinType {
 
 export function CoinSettlementForm({ partyId, onSuccess }: CoinSettlementFormProps) {
   const coinTypesQuery = useCoinTypes();
+  const balancesQuery = usePartyBalances(partyId, {});
   const mazneh = useMazneh();
   const queryClient = useQueryClient();
 
@@ -100,6 +105,7 @@ export function CoinSettlementForm({ partyId, onSuccess }: CoinSettlementFormPro
       : undefined;
   const grossWeightMg =
     selectedType && count > 0n ? (count * BigInt(selectedType.grossWeightUg)) / 1000n : undefined;
+  const receivableRial = balancesQuery.data ? BigInt(balancesQuery.data.rawBalances.rial) : undefined;
 
   const reason: string | null =
     coinTypeId === null || coin === undefined
@@ -238,6 +244,12 @@ export function CoinSettlementForm({ partyId, onSuccess }: CoinSettlementFormPro
               ) : (
                 <span className="text-xs text-muted-foreground">نرخ بازار را وارد کنید</span>
               )}
+            </div>
+          ) : null}
+          {receivableRial !== undefined && settledRial !== undefined && rate1000 !== undefined ? (
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>مانده پس از این پرداخت</span>
+              <AmountDisplay amount={dualFromRial(receivableRial - settledRial, rate1000)} signed size="sm" />
             </div>
           ) : null}
         </div>

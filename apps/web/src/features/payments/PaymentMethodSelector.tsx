@@ -20,6 +20,16 @@ import { cn } from '@/lib/utils';
  *
  * چک پیچیده و قسط‌بندی عمداً در هیچ‌جای این ماژول یا آینده‌ی FE-051..054
  * وجود ندارند — هر دو صریح در «قواعد» همین تسک ممنوع شده‌اند.
+ *
+ * `methods` یک زیرمجموعه‌ی اختیاری است — پیش‌فرض همان پنج‌تای کامل.
+ * دلیل وجودش: `CREDIT` («نسیه») یعنی *ندادن* پول الان و نشستنش روی
+ * طلب شخص (دقیقاً واژه‌ی `FE-047`، «فروش نسیه») — یک مفهوم فروش، نه
+ * تسویه. صفحه‌ی تسویه‌ی شخص (FE-055) این گزینه را با `methods` کنار
+ * می‌گذارد چون معنا ندارد («نسیه گذاشتن» روی بدهی‌ای که همین الان دارد
+ * تسویه می‌شود) و هیچ endpoint تسویه‌ی مستقلی هم برایش نیست؛ «مانده
+ * اعتباری» (اعمال اعتبار موجود شخص) مفهوم جداگانه‌ای است که فقط به‌عنوان
+ * یک نوع ردیف داخل `MixedSettlementForm` (FE-054) وجود دارد، نه یک روش
+ * مستقل اینجا.
  */
 
 export const PAYMENT_METHODS = ['RIAL', 'GOLD', 'COIN', 'CREDIT', 'COMBINED'] as const;
@@ -44,14 +54,22 @@ const METHOD_ICON: Record<PaymentMethod, LucideIcon> = {
 export interface PaymentMethodSelectorProps {
   readonly value: PaymentMethod | null;
   readonly onChange: (method: PaymentMethod) => void;
+  /** زیرمجموعه‌ای که نشان داده می‌شود — پیش‌فرض همه‌ی پنج روش. */
+  readonly methods?: readonly PaymentMethod[];
   readonly disabled?: boolean;
   readonly className?: string;
 }
 
-export function PaymentMethodSelector({ value, onChange, disabled = false, className }: PaymentMethodSelectorProps) {
+export function PaymentMethodSelector({
+  value,
+  onChange,
+  methods = PAYMENT_METHODS,
+  disabled = false,
+  className,
+}: PaymentMethodSelectorProps) {
   return (
     <div role="radiogroup" aria-label="روش پرداخت" className={cn('grid grid-cols-3 gap-2', className)}>
-      {PAYMENT_METHODS.map((method) => {
+      {methods.map((method) => {
         const Icon = METHOD_ICON[method];
         const selected = value === method;
         return (

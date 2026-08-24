@@ -38,6 +38,11 @@ import { toast } from '@/stores/toast-store';
  * دادن مقدار مشتق‌شده‌ای که هر رندر عوض می‌شود به `value` یک فیلد کیپدی،
  * وقتی `onChange`اش state را می‌نویسد، فیلد را با یک عدد میانی «لمس‌شده»
  * علامت می‌زند. `amountRial` فقط از خودش می‌آید.
+ *
+ * «مانده پس از این پرداخت» (FE-055، «preview مانده بعد») مستقیم همینجا
+ * از `receivableRial - amountRial` محاسبه می‌شود — این فرم از قبل موجودی
+ * جاری را برای «پرداخت کامل» می‌خواند، پس صفحه‌ی میزبان لازم نیست همان
+ * داده را دوباره بگیرد یا این مقدار زنده را از این فرم بیرون بکشد.
  */
 
 export interface RialSettlementFormProps {
@@ -140,6 +145,17 @@ export function RialSettlementForm({ partyId, onSuccess }: RialSettlementFormPro
         ) : null}
 
         <MoneyInput label="مبلغ" value={amountRial} onChange={setAmountRial} />
+
+        {receivableRial !== undefined && amountRial > 0n ? (
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>مانده پس از این پرداخت</span>
+            {rate1000 !== undefined ? (
+              <AmountDisplay amount={dualFromRial(receivableRial - amountRial, rate1000)} signed size="sm" />
+            ) : (
+              <span className="tabular-nums">{formatRial(receivableRial - amountRial)} ریال</span>
+            )}
+          </div>
+        ) : null}
 
         <Button
           type="button"

@@ -2,16 +2,16 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { toPersianDigits } from '@gold/core-calc';
+import { dualFromRial, formatGram, toPersianDigits } from '@gold/core-calc';
 import type * as Queries from '@/api/queries';
-import type { PriceQuote } from '@/api/contracts';
+import type { PartyBalances, PriceQuote } from '@/api/contracts';
 import { NumericKeypad } from '@/components/keypad/NumericKeypad';
 import { GoldSettlementForm } from './GoldSettlementForm';
 
 /**
  * FE-052 — پرداخت با طلا (`GoldSettlementForm`، «هر روش component مستقل
  * داشته باشد»، FE-050). فقط مرز شبکه (`@/api/settlements`) و
- * `useLatestPriceQuote` (زیرِ `useMazneh`) mock می‌شوند.
+ * `useLatestPriceQuote`/`usePartyBalances` mock می‌شوند.
  */
 
 const TEST_PARTY_ID = 'a1000000-0000-4000-8000-000000000001';
@@ -22,10 +22,22 @@ vi.mock('@/api/settlements', () => ({
 }));
 
 const useLatestPriceQuoteMock = vi.fn();
+const usePartyBalancesMock = vi.fn();
 vi.mock('@/api/queries', async (importOriginal) => ({
   ...(await importOriginal<typeof Queries>()),
   useLatestPriceQuote: (...args: unknown[]) => useLatestPriceQuoteMock(...args),
+  usePartyBalances: (...args: unknown[]) => usePartyBalancesMock(...args),
 }));
+
+function balances(rial: string): PartyBalances {
+  return {
+    partyId: TEST_PARTY_ID,
+    calculatedAt: new Date().toISOString(),
+    defaultDisplayUnit: 'GOLD',
+    rawBalances: { rial, pureGoldMg: '0', coins: [] },
+    convertedView: null,
+  };
+}
 
 /** `324885150` → `gramRate1000` واقعی دقیقاً `100_000_000` می‌دهد، بدون گرد کردن. */
 function priceQuote(id: string, amountRial: bigint): PriceQuote {
@@ -72,7 +84,9 @@ function renderForm() {
 beforeEach(() => {
   createGoldSettlementMock.mockReset();
   useLatestPriceQuoteMock.mockReset();
+  usePartyBalancesMock.mockReset();
   useLatestPriceQuoteMock.mockReturnValue({ data: QUOTE_A, isLoading: false, isSuccess: true });
+  usePartyBalancesMock.mockReturnValue({ data: balances('45000000'), isLoading: false, isError: false });
 });
 
 describe('GoldSettlementForm — پرداخت با طلا (FE-052)', () => {
@@ -165,5 +179,17 @@ describe('GoldSettlementForm — پرداخت با طلا (FE-052)', () => {
   it('بدون وزن، دکمه‌ی ثبت غیرفعال است', () => {
     renderForm();
     expect(screen.getByRole('button', { name: 'ثبت پرداخت' })).toBeDisabled();
+  });
+
+  it('«مانده پس از این پرداخت» را از موجودی جاری منهای معادل نمایشی می‌سازد (FE-055)', async () => {
+    const user = userEvent.setup();
+    renderForm();
+
+    await fillWeightAndKarat(user);
+
+    // مانده فعلی ۴۵٬۰۰۰٬۰۰۰ − معادل نمایشی ۹۰۰٬۰۰۰٬۰۰۰ = ۸۵۵٬۰۰۰٬۰۰۰ منفی (بستانکار می‌شود)
+    await waitFor(() => expect(screen.getByText('مانده پس از این پرداخت')).toBeInTheDocument());
+    const dualGram = formatGram(dualFromRial(-855_000_000n, 100_000_000n).pureMg);
+    expect(screen.getByText(dualGram)).toBeInTheDocument();
   });
 });
