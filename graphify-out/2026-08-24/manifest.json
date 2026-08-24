@@ -1665,8 +1665,8 @@
     "semantic_hash": "f0918d28c8b297bd1e16403c91156161"
   },
   "apps/web/src/api/contracts.ts": {
-    "mtime": 1787502723.8453524,
-    "ast_hash": "2ef0010d1568f769637fe34233ddfc3c",
+    "mtime": 1787502222.3949325,
+    "ast_hash": "8d180e31e8dc754b5446c4058ec991e2",
     "semantic_hash": ""
   },
   "apps/web/src/api/queries.ts": {
@@ -1905,8 +1905,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/mocks/handlers/index.ts": {
-    "mtime": 1787502770.9479973,
-    "ast_hash": "0e61645cefb166f05db98b067708fa8b",
+    "mtime": 1787502281.2882054,
+    "ast_hash": "5d02479c9617622de30d3bfb57deee29",
     "semantic_hash": ""
   },
   "apps/web/src/stores/theme-store.ts": {
@@ -2900,8 +2900,8 @@
     "semantic_hash": "57f3eade61064fcaf09a18164aacb4bc"
   },
   "FrontTasks.md": {
-    "mtime": 1787597437.0515993,
-    "ast_hash": "0ac3667d04cc7753c638aa9d71c7118e",
+    "mtime": 1787502587.3307035,
+    "ast_hash": "a252123fbb9882519acc787105d43cb5",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
@@ -4225,8 +4225,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/settlements.ts": {
-    "mtime": 1787502734.4100838,
-    "ast_hash": "7c86ebe9a20f1d399b1d653f957fca8b",
+    "mtime": 1787502234.1388178,
+    "ast_hash": "f53ae30d49b429ac053b7893295cad1c",
     "semantic_hash": ""
   },
   "apps/web/src/features/payments/RialSettlementForm.test.tsx": {
@@ -4247,16 +4247,6 @@
   "apps/web/src/features/payments/GoldSettlementForm.tsx": {
     "mtime": 1787502314.8313127,
     "ast_hash": "388b81ea8f9dbec37a1e5c45f36099ca",
-    "semantic_hash": ""
-  },
-  "apps/web/src/features/payments/CoinSettlementForm.test.tsx": {
-    "mtime": 1787597270.2432177,
-    "ast_hash": "3f19ec59e37f0be5263165069f7e6c43",
-    "semantic_hash": ""
-  },
-  "apps/web/src/features/payments/CoinSettlementForm.tsx": {
-    "mtime": 1787597213.5667791,
-    "ast_hash": "222c08f19f8944d909dc5c419670587e",
     "semantic_hash": ""
   }
 }
