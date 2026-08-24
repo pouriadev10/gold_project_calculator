@@ -2,10 +2,13 @@ import { apiPost } from './client';
 import {
   rialSettlementSchema,
   goldSettlementSchema,
+  coinSettlementSchema,
   type CreateRialSettlementInput,
   type RialSettlement,
   type CreateGoldSettlementInput,
   type GoldSettlement,
+  type CreateCoinSettlementInput,
+  type CoinSettlement,
 } from './contracts';
 
 /**
@@ -33,4 +36,17 @@ export function createGoldSettlement(
   signal?: AbortSignal,
 ): Promise<GoldSettlement> {
   return apiPost(`/parties/${partyId}/settlements/gold`, input, goldSettlementSchema, idempotencyKey, signal);
+}
+
+/**
+ * ثبت دریافت سکه برای تسویه‌ی مانده‌ی شخص — `POST
+ * /parties/:partyId/settlements/coins` (BE-047، FE-053).
+ */
+export function createCoinSettlement(
+  partyId: string,
+  input: CreateCoinSettlementInput,
+  idempotencyKey: string,
+  signal?: AbortSignal,
+): Promise<CoinSettlement> {
+  return apiPost(`/parties/${partyId}/settlements/coins`, input, coinSettlementSchema, idempotencyKey, signal);
 }

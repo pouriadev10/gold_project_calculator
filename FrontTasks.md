@@ -1868,7 +1868,27 @@ BE-046
 * payload وزن string
 * نرخ ردیف نمایش داده شود.
 ---
-## [ ] FE-053 — پرداخت با سکه
+## [x] FE-053 — پرداخت با سکه
+
+> `CoinSettlementForm.tsx` — آینه‌ی `GoldSettlementForm` (FE-052) و
+> `CoinSaleForm` (FE-048) با هم: فقط `partyId` می‌گیرد و مستقیم `POST
+> /parties/:partyId/settlements/coins` (BE-047) را می‌زند؛ فرمول‌های
+> ارزش ذاتی/حباب/معادل نمایشی دقیقاً همان `core-calc` که `CoinSaleForm`
+> استفاده می‌کند، چون سرویس واقعی هم همان توابع را می‌زند
+> (`intrinsicValue`/`bubble`/`coinPositionValue` تک‌واحدی روی تعداد).
+>
+> **بدون قفل مظنه** — برخلاف تسویه‌ی طلا (FE-052) که صریح «قفل‌شونده»
+> می‌خواست، این تسک چنین قاعده‌ای ندارد؛ نرخ زنده تا لحظه‌ی ثبت می‌آید،
+> همان الگوی خودِ `CoinSaleForm`.
+>
+> **«تبدیل به وزن فقط نمایشی»** به‌صورت یک خط زیر تعداد پیاده شد
+> (`معادل وزنی (فقط نمایشی)`) — از `count` و `grossWeightUg` کاتالوگ
+> ساخته می‌شود، در `payload` نیست. تستی که این را می‌سنجد صریح چک می‌کند
+> `grossWeightMg`/`grossWeightUg` در بدنه‌ی ارسالی نباشند.
+>
+> ۵ تست تازه (`CoinSettlementForm.test.tsx`). `typecheck`, `eslint`,
+> `check:circular` و `pnpm test` سبز: ۶۸ فایل / ۶۰۱ تست.
+
 ### وابستگی بک‌اند
 ```text
 BE-047

@@ -12,6 +12,7 @@ import {
   coinSaleSchema as sharedCoinSaleSchema,
   rialSettlementSchema as sharedRialSettlementSchema,
   goldSettlementSchema as sharedGoldSettlementSchema,
+  coinSettlementSchema as sharedCoinSettlementSchema,
   type Party,
 } from '@gold/contracts';
 
@@ -89,12 +90,14 @@ export {
   createCoinSaleSchema,
   createRialSettlementSchema,
   createGoldSettlementSchema,
+  createCoinSettlementSchema,
   salesInvoiceVersionHistorySchema,
   type CreateJewelryCashSaleInput,
   type CreateJewelryCreditSaleInput,
   type CreateCoinSaleInput,
   type CreateRialSettlementInput,
   type CreateGoldSettlementInput,
+  type CreateCoinSettlementInput,
   type SalesInvoiceVersionHistory,
   type LoginInput,
   type SessionResponse,
@@ -421,3 +424,17 @@ export const goldSettlementSchema = sharedGoldSettlementSchema.extend({
   goldRatePerGramRial: bigintString,
 });
 export type GoldSettlement = z.infer<typeof goldSettlementSchema>;
+
+/* ── POST /api/parties/:partyId/settlements/coins — FE-053/BE-047 ─── */
+
+/**
+ * پاسخ ثبت دریافت سکه برای تسویه. `intrinsicValueRial`/`bubbleRial` مقدار
+ * **یک سکه** است، دقیقاً مثل پاسخ فروش سکه (`coinSaleSchema`) — سرور هم
+ * از همان `intrinsicValue`/`bubble` تک‌واحدی `core-calc` می‌سازدشان.
+ */
+export const coinSettlementSchema = sharedCoinSettlementSchema.extend({
+  settledRial: bigintString,
+  intrinsicValueRial: bigintString,
+  bubbleRial: bigIntStringSchema.nullable().transform((value) => (value === null ? null : BigInt(value))),
+});
+export type CoinSettlement = z.infer<typeof coinSettlementSchema>;
