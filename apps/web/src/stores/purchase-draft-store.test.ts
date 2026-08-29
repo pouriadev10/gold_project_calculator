@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
+  DEFAULT_PURCHASE_KARAT,
   hasPurchaseDraftProgress,
   NAVIGABLE_PURCHASE_STEPS,
   PURCHASE_DRAFT_STORAGE_KEY,
@@ -9,11 +10,7 @@ import {
 import type { PartySelection } from './recent-parties-store';
 
 /**
- * FE-056 — پیش‌نویس خرید دست‌دوم.
- *
- * تمرکز روی سه قاعده‌ی خودِ تسک: رفت‌وبرگشت مراحل داده را از بین نبرد،
- * `sessionStorage` (نه `localStorage`)، و «رسید» که مرحله‌ی پیمایش‌پذیر
- * نیست — با «بعدی» هرگز وارد نمی‌شود، فقط پس از ثبت موفق (FE-059).
+ * FE-056 / FE-057 — پیش‌نویس خرید دست‌دوم.
  */
 
 const SELLER: PartySelection = {
@@ -66,12 +63,23 @@ describe('usePurchaseDraftStore — پیمایش مراحل', () => {
     expect(usePurchaseDraftStore.getState().step).toBe('SELLER');
   });
 
-  it('رفت‌وبرگشت مراحل، فروشنده‌ی انتخاب‌شده را از بین نمی‌برد', () => {
+  it('رفت‌وبرگشت مراحل، فروشنده و داده‌های وزن‌کشی را از بین نمی‌برد', () => {
     usePurchaseDraftStore.getState().setSeller(SELLER);
+    usePurchaseDraftStore.getState().setGrossWeightMg('4500');
+    usePurchaseDraftStore.getState().setStoneWeightMg('200');
+    usePurchaseDraftStore.getState().setOtherDeductionWeightMg('50');
+    usePurchaseDraftStore.getState().setPurchaseKarat(750);
+    usePurchaseDraftStore.getState().setFeeRial('100000');
+
     usePurchaseDraftStore.getState().goToStep('QUOTE');
     usePurchaseDraftStore.getState().goToStep('SELLER');
 
     expect(usePurchaseDraftStore.getState().seller).toEqual(SELLER);
+    expect(usePurchaseDraftStore.getState().grossWeightMg).toBe('4500');
+    expect(usePurchaseDraftStore.getState().stoneWeightMg).toBe('200');
+    expect(usePurchaseDraftStore.getState().otherDeductionWeightMg).toBe('50');
+    expect(usePurchaseDraftStore.getState().purchaseKarat).toBe(750);
+    expect(usePurchaseDraftStore.getState().feeRial).toBe('100000');
   });
 
   it('goToStep به RECEIPT هم اجازه‌ی set می‌دهد — فقط مسیر ثبت موفق (FE-059) از آن می‌گذرد', () => {
@@ -80,7 +88,7 @@ describe('usePurchaseDraftStore — پیمایش مراحل', () => {
   });
 });
 
-describe('usePurchaseDraftStore — ماندگاری', () => {
+describe('usePurchaseDraftStore — مقادیر و ماندگاری', () => {
   it('در sessionStorage (نه localStorage) ذخیره می‌شود', () => {
     usePurchaseDraftStore.getState().setSeller(SELLER);
     usePurchaseDraftStore.getState().goToStep('WEIGHING');
@@ -88,31 +96,52 @@ describe('usePurchaseDraftStore — ماندگاری', () => {
     expect(sessionStorage.getItem(PURCHASE_DRAFT_STORAGE_KEY)).not.toBeNull();
   });
 
-  it('پس از reset، مرحله و فروشنده پاک می‌شوند', () => {
+  it('پس از reset، همه‌ی فیلدها به مقادیر اولیه بازمی‌گردند', () => {
     usePurchaseDraftStore.getState().setSeller(SELLER);
+    usePurchaseDraftStore.getState().setGrossWeightMg('5000');
+    usePurchaseDraftStore.getState().setStoneWeightMg('100');
+    usePurchaseDraftStore.getState().setOtherDeductionWeightMg('50');
+    usePurchaseDraftStore.getState().setPurchaseKarat(900);
+    usePurchaseDraftStore.getState().setFeeRial('50000');
     usePurchaseDraftStore.getState().goToStep('PAYMENT');
+
     usePurchaseDraftStore.getState().reset();
 
     expect(usePurchaseDraftStore.getState().step).toBe('SELLER');
     expect(usePurchaseDraftStore.getState().seller).toBeNull();
-  });
-});
-
-describe('hasPurchaseDraftProgress', () => {
-  it('روی مرحله‌ی اول بدون فروشنده، یعنی «هنوز شروع نشده»', () => {
-    const state = usePurchaseDraftStore.getState();
-    expect(hasPurchaseDraftProgress({ step: state.step, seller: state.seller })).toBe(false);
+    expect(usePurchaseDraftStore.getState().grossWeightMg).toBe('0');
+    expect(usePurchaseDraftStore.getState().stoneWeightMg).toBe('0');
+    expect(usePurchaseDraftStore.getState().otherDeductionWeightMg).toBe('0');
+    expect(usePurchaseDraftStore.getState().purchaseKarat).toBe(DEFAULT_PURCHASE_KARAT);
+    expect(usePurchaseDraftStore.getState().feeRial).toBe('0');
   });
 
-  it('با فروشنده‌ی انتخاب‌شده روشن است', () => {
-    usePurchaseDraftStore.getState().setSeller(SELLER);
-    const state = usePurchaseDraftStore.getState();
-    expect(hasPurchaseDraftProgress({ step: state.step, seller: state.seller })).toBe(true);
-  });
+  it('hasPurchaseDraftProgress تغییرات وزن یا فروشنده را تشخیص می‌دهد', () => {
+    expect(
+      hasPurchaseDraftProgress({
+        step: 'SELLER',
+        seller: null,
+        grossWeightMg: '0',
+        feeRial: '0',
+      }),
+    ).toBe(false);
 
-  it('بدون انتخاب، فقط جلو رفتن از مرحله‌ی اول کافی است', () => {
-    usePurchaseDraftStore.getState().goToStep('WEIGHING');
-    const state = usePurchaseDraftStore.getState();
-    expect(hasPurchaseDraftProgress({ step: state.step, seller: state.seller })).toBe(true);
+    expect(
+      hasPurchaseDraftProgress({
+        step: 'SELLER',
+        seller: null,
+        grossWeightMg: '2500',
+        feeRial: '0',
+      }),
+    ).toBe(true);
+
+    expect(
+      hasPurchaseDraftProgress({
+        step: 'WEIGHING',
+        seller: null,
+        grossWeightMg: '0',
+        feeRial: '0',
+      }),
+    ).toBe(true);
   });
 });

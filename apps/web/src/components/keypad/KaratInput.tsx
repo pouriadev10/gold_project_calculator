@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { NumericField } from './NumericField';
 
 /**
@@ -51,18 +51,12 @@ export function KaratInput({
   disabled,
   className,
 }: KaratInputProps) {
-  // همان الگوی WeightInput: بدون این، وقتی فراخوان‌کننده onChange نمی‌دهد
-  // (رایج‌ترین حالت مصرف)، اعتبارسنجی داخلی هرگز مقدار تازه‌ی تایپ‌شده
-  // را نمی‌بیند و همیشه روی مقدار اولیه گیر می‌کند.
-  const [liveValue, setLiveValue] = useState(value ?? 0n);
-
-  useEffect(() => {
-    if (value !== undefined) setLiveValue(value);
-  }, [value]);
+  const [internalValue, setInternalValue] = useState(0n);
+  const liveValue = value ?? internalValue;
 
   const handleChange = useCallback(
     (next: bigint) => {
-      setLiveValue(next);
+      setInternalValue(next);
       onChange?.(next);
     },
     [onChange],

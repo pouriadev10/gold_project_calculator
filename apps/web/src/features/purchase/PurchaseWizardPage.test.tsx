@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ReactNode } from 'react';
+import { act, type ReactNode } from 'react';
 import type * as ReactRouter from '@tanstack/react-router';
 import type * as Queries from '@/api/queries';
 import type { Party, PriceQuote } from '@/api/contracts';
@@ -10,12 +10,7 @@ import { usePurchaseDraftStore } from '@/stores/purchase-draft-store';
 import PurchaseWizardPage from './PurchaseWizardPage';
 
 /**
- * FE-056 — صفحه‌ی خرید طلای دست‌دوم (shell هشت‌مرحله‌ای).
- *
- * `useBlocker` واقعی به `RouterProvider` نیاز دارد (همان دلیل mock کردن
- * `Link` در `SaleWizardPage.test.tsx`) — اینجا هم mock می‌شود تا فقط
- * بررسی شود این کامپوننت با ورودی درست (شرط بر اساس
- * `hasPurchaseDraftProgress`) صدایش می‌زند.
+ * FE-056 / FE-057 — صفحه‌ی خرید طلای دست‌دوم و مراحل وزن‌کشی.
  */
 
 const useBlockerMock = vi.fn();
@@ -44,7 +39,7 @@ function priceQuote(): PriceQuote {
   return {
     id: 'q1',
     quoteType: 'MAZNEH',
-    amountRial: 324_885_150n,
+    amountRial: 100_000_000n,
     source: 'MANUAL',
     observedAt: new Date().toISOString(),
     createdBy: null,
@@ -154,23 +149,32 @@ describe('PurchaseWizardPage — شروع و پیمایش مراحل', () => {
     expect(screen.getByText('حسین مرادی')).toBeInTheDocument();
   });
 
-  it('مراحل جانگه‌دار با توضیح «ساخته نشده» رندر می‌شوند و رفت‌وبرگشت آزاد است', async () => {
+  it('مراحل وزن‌کشی، کسورات و عیار فرم‌های واقعی رندر می‌کنند', async () => {
     const user = userEvent.setup();
     renderPage();
 
     await selectSeller(user, 'حسین مرادی');
-    for (const label of ['وزن‌کشی', 'کسورات', 'عیار']) {
-      await user.click(screen.getByRole('button', { name: 'بعدی' }));
-      expect(screen.getByText(`مرحله ${label === 'وزن‌کشی' ? '۲' : label === 'کسورات' ? '۳' : '۴'} از ۸ — ${label}`)).toBeInTheDocument();
-      expect(screen.getByText('این بخش هنوز ساخته نشده است')).toBeInTheDocument();
-    }
-    // عیار پیش‌فرض: هیچ مقداری در UI هاردکد نشده — توضیح، منبع سرور را می‌گوید
-    expect(screen.getByText(/پیش‌فرضِ نسخه‌دار مستأجر از سرور/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'بعدی' }));
+    expect(screen.getByText('مرحله ۲ از ۸ — وزن‌کشی')).toBeInTheDocument();
+    expect(screen.getByLabelText('وزن کل (ناخالص)')).toBeInTheDocument();
+
+    // ورود وزن ناخالص
+    act(() => {
+      usePurchaseDraftStore.getState().setGrossWeightMg('2500');
+    });
+
+    await user.click(screen.getByRole('button', { name: 'بعدی' }));
+    expect(screen.getByText('مرحله ۳ از ۸ — کسورات')).toBeInTheDocument();
+    expect(screen.getByLabelText('وزن نگین')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'بعدی' }));
+    expect(screen.getByText('مرحله ۴ از ۸ — عیار')).toBeInTheDocument();
+    expect(screen.getByLabelText('عیار خرید')).toBeInTheDocument();
   });
 });
 
-describe('PurchaseWizardPage — مرحله‌ی مظنه', () => {
-  it('بدون مظنه، «بعدی» غیرفعال است', () => {
+describe('PurchaseWizardPage — مرحله‌ی مظنه و مبلغ', () => {
+  it('بدون مظنه، «بعدی» در مرحله مظنه غیرفعال است', () => {
     useLatestPriceQuoteMock.mockReturnValue({ data: null, isLoading: false, isSuccess: true });
     usePurchaseDraftStore.getState().setSeller({
       id: 'p1',
@@ -179,6 +183,7 @@ describe('PurchaseWizardPage — مرحله‌ی مظنه', () => {
       type: 'CONSUMER',
       status: 'ACTIVE',
     });
+    usePurchaseDraftStore.getState().setGrossWeightMg('2000');
     usePurchaseDraftStore.getState().goToStep('QUOTE');
     renderPage();
 
@@ -186,7 +191,8 @@ describe('PurchaseWizardPage — مرحله‌ی مظنه', () => {
     expect(screen.getByRole('button', { name: 'بعدی' })).toBeDisabled();
   });
 
-  it('با مظنه‌ی موجود، «بعدی» فعال است و به مبلغ می‌برد', () => {
+  it('با مظنه‌ی موجود، «بعدی» فعال است و به مبلغ می‌برد و محاسبات را نشان می‌دهد', async () => {
+    const user = userEvent.setup();
     usePurchaseDraftStore.getState().setSeller({
       id: 'p1',
       displayName: 'حسین مرادی',
@@ -194,10 +200,18 @@ describe('PurchaseWizardPage — مرحله‌ی مظنه', () => {
       type: 'CONSUMER',
       status: 'ACTIVE',
     });
+    usePurchaseDraftStore.getState().setGrossWeightMg('1000');
+    usePurchaseDraftStore.getState().setStoneWeightMg('100');
+    usePurchaseDraftStore.getState().setPurchaseKarat(740);
     usePurchaseDraftStore.getState().goToStep('QUOTE');
     renderPage();
 
     expect(screen.getByRole('button', { name: 'بعدی' })).toBeEnabled();
+    await user.click(screen.getByRole('button', { name: 'بعدی' }));
+
+    expect(screen.getByText('مرحله ۶ از ۸ — مبلغ')).toBeInTheDocument();
+    expect(screen.getByLabelText('کارمزد خرید (اختیاری)')).toBeInTheDocument();
+    expect(screen.getByText('مبلغ نهایی قابل پرداخت:')).toBeInTheDocument();
   });
 });
 

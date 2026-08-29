@@ -150,7 +150,11 @@ export const useKeypadStore = create<KeypadState>()((set) => ({
       return editActive(state, () => pasteDigits(text, spec));
     }),
 
-  setBuffer: (id, raw) => set((state) => ({ buffers: { ...state.buffers, [id]: raw } })),
+  setBuffer: (id, raw) =>
+    set((state) => {
+      if (state.buffers[id] === raw) return state;
+      return { buffers: { ...state.buffers, [id]: raw } };
+    }),
 
   reset: () => set({ isOpen: false, activeId: null, buffers: {} }),
 }));

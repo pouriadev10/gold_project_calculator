@@ -1,11 +1,14 @@
 import { useBlocker } from '@tanstack/react-router';
 import { AlertTriangle, Construction, Info } from 'lucide-react';
-import { PartySelector } from '@/components/common/PartySelector';
-import { PageHeader } from '@/components/common/PageHeader';
+import { toSafeNumber } from '@gold/core-calc';
 import { EmptyState } from '@/components/common/EmptyState';
+import { PageHeader } from '@/components/common/PageHeader';
+import { PartySelector } from '@/components/common/PartySelector';
+import { UnitToggle } from '@/components/common/UnitToggle';
 import { Button } from '@/components/ui/button';
-import { useMazneh } from '@/features/home/useMazneh';
+import { NumericKeypad } from '@/components/keypad/NumericKeypad';
 import { MaznehBar } from '@/features/home/MaznehBar';
+import { useMazneh } from '@/features/home/useMazneh';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import {
   hasPurchaseDraftProgress,
@@ -15,83 +18,98 @@ import {
   type PurchaseStep,
 } from '@/stores/purchase-draft-store';
 import { PurchaseStepper } from './PurchaseStepper';
+import { SecondHandWeighingForm } from './SecondHandWeighingForm';
+import { calculateSecondHandWeighing } from './purchase-pricing';
 
 /**
- * صفحه‌ی خرید طلای دست‌دوم — shell جریان هشت‌مرحله‌ای (FE-056).
+ * صفحه‌ی خرید طلای دست‌دوم — shell و فرم وزن‌کشی جریان هشت‌مرحله‌ای (FE-056 / FE-057).
  *
- * **مستقل از ویزارد فروش** — قاعده‌ی صریح تسک. هیچ کامپوننت یا storeای از
- * `features/sales` اینجا نیست؛ فقط زیرساخت مشترک (`PartySelector` در
- * `components/common/` که مستنداتش از روز اول «فروشنده» را هم مثال
- * می‌زد، و `MaznehBar`) و store پیش‌نویس مخصوص همین جریان
- * (`purchase-draft-store.ts`).
+ * **مستقل از ویزارد فروش** — قاعده‌ی صریح تسک: هیچ وابستگی‌ای به `features/sales` نیست.
  *
- * دو مرحله محتوای واقعی دارند:
- * - **فروشنده**: مستقیم `PartySelector` (FE-035) — بدون انتخاب، «بعدی»
- *   غیرفعال است. خرید دست‌دوم فقط از **مصرف‌کننده** ممکن است (سرور:
- *   `SecondHandPurchasePartyNotConsumerError`؛ همکار یعنی مرجوعی B2B که
- *   خارج از دامنه‌ی فاز ۱ است) — انتخاب همکار «بعدی» را قفل می‌کند.
- * - **مظنه**: مستقیم `MaznehBar` (FE-029) — خرید هم `quoteId` می‌خواهد
- *   (`createSecondHandGoldPurchaseSchema`)، پس بدون مظنه «بعدی» غیرفعال است.
- *
- * **وزن‌کشی، کسورات، عیار، مبلغ، پرداخت** جانگه‌دارند — فرم وزن‌کشی با همه‌ی
- * این فیلدها کار FE-057 است و ثبت/پرداخت/رسید کار FE-059؛ طراحی زودهنگام
- * شکلشان بدون داده، همان چیزی است که store پیش‌نویس هم از آن پرهیز می‌کند.
- * دو قاعده‌ی تسک از همین حالا تضمین شده‌اند، نه به بعد موکول:
- * - **مقصد پیش‌فرض آبشده** روی مرحله‌ی اول نمایش داده می‌شود — سرور همیشه
- *   `MELTED_GOLD` می‌سازد و ورودی مقصد در قرارداد وجود ندارد.
- * - **هیچ عددی از عیار پیش‌فرض در UI نیست** — قرارداد `purchaseKarat` را
- *   اختیاری می‌گیرد و نبودش یعنی پیش‌فرض نسخه‌دار مستأجر را خود سرور
- *   اعمال کند؛ «۷۴۰» در هیچ‌جای این جریان نوشته نمی‌شود.
- *
- * کلید تعویض واحد و کیپد عددی فعلاً mount نمی‌شوند — هیچ عدد مالی یا
- * فیلد عددی در این صفحه هنوز رندر نمی‌شود؛ FE-057 هنگام افزودن پیش‌نمایش
- * مبلغ `UnitToggle` و هنگام افزودن فیلدهای وزنی دقیقاً یک `<NumericKeypad />`
- * اضافه می‌کند (قاعده‌ی مستندشده در `SaleWizardPage`).
- *
- * `useBlocker` هشدار خروج مسیر برای پیش‌نویس نیمه‌کاره است — همان نقشش در
- * فروش؛ پایداری draft در برابر refresh را خودِ store با `sessionStorage`
- * می‌دهد. پس از ثبت موفق (FE-059) رسید جای مراحل می‌نشیند — «رسید» در
- * `PURCHASE_STEPS` مقصد جریان است، نه مرحله‌ی پیمایش‌پذیر با «بعدی».
+ * مراحل:
+ * ۱. **فروشنده**: `PartySelector` با قفل برای همکاران (`CONSUMER` فقط).
+ * ۲. **وزن‌کشی**: ورودی وزن ناخالص کل با `WeightInput`.
+ * ۳. **کسورات**: ورودی وزن نگین و سایر متعلقات با پیش‌نمایش وزن خالص پیش از عیار.
+ * ۴. **عیار**: انتخاب عیار خرید با پیش‌نمایش نرخ هر گرم عیار مربوطه.
+ * ۵. **مظنه**: بررسی مظنه زنده با `MaznehBar`.
+ * ۶. **مبلغ**: ورودی کارمزد اختیاری و پیش‌نمایش کامل مبالغ قبل و بعد از کارمزد و طلای خالص.
+ * ۷. **پرداخت**: ثبت پرداخت و تسویه (FE-059).
+ * ۸. **رسید**: نمایش رسید نهایی (FE-059).
  */
 
-const STEP_PLACEHOLDER: Record<
-  Extract<PurchaseStep, 'WEIGHING' | 'DEDUCTIONS' | 'KARAT' | 'AMOUNT' | 'PAYMENT'>,
-  string
-> = {
-  WEIGHING: 'فرم وزن‌کشی خرید در تسک بعد اضافه می‌شود.',
-  DEDUCTIONS: 'ثبت وزن نگین و سایر کسورات کنار وزن‌کشی اضافه می‌شود.',
-  KARAT: 'انتخاب عیار خرید — با پیش‌فرضِ نسخه‌دار مستأجر از سرور — در تسک وزن‌کشی اضافه می‌شود.',
-  AMOUNT: 'پیش‌نمایش مبلغ خرید (نرخ گرم عیار خرید، کارمزد، مبلغ نهایی) در تسک وزن‌کشی اضافه می‌شود.',
+const STEP_PLACEHOLDER: Record<Extract<PurchaseStep, 'PAYMENT'>, string> = {
   PAYMENT: 'ثبت پرداخت و ثبت نهایی خرید در تسک بعد اضافه می‌شود.',
 };
 
 export default function PurchaseWizardPage() {
   const isOnline = useOnlineStatus();
   const mazneh = useMazneh();
+
   const step = usePurchaseDraftStore((s) => s.step);
   const seller = usePurchaseDraftStore((s) => s.seller);
+  const grossWeightMg = usePurchaseDraftStore((s) => s.grossWeightMg);
+  const stoneWeightMg = usePurchaseDraftStore((s) => s.stoneWeightMg);
+  const otherDeductionWeightMg = usePurchaseDraftStore((s) => s.otherDeductionWeightMg);
+  const purchaseKarat = usePurchaseDraftStore((s) => s.purchaseKarat);
+  const feeRial = usePurchaseDraftStore((s) => s.feeRial);
+
   const next = usePurchaseDraftStore((s) => s.next);
   const back = usePurchaseDraftStore((s) => s.back);
   const setSeller = usePurchaseDraftStore((s) => s.setSeller);
+  const setGrossWeightMg = usePurchaseDraftStore((s) => s.setGrossWeightMg);
+  const setStoneWeightMg = usePurchaseDraftStore((s) => s.setStoneWeightMg);
+  const setOtherDeductionWeightMg = usePurchaseDraftStore((s) => s.setOtherDeductionWeightMg);
+  const setPurchaseKarat = usePurchaseDraftStore((s) => s.setPurchaseKarat);
+  const setFeeRial = usePurchaseDraftStore((s) => s.setFeeRial);
 
-  useBlocker(() => true, hasPurchaseDraftProgress({ step, seller }));
+  useBlocker(() => true, hasPurchaseDraftProgress({ step, seller, grossWeightMg, feeRial }));
 
   const stepIndex = PURCHASE_STEPS.indexOf(step);
   const isFirstStep = stepIndex === 0;
   const isLastEntryStep = step === NAVIGABLE_PURCHASE_STEPS[NAVIGABLE_PURCHASE_STEPS.length - 1];
-  // خرید دست‌دوم فقط از مصرف‌کننده — همان خطای واقعی سرور، اینجا زودتر نشان داده می‌شود
   const isNonConsumerSeller = seller !== null && seller.type !== 'CONSUMER';
 
-  const canGoNext =
-    step === 'SELLER'
-      ? seller !== null && !isNonConsumerSeller
-      : step === 'QUOTE'
-        ? Boolean(mazneh.data)
-        : true;
+  const maznehRial = mazneh.data?.mazneh ?? 0n;
+
+  const grossWeightBigInt = BigInt(grossWeightMg || '0');
+  const stoneWeightBigInt = BigInt(stoneWeightMg || '0');
+  const otherDeductionWeightBigInt = BigInt(otherDeductionWeightMg || '0');
+  const feeBigInt = BigInt(feeRial || '0');
+  const totalDeductionsBigInt = stoneWeightBigInt + otherDeductionWeightBigInt;
+
+  const weighingCalc = calculateSecondHandWeighing(
+    {
+      grossWeightMg,
+      stoneWeightMg,
+      otherDeductionWeightMg,
+      purchaseKarat,
+      feeRial,
+    },
+    maznehRial,
+  );
+
+  let canGoNext = false;
+  if (step === 'SELLER') {
+    canGoNext = seller !== null && !isNonConsumerSeller;
+  } else if (step === 'WEIGHING') {
+    canGoNext = grossWeightBigInt > 0n;
+  } else if (step === 'DEDUCTIONS') {
+    canGoNext = grossWeightBigInt > 0n && totalDeductionsBigInt < grossWeightBigInt;
+  } else if (step === 'KARAT') {
+    canGoNext = purchaseKarat >= 1 && purchaseKarat <= 1000;
+  } else if (step === 'QUOTE') {
+    canGoNext = Boolean(mazneh.data && maznehRial > 0n);
+  } else if (step === 'AMOUNT') {
+    canGoNext = weighingCalc.ok && weighingCalc.calc.finalAmountRial > 0n;
+  } else {
+    canGoNext = true;
+  }
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <PageHeader title="خرید طلای دست‌دوم" />
+      <PageHeader title="خرید طلای دست‌دوم">
+        <UnitToggle />
+      </PageHeader>
       <PurchaseStepper current={step} />
 
       <div className="flex-1 space-y-4 p-4 pb-32">
@@ -110,21 +128,83 @@ export default function PurchaseWizardPage() {
             ) : null}
           </>
         ) : null}
-        {step === 'QUOTE' ? <MaznehBar isOnline={isOnline} /> : null}
+
         {step === 'WEIGHING' ? (
-          <EmptyState icon={Construction} title="این بخش هنوز ساخته نشده است" description={STEP_PLACEHOLDER.WEIGHING} />
+          <SecondHandWeighingForm
+            grossWeightMg={grossWeightBigInt}
+            onGrossWeightChange={(v) => setGrossWeightMg(v.toString())}
+            stoneWeightMg={stoneWeightBigInt}
+            onStoneWeightChange={(v) => setStoneWeightMg(v.toString())}
+            otherDeductionWeightMg={otherDeductionWeightBigInt}
+            onOtherDeductionWeightChange={(v) => setOtherDeductionWeightMg(v.toString())}
+            karat={BigInt(purchaseKarat)}
+            onKaratChange={(v) => setPurchaseKarat(toSafeNumber(v))}
+            feeRial={feeBigInt}
+            onFeeChange={(v) => setFeeRial(v.toString())}
+            maznehRial={maznehRial}
+            mode="WEIGHING"
+          />
         ) : null}
+
         {step === 'DEDUCTIONS' ? (
-          <EmptyState icon={Construction} title="این بخش هنوز ساخته نشده است" description={STEP_PLACEHOLDER.DEDUCTIONS} />
+          <SecondHandWeighingForm
+            grossWeightMg={grossWeightBigInt}
+            onGrossWeightChange={(v) => setGrossWeightMg(v.toString())}
+            stoneWeightMg={stoneWeightBigInt}
+            onStoneWeightChange={(v) => setStoneWeightMg(v.toString())}
+            otherDeductionWeightMg={otherDeductionWeightBigInt}
+            onOtherDeductionWeightChange={(v) => setOtherDeductionWeightMg(v.toString())}
+            karat={BigInt(purchaseKarat)}
+            onKaratChange={(v) => setPurchaseKarat(toSafeNumber(v))}
+            feeRial={feeBigInt}
+            onFeeChange={(v) => setFeeRial(v.toString())}
+            maznehRial={maznehRial}
+            mode="DEDUCTIONS"
+          />
         ) : null}
+
         {step === 'KARAT' ? (
-          <EmptyState icon={Construction} title="این بخش هنوز ساخته نشده است" description={STEP_PLACEHOLDER.KARAT} />
+          <SecondHandWeighingForm
+            grossWeightMg={grossWeightBigInt}
+            onGrossWeightChange={(v) => setGrossWeightMg(v.toString())}
+            stoneWeightMg={stoneWeightBigInt}
+            onStoneWeightChange={(v) => setStoneWeightMg(v.toString())}
+            otherDeductionWeightMg={otherDeductionWeightBigInt}
+            onOtherDeductionWeightChange={(v) => setOtherDeductionWeightMg(v.toString())}
+            karat={BigInt(purchaseKarat)}
+            onKaratChange={(v) => setPurchaseKarat(toSafeNumber(v))}
+            feeRial={feeBigInt}
+            onFeeChange={(v) => setFeeRial(v.toString())}
+            maznehRial={maznehRial}
+            mode="KARAT"
+          />
         ) : null}
+
+        {step === 'QUOTE' ? <MaznehBar isOnline={isOnline} /> : null}
+
         {step === 'AMOUNT' ? (
-          <EmptyState icon={Construction} title="این بخش هنوز ساخته نشده است" description={STEP_PLACEHOLDER.AMOUNT} />
+          <SecondHandWeighingForm
+            grossWeightMg={grossWeightBigInt}
+            onGrossWeightChange={(v) => setGrossWeightMg(v.toString())}
+            stoneWeightMg={stoneWeightBigInt}
+            onStoneWeightChange={(v) => setStoneWeightMg(v.toString())}
+            otherDeductionWeightMg={otherDeductionWeightBigInt}
+            onOtherDeductionWeightChange={(v) => setOtherDeductionWeightMg(v.toString())}
+            karat={BigInt(purchaseKarat)}
+            onKaratChange={(v) => setPurchaseKarat(toSafeNumber(v))}
+            feeRial={feeBigInt}
+            onFeeChange={(v) => setFeeRial(v.toString())}
+            maznehRial={maznehRial}
+            mode="AMOUNT"
+          />
         ) : null}
+
         {step === 'PAYMENT' ? (
-          <EmptyState icon={Construction} title="این بخش هنوز ساخته نشده است" description={STEP_PLACEHOLDER.PAYMENT} />
+          <EmptyState
+            icon={Construction}
+            title="این بخش هنوز ساخته نشده است"
+            description={STEP_PLACEHOLDER.PAYMENT}
+          />
         ) : null}
       </div>
 
@@ -141,11 +221,6 @@ export default function PurchaseWizardPage() {
             قبلی
           </Button>
           {isLastEntryStep ? (
-            /*
-              دکمه‌ی ثبت روی مرحله‌ی آخر از همین حالا می‌نشیند ولی تا FE-059
-              (submit با idempotency) هیچ مسیری را صدا نمی‌زند — disabled صریح،
-              نه پنهان، تا جای اقدام نهایی از قبل جا افتاده باشد.
-            */
             <Button type="button" size="action" disabled>
               ثبت خرید
             </Button>
@@ -156,6 +231,9 @@ export default function PurchaseWizardPage() {
           )}
         </div>
       </div>
+
+      {/* صفحه‌کلید عددی سفارشی درون‌برنامه‌ای */}
+      <NumericKeypad />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { formatGram, grossMg, karat as toKarat, toPureMg, toSafeNumber } from '@gold/core-calc';
 import { NumericField } from './NumericField';
 
@@ -48,22 +48,12 @@ export function WeightInput({
   disabled,
   className,
 }: WeightInputProps) {
-  /**
-   * چرا یک کپی داخلی از مقدار لازم است: بدون `onChange` بیرونی،
-   * `NumericField` کاملاً uncontrolled کار می‌کند و مقدار واقعی فقط
-   * داخل استور مشترک کیپد می‌ماند (زیر یک `id` داخلی که این کامپوننت
-   * اصلاً نمی‌بیند). بدون این کپی، پیش‌نمایش وزن خالص هرگز از صفر
-   * جلوتر نمی‌رفت، چون هیچ‌وقت مقدار تازه‌ی تایپ‌شده را نمی‌دید.
-   */
-  const [liveValue, setLiveValue] = useState(value ?? 0n);
-
-  useEffect(() => {
-    if (value !== undefined) setLiveValue(value);
-  }, [value]);
+  const [internalValue, setInternalValue] = useState(0n);
+  const liveValue = value ?? internalValue;
 
   const handleChange = useCallback(
     (next: bigint) => {
-      setLiveValue(next);
+      setInternalValue(next);
       onChange?.(next);
     },
     [onChange],

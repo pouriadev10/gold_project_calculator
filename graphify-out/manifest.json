@@ -1740,9 +1740,9 @@
     "semantic_hash": "1d162fcfb7cfdf1f25ea075c66d0aa46"
   },
   "apps/web/src/components/keypad/NumericField.tsx": {
-    "mtime": 1787127932.812533,
-    "ast_hash": "11893dc5820cb587c8522f7fabd27619",
-    "semantic_hash": "11893dc5820cb587c8522f7fabd27619"
+    "mtime": 1788032819.4602258,
+    "ast_hash": "b97461399c28722136823194e1ce2b07",
+    "semantic_hash": "b97461399c28722136823194e1ce2b07"
   },
   "apps/web/src/components/keypad/NumericKeypad.tsx": {
     "mtime": 1787127867.6019948,
@@ -1750,9 +1750,9 @@
     "semantic_hash": "9878237774befda688520b5aabdd0237"
   },
   "apps/web/src/components/keypad/keypad-store.ts": {
-    "mtime": 1787127913.1507084,
-    "ast_hash": "d1464440d660c828ab3fa71e6daa3cca",
-    "semantic_hash": "d1464440d660c828ab3fa71e6daa3cca"
+    "mtime": 1788032787.53573,
+    "ast_hash": "2bc816268e82accfb9e85e49311403c1",
+    "semantic_hash": "2bc816268e82accfb9e85e49311403c1"
   },
   "apps/web/src/components/keypad/keypad.test.tsx": {
     "mtime": 1786965220.0489821,
@@ -3580,9 +3580,9 @@
     "semantic_hash": "8f64b82f673bc5c1ddc7a53e21f070d1"
   },
   "apps/web/src/components/keypad/KaratInput.tsx": {
-    "mtime": 1786965220.043983,
-    "ast_hash": "877359618d501009801588c114011ec9",
-    "semantic_hash": "877359618d501009801588c114011ec9"
+    "mtime": 1788032915.9676886,
+    "ast_hash": "e5bdb4f276926d8ee02a4927538468aa",
+    "semantic_hash": "e5bdb4f276926d8ee02a4927538468aa"
   },
   "apps/web/src/components/keypad/MoneyInput.test.tsx": {
     "mtime": 1786965220.044983,
@@ -3600,9 +3600,9 @@
     "semantic_hash": "07c9ea949d26c3d0b7cdb585f2d28fb6"
   },
   "apps/web/src/components/keypad/WeightInput.tsx": {
-    "mtime": 1787289577.8692737,
-    "ast_hash": "f5cd13ff9c36cce5836bb9d57d3a055d",
-    "semantic_hash": "f5cd13ff9c36cce5836bb9d57d3a055d"
+    "mtime": 1788032918.9332674,
+    "ast_hash": "0f4b8406d56fa8c63251ed066499c519",
+    "semantic_hash": "0f4b8406d56fa8c63251ed066499c519"
   },
   "apps/web/src/components/ui/select.tsx": {
     "mtime": 1786965220.0499823,
@@ -4285,23 +4285,43 @@
     "semantic_hash": "a018cc6597f489239cc896d5ef8b5190"
   },
   "apps/web/src/features/purchase/PurchaseWizardPage.test.tsx": {
-    "mtime": 1788029407.889102,
-    "ast_hash": "455674071c394b30fc289399c00ccc89",
-    "semantic_hash": "455674071c394b30fc289399c00ccc89"
+    "mtime": 1788032846.6054192,
+    "ast_hash": "6325c4b0149a3010b76b8273275bc628",
+    "semantic_hash": "6325c4b0149a3010b76b8273275bc628"
   },
   "apps/web/src/features/purchase/PurchaseWizardPage.tsx": {
-    "mtime": 1788029282.742229,
-    "ast_hash": "c31d201a7a267f13c9340c8ad79f4f61",
-    "semantic_hash": "c31d201a7a267f13c9340c8ad79f4f61"
+    "mtime": 1788032912.1172895,
+    "ast_hash": "ba18c68cfbef595dea34df58a1495ac6",
+    "semantic_hash": "ba18c68cfbef595dea34df58a1495ac6"
   },
   "apps/web/src/stores/purchase-draft-store.test.ts": {
-    "mtime": 1788029372.95102,
-    "ast_hash": "b25c23782cf023e559d03d9f5b628ead",
-    "semantic_hash": "b25c23782cf023e559d03d9f5b628ead"
+    "mtime": 1788032347.303977,
+    "ast_hash": "af73354ee99fbfc0893d10242b3ff517",
+    "semantic_hash": "af73354ee99fbfc0893d10242b3ff517"
   },
   "apps/web/src/stores/purchase-draft-store.ts": {
-    "mtime": 1788029095.608442,
-    "ast_hash": "5d134b446f4a5c17a3983b97f356fed8",
-    "semantic_hash": "5d134b446f4a5c17a3983b97f356fed8"
+    "mtime": 1788032725.4444299,
+    "ast_hash": "ebef868c802050f3e3c036f8a202d909",
+    "semantic_hash": "ebef868c802050f3e3c036f8a202d909"
+  },
+  "apps/web/src/features/purchase/SecondHandWeighingForm.test.tsx": {
+    "mtime": 1788032934.3580167,
+    "ast_hash": "2f6ebe183e4bcfb9c196c562d7b13a55",
+    "semantic_hash": "2f6ebe183e4bcfb9c196c562d7b13a55"
+  },
+  "apps/web/src/features/purchase/SecondHandWeighingForm.tsx": {
+    "mtime": 1788032355.8513134,
+    "ast_hash": "7be433e91480d3bf2213e3aa460f8596",
+    "semantic_hash": "7be433e91480d3bf2213e3aa460f8596"
+  },
+  "apps/web/src/features/purchase/purchase-pricing.test.ts": {
+    "mtime": 1788032327.8887963,
+    "ast_hash": "328131941a95ff71ddba0f3205bac516",
+    "semantic_hash": "328131941a95ff71ddba0f3205bac516"
+  },
+  "apps/web/src/features/purchase/purchase-pricing.ts": {
+    "mtime": 1788032922.146295,
+    "ast_hash": "1542b4b96cddd184dd7a7d4f34dfa716",
+    "semantic_hash": "1542b4b96cddd184dd7a7d4f34dfa716"
   }
 }

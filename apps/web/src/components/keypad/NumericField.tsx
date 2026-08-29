@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo } from 'react';
+import { useEffect, useId, useMemo, useRef } from 'react';
 import { X } from 'lucide-react';
 import {
   DIGIT_SPECS,
@@ -112,8 +112,14 @@ export function NumericField({
 
   const currentValue = useMemo(() => digitsToBigInt(raw, spec), [raw, spec]);
 
+  const isInitialMount = useRef(true);
+
   /** اطلاع تغییر به فرم */
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
     onChange?.(currentValue);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- onChange پایدار نیست و حلقه می‌سازد
   }, [currentValue]);
