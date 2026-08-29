@@ -201,7 +201,9 @@ const salesInvoiceDetailRoute = createRoute({
 const purchaseSecondHandRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/purchase/second-hand',
-  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'PurchaseSecondHandPlaceholder'),
+  // بدون beforeLoad نقش‌محور — @Roles('OWNER','MANAGER','CASHIER') روی POST
+  // /purchase/second-hand/gold هر سه نقش را می‌پذیرد (second-hand-gold-purchases.controller.ts، BE-050)
+  component: lazyRouteComponent(() => import('@/features/purchase/PurchaseWizardPage')),
 });
 
 const settlementsNewRoute = createRoute({

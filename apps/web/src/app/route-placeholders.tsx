@@ -14,12 +14,6 @@ export function SalesInvoiceDetailPlaceholder() {
   return <PlaceholderPage title="جزئیات فاکتور" note="جزئیات و اصلاح فاکتور در گام‌های بعد می‌آید." />;
 }
 
-export function PurchaseSecondHandPlaceholder() {
-  return (
-    <PlaceholderPage title="خرید دست‌دوم" note="خرید طلای دست‌دوم از مصرف‌کننده در گام‌های بعد می‌آید." />
-  );
-}
-
 export function SettlementsNewPlaceholder() {
   return <PlaceholderPage title="ثبت تسویه" note="تسویه‌ی ترکیبی ریال/طلا/سکه در گام‌های بعد می‌آید." />;
 }
