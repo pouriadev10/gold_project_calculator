@@ -1,1 +1,911 @@
-{"nodes": [{"id": "_claude_skills_ui_styling_license_apache_license_2_0", "label": "Apache License 2.0", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\.claude\\skills\\ui-styling\\LICENSE.txt", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "readme_gold_project_calculator", "label": "gold_project_calculator", "file_type": "concept", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "agents_gold_accounting_product", "label": "Gold Accounting Product", "file_type": "rationale", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\AGENTS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null, "rationale": "The product's accounting unit is gold rather than rial; rial is treated as a transient unit."}, {"id": "agents_gold_denominated_accounting", "label": "Gold-Denominated Accounting", "file_type": "rationale", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\AGENTS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null, "rationale": "Gold-denominated balances preserve the business's economic position through market-price changes."}, {"id": "agents_numeric_precision_policy", "label": "Numeric Precision Policy", "file_type": "rationale", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\AGENTS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null, "rationale": "Rial and weight use bigint; money and weight are serialized as strings, and rounding is centralized in core-calc."}, {"id": "agents_coin_as_counted_asset", "label": "Coin as Counted Asset", "file_type": "rationale", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\AGENTS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null, "rationale": "Each coin type is an independent ledger dimension and must not be normalized to gold weight in storage."}, {"id": "agents_coin_bubble_rule", "label": "Central-Bank Coin Bubble Rule", "file_type": "rationale", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\AGENTS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null, "rationale": "Only central-bank-minted coins have a bubble; bullion never has a bubble or premium."}, {"id": "agents_global_unit_toggle", "label": "Global Gold/Rial Unit Toggle", "file_type": "rationale", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\AGENTS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null, "rationale": "Every financial report and balance must switch between gold and rial through a user-level setting with per-page temporary override."}, {"id": "agents_b2c_second_hand_purchase", "label": "B2C Return as Second-Hand Purchase", "file_type": "rationale", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\AGENTS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null, "rationale": "A consumer return is a second-hand-gold purchase at the return-day rate, not a shared B2B return workflow."}, {"id": "agents_versioned_domain_settings", "label": "Versioned Domain Settings", "file_type": "rationale", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\AGENTS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null, "rationale": "Industry values such as tax, purity, coin specifications, and labor rules are database records with validity ranges so historical documents reproduce exactly."}, {"id": "agents_append_only_ledger", "label": "Append-Only Multi-Unit Ledger", "file_type": "rationale", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\AGENTS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null, "rationale": "Ledger entries are never updated or deleted; correction is a new document and a deferred database constraint enforces zero balance in each dimension per transaction."}, {"id": "agents_event_rate_snapshot", "label": "Event Rate Snapshot", "file_type": "rationale", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\AGENTS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null, "rationale": "Every rial-to-gold conversion locks the contemporaneous market rate in the document so historical reports do not change with current prices."}, {"id": "agents_core_calc", "label": "core-calc", "file_type": "concept", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\AGENTS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null, "rationale": "Pure, tested TypeScript calculations shared identically by browser and server, including the only permitted rounding location."}, {"id": "agents_phase_1_scope", "label": "Phase 1 Scope", "file_type": "rationale", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\AGENTS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null, "rationale": "Phase 1 includes gold jewelry and coin sale/purchase, consumer second-hand purchase, basic inventory and reporting; bullion, silver operations, B2B returns, and other listed capabilities are excluded."}, {"id": "agents_tenant_isolation", "label": "Tenant Isolation", "file_type": "rationale", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\AGENTS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null, "rationale": "All relevant tables carry tenant_id and use PostgreSQL Row-Level Security; write endpoints require Idempotency-Key."}, {"id": "agents_mobile_first_financial_ui", "label": "Mobile-First Financial UI", "file_type": "rationale", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\AGENTS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null, "rationale": "The interface starts at 360px, uses RTL logical CSS properties, cards instead of narrow-screen tables, and 44px minimum touch targets."}, {"id": "agents_custom_domain_keypad", "label": "Custom Domain Numeric Keypad", "file_type": "rationale", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\AGENTS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null, "rationale": "An in-app numeric keypad with domain shortcuts supports under-15-second transaction entry without reliance on the system keyboard."}, {"id": "agents_graphify_maintenance_workflow", "label": "Graphify Maintenance Workflow", "file_type": "rationale", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\AGENTS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null, "rationale": "Use graph.json first for structural questions, run graphify . --update after each completed task, save useful results, and reflect on stale lessons at session start."}, {"id": "tasks_backend_phase_1", "label": "Backend Phase 1 Task Plan", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_milestone_8_sales_documents", "label": "Milestone 8: Numbering and Sales Documents", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_milestone_9_settlement", "label": "Milestone 9: Settlement", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_milestone_10_consumer_purchase", "label": "Milestone 10: Consumer Purchase", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_milestone_11_invoice_correction", "label": "Milestone 11: Invoice Correction", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_milestone_12_party_reporting", "label": "Milestone 12: Party Accounts and Basic Reporting", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_milestone_13_receipts_exports", "label": "Milestone 13: Receipts and Export", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_milestone_14_hardening_delivery", "label": "Milestone 14: Hardening and Phase 1 Delivery", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_043_coin_sale", "label": "BE-043 Coin Sale", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_044_settlement_model", "label": "BE-044 Settlement Model", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_045_rial_balance_payment", "label": "BE-045 Rial Balance Payment", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_046_gold_payment", "label": "BE-046 Gold Payment", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_047_coin_payment", "label": "BE-047 Coin Payment", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_048_combined_settlement", "label": "BE-048 Combined Settlement", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_049_second_hand_gold_model", "label": "BE-049 Second-Hand Gold Purchase Model", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_050_record_second_hand_gold_purchase", "label": "BE-050 Record Second-Hand Gold Purchase", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_051_consumer_coin_purchase", "label": "BE-051 Consumer Coin Purchase", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_052_b2c_return_second_hand_purchase", "label": "BE-052 B2C Return as Second-Hand Purchase", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_053_invoice_correction_policy", "label": "BE-053 Invoice Correction Policy", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_054_new_invoice_version", "label": "BE-054 New Invoice Version", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_055_correction_history", "label": "BE-055 Correction History", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_056_party_multi_unit_balance", "label": "BE-056 Party Multi-Unit Balance", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_057_party_statement", "label": "BE-057 Party Statement", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_058_debtors_creditors_list", "label": "BE-058 Debtors and Creditors List", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_059_basic_dashboard", "label": "BE-059 Basic Dashboard", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_060_two_scale_profit_report", "label": "BE-060 Two-Scale Profit Report", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_061_invoice_exporter", "label": "BE-061 InvoiceExporter Abstraction", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_062_pdf_receipt_api", "label": "BE-062 PDF Receipt API", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_063_database_constraints", "label": "BE-063 Database Constraints", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_064_atomic_transaction_e2e", "label": "BE-064 Atomic Transaction End-to-End Tests", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_065_multi_tenant_security_test", "label": "BE-065 Multi-Tenant Security Tests", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_066_performance_baseline", "label": "BE-066 Performance Baseline", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_067_logging_observability", "label": "BE-067 Logging and Observability", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_068_backup_restore", "label": "BE-068 Backup and Restore Documentation", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_069_full_tenant_export", "label": "BE-069 Full Tenant Data Export", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_070_swagger_api_docs", "label": "BE-070 Swagger and API Documentation", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_071_backend_final_gate", "label": "BE-071 Backend Final Quality Gate", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "tasks_be_072_pilot_scenario_test", "label": "BE-072 Complete Pilot Scenario Test", "file_type": "document", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}, {"id": "graphify_out_memory_query_20260811_192513_how_should_graphify_be_maintained_after_completing_graphify_task_maintenance", "label": "Graphify Task Maintenance Guidance", "file_type": "rationale", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\graphify-out\\memory\\query_20260811_192513_how_should_graphify_be_maintained_after_completing.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": "graphify", "rationale": "Before handoff, run graphify . --update to capture code, documentation, and image changes; save the summary, principal graph nodes, and tests as a useful result; reflect at the next session start."}, {"id": "graphify_out_memory_query_20260811_192513_how_should_graphify_be_maintained_after_completing_incremental_update", "label": "Graphify Incremental Update", "file_type": "concept", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\graphify-out\\memory\\query_20260811_192513_how_should_graphify_be_maintained_after_completing.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": "graphify"}, {"id": "graphify_out_memory_query_20260811_192513_how_should_graphify_be_maintained_after_completing_save_result", "label": "Graphify Save Result", "file_type": "concept", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\graphify-out\\memory\\query_20260811_192513_how_should_graphify_be_maintained_after_completing.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": "graphify"}, {"id": "graphify_out_memory_query_20260811_192513_how_should_graphify_be_maintained_after_completing_reflect_if_stale", "label": "Graphify Reflect If Stale", "file_type": "concept", "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\graphify-out\\memory\\query_20260811_192513_how_should_graphify_be_maintained_after_completing.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": "graphify"}], "edges": [{"source": "readme_gold_project_calculator", "target": "agents_gold_accounting_product", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\README.md", "source_location": null, "weight": 1.0}, {"source": "agents_gold_accounting_product", "target": "agents_gold_denominated_accounting", "relation": "rationale_for", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\AGENTS.md", "source_location": null, "weight": 1.0}, {"source": "agents_gold_accounting_product", "target": "agents_global_unit_toggle", "relation": "rationale_for", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\AGENTS.md", "source_location": null, "weight": 1.0}, {"source": "agents_coin_as_counted_asset", "target": "agents_coin_bubble_rule", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\AGENTS.md", "source_location": null, "weight": 1.0}, {"source": "agents_append_only_ledger", "target": "agents_tenant_isolation", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\AGENTS.md", "source_location": null, "weight": 1.0}, {"source": "agents_versioned_domain_settings", "target": "agents_event_rate_snapshot", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\AGENTS.md", "source_location": null, "weight": 1.0}, {"source": "agents_b2c_second_hand_purchase", "target": "agents_phase_1_scope", "relation": "rationale_for", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\AGENTS.md", "source_location": null, "weight": 1.0}, {"source": "agents_mobile_first_financial_ui", "target": "agents_custom_domain_keypad", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\AGENTS.md", "source_location": null, "weight": 1.0}, {"source": "agents_graphify_maintenance_workflow", "target": "graphify_out_memory_query_20260811_192513_how_should_graphify_be_maintained_after_completing_graphify_task_maintenance", "relation": "semantically_similar_to", "confidence": "INFERRED", "confidence_score": 0.95, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\AGENTS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_backend_phase_1", "target": "agents_phase_1_scope", "relation": "conceptually_related_to", "confidence": "INFERRED", "confidence_score": 0.95, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_043_coin_sale", "target": "tasks_milestone_8_sales_documents", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_043_coin_sale", "target": "agents_coin_as_counted_asset", "relation": "references", "confidence": "INFERRED", "confidence_score": 0.85, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_044_settlement_model", "target": "tasks_milestone_9_settlement", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_045_rial_balance_payment", "target": "tasks_milestone_9_settlement", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_046_gold_payment", "target": "tasks_milestone_9_settlement", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_047_coin_payment", "target": "tasks_milestone_9_settlement", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_048_combined_settlement", "target": "tasks_milestone_9_settlement", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_049_second_hand_gold_model", "target": "tasks_milestone_10_consumer_purchase", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_050_record_second_hand_gold_purchase", "target": "tasks_milestone_10_consumer_purchase", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_051_consumer_coin_purchase", "target": "tasks_milestone_10_consumer_purchase", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_052_b2c_return_second_hand_purchase", "target": "tasks_milestone_10_consumer_purchase", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_052_b2c_return_second_hand_purchase", "target": "agents_b2c_second_hand_purchase", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_053_invoice_correction_policy", "target": "tasks_milestone_11_invoice_correction", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_054_new_invoice_version", "target": "tasks_milestone_11_invoice_correction", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_055_correction_history", "target": "tasks_milestone_11_invoice_correction", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_056_party_multi_unit_balance", "target": "tasks_milestone_12_party_reporting", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_057_party_statement", "target": "tasks_milestone_12_party_reporting", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_058_debtors_creditors_list", "target": "tasks_milestone_12_party_reporting", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_059_basic_dashboard", "target": "tasks_milestone_12_party_reporting", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_060_two_scale_profit_report", "target": "tasks_milestone_12_party_reporting", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_060_two_scale_profit_report", "target": "agents_global_unit_toggle", "relation": "references", "confidence": "INFERRED", "confidence_score": 0.85, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_061_invoice_exporter", "target": "tasks_milestone_13_receipts_exports", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_062_pdf_receipt_api", "target": "tasks_milestone_13_receipts_exports", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_063_database_constraints", "target": "tasks_milestone_14_hardening_delivery", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_063_database_constraints", "target": "agents_append_only_ledger", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_064_atomic_transaction_e2e", "target": "tasks_milestone_14_hardening_delivery", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_065_multi_tenant_security_test", "target": "tasks_milestone_14_hardening_delivery", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_065_multi_tenant_security_test", "target": "agents_tenant_isolation", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_066_performance_baseline", "target": "tasks_milestone_14_hardening_delivery", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_067_logging_observability", "target": "tasks_milestone_14_hardening_delivery", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_068_backup_restore", "target": "tasks_milestone_14_hardening_delivery", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_069_full_tenant_export", "target": "tasks_milestone_14_hardening_delivery", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_070_swagger_api_docs", "target": "tasks_milestone_14_hardening_delivery", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_071_backend_final_gate", "target": "tasks_milestone_14_hardening_delivery", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_072_pilot_scenario_test", "target": "tasks_milestone_14_hardening_delivery", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "tasks_be_071_backend_final_gate", "target": "agents_numeric_precision_policy", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md", "source_location": null, "weight": 1.0}, {"source": "graphify_out_memory_query_20260811_192513_how_should_graphify_be_maintained_after_completing_graphify_task_maintenance", "target": "graphify_out_memory_query_20260811_192513_how_should_graphify_be_maintained_after_completing_incremental_update", "relation": "rationale_for", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\graphify-out\\memory\\query_20260811_192513_how_should_graphify_be_maintained_after_completing.md", "source_location": null, "weight": 1.0}, {"source": "graphify_out_memory_query_20260811_192513_how_should_graphify_be_maintained_after_completing_graphify_task_maintenance", "target": "graphify_out_memory_query_20260811_192513_how_should_graphify_be_maintained_after_completing_save_result", "relation": "rationale_for", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\graphify-out\\memory\\query_20260811_192513_how_should_graphify_be_maintained_after_completing.md", "source_location": null, "weight": 1.0}, {"source": "graphify_out_memory_query_20260811_192513_how_should_graphify_be_maintained_after_completing_graphify_task_maintenance", "target": "graphify_out_memory_query_20260811_192513_how_should_graphify_be_maintained_after_completing_reflect_if_stale", "relation": "rationale_for", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\graphify-out\\memory\\query_20260811_192513_how_should_graphify_be_maintained_after_completing.md", "source_location": null, "weight": 1.0}], "hyperedges": [{"id": "tasks_settlement_workflow", "label": "Settlement Workflow Tasks", "nodes": ["tasks_be_044_settlement_model", "tasks_be_045_rial_balance_payment", "tasks_be_046_gold_payment", "tasks_be_047_coin_payment", "tasks_be_048_combined_settlement"], "relation": "participate_in", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md"}, {"id": "tasks_consumer_purchase_workflow", "label": "Consumer Purchase Workflow Tasks", "nodes": ["tasks_be_049_second_hand_gold_model", "tasks_be_050_record_second_hand_gold_purchase", "tasks_be_051_consumer_coin_purchase", "tasks_be_052_b2c_return_second_hand_purchase"], "relation": "participate_in", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md"}, {"id": "tasks_phase_1_hardening", "label": "Phase 1 Hardening and Delivery Tasks", "nodes": ["tasks_be_063_database_constraints", "tasks_be_064_atomic_transaction_e2e", "tasks_be_065_multi_tenant_security_test", "tasks_be_066_performance_baseline", "tasks_be_071_backend_final_gate", "tasks_be_072_pilot_scenario_test"], "relation": "participate_in", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md"}], "input_tokens": 0, "output_tokens": 0}
+{
+  "nodes": [
+    {
+      "id": "fronttasks_frontend_phase_1_task_plan",
+      "label": "Frontend Phase 1 Task Plan",
+      "file_type": "document",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "fronttasks_server_authoritative_financial_results",
+      "label": "Server-Authoritative Financial Results",
+      "file_type": "rationale",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "fronttasks_fe_009_api_error_management",
+      "label": "FE-009 API Error Management",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "fronttasks_fe_056_second_hand_purchase_wizard",
+      "label": "FE-056 Second-Hand Gold Purchase Wizard",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "fronttasks_purchase_wizard_eight_step_flow",
+      "label": "Eight-Step Second-Hand Purchase Flow",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "fronttasks_consumer_only_seller_selection",
+      "label": "Consumer-Only Seller Selection",
+      "file_type": "rationale",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "fronttasks_fe_057_second_hand_weighing_form",
+      "label": "FE-057 Second-Hand Gold Weighing Form",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "fronttasks_core_calc_purchase_pricing",
+      "label": "Core-Calc Purchase Pricing Preview",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "fronttasks_fe_058_seller_details",
+      "label": "FE-058 Seller Details",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "fronttasks_identity_data_minimization",
+      "label": "Seller Identity Data Minimization",
+      "file_type": "rationale",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "fronttasks_fe_059_second_hand_purchase_submission",
+      "label": "FE-059 Second-Hand Purchase Submission",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "fronttasks_fe_060_consumer_coin_purchase",
+      "label": "FE-060 Consumer Coin Purchase",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "fronttasks_fe_061_b2c_buyback_start",
+      "label": "FE-061 Start B2C Buyback from Invoice",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "fronttasks_fe_062_buyback_comparison",
+      "label": "FE-062 Original Purchase versus Today's Buyback Comparison",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "tasks_backend_phase_1_task_plan",
+      "label": "Backend Phase 1 Task Plan",
+      "file_type": "document",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "tasks_idempotent_write_operations",
+      "label": "Idempotent Write Operations",
+      "file_type": "rationale",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "tasks_multitenant_rls",
+      "label": "Tenant Isolation with PostgreSQL RLS",
+      "file_type": "rationale",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "tasks_append_only_balanced_ledger",
+      "label": "Append-Only Dimension-Balanced Ledger",
+      "file_type": "rationale",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "tasks_be_017_error_contract",
+      "label": "BE-017 Standard Error Contract",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "tasks_be_049_second_hand_purchase_model",
+      "label": "BE-049 Second-Hand Gold Purchase Model",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "tasks_historical_purchase_snapshots",
+      "label": "Historical Second-Hand Purchase Snapshots",
+      "file_type": "rationale",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "tasks_be_050_register_second_hand_gold_purchase",
+      "label": "BE-050 Register Second-Hand Gold Purchase",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "tasks_be_051_consumer_coin_purchase",
+      "label": "BE-051 Consumer Coin Purchase",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "tasks_be_052_b2c_buyback",
+      "label": "BE-052 B2C Buyback as Second-Hand Purchase",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "design_system_master_goldaccounting_design_system",
+      "label": "GoldAccounting Design System",
+      "file_type": "document",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\design-system\\MASTER.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "design_system_master_gold_first_unit_switching",
+      "label": "Gold-First Global Unit Switching",
+      "file_type": "rationale",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\design-system\\MASTER.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "design_system_master_mobile_first_work_tool",
+      "label": "Mobile-First Dense Work Tool",
+      "file_type": "rationale",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\design-system\\MASTER.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "design_system_master_token_driven_dark_mode",
+      "label": "Token-Driven Light and Dark Modes",
+      "file_type": "rationale",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\design-system\\MASTER.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "design_system_master_local_vazirmatn_typography",
+      "label": "Local Vazirmatn Typography",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\design-system\\MASTER.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "design_system_master_mobile_first_breakpoints",
+      "label": "Mobile-First Breakpoints 360 640 1024 1440",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\design-system\\MASTER.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "design_system_master_rtl_logical_layout",
+      "label": "RTL Logical-Property Layout",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\design-system\\MASTER.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "design_system_master_amountdisplay",
+      "label": "AmountDisplay",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\design-system\\MASTER.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "design_system_master_ratedisplay",
+      "label": "RateDisplay",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\design-system\\MASTER.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "design_system_master_minimal_motion",
+      "label": "Minimal Motion for INP under 200ms",
+      "file_type": "rationale",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\design-system\\MASTER.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "design_system_master_touch_first_interaction",
+      "label": "Touch-First Interaction",
+      "file_type": "rationale",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\design-system\\MASTER.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "design_system_master_pre_delivery_checklist",
+      "label": "Frontend Pre-Delivery Checklist",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\design-system\\MASTER.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "graphify_out_memory_query_20260811_192513_how_should_graphify_be_maintained_after_completing_graphify_maintenance_workflow",
+      "label": "Graphify Post-Task Maintenance Workflow",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\graphify-out\\memory\\query_20260811_192513_how_should_graphify_be_maintained_after_completing.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": "graphify"
+    },
+    {
+      "id": "graphify_out_memory_query_20260811_194802_implement_fe_009_api_error_management_safe_api_error_presentation",
+      "label": "Safe Persian API Error Presentation",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\graphify-out\\memory\\query_20260811_194802_implement_fe_009_api_error_management.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": "graphify"
+    },
+    {
+      "id": "graphify_out_memory_query_20260829_193215_fe_056_second_hand_gold_purchase_wizard_shell_purchase_wizard_shell",
+      "label": "Second-Hand Gold Purchase Wizard Shell Implementation",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\graphify-out\\memory\\query_20260829_193215_fe_056_second_hand_gold_purchase_wizard_shell.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": "graphify"
+    },
+    {
+      "id": "graphify_out_memory_query_20260829_195112_fe_057_second_hand_gold_weighing_form_weighing_form_implementation",
+      "label": "Second-Hand Gold Weighing Form Implementation",
+      "file_type": "concept",
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\graphify-out\\memory\\query_20260829_195112_fe_057_second_hand_gold_weighing_form.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": "graphify"
+    }
+  ],
+  "edges": [
+    {
+      "source": "fronttasks_frontend_phase_1_task_plan",
+      "target": "fronttasks_server_authoritative_financial_results",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "fronttasks_fe_009_api_error_management",
+      "target": "tasks_be_017_error_contract",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "fronttasks_fe_056_second_hand_purchase_wizard",
+      "target": "tasks_be_050_register_second_hand_gold_purchase",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "fronttasks_fe_056_second_hand_purchase_wizard",
+      "target": "fronttasks_purchase_wizard_eight_step_flow",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "fronttasks_fe_056_second_hand_purchase_wizard",
+      "target": "fronttasks_consumer_only_seller_selection",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "fronttasks_fe_057_second_hand_weighing_form",
+      "target": "fronttasks_core_calc_purchase_pricing",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "fronttasks_fe_057_second_hand_weighing_form",
+      "target": "fronttasks_server_authoritative_financial_results",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "fronttasks_fe_058_seller_details",
+      "target": "fronttasks_consumer_only_seller_selection",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "fronttasks_fe_058_seller_details",
+      "target": "fronttasks_identity_data_minimization",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "fronttasks_fe_059_second_hand_purchase_submission",
+      "target": "tasks_be_050_register_second_hand_gold_purchase",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "fronttasks_fe_059_second_hand_purchase_submission",
+      "target": "tasks_idempotent_write_operations",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "fronttasks_fe_060_consumer_coin_purchase",
+      "target": "tasks_be_051_consumer_coin_purchase",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "fronttasks_fe_061_b2c_buyback_start",
+      "target": "tasks_be_052_b2c_buyback",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "fronttasks_fe_062_buyback_comparison",
+      "target": "tasks_be_052_b2c_buyback",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "tasks_backend_phase_1_task_plan",
+      "target": "tasks_idempotent_write_operations",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "tasks_backend_phase_1_task_plan",
+      "target": "tasks_multitenant_rls",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "tasks_backend_phase_1_task_plan",
+      "target": "tasks_append_only_balanced_ledger",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "tasks_be_049_second_hand_purchase_model",
+      "target": "tasks_historical_purchase_snapshots",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "tasks_be_050_register_second_hand_gold_purchase",
+      "target": "tasks_be_049_second_hand_purchase_model",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "tasks_be_050_register_second_hand_gold_purchase",
+      "target": "tasks_historical_purchase_snapshots",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "tasks_be_050_register_second_hand_gold_purchase",
+      "target": "tasks_idempotent_write_operations",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "tasks_be_050_register_second_hand_gold_purchase",
+      "target": "tasks_append_only_balanced_ledger",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "tasks_be_051_consumer_coin_purchase",
+      "target": "tasks_append_only_balanced_ledger",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "tasks_be_052_b2c_buyback",
+      "target": "tasks_be_049_second_hand_purchase_model",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "design_system_master_goldaccounting_design_system",
+      "target": "design_system_master_gold_first_unit_switching",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\design-system\\MASTER.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "design_system_master_goldaccounting_design_system",
+      "target": "design_system_master_mobile_first_work_tool",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\design-system\\MASTER.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "design_system_master_goldaccounting_design_system",
+      "target": "design_system_master_token_driven_dark_mode",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\design-system\\MASTER.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "design_system_master_goldaccounting_design_system",
+      "target": "design_system_master_local_vazirmatn_typography",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\design-system\\MASTER.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "design_system_master_mobile_first_work_tool",
+      "target": "design_system_master_mobile_first_breakpoints",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\design-system\\MASTER.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "design_system_master_mobile_first_work_tool",
+      "target": "design_system_master_rtl_logical_layout",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\design-system\\MASTER.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "design_system_master_gold_first_unit_switching",
+      "target": "design_system_master_amountdisplay",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\design-system\\MASTER.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "design_system_master_amountdisplay",
+      "target": "design_system_master_ratedisplay",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\design-system\\MASTER.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "design_system_master_mobile_first_work_tool",
+      "target": "design_system_master_minimal_motion",
+      "relation": "rationale_for",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\design-system\\MASTER.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "design_system_master_mobile_first_work_tool",
+      "target": "design_system_master_touch_first_interaction",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\design-system\\MASTER.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "design_system_master_pre_delivery_checklist",
+      "target": "design_system_master_touch_first_interaction",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\design-system\\MASTER.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "design_system_master_pre_delivery_checklist",
+      "target": "design_system_master_mobile_first_breakpoints",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\design-system\\MASTER.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "design_system_master_pre_delivery_checklist",
+      "target": "design_system_master_amountdisplay",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\design-system\\MASTER.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_memory_query_20260811_194802_implement_fe_009_api_error_management_safe_api_error_presentation",
+      "target": "fronttasks_fe_009_api_error_management",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\graphify-out\\memory\\query_20260811_194802_implement_fe_009_api_error_management.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_memory_query_20260811_194802_implement_fe_009_api_error_management_safe_api_error_presentation",
+      "target": "tasks_be_017_error_contract",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\graphify-out\\memory\\query_20260811_194802_implement_fe_009_api_error_management.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_memory_query_20260829_193215_fe_056_second_hand_gold_purchase_wizard_shell_purchase_wizard_shell",
+      "target": "fronttasks_fe_056_second_hand_purchase_wizard",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\graphify-out\\memory\\query_20260829_193215_fe_056_second_hand_gold_purchase_wizard_shell.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_memory_query_20260829_195112_fe_057_second_hand_gold_weighing_form_weighing_form_implementation",
+      "target": "fronttasks_fe_057_second_hand_weighing_form",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\graphify-out\\memory\\query_20260829_195112_fe_057_second_hand_gold_weighing_form.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "graphify_out_memory_query_20260829_195112_fe_057_second_hand_gold_weighing_form_weighing_form_implementation",
+      "target": "fronttasks_core_calc_purchase_pricing",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\graphify-out\\memory\\query_20260829_195112_fe_057_second_hand_gold_weighing_form.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "fronttasks_second_hand_purchase_frontend_flow",
+      "label": "Second-Hand Purchase Frontend Flow",
+      "nodes": [
+        "fronttasks_fe_056_second_hand_purchase_wizard",
+        "fronttasks_fe_057_second_hand_weighing_form",
+        "fronttasks_fe_058_seller_details",
+        "fronttasks_fe_059_second_hand_purchase_submission"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\FrontTasks.md"
+    },
+    {
+      "id": "tasks_second_hand_purchase_backend_flow",
+      "label": "Second-Hand Purchase Backend Flow",
+      "nodes": [
+        "tasks_be_049_second_hand_purchase_model",
+        "tasks_be_050_register_second_hand_gold_purchase",
+        "tasks_be_052_b2c_buyback"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\TASKS.md"
+    },
+    {
+      "id": "design_system_master_mobile_financial_interface",
+      "label": "Mobile Financial Interface Design Pattern",
+      "nodes": [
+        "design_system_master_gold_first_unit_switching",
+        "design_system_master_mobile_first_work_tool",
+        "design_system_master_amountdisplay",
+        "design_system_master_touch_first_interaction"
+      ],
+      "relation": "form",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "C:\\Users\\Sobhan\\OneDrive\\Documents\\gold project prd\\design-system\\MASTER.md"
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

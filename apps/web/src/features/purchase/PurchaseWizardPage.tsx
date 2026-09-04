@@ -1,9 +1,8 @@
 import { useBlocker } from '@tanstack/react-router';
-import { AlertTriangle, Construction, Info } from 'lucide-react';
+import { Construction, Info } from 'lucide-react';
 import { toSafeNumber } from '@gold/core-calc';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PageHeader } from '@/components/common/PageHeader';
-import { PartySelector } from '@/components/common/PartySelector';
 import { UnitToggle } from '@/components/common/UnitToggle';
 import { Button } from '@/components/ui/button';
 import { NumericKeypad } from '@/components/keypad/NumericKeypad';
@@ -20,6 +19,7 @@ import {
 import { PurchaseStepper } from './PurchaseStepper';
 import { SecondHandWeighingForm } from './SecondHandWeighingForm';
 import { calculateSecondHandWeighing } from './purchase-pricing';
+import { SellerDetailsStep } from './SellerDetailsStep';
 
 /**
  * صفحه‌ی خرید طلای دست‌دوم — shell و فرم وزن‌کشی جریان هشت‌مرحله‌ای (FE-056 / FE-057).
@@ -119,13 +119,7 @@ export default function PurchaseWizardPage() {
               <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
               طلای خریداری‌شده به‌طور پیش‌فرض به موجودی آبشده اضافه می‌شود.
             </p>
-            <PartySelector label="فروشنده" value={seller} onChange={setSeller} />
-            {isNonConsumerSeller ? (
-              <p className="flex items-start gap-1.5 text-xs text-warning" role="alert">
-                <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
-                خرید دست‌دوم فقط از شخص مصرف‌کننده ثبت می‌شود؛ همکار انتخاب شده است.
-              </p>
-            ) : null}
+            <SellerDetailsStep seller={seller} onSellerChange={setSeller} />
           </>
         ) : null}
 

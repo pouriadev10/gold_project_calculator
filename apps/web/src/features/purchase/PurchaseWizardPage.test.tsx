@@ -7,6 +7,7 @@ import type * as ReactRouter from '@tanstack/react-router';
 import type * as Queries from '@/api/queries';
 import type { Party, PriceQuote } from '@/api/contracts';
 import { usePurchaseDraftStore } from '@/stores/purchase-draft-store';
+import { useRecentPartiesStore } from '@/stores/recent-parties-store';
 import PurchaseWizardPage from './PurchaseWizardPage';
 
 /**
@@ -82,6 +83,7 @@ async function selectSeller(user: ReturnType<typeof userEvent.setup>, name: stri
 
 beforeEach(() => {
   usePurchaseDraftStore.getState().reset();
+  useRecentPartiesStore.setState({ recent: [] });
   sessionStorage.clear();
   localStorage.clear();
   useBlockerMock.mockReset();
@@ -128,6 +130,28 @@ describe('PurchaseWizardPage — شروع و پیمایش مراحل', () => {
     expect(screen.getByText('مرحله ۲ از ۸ — وزن‌کشی')).toBeInTheDocument();
   });
 
+  it('پس از انتخاب، نام و اطلاعات هویتی را فقط به‌صورت امن نمایش می‌دهد', async () => {
+    const user = userEvent.setup();
+    const mobile = '09121234567';
+    const nationalId = '0012345678';
+    usePartiesMock.mockReturnValue({
+      data: { items: [party({ displayName: 'حسین مرادی', mobile, nationalId })] },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+    renderPage();
+
+    await selectSeller(user, 'حسین مرادی');
+
+    expect(screen.getByRole('region', { name: 'مشخصات فروشنده' })).toBeInTheDocument();
+    expect(screen.getByLabelText('خلاصه امن مشخصات فروشنده')).toHaveTextContent('۰۹۱۲••••۵۶۷');
+    expect(screen.getByLabelText('خلاصه امن مشخصات فروشنده')).toHaveTextContent('۰۰۱••••۶۷۸');
+    expect(screen.queryByText(mobile)).not.toBeInTheDocument();
+    expect(screen.queryByText(nationalId)).not.toBeInTheDocument();
+    expect(sessionStorage.getItem('gold-ui-purchase-draft')).not.toContain(nationalId);
+  });
+
   it('انتخاب همکار (BUSINESS) «بعدی» را قفل و هشدار مصرف‌کننده را نشان می‌دهد', async () => {
     const user = userEvent.setup();
     renderPage();
@@ -146,7 +170,7 @@ describe('PurchaseWizardPage — شروع و پیمایش مراحل', () => {
     await user.click(screen.getByRole('button', { name: 'قبلی' }));
 
     expect(screen.getByText('مرحله ۱ از ۸ — فروشنده')).toBeInTheDocument();
-    expect(screen.getByText('حسین مرادی')).toBeInTheDocument();
+    expect(screen.getAllByText('حسین مرادی').length).toBeGreaterThan(0);
   });
 
   it('مراحل وزن‌کشی، کسورات و عیار فرم‌های واقعی رندر می‌کنند', async () => {

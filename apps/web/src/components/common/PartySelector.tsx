@@ -2,7 +2,7 @@ import { useEffect, useId, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { Plus, Search, UserRound, X } from 'lucide-react';
 import { useParties } from '@/api/queries';
-import type { PartyType } from '@/api/contracts';
+import type { Party, PartyType } from '@/api/contracts';
 import { CardSkeleton } from '@/components/common/CardSkeleton';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorState } from '@/components/common/ErrorState';
@@ -16,8 +16,12 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { CreatePartyDialog } from '@/features/parties/CreatePartyDialog';
+import {
+  CreatePartyDialog,
+  type CreatePartyDialogVariant,
+} from '@/features/parties/CreatePartyDialog';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { maskMobileForDisplay, maskNationalIdForDisplay } from '@/lib/sensitive-identity';
 import { cn } from '@/lib/utils';
 import { useRecentPartiesStore, type PartySelection } from '@/stores/recent-parties-store';
 
@@ -71,6 +75,25 @@ export interface PartySelectorProps {
   onChange: (party: PartySelection | null) => void;
   placeholder?: string;
   disabled?: boolean;
+  /** فرم inline را برای زمینه‌ی جاری تنظیم می‌کند؛ فروشنده کد ملی اختیاری و نوع ثابت مصرف‌کننده دارد. */
+  inlineCreateVariant?: CreatePartyDialogVariant;
+}
+
+type PartyCandidate = PartySelection & Partial<Pick<Party, 'nationalId'>>;
+
+/** فقط snapshot حداقلی و امن را به store/caller تحویل می‌دهد؛ propertyهای اضافی پاسخ API نشت نمی‌کنند. */
+function toPartySelection(party: PartyCandidate): PartySelection {
+  const rawNationalId = party.nationalId;
+  return {
+    id: party.id,
+    displayName: party.displayName,
+    mobile: party.mobile,
+    nationalIdMasked: rawNationalId
+      ? maskNationalIdForDisplay(rawNationalId)
+      : (party.nationalIdMasked ?? null),
+    type: party.type,
+    status: party.status,
+  };
 }
 
 export function PartySelector({
@@ -79,6 +102,7 @@ export function PartySelector({
   onChange,
   placeholder = 'انتخاب شخص',
   disabled = false,
+  inlineCreateVariant = 'QUICK',
 }: PartySelectorProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -111,10 +135,11 @@ export function PartySelector({
     setHighlightedIndex(0);
   }, [isSearching, results.length]);
 
-  function select(party: PartySelection) {
+  function select(party: PartyCandidate) {
     if (party.status === 'INACTIVE') return; // قاعده‌ی FE-033 — رد خاموش، نه خطا؛ دکمه هم disabled است
-    recordSelection(party);
-    onChange(party);
+    const selection = toPartySelection(party);
+    recordSelection(selection);
+    onChange(selection);
     setOpen(false);
     setSearch('');
   }
@@ -254,7 +279,7 @@ export function PartySelector({
                         <span className="block truncate text-sm font-medium">{party.displayName}</span>
                         {party.mobile ? (
                           <span className="block truncate text-xs tabular-nums text-muted-foreground" dir="ltr">
-                            {party.mobile}
+                            {maskMobileForDisplay(party.mobile)}
                           </span>
                         ) : null}
                       </span>
@@ -284,7 +309,12 @@ export function PartySelector({
         </ResponsiveDialogContent>
       </ResponsiveDialog>
 
-      <CreatePartyDialog open={createOpen} onOpenChange={setCreateOpen} onCreated={select} />
+      <CreatePartyDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onCreated={select}
+        variant={inlineCreateVariant}
+      />
     </div>
   );
 }

@@ -21,14 +21,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { useIdempotentSubmit } from '@/hooks/useIdempotentSubmit';
+import { normalizedInput } from '@/lib/persian-text';
 import { toast } from '@/stores/toast-store';
 
 /**
  * ثبت سریع شخص — FE-032.
  *
- * فقط سه فیلد: نوع، نام، موبایل اختیاری. کد ملی و یادداشت اینجا نیستند —
- * فرم کامل ایجاد/ویرایش با همه‌ی فیلدها کار FE-033 است؛ این‌جا فقط باید
- * در وسط یک فروش/جست‌وجو بشود سریع یک مشتری تازه ساخت.
+ * در حالت پیش‌فرض فقط سه فیلد سریع نوع، نام و موبایل اختیاری را نشان می‌دهد.
+ * حالت `SELLER` برای مرحله‌ی فروشنده‌ی خرید دست‌دوم (FE-058) نوع را روی
+ * مصرف‌کننده قفل می‌کند و کد ملی اختیاری را هم می‌گیرد؛ این داده فقط به
+ * API فرستاده می‌شود و انتخاب‌گر نسخه‌ی خام آن را در storage نگه نمی‌دارد.
  *
  * schema محلی (نه `createPartySchema` مستقیم): آن schema مشترک `mobile`
  * را `min(1).optional()` می‌خواهد — یعنی رشته‌ی خالیِ input خالی (نه
@@ -37,8 +39,9 @@ import { toast } from '@/stores/toast-store';
  */
 const partyFormSchema = z.object({
   type: z.enum(['CONSUMER', 'BUSINESS']),
-  displayName: z.string().trim().min(1, 'نام الزامی است').max(200),
-  mobile: z.string().trim().max(32, 'حداکثر ۳۲ نویسه').optional(),
+  displayName: normalizedInput(z.string().trim().min(1, 'نام الزامی است').max(200)),
+  mobile: normalizedInput(z.string().trim().max(32, 'حداکثر ۳۲ نویسه')).optional(),
+  nationalId: normalizedInput(z.string().trim().max(32, 'حداکثر ۳۲ نویسه')).optional(),
 });
 type PartyFormValues = z.infer<typeof partyFormSchema>;
 
@@ -49,17 +52,28 @@ function toCreatePartyInput(values: PartyFormValues): CreatePartyInput {
     type: values.type,
     displayName: values.displayName,
     ...(values.mobile ? { mobile: values.mobile } : {}),
+    ...(values.nationalId ? { nationalId: values.nationalId } : {}),
   };
 }
+
+export type CreatePartyDialogVariant = 'QUICK' | 'SELLER';
 
 export interface CreatePartyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** بعد از ثبت موفق با شخص تازه صدا زده می‌شود — مثلاً برای انتخاب خودکار در `PartySelector` (FE-035). */
   onCreated?: (party: Party) => void;
+  /** حالت فروشنده، ورودی هویتی لازم برای خرید دست‌دوم را بدون افزودن فیلدهای نامرتبط نشان می‌دهد. */
+  variant?: CreatePartyDialogVariant;
 }
 
-export function CreatePartyDialog({ open, onOpenChange, onCreated }: CreatePartyDialogProps) {
+export function CreatePartyDialog({
+  open,
+  onOpenChange,
+  onCreated,
+  variant = 'QUICK',
+}: CreatePartyDialogProps) {
+  const isSeller = variant === 'SELLER';
   const queryClient = useQueryClient();
   const [submitError, setSubmitError] = useState<unknown>(null);
 
@@ -70,7 +84,7 @@ export function CreatePartyDialog({ open, onOpenChange, onCreated }: CreateParty
     formState: { errors },
   } = useForm<PartyFormValues>({
     resolver: zodResolver(partyFormSchema),
-    defaultValues: { type: 'CONSUMER', displayName: '', mobile: '' },
+    defaultValues: { type: 'CONSUMER', displayName: '', mobile: '', nationalId: '' },
   });
 
   const { submit, isSubmitting, reset: resetKey } = useIdempotentSubmit(
@@ -106,25 +120,35 @@ export function CreatePartyDialog({ open, onOpenChange, onCreated }: CreateParty
     <ResponsiveDialog open={open} onOpenChange={(next) => (next ? onOpenChange(true) : close())}>
       <ResponsiveDialogContent>
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>افزودن شخص</ResponsiveDialogTitle>
+          <ResponsiveDialogTitle>{isSeller ? 'افزودن فروشنده' : 'افزودن شخص'}</ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
-            برای شروع همین سه فیلد کافی است؛ بقیه‌ی مشخصات را بعداً از صفحه‌ی شخص کامل کنید.
+            {isSeller
+              ? 'فروشنده به‌عنوان مصرف‌کننده ثبت می‌شود. کد ملی فعلاً اختیاری است.'
+              : 'برای شروع همین سه فیلد کافی است؛ بقیه‌ی مشخصات را بعداً از صفحه‌ی شخص کامل کنید.'}
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
 
         <form className="space-y-4" onSubmit={onSubmit} noValidate>
-          <div>
-            <label htmlFor="party-type" className="mb-1.5 block text-sm font-medium">
-              نوع طرف حساب
-            </label>
-            <Select id="party-type" disabled={isSubmitting} {...register('type')}>
-              {Object.entries(TYPE_LABEL).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </Select>
-          </div>
+          {isSeller ? (
+            <div className="rounded-md border border-border bg-muted px-3 py-2">
+              <span className="block text-xs text-muted-foreground">نوع طرف حساب</span>
+              <span className="text-sm font-medium">مصرف‌کننده</span>
+              <input type="hidden" value="CONSUMER" {...register('type')} />
+            </div>
+          ) : (
+            <div>
+              <label htmlFor="party-type" className="mb-1.5 block text-sm font-medium">
+                نوع طرف حساب
+              </label>
+              <Select id="party-type" disabled={isSubmitting} {...register('type')}>
+                {Object.entries(TYPE_LABEL).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          )}
 
           <div>
             <label htmlFor="party-name" className="mb-1.5 block text-sm font-medium">
@@ -157,6 +181,30 @@ export function CreatePartyDialog({ open, onOpenChange, onCreated }: CreateParty
             />
             {errors.mobile ? <InlineError message={errors.mobile.message ?? 'موبایل معتبر نیست'} /> : null}
           </div>
+
+          {isSeller ? (
+            <div>
+              <label htmlFor="party-national-id" className="mb-1.5 block text-sm font-medium">
+                کد ملی (اختیاری)
+              </label>
+              <Input
+                id="party-national-id"
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                disabled={isSubmitting}
+                aria-invalid={Boolean(errors.nationalId)}
+                aria-describedby="party-national-id-hint"
+                {...register('nationalId')}
+              />
+              <p id="party-national-id-hint" className="mt-1 text-xs text-muted-foreground">
+                پس از ثبت، مقدار کامل در این جریان دوباره نمایش داده نمی‌شود.
+              </p>
+              {errors.nationalId ? (
+                <InlineError message={errors.nationalId.message ?? 'کد ملی معتبر نیست'} />
+              ) : null}
+            </div>
+          ) : null}
 
           {submitError ? <ApiErrorNotice error={submitError} /> : null}
 

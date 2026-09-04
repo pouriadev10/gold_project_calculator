@@ -70,11 +70,16 @@ function idleParties(items: Party[] = []) {
 }
 
 function renderSelector(props: Partial<Parameters<typeof PartySelector>[0]> = {}) {
-  const onChange = props.onChange ?? vi.fn();
+  const {
+    onChange = vi.fn(),
+    value = null,
+    label = 'طرف حساب',
+    ...rest
+  } = props;
   const client = new QueryClient();
   render(
     <QueryClientProvider client={client}>
-      <PartySelector label="طرف حساب" value={props.value ?? null} onChange={onChange} />
+      <PartySelector label={label} value={value} onChange={onChange} {...rest} />
     </QueryClientProvider>,
   );
   return onChange;
@@ -212,6 +217,26 @@ describe('PartySelector — جست‌وجو (تمام است وقتی: با کی
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
 
+  it('اطلاعات اضافی پاسخ API را حذف و فقط کد ملی پوشانده‌شده را ذخیره می‌کند', async () => {
+    const rawNationalId = '0012345678';
+    usePartiesMock.mockReturnValue(idleParties([party({ id: 'p-secure', nationalId: rawNationalId })]));
+    const user = userEvent.setup();
+    const onChange = renderSelector();
+    await user.click(screen.getByRole('button', { name: 'طرف حساب' }));
+    await user.type(screen.getByRole('combobox', { name: 'جست‌وجوی نام یا موبایل' }), 'حسین');
+    await user.click(await screen.findByRole('option', { name: /حسین مرادی/ }));
+
+    expect(onChange).toHaveBeenCalledWith({
+      id: 'p-secure',
+      displayName: 'حسین مرادی',
+      mobile: '09121234567',
+      nationalIdMasked: '۰۰۱••••۶۷۸',
+      type: 'CONSUMER',
+      status: 'ACTIVE',
+    });
+    expect(localStorage.getItem('gold-ui-recent-parties')).not.toContain(rawNationalId);
+  });
+
   it('ردیف غیرفعال با کلیک انتخاب نمی‌شود', async () => {
     usePartiesMock.mockReturnValue(idleParties([party({ id: 'p9', status: 'INACTIVE' })]));
     const user = userEvent.setup();
@@ -253,6 +278,17 @@ describe('PartySelector — ایجاد شخص جدید (تمام است وقتی
 
     expect(await screen.findByLabelText('نام')).toBeInTheDocument();
     expect(screen.queryByRole('combobox', { name: 'جست‌وجوی نام یا موبایل' })).not.toBeInTheDocument();
+  });
+
+  it('در زمینه‌ی فروشنده فرم inline کد ملی اختیاری و نوع ثابت مصرف‌کننده دارد', async () => {
+    const user = userEvent.setup();
+    renderSelector({ label: 'فروشنده', inlineCreateVariant: 'SELLER' });
+    await user.click(screen.getByRole('button', { name: 'فروشنده' }));
+    await user.click(screen.getByRole('button', { name: 'ایجاد شخص جدید' }));
+
+    expect(await screen.findByRole('heading', { name: 'افزودن فروشنده' })).toBeInTheDocument();
+    expect(screen.getByLabelText('کد ملی (اختیاری)')).toBeInTheDocument();
+    expect(screen.queryByLabelText('نوع طرف حساب')).not.toBeInTheDocument();
   });
 
   it('بعد از ثبت موفق، همان شخص انتخاب و در فهرست اخیر ثبت می‌شود', async () => {

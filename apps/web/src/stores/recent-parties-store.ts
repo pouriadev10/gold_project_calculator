@@ -24,6 +24,8 @@ export interface PartySelection {
   readonly id: string;
   readonly displayName: string;
   readonly mobile: string | null;
+  /** فقط نمایش پوشانده‌شده؛ مقدار خام کد ملی هرگز در storage سمت کلاینت قرار نمی‌گیرد. */
+  readonly nationalIdMasked?: string | null;
   readonly type: PartyType;
   readonly status: PartyStatus;
 }

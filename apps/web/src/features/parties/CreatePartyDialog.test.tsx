@@ -49,11 +49,20 @@ function mockDesktopViewport() {
   );
 }
 
-function renderDialog(onOpenChange = vi.fn(), onCreated?: (party: Party) => void) {
+function renderDialog(
+  onOpenChange = vi.fn(),
+  onCreated?: (party: Party) => void,
+  variant?: 'QUICK' | 'SELLER',
+) {
   const client = new QueryClient();
   render(
     <QueryClientProvider client={client}>
-      <CreatePartyDialog open onOpenChange={onOpenChange} {...(onCreated ? { onCreated } : {})} />
+      <CreatePartyDialog
+        open
+        onOpenChange={onOpenChange}
+        {...(onCreated ? { onCreated } : {})}
+        {...(variant ? { variant } : {})}
+      />
     </QueryClientProvider>,
   );
   return onOpenChange;
@@ -114,6 +123,34 @@ describe('CreatePartyDialog — ثبت موفق (تمام است وقتی: شخ�
     );
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
     expect(useToastStore.getState().toasts.some((t) => t.title === 'شخص ثبت شد')).toBe(true);
+  });
+
+  it('در حالت فروشنده نوع را روی مصرف‌کننده قفل و کد ملی اختیاری را نرمال می‌کند', async () => {
+    createPartyMock.mockResolvedValue({
+      ...PARTY_RESPONSE,
+      mobile: '09121234567',
+      nationalId: '0012345678',
+    });
+    const user = userEvent.setup();
+    renderDialog(vi.fn(), undefined, 'SELLER');
+
+    expect(screen.queryByLabelText('نوع طرف حساب')).not.toBeInTheDocument();
+    expect(screen.getByText('مصرف‌کننده')).toBeInTheDocument();
+    await fillName(user, 'حسین مرادی');
+    await user.type(screen.getByLabelText('موبایل (اختیاری)'), '۰۹۱۲۱۲۳۴۵۶۷');
+    await user.type(screen.getByLabelText('کد ملی (اختیاری)'), '۰۰۱۲۳۴۵۶۷۸');
+    await user.click(screen.getByRole('button', { name: 'ثبت شخص' }));
+
+    await waitFor(() => expect(createPartyMock).toHaveBeenCalledTimes(1));
+    expect(createPartyMock).toHaveBeenCalledWith(
+      {
+        type: 'CONSUMER',
+        displayName: 'حسین مرادی',
+        mobile: '09121234567',
+        nationalId: '0012345678',
+      },
+      expect.any(String),
+    );
   });
 
   it('با موبایل پرشده، در payload می‌آید', async () => {
