@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, type ReactNode } from 'react';
 import type * as ReactRouter from '@tanstack/react-router';
 import type * as Queries from '@/api/queries';
@@ -102,6 +102,31 @@ beforeEach(() => {
     isError: false,
     refetch: vi.fn(),
   });
+});
+afterEach(() => vi.unstubAllGlobals());
+
+it('registers from payment and renders the authoritative server receipt', async () => {
+  const user = userEvent.setup();
+  useLatestPriceQuoteMock.mockReturnValue({ data: { ...priceQuote(), id: 'c1000000-0000-4000-8000-000000000001' }, isSuccess: true });
+  usePurchaseDraftStore.setState({ step: 'PAYMENT', grossWeightMg: '1000',
+    seller: { id: 'a1000000-0000-4000-8000-000000000001', displayName: 'حسین', mobile: null, type: 'CONSUMER', status: 'ACTIVE' } });
+  const receipt = {
+    secondHandPurchaseId: 'a1000000-0000-4000-8000-000000000011',
+    ledgerTransactionId: 'a1000000-0000-4000-8000-000000000012',
+    inventoryMovementId: 'a1000000-0000-4000-8000-000000000013',
+    pureWeightMg: '740', goldRatePerGramRial: '30000000', grossPurchaseAmountRial: '22000000',
+    feeRial: '0', finalAmountRial: '22000000', paidRial: '0', payableRial: '22000000',
+  };
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(receipt), { status: 201 })));
+  renderPage();
+  await user.click(screen.getByRole('button', { name: 'ثبت خرید' }));
+  expect(await screen.findByText('خرید ثبت شد')).toBeInTheDocument();
+  expect(screen.getByText('مرحله ۸ از ۸ — رسید')).toBeInTheDocument();
+  expect(screen.getByText(receipt.secondHandPurchaseId)).toBeInTheDocument();
+  expect(screen.getByLabelText('رسید خرید')).toHaveTextContent('مانده بستانکاری فروشنده');
+  expect(useBlockerMock).toHaveBeenLastCalledWith(expect.any(Function), false);
+  await user.click(screen.getByRole('button', { name: 'خرید جدید' }));
+  expect(screen.getByText('مرحله ۱ از ۸ — فروشنده')).toBeInTheDocument();
 });
 
 describe('PurchaseWizardPage — شروع و پیمایش مراحل', () => {
@@ -240,7 +265,7 @@ describe('PurchaseWizardPage — مرحله‌ی مظنه و مبلغ', () => {
 });
 
 describe('PurchaseWizardPage — مرحله‌ی آخر و هشدار خروج', () => {
-  it('روی پرداخت، دکمه‌ی ثبت (هنوز بی‌کنش) جای «بعدی» می‌نشیند', () => {
+  it('روی پرداخت بدون اطلاعات خرید، دکمه ثبت غیرفعال است', () => {
     usePurchaseDraftStore.getState().goToStep('PAYMENT');
     renderPage();
 

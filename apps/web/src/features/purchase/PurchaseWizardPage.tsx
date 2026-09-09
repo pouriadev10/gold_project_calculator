@@ -1,7 +1,9 @@
 import { useBlocker } from '@tanstack/react-router';
-import { Construction, Info } from 'lucide-react';
-import { toSafeNumber } from '@gold/core-calc';
-import { EmptyState } from '@/components/common/EmptyState';
+import { Info } from 'lucide-react';
+import { dualFromRial, toSafeNumber } from '@gold/core-calc';
+import { AmountDisplay } from '@/components/common/AmountDisplay';
+import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
+import { MoneyInput } from '@/components/keypad/MoneyInput';
 import { PageHeader } from '@/components/common/PageHeader';
 import { UnitToggle } from '@/components/common/UnitToggle';
 import { Button } from '@/components/ui/button';
@@ -14,12 +16,13 @@ import {
   NAVIGABLE_PURCHASE_STEPS,
   PURCHASE_STEPS,
   usePurchaseDraftStore,
-  type PurchaseStep,
 } from '@/stores/purchase-draft-store';
 import { PurchaseStepper } from './PurchaseStepper';
 import { SecondHandWeighingForm } from './SecondHandWeighingForm';
 import { calculateSecondHandWeighing } from './purchase-pricing';
 import { SellerDetailsStep } from './SellerDetailsStep';
+import { PurchaseReceipt } from './PurchaseReceipt';
+import { usePurchaseSubmit } from './usePurchaseSubmit';
 
 /**
  * صفحه‌ی خرید طلای دست‌دوم — shell و فرم وزن‌کشی جریان هشت‌مرحله‌ای (FE-056 / FE-057).
@@ -37,10 +40,6 @@ import { SellerDetailsStep } from './SellerDetailsStep';
  * ۸. **رسید**: نمایش رسید نهایی (FE-059).
  */
 
-const STEP_PLACEHOLDER: Record<Extract<PurchaseStep, 'PAYMENT'>, string> = {
-  PAYMENT: 'ثبت پرداخت و ثبت نهایی خرید در تسک بعد اضافه می‌شود.',
-};
-
 export default function PurchaseWizardPage() {
   const isOnline = useOnlineStatus();
   const mazneh = useMazneh();
@@ -52,6 +51,10 @@ export default function PurchaseWizardPage() {
   const otherDeductionWeightMg = usePurchaseDraftStore((s) => s.otherDeductionWeightMg);
   const purchaseKarat = usePurchaseDraftStore((s) => s.purchaseKarat);
   const feeRial = usePurchaseDraftStore((s) => s.feeRial);
+  const paidRial = usePurchaseDraftStore((s) => s.paidRial);
+  const setPaidRial = usePurchaseDraftStore((s) => s.setPaidRial);
+  const submission = usePurchaseSubmit(mazneh.data?.quoteId, isOnline);
+  const locked = submission.isSubmitting || submission.attempt !== null;
 
   const next = usePurchaseDraftStore((s) => s.next);
   const back = usePurchaseDraftStore((s) => s.back);
@@ -62,7 +65,7 @@ export default function PurchaseWizardPage() {
   const setPurchaseKarat = usePurchaseDraftStore((s) => s.setPurchaseKarat);
   const setFeeRial = usePurchaseDraftStore((s) => s.setFeeRial);
 
-  useBlocker(() => true, hasPurchaseDraftProgress({ step, seller, grossWeightMg, feeRial }));
+  useBlocker(() => true, !submission.receipt && hasPurchaseDraftProgress({ step, seller, grossWeightMg, feeRial }));
 
   const stepIndex = PURCHASE_STEPS.indexOf(step);
   const isFirstStep = stepIndex === 0;
@@ -87,6 +90,11 @@ export default function PurchaseWizardPage() {
     },
     maznehRial,
   );
+  const paid = BigInt(paidRial || '0');
+  const canSubmit = isOnline && !submission.isSubmitting && (submission.attempt !== null || (
+    seller?.type === 'CONSUMER' && seller.status === 'ACTIVE' &&
+    Boolean(mazneh.data) && weighingCalc.ok && paid >= 0n && paid <= weighingCalc.calc.finalAmountRial
+  ));
 
   let canGoNext = false;
   if (step === 'SELLER') {
@@ -110,9 +118,11 @@ export default function PurchaseWizardPage() {
       <PageHeader title="خرید طلای دست‌دوم">
         <UnitToggle />
       </PageHeader>
-      <PurchaseStepper current={step} />
+      <PurchaseStepper current={submission.receipt ? 'RECEIPT' : step} />
 
       <div className="flex-1 space-y-4 p-4 pb-32">
+        {submission.receipt ? <PurchaseReceipt receipt={submission.receipt} /> : <>
+        <fieldset disabled={locked} className="min-w-0 space-y-4">
         {step === 'SELLER' ? (
           <>
             <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
@@ -194,36 +204,47 @@ export default function PurchaseWizardPage() {
         ) : null}
 
         {step === 'PAYMENT' ? (
-          <EmptyState
-            icon={Construction}
-            title="این بخش هنوز ساخته نشده است"
-            description={STEP_PLACEHOLDER.PAYMENT}
-          />
+          <section className="space-y-4" aria-label="پرداخت خرید">
+            <h2 className="text-base font-semibold">پرداخت به فروشنده</h2>
+            {weighingCalc.ok ? <>
+              <p>مبلغ نهایی: <AmountDisplay amount={weighingCalc.calc.dualFinalAmount} /></p>
+              <MoneyInput label="پرداخت اکنون (ریال)" value={paid} onChange={(v) => setPaidRial(v.toString())} disabled={locked}
+                hint="مبلغ پرداخت‌نشده به مانده بستانکاری فروشنده اضافه می‌شود." />
+              <Button type="button" variant="outline" disabled={locked} onClick={() => setPaidRial(weighingCalc.calc.finalAmountRial.toString())}>پرداخت کامل</Button>
+              {paid > weighingCalc.calc.finalAmountRial ? <p role="alert" className="text-sm text-destructive">پرداخت نمی‌تواند بیشتر از مبلغ خرید باشد.</p> :
+                <p>مانده بستانکاری: <AmountDisplay amount={dualFromRial(weighingCalc.calc.finalAmountRial - paid, weighingCalc.calc.goldRatePerGramRial)} /></p>}
+            </> : <p role="alert">{weighingCalc.error}</p>}
+          </section>
         ) : null}
+        </fieldset>
+        {!isOnline ? <p role="alert">برای ثبت خرید به اینترنت متصل شوید.</p> : null}
+        {submission.attempt && !submission.isSubmitting ? <p role="status">نتیجه درخواست قبلی هنوز مشخص نیست. برای دریافت نتیجه، همان خرید را دوباره بررسی کنید.</p> : null}
+        {submission.error ? <ApiErrorNotice error={submission.error} /> : null}
+        </>}
       </div>
 
       {/* اقدام اصلی پایین صفحه — منطقه‌ی شست، همیشه بدون اسکرول دیده می‌شود */}
       <div className="fixed inset-x-0 bottom-above-nav z-20 border-t border-border bg-background/95 px-4 py-3 backdrop-blur-sm lg:static lg:border-0 lg:bg-transparent">
-        <div className="grid grid-cols-2 gap-3">
+        {submission.receipt ? <Button type="button" size="action" className="w-full" onClick={submission.startNew}>خرید جدید</Button> : <div className="grid grid-cols-2 gap-3">
           <Button
             type="button"
             variant="outline"
             size="action"
-            disabled={isFirstStep}
+            disabled={isFirstStep || locked}
             onClick={back}
           >
             قبلی
           </Button>
           {isLastEntryStep ? (
-            <Button type="button" size="action" disabled>
-              ثبت خرید
+            <Button type="button" size="action" disabled={!canSubmit} onClick={() => void submission.submit()} aria-busy={submission.isSubmitting}>
+              {submission.isSubmitting ? 'در حال ثبت…' : submission.attempt ? 'بررسی نتیجه خرید' : 'ثبت خرید'}
             </Button>
           ) : (
-            <Button type="button" size="action" disabled={!canGoNext} onClick={next}>
+            <Button type="button" size="action" disabled={!canGoNext || locked} onClick={next}>
               بعدی
             </Button>
           )}
-        </div>
+        </div>}
       </div>
 
       {/* صفحه‌کلید عددی سفارشی درون‌برنامه‌ای */}

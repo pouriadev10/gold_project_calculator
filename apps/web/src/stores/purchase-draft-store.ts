@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import type { PartySelection } from './recent-parties-store';
+import type { CreateSecondHandGoldPurchaseInput } from '@gold/contracts';
+
+export interface PurchaseAttempt {
+  readonly key: string;
+  readonly input: CreateSecondHandGoldPurchaseInput;
+}
 
 /**
  * پیش‌نویس خرید طلای دست‌دوم — shell و داده‌های وزن‌کشی جریان خرید (FE-056 / FE-057).
@@ -58,6 +64,10 @@ export interface PurchaseDraftState {
   readonly purchaseKarat: number;
   /** کارمزد اختیاری خرید به ریال. */
   readonly feeRial: string;
+  readonly paidRial: string;
+  readonly attempt: PurchaseAttempt | null;
+  readonly setPaidRial: (value: string) => void;
+  readonly setAttempt: (value: PurchaseAttempt | null) => void;
 
   readonly goToStep: (step: PurchaseStep) => void;
   readonly next: () => void;
@@ -83,6 +93,10 @@ export const usePurchaseDraftStore = create<PurchaseDraftState>()(
       otherDeductionWeightMg: '0',
       purchaseKarat: DEFAULT_PURCHASE_KARAT,
       feeRial: '0',
+      paidRial: '0',
+      attempt: null,
+      setPaidRial: (paidRial) => set({ paidRial }),
+      setAttempt: (attempt) => set({ attempt }),
 
       goToStep: (step) => {
         if (get().step !== step) set({ step });
@@ -129,6 +143,8 @@ export const usePurchaseDraftStore = create<PurchaseDraftState>()(
           otherDeductionWeightMg: '0',
           purchaseKarat: DEFAULT_PURCHASE_KARAT,
           feeRial: '0',
+          paidRial: '0',
+          attempt: null,
         }),
     }),
     {

@@ -1,5 +1,8 @@
 import {
   bubble,
+  calculateSecondHandGoldPurchase,
+  DEFAULT_ROUNDING_UNIT,
+  RATE_DIVISOR,
   coinPositionValue,
   gramRate1000,
   grossMg,
@@ -12,7 +15,7 @@ import {
   valueOfPure,
 } from '@gold/core-calc';
 import type { CoinType } from '@gold/core-calc';
-import { DEFAULT_PAGE_SIZE } from '@gold/contracts';
+import { createSecondHandGoldPurchaseSchema, DEFAULT_PAGE_SIZE } from '@gold/contracts';
 import { HttpResponse, http, delay } from 'msw';
 import type { JewelryItemVersion, Party } from '@/api/contracts';
 import {
@@ -444,6 +447,42 @@ async function registerCoinSale(request: Request) {
 }
 
 export const handlers = [
+  http.post('/api/purchase/second-hand/gold', async ({ request }) => {
+    await delay(WRITE_DELAY_MS);
+    const key = request.headers.get('Idempotency-Key');
+    const parsed = createSecondHandGoldPurchaseSchema.safeParse(await request.json());
+    if (!key || !parsed.success) return HttpResponse.json({ message: 'ورودی خرید معتبر نیست' }, { status: 400 });
+    const cacheKey = `purchase:${key}`;
+    const cached = idempotencyCache.get(cacheKey);
+    if (cached) return HttpResponse.json(cached, { status: 201 });
+    const body = parsed.data;
+    const party = partyList.find((p) => p.id === body.partyId);
+    const quote = maznehQuoteHistory.find((q) => q.id === body.quoteId);
+    if (!quote || party?.type !== 'CONSUMER' || party.status !== 'ACTIVE') {
+      return HttpResponse.json({ message: 'فروشنده یا مظنه معتبر نیست' }, { status: 400 });
+    }
+    try {
+      if (body.purchaseKarat === undefined) return HttpResponse.json({ message: 'عیار خرید لازم است' }, { status: 400 });
+      const calc = calculateSecondHandGoldPurchase({
+        grossWeightMg: BigInt(body.grossWeightMg),
+        deductions: { stone: grossMg(BigInt(body.stoneWeightMg)), other: grossMg(BigInt(body.otherDeductionWeightMg)) },
+        purchaseKarat: karat(body.purchaseKarat), maznehRial: BigInt(quote.amountRial), feeRial: BigInt(body.feeRial),
+        roundingUnitRial: DEFAULT_ROUNDING_UNIT, rateDivisor: RATE_DIVISOR,
+      });
+      if (BigInt(body.paidRial) > calc.finalAmountRial) return HttpResponse.json({ message: 'پرداخت بیشتر از مبلغ خرید است' }, { status: 400 });
+      const result = {
+        secondHandPurchaseId: crypto.randomUUID(), ledgerTransactionId: crypto.randomUUID(), inventoryMovementId: crypto.randomUUID(),
+        pureWeightMg: calc.pureWeightMg.toString(), goldRatePerGramRial: calc.goldRatePerGramRial.toString(),
+        grossPurchaseAmountRial: calc.grossPurchaseAmountRial.toString(), feeRial: body.feeRial,
+        finalAmountRial: calc.finalAmountRial.toString(), paidRial: body.paidRial,
+        payableRial: (calc.finalAmountRial - BigInt(body.paidRial)).toString(),
+      };
+      idempotencyCache.set(cacheKey, result);
+      return HttpResponse.json(result, { status: 201 });
+    } catch {
+      return HttpResponse.json({ message: 'محاسبه خرید نامعتبر است' }, { status: 400 });
+    }
+  }),
   http.post('/api/auth/login', async ({ request }) => {
     await delay(WRITE_DELAY_MS);
 
@@ -1567,4 +1606,3 @@ export const handlers = [
     return HttpResponse.json(found);
   }),
 ];
-

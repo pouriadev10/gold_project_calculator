@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { StrictMode, useState } from 'react';
 import userEvent from '@testing-library/user-event';
 import { toPersianDigits } from '@gold/core-calc';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -41,6 +42,18 @@ beforeEach(() => {
 });
 
 describe('بازه‌ی معتبر [۱, ۱۰۰۰]', () => {
+  it('preserves a controlled initial value in StrictMode and accepts subsequent edits', async () => {
+    function Controlled() {
+      const [value, setValue] = useState(740n);
+      return <Form label="عیار" value={value} onChange={setValue} />;
+    }
+    render(<StrictMode><Controlled /></StrictMode>);
+    expect(screen.getByLabelText('عیار')).toHaveAttribute('data-value', '740');
+    const user = userEvent.setup();
+    await user.click(screen.getByLabelText('عیار'));
+    await tap(user, 'حذف یک رقم — برای پاک‌کردن کل فیلد نگه دارید');
+    expect(screen.getByLabelText('عیار')).toHaveAttribute('data-value', '74');
+  });
   it('فیلد دست‌نخورده خطا نشان نمی‌دهد', () => {
     render(<Form label="عیار" />);
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();

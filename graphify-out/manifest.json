@@ -1740,9 +1740,9 @@
     "semantic_hash": "1d162fcfb7cfdf1f25ea075c66d0aa46"
   },
   "apps/web/src/components/keypad/NumericField.tsx": {
-    "mtime": 1788032819.4602258,
-    "ast_hash": "b97461399c28722136823194e1ce2b07",
-    "semantic_hash": "b97461399c28722136823194e1ce2b07"
+    "mtime": 1788949121.3036923,
+    "ast_hash": "3a7dde97e4be77ac803fafe5588036d8",
+    "semantic_hash": "3a7dde97e4be77ac803fafe5588036d8"
   },
   "apps/web/src/components/keypad/NumericKeypad.tsx": {
     "mtime": 1787127867.6019948,
@@ -1905,9 +1905,9 @@
     "semantic_hash": "fb3d8fa4e168e1949ed3158a106376d7"
   },
   "apps/web/src/mocks/handlers/index.ts": {
-    "mtime": 1787598525.1125512,
-    "ast_hash": "7211302966d41fc23d3b94f67a29e4d8",
-    "semantic_hash": "7211302966d41fc23d3b94f67a29e4d8"
+    "mtime": 1788633214.6220248,
+    "ast_hash": "fbf70c09b2c66a65b3f2b6bfb7816f43",
+    "semantic_hash": "fbf70c09b2c66a65b3f2b6bfb7816f43"
   },
   "apps/web/src/stores/theme-store.ts": {
     "mtime": 1785500611.6735494,
@@ -3575,9 +3575,9 @@
     "semantic_hash": "d434a665d8ebf874deb7193b9f5683fe"
   },
   "apps/web/src/components/keypad/KaratInput.test.tsx": {
-    "mtime": 1786965220.043983,
-    "ast_hash": "8f64b82f673bc5c1ddc7a53e21f070d1",
-    "semantic_hash": "8f64b82f673bc5c1ddc7a53e21f070d1"
+    "mtime": 1788949122.2278788,
+    "ast_hash": "63ea66e554073a601727241b12d7ff65",
+    "semantic_hash": "63ea66e554073a601727241b12d7ff65"
   },
   "apps/web/src/components/keypad/KaratInput.tsx": {
     "mtime": 1788032915.9676886,
@@ -4285,14 +4285,14 @@
     "semantic_hash": "a018cc6597f489239cc896d5ef8b5190"
   },
   "apps/web/src/features/purchase/PurchaseWizardPage.test.tsx": {
-    "mtime": 1788535254.8622844,
-    "ast_hash": "0f28241a0008b3abe1cb7626e4cab95e",
-    "semantic_hash": "0f28241a0008b3abe1cb7626e4cab95e"
+    "mtime": 1788633266.6185179,
+    "ast_hash": "229155b002a38f52decc282ac28939c7",
+    "semantic_hash": "229155b002a38f52decc282ac28939c7"
   },
   "apps/web/src/features/purchase/PurchaseWizardPage.tsx": {
-    "mtime": 1788535124.0811388,
-    "ast_hash": "576feee7975da44bd856c867f6988a4d",
-    "semantic_hash": "576feee7975da44bd856c867f6988a4d"
+    "mtime": 1788633064.8445911,
+    "ast_hash": "1c60adf3e433c210a9492f4d2f054bff",
+    "semantic_hash": "1c60adf3e433c210a9492f4d2f054bff"
   },
   "apps/web/src/stores/purchase-draft-store.test.ts": {
     "mtime": 1788032347.303977,
@@ -4300,9 +4300,9 @@
     "semantic_hash": "af73354ee99fbfc0893d10242b3ff517"
   },
   "apps/web/src/stores/purchase-draft-store.ts": {
-    "mtime": 1788032725.4444299,
-    "ast_hash": "ebef868c802050f3e3c036f8a202d909",
-    "semantic_hash": "ebef868c802050f3e3c036f8a202d909"
+    "mtime": 1788632933.9095287,
+    "ast_hash": "912cb95fdf43fe1e70b776ffeda56291",
+    "semantic_hash": "912cb95fdf43fe1e70b776ffeda56291"
   },
   "apps/web/src/features/purchase/SecondHandWeighingForm.test.tsx": {
     "mtime": 1788032934.3580167,
@@ -4327,7 +4327,7 @@
   "apps/web/src/features/purchase/SellerDetailsStep.tsx": {
     "mtime": 1788537595.406043,
     "ast_hash": "e3cfc43000665c5bed44b3be8fc78196",
-    "semantic_hash": ""
+    "semantic_hash": "e3cfc43000665c5bed44b3be8fc78196"
   },
   "apps/web/src/lib/sensitive-identity.test.ts": {
     "mtime": 1788535052.5352108,
@@ -4353,5 +4353,25 @@
     "mtime": 1788537561.692498,
     "ast_hash": "1bc7c7aa162895b14773505fdc6b5f58",
     "semantic_hash": ""
+  },
+  "apps/web/src/api/purchase.ts": {
+    "mtime": 1788632932.9114199,
+    "ast_hash": "f6474867601ad871e5bdc15a6d976953",
+    "semantic_hash": "f6474867601ad871e5bdc15a6d976953"
+  },
+  "apps/web/src/features/purchase/PurchaseReceipt.tsx": {
+    "mtime": 1788632935.8938882,
+    "ast_hash": "dc9635d76abbf98f7f4e231feb6344a3",
+    "semantic_hash": "dc9635d76abbf98f7f4e231feb6344a3"
+  },
+  "apps/web/src/features/purchase/usePurchaseSubmit.test.tsx": {
+    "mtime": 1788633066.1656387,
+    "ast_hash": "9e7ce92e7379e29df00f5976ac9e382a",
+    "semantic_hash": "9e7ce92e7379e29df00f5976ac9e382a"
+  },
+  "apps/web/src/features/purchase/usePurchaseSubmit.ts": {
+    "mtime": 1788632934.9146209,
+    "ast_hash": "49406750c7368fb65f2ad16fd15159d7",
+    "semantic_hash": "49406750c7368fb65f2ad16fd15159d7"
   }
 }

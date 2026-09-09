@@ -120,6 +120,10 @@ export function NumericField({
       isInitialMount.current = false;
       return;
     }
+    // The controlled-value effect may have replaced the buffer after this render.
+    // StrictMode replays mount effects; never report that stale render back to the form.
+    const latest = digitsToBigInt(useKeypadStore.getState().buffers[id] ?? '', spec);
+    if (latest !== currentValue || value === currentValue) return;
     onChange?.(currentValue);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- onChange پایدار نیست و حلقه می‌سازد
   }, [currentValue]);
