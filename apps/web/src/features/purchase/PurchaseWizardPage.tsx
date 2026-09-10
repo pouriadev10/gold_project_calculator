@@ -18,6 +18,7 @@ import {
   usePurchaseDraftStore,
 } from '@/stores/purchase-draft-store';
 import { PurchaseStepper } from './PurchaseStepper';
+import { PurchaseKindTabs } from './PurchaseKindTabs';
 import { SecondHandWeighingForm } from './SecondHandWeighingForm';
 import { calculateSecondHandWeighing } from './purchase-pricing';
 import { SellerDetailsStep } from './SellerDetailsStep';
@@ -121,6 +122,7 @@ export default function PurchaseWizardPage() {
       <PurchaseStepper current={submission.receipt ? 'RECEIPT' : step} />
 
       <div className="flex-1 space-y-4 p-4 pb-32">
+        <PurchaseKindTabs />
         {submission.receipt ? <PurchaseReceipt receipt={submission.receipt} /> : <>
         <fieldset disabled={locked} className="min-w-0 space-y-4">
         {step === 'SELLER' ? (

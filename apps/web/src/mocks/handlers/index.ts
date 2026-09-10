@@ -15,7 +15,11 @@ import {
   valueOfPure,
 } from '@gold/core-calc';
 import type { CoinType } from '@gold/core-calc';
-import { createSecondHandGoldPurchaseSchema, DEFAULT_PAGE_SIZE } from '@gold/contracts';
+import {
+  createSecondHandCoinPurchaseSchema,
+  createSecondHandGoldPurchaseSchema,
+  DEFAULT_PAGE_SIZE,
+} from '@gold/contracts';
 import { HttpResponse, http, delay } from 'msw';
 import type { JewelryItemVersion, Party } from '@/api/contracts';
 import {
@@ -482,6 +486,43 @@ export const handlers = [
     } catch {
       return HttpResponse.json({ message: 'محاسبه خرید نامعتبر است' }, { status: 400 });
     }
+  }),
+
+  http.post('/api/purchase/second-hand/coins', async ({ request }) => {
+    await delay(WRITE_DELAY_MS);
+    const key = request.headers.get('Idempotency-Key');
+    const parsed = createSecondHandCoinPurchaseSchema.safeParse(await request.json());
+    if (!key || !parsed.success) return HttpResponse.json({ message: 'ورودی خرید سکه معتبر نیست' }, { status: 400 });
+    const cacheKey = `coin-purchase:${key}`;
+    const cached = idempotencyCache.get(cacheKey);
+    if (cached) return HttpResponse.json(cached, { status: 201 });
+    const body = parsed.data;
+    const party = partyList.find((candidate) => candidate.id === body.partyId);
+    const fixture = COIN_TYPE_VERSIONS.find((candidate) => candidate.coinTypeId === body.coinTypeId && candidate.active);
+    const quote = maznehQuoteHistory.find((candidate) => candidate.id === body.quoteId);
+    if (!fixture || !quote || party?.type !== 'CONSUMER' || party.status !== 'ACTIVE') {
+      return HttpResponse.json({ message: 'فروشنده، نوع سکه یا مظنه معتبر نیست' }, { status: 400 });
+    }
+    const unitPrice = rial(BigInt(body.purchaseUnitPriceRial));
+    const purchaseAmount = coinPositionValue(body.count, unitPrice);
+    const paid = BigInt(body.paidRial);
+    if (paid > purchaseAmount) return HttpResponse.json({ message: 'پرداخت نمی‌تواند بیشتر از مبلغ خرید باشد' }, { status: 422 });
+    const coin = toCoinType(fixture);
+    const rate1000 = gramRate1000(BigInt(quote.amountRial));
+    const intrinsic = intrinsicValue(coin, rate1000);
+    const coinBubble = coin.isCentralBankMinted ? bubble(coin, unitPrice, rate1000) : null;
+    const result = {
+      secondHandPurchaseId: crypto.randomUUID(), ledgerTransactionId: crypto.randomUUID(),
+      inventoryMovementId: crypto.randomUUID(), coinTypeId: body.coinTypeId, count: body.count,
+      purchaseUnitPriceRial: unitPrice.toString(), purchaseAmountRial: purchaseAmount.toString(),
+      paidRial: paid.toString(), payableRial: (purchaseAmount - paid).toString(),
+      intrinsicValueRial: intrinsic.toString(), bubbleRial: coinBubble?.toString() ?? null,
+    };
+    const existingBalance = COIN_BALANCE_ROWS.find((row) => row.itemId === body.coinTypeId);
+    if (existingBalance) existingBalance.quantity = (BigInt(existingBalance.quantity) + BigInt(body.count)).toString();
+    else (COIN_BALANCE_ROWS as { itemType: 'COIN'; itemId: string; quantity: string }[]).push({ itemType: 'COIN', itemId: body.coinTypeId, quantity: body.count.toString() });
+    idempotencyCache.set(cacheKey, result);
+    return HttpResponse.json(result, { status: 201 });
   }),
   http.post('/api/auth/login', async ({ request }) => {
     await delay(WRITE_DELAY_MS);

@@ -1695,9 +1695,9 @@
     "semantic_hash": "f66f245094d0637eaba9854eafb2899a"
   },
   "apps/web/src/app/router.tsx": {
-    "mtime": 1788029288.7876036,
-    "ast_hash": "749380d05b8d3d6352e3f061a37105dd",
-    "semantic_hash": "749380d05b8d3d6352e3f061a37105dd"
+    "mtime": 1788950277.9218378,
+    "ast_hash": "3d7e4f17333cab242b11614114bf0384",
+    "semantic_hash": "3d7e4f17333cab242b11614114bf0384"
   },
   "apps/web/src/components/common/AmountDisplay.test.tsx": {
     "mtime": 1786965220.039877,
@@ -1905,9 +1905,9 @@
     "semantic_hash": "fb3d8fa4e168e1949ed3158a106376d7"
   },
   "apps/web/src/mocks/handlers/index.ts": {
-    "mtime": 1788633214.6220248,
-    "ast_hash": "fbf70c09b2c66a65b3f2b6bfb7816f43",
-    "semantic_hash": "fbf70c09b2c66a65b3f2b6bfb7816f43"
+    "mtime": 1788950375.267734,
+    "ast_hash": "235c979cc93b730fabd145fc1b5d9240",
+    "semantic_hash": "235c979cc93b730fabd145fc1b5d9240"
   },
   "apps/web/src/stores/theme-store.ts": {
     "mtime": 1785500611.6735494,
@@ -2900,9 +2900,9 @@
     "semantic_hash": "57f3eade61064fcaf09a18164aacb4bc"
   },
   "FrontTasks.md": {
-    "mtime": 1788536653.1511004,
-    "ast_hash": "9ee9260f7441266bac9821a6890764ab",
-    "semantic_hash": "9ee9260f7441266bac9821a6890764ab"
+    "mtime": 1789045523.90064,
+    "ast_hash": "1158473fafa81cf80896356f95213c4c",
+    "semantic_hash": "1158473fafa81cf80896356f95213c4c"
   },
   "KEYPAD-REPORT.md": {
     "mtime": 1785500611.9019055,
@@ -4285,14 +4285,14 @@
     "semantic_hash": "a018cc6597f489239cc896d5ef8b5190"
   },
   "apps/web/src/features/purchase/PurchaseWizardPage.test.tsx": {
-    "mtime": 1788633266.6185179,
-    "ast_hash": "229155b002a38f52decc282ac28939c7",
-    "semantic_hash": "229155b002a38f52decc282ac28939c7"
+    "mtime": 1788951703.8715515,
+    "ast_hash": "6425f4ef3a3db5cae85db5edb9b6d3a1",
+    "semantic_hash": "6425f4ef3a3db5cae85db5edb9b6d3a1"
   },
   "apps/web/src/features/purchase/PurchaseWizardPage.tsx": {
-    "mtime": 1788633064.8445911,
-    "ast_hash": "1c60adf3e433c210a9492f4d2f054bff",
-    "semantic_hash": "1c60adf3e433c210a9492f4d2f054bff"
+    "mtime": 1788950276.6682115,
+    "ast_hash": "cb05e859eed94931f9c10bf175e3d8a6",
+    "semantic_hash": "cb05e859eed94931f9c10bf175e3d8a6"
   },
   "apps/web/src/stores/purchase-draft-store.test.ts": {
     "mtime": 1788032347.303977,
@@ -4352,12 +4352,12 @@
   "graphify-out/memory/query_20260904_155921_fe_058___\u062b\u0628\u062a_\u0645\u0634\u062e\u0635\u0627\u062a_\u0641\u0631\u0648\u0634\u0646\u062f\u0647.md": {
     "mtime": 1788537561.692498,
     "ast_hash": "1bc7c7aa162895b14773505fdc6b5f58",
-    "semantic_hash": ""
+    "semantic_hash": "1bc7c7aa162895b14773505fdc6b5f58"
   },
   "apps/web/src/api/purchase.ts": {
-    "mtime": 1788632932.9114199,
-    "ast_hash": "f6474867601ad871e5bdc15a6d976953",
-    "semantic_hash": "f6474867601ad871e5bdc15a6d976953"
+    "mtime": 1788949946.578008,
+    "ast_hash": "c2b02d219e1e892e52d3df3471ac4cf0",
+    "semantic_hash": "c2b02d219e1e892e52d3df3471ac4cf0"
   },
   "apps/web/src/features/purchase/PurchaseReceipt.tsx": {
     "mtime": 1788632935.8938882,
@@ -4373,5 +4373,40 @@
     "mtime": 1788632934.9146209,
     "ast_hash": "49406750c7368fb65f2ad16fd15159d7",
     "semantic_hash": "49406750c7368fb65f2ad16fd15159d7"
+  },
+  "graphify-out/memory/query_20260909_102605_fe_059_second_hand_purchase_submission.md": {
+    "mtime": 1788949565.260582,
+    "ast_hash": "f28334ba9d1a4d867c129761f3dcbfe2",
+    "semantic_hash": "f28334ba9d1a4d867c129761f3dcbfe2"
+  },
+  "apps/web/src/features/purchase/CoinPurchaseForm.test.tsx": {
+    "mtime": 1788950719.0942826,
+    "ast_hash": "2fff3b6d6476146144a30044b1f90351",
+    "semantic_hash": "2fff3b6d6476146144a30044b1f90351"
+  },
+  "apps/web/src/features/purchase/CoinPurchaseForm.tsx": {
+    "mtime": 1788951701.1933072,
+    "ast_hash": "dbb420df4ab8598165efa52f6d333d39",
+    "semantic_hash": "dbb420df4ab8598165efa52f6d333d39"
+  },
+  "apps/web/src/features/purchase/CoinPurchaseSummary.tsx": {
+    "mtime": 1788951702.5670784,
+    "ast_hash": "40536f6e7892d0d4578262ed247f5665",
+    "semantic_hash": "40536f6e7892d0d4578262ed247f5665"
+  },
+  "apps/web/src/features/purchase/PurchaseKindTabs.tsx": {
+    "mtime": 1788950272.7181463,
+    "ast_hash": "8dbecdd24db73646a751339da5d8a79f",
+    "semantic_hash": "8dbecdd24db73646a751339da5d8a79f"
+  },
+  "apps/web/src/features/purchase/useCoinPurchaseSubmit.test.tsx": {
+    "mtime": 1788950833.2473035,
+    "ast_hash": "79526e934936d606d95d822d12c3f3c4",
+    "semantic_hash": "79526e934936d606d95d822d12c3f3c4"
+  },
+  "apps/web/src/features/purchase/useCoinPurchaseSubmit.ts": {
+    "mtime": 1788950275.2727864,
+    "ast_hash": "ef049a68ad3db62d76f945e0020fb7ea",
+    "semantic_hash": "ef049a68ad3db62d76f945e0020fb7ea"
   }
 }

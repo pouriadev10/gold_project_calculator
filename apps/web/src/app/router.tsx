@@ -206,6 +206,12 @@ const purchaseSecondHandRoute = createRoute({
   component: lazyRouteComponent(() => import('@/features/purchase/PurchaseWizardPage')),
 });
 
+const purchaseSecondHandCoinsRoute = createRoute({
+  getParentRoute: () => appShellRoute,
+  path: '/purchase/second-hand/coins',
+  component: lazyRouteComponent(() => import('@/features/purchase/CoinPurchaseForm')),
+});
+
 const settlementsNewRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/settlements/new',
@@ -289,6 +295,7 @@ const routeTree = rootRoute.addChildren([
     salesInvoicesRoute,
     salesInvoiceDetailRoute,
     purchaseSecondHandRoute,
+    purchaseSecondHandCoinsRoute,
     settlementsNewRoute,
     reportingDebtorsRoute,
     reportingCreditorsRoute,
