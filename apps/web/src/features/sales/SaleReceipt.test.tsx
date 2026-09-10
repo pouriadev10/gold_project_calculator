@@ -1,5 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ReactNode } from 'react';
+import type * as ReactRouter from '@tanstack/react-router';
 import type * as Queries from '@/api/queries';
 import { ApiError } from '@/api/api-error';
 import { useUnitStore } from '@/stores/unit-store';
@@ -16,6 +18,16 @@ import type { SaleSubmitOutcome } from './useJewelrySaleSubmit';
  */
 
 const useInvoiceVersionsMock = vi.fn();
+vi.mock('@tanstack/react-router', async (importOriginal) => {
+  const actual = await importOriginal<typeof ReactRouter>();
+  return {
+    ...actual,
+    Link: ({ to, params, children, ...rest }: { to: string; params?: Record<string, string>; children?: ReactNode }) => (
+      <a href={to} data-params={JSON.stringify(params)} {...rest}>{children}</a>
+    ),
+  };
+});
+
 vi.mock('@/api/queries', async (importOriginal) => ({
   ...(await importOriginal<typeof Queries>()),
   useInvoiceVersions: (...args: unknown[]) => useInvoiceVersionsMock(...args),
@@ -243,5 +255,23 @@ describe('SaleReceipt — اقدام PDF', () => {
     render(<SaleReceipt outcome={OUTCOME} />);
 
     expect(screen.getByRole('button', { name: /چاپ یا دریافت PDF/ })).toBeDisabled();
+  });
+});
+
+describe('SaleReceipt — شروع خرید مجدد B2C (FE-061)', () => {
+  it('برای مشتری مصرف‌کننده، مسیر جداگانه‌ی خرید مجدد را با شناسه فاکتور درست نشان می‌دهد', () => {
+    mockQuery(versionHistory());
+    render(<SaleReceipt outcome={OUTCOME} />);
+
+    const entry = screen.getByRole('link', { name: 'خرید مجدد از مشتری' });
+    expect(entry).toHaveAttribute('href', '/sales/invoices/$invoiceId/b2c-buyback');
+    expect(entry).toHaveAttribute('data-params', JSON.stringify({ invoiceId: INVOICE_ID }));
+  });
+
+  it('برای همکار، هیچ مسیر بازگشت یا خرید مجددی نمی‌سازد', () => {
+    mockQuery(versionHistory());
+    render(<SaleReceipt outcome={{ ...OUTCOME, party: { ...OUTCOME.party, type: 'BUSINESS' } }} />);
+
+    expect(screen.queryByRole('link', { name: 'خرید مجدد از مشتری' })).not.toBeInTheDocument();
   });
 });

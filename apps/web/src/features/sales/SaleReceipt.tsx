@@ -1,4 +1,5 @@
-import { AlertTriangle, FileText, Loader2 } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
+import { AlertTriangle, FileText, Loader2, RotateCcw } from 'lucide-react';
 import { dualFromRial, formatCount, formatGram, gramRate1000, toSafeNumber } from '@gold/core-calc';
 import type { SalesInvoiceVersionHistory } from '@/api/contracts';
 import { useInvoiceVersions } from '@/api/queries';
@@ -246,6 +247,15 @@ export function SaleReceipt({ outcome }: { readonly outcome: SaleSubmitOutcome }
         <FileText className="size-4" aria-hidden="true" />
         چاپ یا دریافت PDF (به‌زودی)
       </Button>
+
+      {partyMatches && outcome.party.type === 'CONSUMER' ? (
+        <Button asChild type="button" variant="outline" size="action" className="w-full">
+          <Link to="/sales/invoices/$invoiceId/b2c-buyback" params={{ invoiceId: outcome.sale.invoiceId }}>
+            <RotateCcw className="size-4" aria-hidden="true" />
+            خرید مجدد از مشتری
+          </Link>
+        </Button>
+      ) : null}
     </div>
   );
 }

@@ -198,6 +198,16 @@ const salesInvoiceDetailRoute = createRoute({
   ),
 });
 
+const b2cBuybackStartRoute = createRoute({
+  getParentRoute: () => appShellRoute,
+  path: '/sales/invoices/$invoiceId/b2c-buyback',
+  params: {
+    parse: (raw: { invoiceId: string }) => ({ invoiceId: uuidSchema.parse(raw.invoiceId) }),
+    stringify: (parsed: { invoiceId: string }) => ({ invoiceId: parsed.invoiceId }),
+  },
+  component: lazyRouteComponent(() => import('@/features/sales/B2cBuybackStartPage')),
+});
+
 const purchaseSecondHandRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/purchase/second-hand',
@@ -294,6 +304,7 @@ const routeTree = rootRoute.addChildren([
     salesCoinsNewRoute,
     salesInvoicesRoute,
     salesInvoiceDetailRoute,
+    b2cBuybackStartRoute,
     purchaseSecondHandRoute,
     purchaseSecondHandCoinsRoute,
     settlementsNewRoute,
