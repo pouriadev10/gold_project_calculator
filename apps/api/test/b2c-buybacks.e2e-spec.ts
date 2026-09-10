@@ -147,6 +147,95 @@ describe('B2C buyback (BE-052)', () => {
     await app.close();
   });
 
+  it('previews the server breakdown and both locked event snapshots without creating accounting side effects', async () => {
+    const before = await withTenantTransaction(db, tenant.id, async (transaction) => {
+      const [invoice] = await transaction
+        .select()
+        .from(salesInvoices)
+        .where(eq(salesInvoices.id, sourceInvoiceId));
+      const [version] = await transaction
+        .select()
+        .from(salesInvoiceVersions)
+        .where(
+          and(
+            eq(salesInvoiceVersions.salesInvoiceId, sourceInvoiceId),
+            eq(salesInvoiceVersions.version, 1),
+          ),
+        );
+      return {
+        invoice: invoice!,
+        version: version!,
+        purchases: await transaction
+          .select()
+          .from(secondHandPurchases)
+          .where(eq(secondHandPurchases.tenantId, tenant.id)),
+        ledger: await transaction
+          .select()
+          .from(ledgerTransactions)
+          .where(eq(ledgerTransactions.tenantId, tenant.id)),
+        audit: await transaction
+          .select()
+          .from(auditLogs)
+          .where(eq(auditLogs.tenantId, tenant.id)),
+      };
+    });
+    const meltedBefore = await movements.balance(tenant.id, 'MELTED_GOLD', null);
+
+    const preview = await buybacks.preview({
+      tenantId: tenant.id,
+      sourceInvoiceId,
+      grossWeightMg: 1_000n,
+      stoneWeightMg: 0n,
+      otherDeductionWeightMg: 0n,
+      quoteId: todayQuoteId,
+      effectiveAt: todayEffectiveAt,
+    });
+
+    expect(preview.sourceInvoiceId).toBe(sourceInvoiceId);
+    expect(preview.original).toMatchObject({
+      effectiveAt: originalEffectiveAt,
+      quoteAmountRial: 100_000_000n,
+    });
+    expect(preview.today).toMatchObject({
+      effectiveAt: todayEffectiveAt,
+      quoteAmountRial: 200_000_000n,
+    });
+    expect(preview.original.purchaseAmountRial).toBeGreaterThan(0n);
+    expect(preview.today.purchaseAmountRial).toBeGreaterThan(0n);
+    expect(preview.breakdown.differenceRial).toBe(
+      preview.today.purchaseAmountRial - preview.original.purchaseAmountRial,
+    );
+
+    const after = await withTenantTransaction(db, tenant.id, async (transaction) => ({
+      invoice: (
+        await transaction.select().from(salesInvoices).where(eq(salesInvoices.id, sourceInvoiceId))
+      )[0]!,
+      version: (
+        await transaction
+          .select()
+          .from(salesInvoiceVersions)
+          .where(
+            and(
+              eq(salesInvoiceVersions.salesInvoiceId, sourceInvoiceId),
+              eq(salesInvoiceVersions.version, 1),
+            ),
+          )
+      )[0]!,
+      purchases: await transaction
+        .select()
+        .from(secondHandPurchases)
+        .where(eq(secondHandPurchases.tenantId, tenant.id)),
+      ledger: await transaction
+        .select()
+        .from(ledgerTransactions)
+        .where(eq(ledgerTransactions.tenantId, tenant.id)),
+      audit: await transaction.select().from(auditLogs).where(eq(auditLogs.tenantId, tenant.id)),
+    }));
+
+    expect(after).toEqual(before);
+    expect(await movements.balance(tenant.id, 'MELTED_GOLD', null)).toBe(meltedBefore);
+  });
+
   it('creates a linked second-hand purchase with today’s price, preserves the original invoice, posts melted gold, and returns a balanced difference breakdown', async () => {
     const paidRial = 20_000_000n;
     const request = {

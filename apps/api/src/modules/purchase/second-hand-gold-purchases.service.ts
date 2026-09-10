@@ -70,6 +70,42 @@ export interface CreatedSecondHandGoldPurchase {
   readonly payableRial: bigint;
 }
 
+/**
+ * The resolved, side-effect-free price for a consumer gold purchase. This is
+ * shared by the Buyback preview and creation flows so their calculation and
+ * locked-rate semantics cannot drift apart.
+ */
+export interface PreviewSecondHandGoldPurchaseInput {
+  readonly tenantId: string;
+  readonly grossWeightMg: bigint;
+  readonly stoneWeightMg: bigint;
+  readonly otherDeductionWeightMg: bigint;
+  readonly purchaseKarat?: number | undefined;
+  readonly quoteId: string;
+  readonly feeRial: bigint;
+  readonly effectiveAt: Date;
+}
+
+export interface PreviewSecondHandGoldPurchase {
+  readonly pureWeightMg: bigint;
+  readonly goldRatePerGramRial: bigint;
+  readonly grossPurchaseAmountRial: bigint;
+  readonly feeRial: bigint;
+  readonly finalAmountRial: bigint;
+  readonly quoteAmountRial: bigint;
+  readonly quoteObservedAt: Date;
+}
+
+interface ResolvedSecondHandGoldPurchasePricing extends PreviewSecondHandGoldPurchase {
+  readonly defaultPurchaseKarat: string;
+  readonly effectivePurchaseKarat: ReturnType<typeof karat>;
+  readonly baseQuoteKarat: string;
+  readonly mithqalGrams: string;
+  readonly roundingUnitRial: bigint;
+  readonly roundingPolicy: string;
+  readonly rateDivisor: bigint;
+}
+
 function isSettingRecord(
   value: VersionedSettingValue,
 ): value is { readonly [key: string]: VersionedSettingValue } {
@@ -131,79 +167,92 @@ export class SecondHandGoldPurchasesService {
     @Inject(AuditService) private readonly audit: AuditService,
   ) {}
 
-  async createInTransaction(
+  /**
+   * Calculates the current purchase from the same quote and versioned settings
+   * used by creation. It deliberately performs no insert, ledger posting, or
+   * inventory movement.
+   */
+  async previewInTransaction(
     transaction: TenantTransaction,
-    input: CreateSecondHandGoldPurchaseInput,
-  ): Promise<CreatedSecondHandGoldPurchase> {
-    const [
-      party,
-      quote,
-      defaultPurchaseKarat,
-      baseQuoteKarat,
-      mithqalGrams,
-      roundingUnit,
-      roundingPolicy,
-    ] = await Promise.all([
-      this.parties.findActiveInTransaction(transaction, input.tenantId, input.partyId),
-      transaction
-        .select()
-        .from(priceQuotes)
-        .where(and(eq(priceQuotes.tenantId, input.tenantId), eq(priceQuotes.id, input.quoteId)))
-        .limit(1)
-        .then(([found]) => found),
-      this.settings.getEffectiveInTransaction(
-        transaction,
-        input.tenantId,
-        SETTING_KEYS.defaultPurchaseKarat,
-        input.effectiveAt,
-      ),
-      this.settings.getEffectiveInTransaction(
-        transaction,
-        input.tenantId,
-        SETTING_KEYS.baseQuoteKarat,
-        input.effectiveAt,
-      ),
-      this.settings.getEffectiveInTransaction(
-        transaction,
-        input.tenantId,
-        SETTING_KEYS.mithqalGrams,
-        input.effectiveAt,
-      ),
-      this.settings.getEffectiveInTransaction(
-        transaction,
-        input.tenantId,
-        SETTING_KEYS.roundingUnitRial,
-        input.effectiveAt,
-      ),
-      this.settings.getEffectiveInTransaction(
-        transaction,
-        input.tenantId,
-        SETTING_KEYS.roundingPolicy,
-        input.effectiveAt,
-      ),
-    ]);
+    input: PreviewSecondHandGoldPurchaseInput,
+  ): Promise<PreviewSecondHandGoldPurchase> {
+    const pricing = await this.resolvePricingInTransaction(transaction, input);
+    return {
+      pureWeightMg: pricing.pureWeightMg,
+      goldRatePerGramRial: pricing.goldRatePerGramRial,
+      grossPurchaseAmountRial: pricing.grossPurchaseAmountRial,
+      feeRial: pricing.feeRial,
+      finalAmountRial: pricing.finalAmountRial,
+      quoteAmountRial: pricing.quoteAmountRial,
+      quoteObservedAt: pricing.quoteObservedAt,
+    };
+  }
 
-    if (party === undefined) {
-      throw new SecondHandPurchasePartyNotFoundError();
-    }
-    if (party.type !== 'CONSUMER') {
-      throw new SecondHandPurchasePartyNotConsumerError();
-    }
+  private async resolvePricingInTransaction(
+    transaction: TenantTransaction,
+    input: PreviewSecondHandGoldPurchaseInput,
+  ): Promise<ResolvedSecondHandGoldPurchasePricing> {
+    const [quote, defaultPurchaseKarat, baseQuoteKarat, mithqalGrams, roundingUnit, roundingPolicy] =
+      await Promise.all([
+        transaction
+          .select()
+          .from(priceQuotes)
+          .where(and(eq(priceQuotes.tenantId, input.tenantId), eq(priceQuotes.id, input.quoteId)))
+          .limit(1)
+          .then(([found]) => found),
+        this.settings.getEffectiveInTransaction(
+          transaction,
+          input.tenantId,
+          SETTING_KEYS.defaultPurchaseKarat,
+          input.effectiveAt,
+        ),
+        this.settings.getEffectiveInTransaction(
+          transaction,
+          input.tenantId,
+          SETTING_KEYS.baseQuoteKarat,
+          input.effectiveAt,
+        ),
+        this.settings.getEffectiveInTransaction(
+          transaction,
+          input.tenantId,
+          SETTING_KEYS.mithqalGrams,
+          input.effectiveAt,
+        ),
+        this.settings.getEffectiveInTransaction(
+          transaction,
+          input.tenantId,
+          SETTING_KEYS.roundingUnitRial,
+          input.effectiveAt,
+        ),
+        this.settings.getEffectiveInTransaction(
+          transaction,
+          input.tenantId,
+          SETTING_KEYS.roundingPolicy,
+          input.effectiveAt,
+        ),
+      ]);
+
     if (quote === undefined || quote.quoteType !== 'MAZNEH' || quote.amountRial <= 0n) {
       throw new SecondHandPurchaseQuoteNotFoundError();
     }
-    if (settingString(roundingPolicy, SETTING_KEYS.roundingPolicy) !== 'HALF_UP') {
+    const roundingPolicyValue = settingString(roundingPolicy, SETTING_KEYS.roundingPolicy);
+    if (roundingPolicyValue !== 'HALF_UP') {
       throw new SecondHandPurchasePricingSettingInvalidError(SETTING_KEYS.roundingPolicy);
     }
 
-    const defaultKarat = karat(
-      toSafeNumber(positiveIntegerSetting(defaultPurchaseKarat, SETTING_KEYS.defaultPurchaseKarat)),
+    const defaultPurchaseKaratValue = settingString(
+      defaultPurchaseKarat,
+      SETTING_KEYS.defaultPurchaseKarat,
     );
     const effectivePurchaseKarat =
-      input.purchaseKarat === undefined ? defaultKarat : karat(input.purchaseKarat);
+      input.purchaseKarat === undefined
+        ? karat(toSafeNumber(positiveIntegerSetting(defaultPurchaseKarat, SETTING_KEYS.defaultPurchaseKarat)))
+        : karat(input.purchaseKarat);
+    const baseQuoteKaratValue = settingString(baseQuoteKarat, SETTING_KEYS.baseQuoteKarat);
     const baseKarat = karat(
       toSafeNumber(positiveIntegerSetting(baseQuoteKarat, SETTING_KEYS.baseQuoteKarat)),
     );
+    const mithqalGramsValue = settingString(mithqalGrams, SETTING_KEYS.mithqalGrams);
     const roundingUnitRial = positiveIntegerSetting(roundingUnit, SETTING_KEYS.roundingUnitRial);
     const rateDivisor = rateDivisorFromMarketSettings(baseKarat, mithqalGramsX10k(mithqalGrams));
 
@@ -228,10 +277,49 @@ export class SecondHandGoldPurchasesService {
       throw error;
     }
 
-    if (input.paidRial > calculation.finalAmountRial) {
+    return {
+      pureWeightMg: calculation.pureWeightMg,
+      goldRatePerGramRial: calculation.goldRatePerGramRial,
+      grossPurchaseAmountRial: calculation.grossPurchaseAmountRial,
+      feeRial: input.feeRial,
+      finalAmountRial: calculation.finalAmountRial,
+      quoteAmountRial: quote.amountRial,
+      quoteObservedAt: quote.observedAt,
+      defaultPurchaseKarat: defaultPurchaseKaratValue,
+      effectivePurchaseKarat,
+      baseQuoteKarat: baseQuoteKaratValue,
+      mithqalGrams: mithqalGramsValue,
+      roundingUnitRial,
+      roundingPolicy: roundingPolicyValue,
+      rateDivisor,
+    };
+  }
+
+  async createInTransaction(
+    transaction: TenantTransaction,
+    input: CreateSecondHandGoldPurchaseInput,
+  ): Promise<CreatedSecondHandGoldPurchase> {
+    const [party, pricing] = await Promise.all([
+      this.parties.findActiveInTransaction(transaction, input.tenantId, input.partyId),
+      this.resolvePricingInTransaction(transaction, input),
+    ]);
+    const calculation = pricing;
+    const quote = {
+      id: input.quoteId,
+      amountRial: pricing.quoteAmountRial,
+      observedAt: pricing.quoteObservedAt,
+    };
+
+    if (party === undefined) {
+      throw new SecondHandPurchasePartyNotFoundError();
+    }
+    if (party.type !== 'CONSUMER') {
+      throw new SecondHandPurchasePartyNotConsumerError();
+    }
+    if (input.paidRial > pricing.finalAmountRial) {
       throw new SecondHandPurchasePaidRialExceedsAmountError();
     }
-    const payableRial = calculation.finalAmountRial - input.paidRial;
+    const payableRial = pricing.finalAmountRial - input.paidRial;
 
     const [purchase] = await transaction
       .insert(secondHandPurchases)
@@ -243,16 +331,13 @@ export class SecondHandGoldPurchasesService {
         lockedQuoteAmountRial: quote.amountRial,
         lockedQuoteObservedAt: quote.observedAt,
         settingsSnapshot: {
-          defaultPurchaseKarat: settingString(
-            defaultPurchaseKarat,
-            SETTING_KEYS.defaultPurchaseKarat,
-          ),
-          effectivePurchaseKarat: effectivePurchaseKarat.toString(),
-          baseQuoteKarat: settingString(baseQuoteKarat, SETTING_KEYS.baseQuoteKarat),
-          mithqalGrams: settingString(mithqalGrams, SETTING_KEYS.mithqalGrams),
-          roundingUnitRial: settingString(roundingUnit, SETTING_KEYS.roundingUnitRial),
-          roundingPolicy: settingString(roundingPolicy, SETTING_KEYS.roundingPolicy),
-          rateDivisor: rateDivisor.toString(),
+          defaultPurchaseKarat: pricing.defaultPurchaseKarat,
+          effectivePurchaseKarat: pricing.effectivePurchaseKarat.toString(),
+          baseQuoteKarat: pricing.baseQuoteKarat,
+          mithqalGrams: pricing.mithqalGrams,
+          roundingUnitRial: pricing.roundingUnitRial.toString(),
+          roundingPolicy: pricing.roundingPolicy,
+          rateDivisor: pricing.rateDivisor.toString(),
           goldRatePerGramRial: calculation.goldRatePerGramRial.toString(),
         },
         sellerIdentitySnapshot: {
@@ -277,7 +362,7 @@ export class SecondHandGoldPurchasesService {
       grossWeightMg: input.grossWeightMg,
       stoneWeightMg: input.stoneWeightMg,
       otherDeductionWeightMg: input.otherDeductionWeightMg,
-      purchaseKarat: effectivePurchaseKarat,
+      purchaseKarat: pricing.effectivePurchaseKarat,
       pureWeightMg: calculation.pureWeightMg,
       itemSnapshot: {
         chargeableGrossWeightMg: (

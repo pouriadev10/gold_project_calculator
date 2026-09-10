@@ -11,6 +11,7 @@ import {
   toSafeNumber,
 } from '@gold/core-calc';
 import { AuditService } from '../../platform/audit/audit.service';
+import { DRIZZLE } from '../../platform/database/database.module';
 import {
   jewelryItemVersions,
   salesInvoiceItems,
@@ -29,7 +30,9 @@ import {
   B2cBuybackSourceSnapshotMismatchError,
 } from './b2c-buybacks.errors';
 import type { B2cBuybackDifference, JewelrySaleCalculation, Rial } from '@gold/core-calc';
+import type { Database } from '../../platform/database/connect';
 import type { JewelryItemVersion, SalesInvoiceSnapshotValue } from '../../platform/database/schema';
+import { withTenantTransaction } from '../../platform/database/tenant-transaction';
 import type { TenantTransaction } from '../../platform/database/tenant-transaction';
 
 const HISTORICAL_SETTING_KEYS = {
@@ -72,6 +75,39 @@ interface OriginalJewelrySale {
   readonly partyId: string;
   readonly originalPurchaseAmountRial: Rial;
   readonly calculation: JewelrySaleCalculation;
+  readonly effectiveAt: Date;
+  readonly quoteAmountRial: bigint;
+  readonly quoteObservedAt: Date;
+}
+
+export interface PreviewB2cBuybackInput {
+  readonly tenantId: string;
+  readonly sourceInvoiceId: string;
+  readonly grossWeightMg: bigint;
+  readonly stoneWeightMg: bigint;
+  readonly otherDeductionWeightMg: bigint;
+  readonly purchaseKarat?: number | undefined;
+  readonly quoteId: string;
+  readonly effectiveAt: Date;
+}
+
+export interface PreviewedB2cBuyback {
+  readonly sourceInvoiceId: string;
+  readonly original: {
+    readonly effectiveAt: Date;
+    readonly quoteAmountRial: bigint;
+    readonly quoteObservedAt: Date;
+    readonly goldRatePerGramRial: bigint;
+    readonly purchaseAmountRial: bigint;
+  };
+  readonly today: {
+    readonly effectiveAt: Date;
+    readonly quoteAmountRial: bigint;
+    readonly quoteObservedAt: Date;
+    readonly goldRatePerGramRial: bigint;
+    readonly purchaseAmountRial: bigint;
+  };
+  readonly breakdown: B2cBuybackDifference;
 }
 
 function isSnapshotRecord(
@@ -208,11 +244,68 @@ function historicalCalculation(
 @Injectable()
 export class B2cBuybacksService {
   constructor(
+    @Inject(DRIZZLE) private readonly db: Database,
     @Inject(PartiesService) private readonly parties: PartiesService,
     @Inject(SecondHandGoldPurchasesService)
     private readonly goldPurchases: SecondHandGoldPurchasesService,
     @Inject(AuditService) private readonly audit: AuditService,
   ) {}
+
+  /**
+   * Prices a Buyback in a tenant-scoped read-only transaction. This is not a
+   * draft purchase: it creates no document, inventory movement, ledger entry,
+   * idempotency record, or audit event.
+   */
+  async preview(input: PreviewB2cBuybackInput): Promise<PreviewedB2cBuyback> {
+    return withTenantTransaction(this.db, input.tenantId, (transaction) =>
+      this.previewInTransaction(transaction, input),
+    );
+  }
+
+  async previewInTransaction(
+    transaction: TenantTransaction,
+    input: PreviewB2cBuybackInput,
+  ): Promise<PreviewedB2cBuyback> {
+    const original = await this.loadOriginalJewelrySaleInTransaction(transaction, input);
+    const today = await this.goldPurchases.previewInTransaction(transaction, {
+      tenantId: input.tenantId,
+      grossWeightMg: input.grossWeightMg,
+      stoneWeightMg: input.stoneWeightMg,
+      otherDeductionWeightMg: input.otherDeductionWeightMg,
+      purchaseKarat: input.purchaseKarat,
+      quoteId: input.quoteId,
+      feeRial: 0n,
+      effectiveAt: input.effectiveAt,
+    });
+    const breakdown = calculateB2cBuybackDifference({
+      originalPurchaseAmountRial: original.originalPurchaseAmountRial,
+      originalGoldValueRial: original.calculation.goldValueRial,
+      originalWageRial: original.calculation.wageRial,
+      originalPureWeightMg: original.calculation.pureWeightMg,
+      todayGrossPurchaseAmountRial: rial(today.grossPurchaseAmountRial),
+      todayPurchaseAmountRial: rial(today.finalAmountRial),
+      todayGoldRatePerGramRial: rial(today.goldRatePerGramRial),
+    });
+
+    return {
+      sourceInvoiceId: input.sourceInvoiceId,
+      original: {
+        effectiveAt: original.effectiveAt,
+        quoteAmountRial: original.quoteAmountRial,
+        quoteObservedAt: original.quoteObservedAt,
+        goldRatePerGramRial: original.calculation.goldRatePerGramRial,
+        purchaseAmountRial: original.originalPurchaseAmountRial,
+      },
+      today: {
+        effectiveAt: input.effectiveAt,
+        quoteAmountRial: today.quoteAmountRial,
+        quoteObservedAt: today.quoteObservedAt,
+        goldRatePerGramRial: today.goldRatePerGramRial,
+        purchaseAmountRial: today.finalAmountRial,
+      },
+      breakdown,
+    };
+  }
 
   async createInTransaction(
     transaction: TenantTransaction,
@@ -278,7 +371,7 @@ export class B2cBuybacksService {
 
   private async loadOriginalJewelrySaleInTransaction(
     transaction: TenantTransaction,
-    input: CreateB2cBuybackInput,
+    input: Pick<CreateB2cBuybackInput, 'tenantId' | 'sourceInvoiceId'>,
   ): Promise<OriginalJewelrySale> {
     const [invoice] = await transaction
       .select()
@@ -293,7 +386,12 @@ export class B2cBuybacksService {
     if (invoice === undefined) {
       throw new B2cBuybackInvoiceNotFoundError();
     }
-    if (invoice.status !== 'FINALIZED' || invoice.quoteAmountRial === null) {
+    if (
+      invoice.status !== 'FINALIZED' ||
+      invoice.quoteAmountRial === null ||
+      invoice.quoteObservedAt === null ||
+      invoice.finalizedAt === null
+    ) {
       throw new B2cBuybackInvoiceNotFinalizedError();
     }
 
@@ -374,6 +472,9 @@ export class B2cBuybacksService {
       partyId: party.id,
       originalPurchaseAmountRial: historical.originalPurchaseAmountRial,
       calculation: historical.calculation,
+      effectiveAt: invoice.finalizedAt,
+      quoteAmountRial: invoice.quoteAmountRial,
+      quoteObservedAt: invoice.quoteObservedAt,
     };
   }
 }

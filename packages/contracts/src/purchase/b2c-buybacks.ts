@@ -26,6 +26,13 @@ export const createB2cBuybackSchema = z
   .strict();
 
 /**
+ * Read-only pricing request for the Buyback comparison screen. It intentionally
+ * omits payment because previewing a purchase must not create a payment, a
+ * purchase document, an inventory movement, or a ledger transaction.
+ */
+export const previewB2cBuybackSchema = createB2cBuybackSchema.omit({ paidRial: true });
+
+/**
  * `differenceRial` and the three difference effects are signed. A positive
  * value increases today’s purchase amount compared with the prior sale.
  * `wageBurnedRial` is a positive display amount and is subtracted in the
@@ -41,6 +48,27 @@ export const b2cBuybackBreakdownSchema = z.object({
   otherCalculationDifferenceRial: bigIntStringSchema,
 });
 
+/** Locked information for one side of a B2C Buyback comparison. */
+export const b2cBuybackComparisonEventSchema = z.object({
+  effectiveAt: isoDateTimeSchema,
+  quoteAmountRial: positiveBigIntStringSchema,
+  quoteObservedAt: isoDateTimeSchema,
+  goldRatePerGramRial: positiveBigIntStringSchema,
+  purchaseAmountRial: positiveBigIntStringSchema,
+});
+
+/**
+ * Server-calculated, side-effect-free comparison of the original jewelry sale
+ * and a newly measured second-hand purchase. Both event snapshots are carried
+ * explicitly so the browser never substitutes today's market rate for history.
+ */
+export const b2cBuybackPreviewSchema = z.object({
+  sourceInvoiceId: uuidSchema,
+  original: b2cBuybackComparisonEventSchema,
+  today: b2cBuybackComparisonEventSchema,
+  breakdown: b2cBuybackBreakdownSchema,
+});
+
 export const b2cBuybackSchema = z.object({
   secondHandPurchaseId: uuidSchema,
   ledgerTransactionId: uuidSchema,
@@ -54,5 +82,8 @@ export const b2cBuybackSchema = z.object({
 });
 
 export type CreateB2cBuybackInput = z.infer<typeof createB2cBuybackSchema>;
+export type PreviewB2cBuybackInput = z.infer<typeof previewB2cBuybackSchema>;
 export type B2cBuybackBreakdown = z.infer<typeof b2cBuybackBreakdownSchema>;
+export type B2cBuybackComparisonEvent = z.infer<typeof b2cBuybackComparisonEventSchema>;
+export type B2cBuybackPreview = z.infer<typeof b2cBuybackPreviewSchema>;
 export type B2cBuyback = z.infer<typeof b2cBuybackSchema>;
