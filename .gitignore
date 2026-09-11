@@ -28,3 +28,12 @@ pnpm-debug.log*
 
 # pwa generated
 apps/web/dev-dist/
+
+# local package store
+.pnpm-store/
+
+# Graphify local runtime, cache, and dated backups
+graphify-out/.graphify_python
+graphify-out/.graphify_root
+graphify-out/cache/
+graphify-out/????-??-??/
