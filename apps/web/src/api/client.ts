@@ -172,6 +172,8 @@ interface RequestOptions {
   skipAuthRetry?: boolean;
   /** این دومین تلاش همین درخواست است — یک بار تمدید کافی است، نه بی‌نهایت. */
   isRetryAfterRefresh?: boolean;
+  /** درخواست اثر جانبی ندارد و پس از تمدید نشست می‌تواند بی‌صدا تکرار شود. */
+  safeToRetryAfterRefresh?: boolean;
 }
 
 /**
@@ -230,7 +232,7 @@ async function request<S extends z.ZodTypeAny>(
       await parseError(response);
     }
 
-    if ((init.method ?? 'GET') === 'GET') {
+    if ((init.method ?? 'GET') === 'GET' || options.safeToRetryAfterRefresh === true) {
       return request(path, schema, init, callerSignal, timeoutMs, {
         ...options,
         isRetryAfterRefresh: true,
@@ -243,11 +245,7 @@ async function request<S extends z.ZodTypeAny>(
      * (که تغییر نکرده) دوباره `submit` می‌کند — امن است چون تکرار
      * همان کلید همان نتیجه را می‌گیرد، نه سند دوم.
      */
-    throw new ApiError(
-      409,
-      'RETRY_AFTER_REFRESH',
-      'نشست شما تازه شد؛ لطفاً دوباره ثبت کنید.',
-    );
+    throw new ApiError(409, 'RETRY_AFTER_REFRESH', 'نشست شما تازه شد؛ لطفاً دوباره ثبت کنید.');
   }
 
   if (response.status === 401) {
@@ -313,6 +311,34 @@ export function apiPost<S extends z.ZodTypeAny>(
     },
     signal,
     timeoutMs,
+  );
+}
+
+/**
+ * POST فقط‌خواندنی — برای endpointهایی که بدنه‌ی ورودی دارند، اما هیچ
+ * سند یا اثر مالی ایجاد نمی‌کنند (مانند پیش‌نمایش قیمت‌گذاری).
+ *
+ * `Idempotency-Key` مخصوص نوشتن است؛ فرستادن آن برای یک preview این تصور
+ * غلط را می‌سازد که درخواست، عملیات مالی قابل‌تکرار است.
+ */
+export function apiPostReadOnly<S extends z.ZodTypeAny>(
+  path: string,
+  body: unknown,
+  schema: S,
+  signal?: AbortSignal,
+  timeoutMs: number = DEFAULT_TIMEOUT_MS,
+): Promise<z.infer<S>> {
+  return request(
+    path,
+    schema,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+    signal,
+    timeoutMs,
+    { safeToRetryAfterRefresh: true },
   );
 }
 

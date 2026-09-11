@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { useSessionStore } from '@/stores/session-store';
 import { ApiError, NetworkError } from './api-error';
-import { apiGet, apiPost, apiPostRaw, newIdempotencyKey } from './client';
+import { apiGet, apiPost, apiPostRaw, apiPostReadOnly, newIdempotencyKey } from './client';
 import { dualAmountSchema } from './contracts';
 
 /**
@@ -29,10 +29,7 @@ function mockFetch(response: { status?: number; body: unknown }) {
 }
 
 /** هدرهای فرستاده‌شده در n-امین فراخوانی. */
-function sentHeaders(
-  spy: ReturnType<typeof mockFetch>,
-  index = 0,
-): Record<string, string> {
+function sentHeaders(spy: ReturnType<typeof mockFetch>, index = 0): Record<string, string> {
   return (spy.mock.calls[index]?.[1]?.headers ?? {}) as Record<string, string>;
 }
 
@@ -166,6 +163,33 @@ describe('Idempotency-Key', () => {
 
     expect(sentHeaders(spy)['Idempotency-Key']).toBeUndefined();
   });
+
+  it('POST فقط‌خواندنی، کلید idempotency نمی‌فرستد', async () => {
+    const spy = mockFetch({ body: { value: 'ok' } });
+
+    await apiPostReadOnly('/pricing/preview', { a: 1 }, okSchema);
+
+    expect(sentHeaders(spy)['Idempotency-Key']).toBeUndefined();
+    expect(spy.mock.calls[0]?.[1]).toMatchObject({
+      method: 'POST',
+      body: JSON.stringify({ a: 1 }),
+    });
+  });
+
+  it('POST فقط‌خواندنی پس از تمدید نشست بی‌صدا تکرار می‌شود', async () => {
+    useSessionStore.setState({ session: SESSION_A });
+    const spy = mockFetchWith((path, _init, index) => {
+      if (path.includes('/auth/refresh')) return { body: SESSION_B_WIRE };
+      if (index === 0) return { status: 401, body: UNAUTHORIZED_BODY };
+      return { body: { value: 'ok' } };
+    });
+
+    await expect(apiPostReadOnly('/pricing/preview', { a: 1 }, okSchema)).resolves.toEqual({
+      value: 'ok',
+    });
+    expect(spy).toHaveBeenCalledTimes(3);
+    expect(sentHeaders(spy, 2)['Idempotency-Key']).toBeUndefined();
+  });
 });
 
 describe('خطاها', () => {
@@ -190,7 +214,12 @@ describe('خطاها', () => {
   });
 
   it('قطع شبکه پیام فارسی قابل نمایش می‌دهد', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('failed'); }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new TypeError('failed');
+      }),
+    );
 
     await expect(apiGet('/x', okSchema)).rejects.toThrow(NetworkError);
     await expect(apiGet('/x', okSchema)).rejects.toThrow('ارتباط با سرور برقرار نشد');
@@ -305,7 +334,17 @@ describe('تمدید خودکار روی ۴۰۱ — FE-027', () => {
     useSessionStore.setState({ session: SESSION_A });
     mockFetchWith((path, _init, index) => {
       if (path.includes('/auth/refresh')) {
-        return { status: 401, body: { error: { code: 'UNAUTHORIZED', message: 'نشست معتبر نیست یا منقضی شده است', fields: {}, requestId: 'req-refresh' } } };
+        return {
+          status: 401,
+          body: {
+            error: {
+              code: 'UNAUTHORIZED',
+              message: 'نشست معتبر نیست یا منقضی شده است',
+              fields: {},
+              requestId: 'req-refresh',
+            },
+          },
+        };
       }
       if (index === 0) return { status: 401, body: UNAUTHORIZED_BODY };
       throw new Error('نباید دوباره تلاش شود');
