@@ -1,7 +1,0 @@
-C:\Users\Sobhan\OneDrive\Documents\gold project prd\FrontTasks.md
-C:\Users\Sobhan\OneDrive\Documents\gold project prd\TASKS.md
-C:\Users\Sobhan\OneDrive\Documents\gold project prd\design-system\MASTER.md
-C:\Users\Sobhan\OneDrive\Documents\gold project prd\graphify-out\memory\query_20260811_192513_how_should_graphify_be_maintained_after_completing.md
-C:\Users\Sobhan\OneDrive\Documents\gold project prd\graphify-out\memory\query_20260811_194802_implement_fe_009_api_error_management.md
-C:\Users\Sobhan\OneDrive\Documents\gold project prd\graphify-out\memory\query_20260829_193215_fe_056_second_hand_gold_purchase_wizard_shell.md
-C:\Users\Sobhan\OneDrive\Documents\gold project prd\graphify-out\memory\query_20260829_195112_fe_057_second_hand_gold_weighing_form.md

@@ -305,13 +305,6 @@ python3 .Codex/skills/ui-ux-pro-max/scripts/search.py \
 6. تیک بزن، کامیت کن با پیام `[T-xx] عنوان تسک`.
 7. اگر چیزی خلاف قواعد این فایل لازم شد، **کد نزن — بپرس.**
 
-### ۸-۱. حافظه‌ی Graphify
-
-- در پرسش‌های مربوط به ساختار، وابستگی‌ها یا محل تغییر کد، ابتدا از `graphify-out/graph.json` پرس‌وجو کن؛ فقط سپس فایل‌های مرتبط را باز کن.
-- بعد از تکمیل هر تسک و پیش از تحویل، برای همگام‌سازی کامل (به‌ویژه تغییرات مستندات و تصویر) `graphify . --update` را اجرا کن.
-- نتیجه‌ی مفید هر تسک را با `graphify save-result` و `--outcome useful` در حافظه‌ی Graphify ذخیره کن: خلاصه‌ی تغییر، فایل‌ها/گره‌های اصلی، و تست‌های اجراشده. برای نتیجه‌ی نامعتبر یا مسیر بی‌ثمر به‌ترتیب از `--outcome corrected` یا `--outcome dead_end` استفاده کن.
-- ابتدای هر نشست، `graphify reflect --if-stale` را اجرا و `graphify-out/reflections/LESSONS.md` را بخوان تا پاسخ‌های مفید قبلی دوباره مصرف شوند.
-
 **قواعد کامیت:** یک تسک، یک کامیت. بدون کامیت «WIP». بدون تغییر فایل‌های خارج از دامنه‌ی تسک.
 
 **Definition of Done برای هر تسک:**
@@ -324,3 +317,16 @@ python3 .Codex/skills/ui-ux-pro-max/scripts/search.py \
 - [ ] چک‌باکس در `TASKS.md` تیک خورده
 
 ## Imported Claude Cowork project instructions
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+When the user types `/graphify`, use the installed graphify skill or instructions before doing anything else.
+
+Rules:
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
