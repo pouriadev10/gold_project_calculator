@@ -1,19 +1,38 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { B2cBuybackPreview } from '@gold/contracts';
+import type { ReactNode } from 'react';
+import type { B2cBuyback, B2cBuybackPreview } from '@gold/contracts';
 import type * as ReactRouter from '@tanstack/react-router';
 import type * as Queries from '@/api/queries';
 import type * as PurchaseApi from '@/api/purchase';
 import { useKeypadStore } from '@/components/keypad/keypad-store';
 import type * as Mazneh from '@/features/home/useMazneh';
 import type * as OnlineStatus from '@/hooks/useOnlineStatus';
+import type * as BuybackSubmit from './useB2cBuybackSubmit';
 import B2cBuybackStartPage from './B2cBuybackStartPage';
 
 const useParamsMock = vi.fn();
 vi.mock('@tanstack/react-router', async (importOriginal) => {
   const actual = await importOriginal<typeof ReactRouter>();
-  return { ...actual, useParams: (...args: unknown[]) => useParamsMock(...args) };
+  return {
+    ...actual,
+    useParams: (...args: unknown[]) => useParamsMock(...args),
+    Link: ({
+      to,
+      params,
+      children,
+      ...props
+    }: {
+      to: string;
+      params: { invoiceId: string };
+      children: ReactNode;
+    }) => (
+      <a href={to.replace('$invoiceId', params.invoiceId)} {...props}>
+        {children}
+      </a>
+    ),
+  };
 });
 
 const useInvoiceVersionsMock = vi.fn();
@@ -38,6 +57,13 @@ const useOnlineStatusMock = vi.fn();
 vi.mock('@/hooks/useOnlineStatus', async (importOriginal) => ({
   ...(await importOriginal<typeof OnlineStatus>()),
   useOnlineStatus: () => useOnlineStatusMock(),
+}));
+
+const submitBuybackMock = vi.fn();
+const useB2cBuybackSubmitMock = vi.fn();
+vi.mock('./useB2cBuybackSubmit', async (importOriginal) => ({
+  ...(await importOriginal<typeof BuybackSubmit>()),
+  useB2cBuybackSubmit: (...args: unknown[]) => useB2cBuybackSubmitMock(...args),
 }));
 
 const INVOICE_ID = 'd1000000-0000-4000-8000-000000000001';
@@ -70,12 +96,26 @@ const PREVIEW: B2cBuybackPreview = {
   },
 };
 
+const RECEIPT: B2cBuyback = {
+  secondHandPurchaseId: 'e1000000-0000-4000-8000-000000000001',
+  ledgerTransactionId: 'e2000000-0000-4000-8000-000000000001',
+  inventoryMovementId: 'e3000000-0000-4000-8000-000000000001',
+  sourceInvoiceId: INVOICE_ID,
+  pureWeightMg: '740',
+  goldRatePerGramRial: PREVIEW.today.goldRatePerGramRial,
+  paidRial: '765000000',
+  payableRial: '0',
+  breakdown: PREVIEW.breakdown,
+};
+
 beforeEach(() => {
   useParamsMock.mockReset();
   useInvoiceVersionsMock.mockReset();
   useMaznehMock.mockReset();
   useOnlineStatusMock.mockReset();
   previewB2cBuybackMock.mockReset();
+  submitBuybackMock.mockReset();
+  useB2cBuybackSubmitMock.mockReset();
   useKeypadStore.setState({ isOpen: false, fields: [], activeId: null, buffers: {} });
   useParamsMock.mockReturnValue({ invoiceId: INVOICE_ID });
   useInvoiceVersionsMock.mockReturnValue({
@@ -100,9 +140,16 @@ beforeEach(() => {
   });
   useOnlineStatusMock.mockReturnValue(true);
   previewB2cBuybackMock.mockResolvedValue(PREVIEW);
+  useB2cBuybackSubmitMock.mockReturnValue({
+    submit: submitBuybackMock,
+    isSubmitting: false,
+    error: null,
+    receipt: null,
+    attempt: null,
+  });
 });
 
-describe('B2cBuybackStartPage — مقایسه خرید مجدد B2C (FE-062)', () => {
+describe('B2cBuybackStartPage — مقایسه و ثبت خرید مجدد B2C (FE-062/063)', () => {
   it('فاکتور را فقط مرجع می‌داند و تفاوت آن را با برگشت فروش روشن می‌کند', () => {
     render(<B2cBuybackStartPage />);
 
@@ -150,5 +197,78 @@ describe('B2cBuybackStartPage — مقایسه خرید مجدد B2C (FE-062)', 
     expect(await screen.findByText('مقایسه‌ی خرید اولیه و خرید امروز')).toBeInTheDocument();
     expect(screen.getByText('اجرت سوخته')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /ثبت خرید/ })).not.toBeInTheDocument();
+  });
+
+  it('همان snapshot پیش‌نمایش را با پرداخت برای ساخت سند خرید جدید ثبت می‌کند', async () => {
+    const user = userEvent.setup();
+    render(<B2cBuybackStartPage />);
+
+    await user.click(screen.getByLabelText('وزن ناخالص'));
+    await user.click(screen.getByRole('button', { name: 'رقم ۱' }));
+    await user.click(screen.getByRole('button', { name: 'نمایش مقایسه' }));
+    await screen.findByText('پرداخت به مشتری');
+    await user.click(screen.getByRole('button', { name: 'پرداخت کامل' }));
+    await user.click(screen.getByRole('button', { name: 'ثبت سند خرید جدید' }));
+
+    expect(submitBuybackMock).toHaveBeenCalledWith({
+      grossWeightMg: '1000',
+      stoneWeightMg: '0',
+      otherDeductionWeightMg: '0',
+      quoteId: QUOTE_ID,
+      effectiveAt: expect.any(String),
+      paidRial: PREVIEW.breakdown.todayPurchaseAmountRial,
+    });
+  });
+
+  it('پس از موفقیت سند خرید جدید و راه بازگشت به فاکتور مرجع را نشان می‌دهد', () => {
+    useB2cBuybackSubmitMock.mockReturnValue({
+      submit: submitBuybackMock,
+      isSubmitting: false,
+      error: null,
+      receipt: RECEIPT,
+      attempt: null,
+    });
+
+    render(<B2cBuybackStartPage />);
+
+    expect(screen.getByRole('status')).toHaveTextContent('خرید طلای دست‌دوم ثبت شد');
+    expect(screen.getByText(RECEIPT.secondHandPurchaseId)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'لینک به سند خرید جدید' })).toHaveAttribute(
+      'href',
+      `#buyback-document-${RECEIPT.secondHandPurchaseId}`,
+    );
+    expect(screen.getByRole('link', { name: 'مشاهده فاکتور مرجع' })).toHaveAttribute(
+      'href',
+      `/sales/invoices/${INVOICE_ID}`,
+    );
+  });
+
+  it('تلاش نامطمئن بازیابی‌شده را با همان درخواست دوباره بررسی می‌کند', async () => {
+    const user = userEvent.setup();
+    const attempt = {
+      key: 'same-idempotency-key',
+      input: {
+        grossWeightMg: '1000',
+        stoneWeightMg: '0',
+        otherDeductionWeightMg: '0',
+        quoteId: QUOTE_ID,
+        paidRial: '20000000',
+        effectiveAt: '2026-09-10T10:15:00.000Z',
+      },
+    };
+    useB2cBuybackSubmitMock.mockReturnValue({
+      submit: submitBuybackMock,
+      isSubmitting: false,
+      error: new TypeError('offline'),
+      receipt: null,
+      attempt,
+    });
+
+    render(<B2cBuybackStartPage />);
+
+    expect(screen.getByText(/همان خرید با همان شناسه دوباره بررسی می‌شود/)).toBeInTheDocument();
+    expect(screen.getByLabelText('وزن ناخالص')).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'بررسی نتیجه خرید' }));
+    expect(submitBuybackMock).toHaveBeenCalledWith(attempt.input);
   });
 });

@@ -1,8 +1,11 @@
 import {
+  b2cBuybackSchema,
   b2cBuybackPreviewSchema,
   secondHandCoinPurchaseSchema,
   secondHandGoldPurchaseSchema,
+  type B2cBuyback,
   type B2cBuybackPreview,
+  type CreateB2cBuybackInput,
   type CreateSecondHandCoinPurchaseInput,
   type CreateSecondHandGoldPurchaseInput,
   type PreviewB2cBuybackInput,
@@ -33,4 +36,13 @@ export function previewB2cBuyback(
     input,
     b2cBuybackPreviewSchema,
   );
+}
+
+/** ثبت خرید دست‌دوم جدیدی که فاکتور فروش فقط مرجع آن است. */
+export function createB2cBuyback(
+  invoiceId: string,
+  input: CreateB2cBuybackInput,
+  key: string,
+): Promise<B2cBuyback> {
+  return apiPost(`/sales/invoices/${invoiceId}/b2c-buyback`, input, b2cBuybackSchema, key);
 }
