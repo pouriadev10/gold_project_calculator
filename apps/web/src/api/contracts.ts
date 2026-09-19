@@ -237,6 +237,105 @@ export type SalesInvoiceListItem = z.infer<typeof salesInvoiceListItemSchema>;
 export type SalesInvoiceList = z.infer<typeof salesInvoiceListSchema>;
 
 /**
+ * ⚠️ بدون endpoint بک‌اندی تجمیعی در حال حاضر — View model جزئیات
+ * فاکتور برای FE-065. تمام اعداد مالی/وزنی از snapshot نسخه می‌آیند؛
+ * صفحه مجاز نیست آن‌ها را با مظنه یا تنظیمات امروز بازسازی کند. endpoint
+ * واقعی بعدی باید همین projection را از `sales_invoices`، نسخه‌ها، شخص و
+ * دفترکل بسازد؛ تا آن زمان MSW قرارداد را اجرا می‌کند.
+ */
+const salesInvoiceDetailItemSchema = z.object({
+  itemType: z.enum(['JEWELRY', 'COIN']),
+  itemId: uuidSchema,
+  title: z.string().trim().min(1),
+  quantity: z.string().regex(/^[1-9]\d*$/u),
+  pureWeightMg: nonNegativeBigIntStringSchema.nullable(),
+  karat: z.number().int().min(1).max(1000).nullable(),
+  payableRial: nonNegativeBigIntStringSchema,
+});
+
+const salesInvoiceSettingsSnapshotSchema = z.object({
+  baseQuoteKarat: nonNegativeBigIntStringSchema.nullable(),
+  mithqalGramsX10k: nonNegativeBigIntStringSchema.nullable(),
+  roundingUnitRial: nonNegativeBigIntStringSchema.nullable(),
+  roundingPolicy: z.string().trim().min(1).nullable(),
+  profitRateBps: nonNegativeBigIntStringSchema.nullable(),
+  taxRateBps: nonNegativeBigIntStringSchema.nullable(),
+});
+
+const salesInvoiceDetailVersionSchema = z.object({
+  version: z.number().int().positive(),
+  reason: z.string().nullable(),
+  reasonDetail: z.string().nullable(),
+  actor: z
+    .object({
+      id: uuidSchema,
+      displayName: z.string().trim().min(1),
+    })
+    .nullable(),
+  createdAt: isoDateTimeSchema,
+  payableRial: nonNegativeBigIntStringSchema,
+  paidRial: nonNegativeBigIntStringSchema,
+  receivableRial: nonNegativeBigIntStringSchema,
+  pureWeightMg: nonNegativeBigIntStringSchema.nullable(),
+  items: z.array(salesInvoiceDetailItemSchema),
+  settingsSnapshot: salesInvoiceSettingsSnapshotSchema,
+  ledgerSummary: z.object({
+    transactionCount: z.number().int().nonnegative(),
+    entryCount: z.number().int().nonnegative(),
+    balanced: z.boolean(),
+  }),
+});
+
+export const salesInvoiceDetailSchema = z
+  .object({
+    id: uuidSchema,
+    invoiceNumber: z.number().int().positive().nullable(),
+    status: salesInvoiceStatusSchema,
+    currentVersion: z.number().int().nonnegative(),
+    party: z.object({
+      id: uuidSchema,
+      displayName: z.string().trim().min(1),
+      type: z.enum(['CONSUMER', 'BUSINESS']),
+      status: z.enum(['ACTIVE', 'INACTIVE']),
+    }),
+    occurredAt: isoDateTimeSchema,
+    quoteSnapshot: z
+      .object({
+        amountRial: z.string().regex(/^[1-9]\d*$/u),
+        goldRatePerGramRial: z.string().regex(/^[1-9]\d*$/u),
+        observedAt: isoDateTimeSchema,
+      })
+      .nullable(),
+    versions: z.array(salesInvoiceDetailVersionSchema),
+  })
+  .superRefine((value, context) => {
+    const currentVersions = value.versions.filter(
+      (version) => version.version === value.currentVersion,
+    );
+    const draftShape =
+      value.status === 'DRAFT' &&
+      value.invoiceNumber === null &&
+      value.currentVersion === 0 &&
+      value.quoteSnapshot === null &&
+      value.versions.length === 0;
+    const finalizedShape =
+      value.status === 'FINALIZED' &&
+      value.invoiceNumber !== null &&
+      value.currentVersion > 0 &&
+      value.quoteSnapshot !== null &&
+      currentVersions.length === 1;
+
+    if (!draftShape && !finalizedShape) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'جزئیات فاکتور با وضعیت و نسخه جاری آن سازگار نیست',
+      });
+    }
+  });
+
+export type SalesInvoiceDetail = z.infer<typeof salesInvoiceDetailSchema>;
+
+/**
  * رشته‌ی ارقام صحیح روی سیم → `bigint` در برنامه.
  * قاعده‌ی اعتبارسنجی (چه رشته‌ای مجاز است) از `@gold/contracts` می‌آید —
  * همان چیزی که بک‌اند هم بررسی می‌کند؛ تبدیل به `bigint` فقط اینجا لازم

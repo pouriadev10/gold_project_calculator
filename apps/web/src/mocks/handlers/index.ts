@@ -22,7 +22,12 @@ import {
   MAX_PAGE_SIZE,
 } from '@gold/contracts';
 import { HttpResponse, http, delay } from 'msw';
-import type { JewelryItemVersion, Party, SalesInvoiceListItem } from '@/api/contracts';
+import type {
+  JewelryItemVersion,
+  Party,
+  SalesInvoiceDetail,
+  SalesInvoiceListItem,
+} from '@/api/contracts';
 import {
   MAZNEH_RIAL,
   FETCHED_AT,
@@ -45,7 +50,9 @@ import {
   profitToday,
   RECENT_INVENTORY_MOVEMENTS,
   recentTransactions,
+  salesInvoiceDetailRecords,
   salesInvoiceRecords,
+  salesInvoiceVersionRecords,
 } from './fixtures';
 
 /**
@@ -104,7 +111,12 @@ let invoiceCounter = 122;
  * می‌دهد که هیچ‌وقت ثبت نشده و کل قاعده‌ی «رسید = پاسخ سرور» در توسعه
  * ساختگی می‌شود.
  */
-const salesInvoiceVersions = new Map<string, unknown>();
+const salesInvoiceVersions = new Map<string, unknown>(
+  salesInvoiceVersionRecords.map((history) => [history.invoiceId, history]),
+);
+const salesInvoiceDetails = new Map<string, SalesInvoiceDetail>(
+  salesInvoiceDetailRecords.map((detail) => [detail.id, detail]),
+);
 let salesInvoiceList: SalesInvoiceListItem[] = [...salesInvoiceRecords];
 
 /** فاکتور تازه باید بلافاصله در GET فهرست دیده شود، درست مثل سرور واقعی. */
@@ -341,6 +353,8 @@ salesInvoiceVersions.set(result.invoiceId, {
       ],
       totalsSnapshot: {
         payableRial: calc.payableRial.toString(),
+        paidRial: paidRial.toString(),
+        receivableRial: receivableRial.toString(),
         goldValueRial: calc.goldValueRial.toString(),
         wageRial: calc.wageRial.toString(),
         profitRial: calc.profitRial.toString(),
@@ -356,6 +370,68 @@ salesInvoiceVersions.set(result.invoiceId, {
     },
   ],
 });
+
+const invoiceParty = partyList.find((candidate) => candidate.id === body.partyId);
+if (invoiceParty) {
+  salesInvoiceDetails.set(result.invoiceId, {
+    id: result.invoiceId,
+    invoiceNumber: result.invoiceNumber,
+    status: 'FINALIZED',
+    currentVersion: 1,
+    party: {
+      id: invoiceParty.id,
+      displayName: invoiceParty.displayName,
+      type: invoiceParty.type,
+      status: invoiceParty.status,
+    },
+    occurredAt: body.effectiveAt,
+    quoteSnapshot: {
+      amountRial: quote.amountRial,
+      goldRatePerGramRial: gramRate1000(BigInt(quote.amountRial)).toString(),
+      observedAt: quote.observedAt,
+    },
+    versions: [
+      {
+        version: 1,
+        reason: null,
+        reasonDetail: null,
+        actor: {
+          id: 'c1000000-0000-4000-8000-000000000002',
+          displayName: 'مدیر فروشگاه',
+        },
+        createdAt: body.effectiveAt,
+        payableRial: calc.payableRial.toString(),
+        paidRial: paidRial.toString(),
+        receivableRial: receivableRial.toString(),
+        pureWeightMg: calc.pureWeightMg.toString(),
+        items: [
+          {
+            itemType: 'JEWELRY',
+            itemId: body.jewelryItemId,
+            title: version.title,
+            quantity: '1',
+            pureWeightMg: calc.pureWeightMg.toString(),
+            karat: version.karat,
+            payableRial: calc.payableRial.toString(),
+          },
+        ],
+        settingsSnapshot: {
+          baseQuoteKarat: null,
+          mithqalGramsX10k: null,
+          roundingUnitRial: DEFAULT_ROUNDING_UNIT.toString(),
+          roundingPolicy: 'ROUND_HALF_UP',
+          profitRateBps: MOCK_PROFIT_RATE_BPS.toString(),
+          taxRateBps: MOCK_TAX_RATE_BPS.toString(),
+        },
+        ledgerSummary: {
+          transactionCount: 1,
+          entryCount: receivableRial === 0n ? 4 : 5,
+          balanced: true,
+        },
+      },
+    ],
+  });
+}
 
 recordSalesInvoice({
   id: result.invoiceId,
@@ -471,6 +547,110 @@ async function registerCoinSale(request: Request) {
     ledgerTransactionId: crypto.randomUUID(),
     inventoryMovementId: crypto.randomUUID(),
   };
+
+  salesInvoiceVersions.set(result.invoiceId, {
+    invoiceId: result.invoiceId,
+    invoiceNumber: result.invoiceNumber,
+    versions: [
+      {
+        version: 1,
+        reason: null,
+        reasonDetail: null,
+        partyId: body.partyId,
+        actor: {
+          id: 'c1000000-0000-4000-8000-000000000002',
+          displayName: 'مدیر فروشگاه',
+        },
+        createdAt: body.effectiveAt,
+        payableRial: payableRial.toString(),
+        pureWeightMg: null,
+        karat: fixture.karat,
+        items: [
+          {
+            itemType: 'COIN',
+            itemId: body.coinTypeId,
+            quantity: String(body.count),
+            pureWeightMg: null,
+            karat: fixture.karat,
+          },
+        ],
+        totalsSnapshot: {
+          payableRial: payableRial.toString(),
+          paidRial: paidRial.toString(),
+          receivableRial: receivableRial.toString(),
+          count: String(body.count),
+          marketUnitPriceRial: marketUnitPriceRial.toString(),
+          intrinsicValueRial: intrinsicValueRial.toString(),
+          bubbleRial: bubbleRial === null ? null : bubbleRial.toString(),
+        },
+        settingsSnapshot: {},
+        ledgerEffects: [],
+        inventoryEffects: [],
+      },
+    ],
+  });
+
+  const invoiceParty = partyList.find((candidate) => candidate.id === body.partyId);
+  if (invoiceParty) {
+    salesInvoiceDetails.set(result.invoiceId, {
+      id: result.invoiceId,
+      invoiceNumber: result.invoiceNumber,
+      status: 'FINALIZED',
+      currentVersion: 1,
+      party: {
+        id: invoiceParty.id,
+        displayName: invoiceParty.displayName,
+        type: invoiceParty.type,
+        status: invoiceParty.status,
+      },
+      occurredAt: body.effectiveAt,
+      quoteSnapshot: {
+        amountRial: quote.amountRial,
+        goldRatePerGramRial: rate1000.toString(),
+        observedAt: quote.observedAt,
+      },
+      versions: [
+        {
+          version: 1,
+          reason: null,
+          reasonDetail: null,
+          actor: {
+            id: 'c1000000-0000-4000-8000-000000000002',
+            displayName: 'مدیر فروشگاه',
+          },
+          createdAt: body.effectiveAt,
+          payableRial: payableRial.toString(),
+          paidRial: paidRial.toString(),
+          receivableRial: receivableRial.toString(),
+          pureWeightMg: null,
+          items: [
+            {
+              itemType: 'COIN',
+              itemId: body.coinTypeId,
+              title: fixture.title,
+              quantity: String(body.count),
+              pureWeightMg: null,
+              karat: fixture.karat,
+              payableRial: payableRial.toString(),
+            },
+          ],
+          settingsSnapshot: {
+            baseQuoteKarat: null,
+            mithqalGramsX10k: null,
+            roundingUnitRial: null,
+            roundingPolicy: null,
+            profitRateBps: null,
+            taxRateBps: null,
+          },
+          ledgerSummary: {
+            transactionCount: 1,
+            entryCount: paidRial > 0n && receivableRial > 0n ? 5 : 4,
+            balanced: true,
+          },
+        },
+      ],
+    });
+  }
 
   recordSalesInvoice({
     id: result.invoiceId,
@@ -1710,6 +1890,58 @@ export const handlers = [
    * تعداد × قیمت بازار. `bubbleRial` فقط برای نوع بانک‌مرکزی مقدار دارد.
    */
   http.post('/api/sales/invoices/coins', ({ request }) => registerCoinSale(request)),
+
+  /**
+   * projection تجمیعی جزئیات فاکتور — FE-065. تمام نرخ‌ها، پرداخت‌ها و
+   * تنظیمات از snapshot خود سند می‌آیند، نه وضعیت زنده‌ی فروشگاه.
+   */
+  http.get('/api/sales/invoices/:invoiceId/detail', async ({ params }) => {
+    await delay(READ_DELAY_MS);
+    const found = salesInvoiceDetails.get(String(params.invoiceId));
+    if (!found) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 'NOT_FOUND',
+            message: 'فاکتور مورد نظر پیدا نشد',
+            fields: {},
+            requestId: crypto.randomUUID(),
+          },
+        },
+        { status: 404 },
+      );
+    }
+    return HttpResponse.json(found);
+  }),
+
+  /** دانلود آزمایشی همان endpoint واقعی PDF با نام فایل شماره فاکتور. */
+  http.get('/api/sales/invoices/:invoiceId/pdf', async ({ params }) => {
+    await delay(READ_DELAY_MS);
+    const found = salesInvoiceDetails.get(String(params.invoiceId));
+    if (!found || found.invoiceNumber === null || found.status !== 'FINALIZED') {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 'NOT_FOUND',
+            message: 'نسخه PDF این فاکتور در دسترس نیست',
+            fields: {},
+            requestId: crypto.randomUUID(),
+          },
+        },
+        { status: 404 },
+      );
+    }
+    const content = new Blob(
+      [`%PDF-1.4\n% Gold Accounting invoice ${found.invoiceNumber}\n%%EOF`],
+      { type: 'application/pdf' },
+    );
+    return new HttpResponse(content, {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="invoice-${found.invoiceNumber}.pdf"`,
+      },
+    });
+  }),
 
   /**
    * `GET /sales/invoices/:invoiceId/versions` — قرارداد نهایی BE-043

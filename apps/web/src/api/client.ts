@@ -176,21 +176,13 @@ interface RequestOptions {
   safeToRetryAfterRefresh?: boolean;
 }
 
-/**
- * جنریک روی **خود اسکیما** است، نه روی نوع خروجی.
- *
- * اسکیماهای ما `.transform()` دارند (رشته روی سیم → `bigint` در برنامه)،
- * پس ورودی و خروجی‌شان یکی نیست و `ZodType<T>` نمی‌تواند توصیفشان کند.
- * `z.infer<S>` نوع **پس از تبدیل** را می‌دهد — همان چیزی که صفحه می‌گیرد.
- */
-async function request<S extends z.ZodTypeAny>(
+async function requestResponse(
   path: string,
-  schema: S,
-  init: RequestInit = {},
-  callerSignal?: AbortSignal,
-  timeoutMs: number = DEFAULT_TIMEOUT_MS,
-  options: RequestOptions = {},
-): Promise<z.infer<S>> {
+  init: RequestInit,
+  callerSignal: AbortSignal | undefined,
+  timeoutMs: number,
+  options: RequestOptions,
+): Promise<Response> {
   const timeoutSignal = AbortSignal.timeout(timeoutMs);
   const signal = combineSignals([callerSignal, timeoutSignal]);
 
@@ -207,13 +199,6 @@ async function request<S extends z.ZodTypeAny>(
       },
     });
   } catch (error) {
-    /*
-     * لغو عمدی فراخوان (مثلاً TanStack Query هنگام unmount یا جایگزینی
-     * query) باید همان AbortError دست‌نخورده بالا برود — TanStack Query
-     * با بررسی `error.name === 'AbortError'` این حالت را «لغو» می‌شناسد،
-     * نه «خطا»؛ اگر اینجا در NetworkError بپیچیمش، آن تشخیص از کار می‌افتد
-     * و لغوهای عادی مثل خطای شبکه‌ی واقعی نمایش داده می‌شوند.
-     */
     if (callerSignal?.aborted) throw error;
     if (timeoutSignal.aborted) {
       throw new NetworkError('درخواست بیش از حد معمول طول کشید — دوباره تلاش کنید');
@@ -227,33 +212,41 @@ async function request<S extends z.ZodTypeAny>(
     try {
       await refreshAccessToken();
     } catch {
-      // تمدید هم رد شد — نشست واقعاً مرده است، نه فقط توکن دسترسی
       useSessionStore.getState().clearSession();
       await parseError(response);
     }
 
     if ((init.method ?? 'GET') === 'GET' || options.safeToRetryAfterRefresh === true) {
-      return request(path, schema, init, callerSignal, timeoutMs, {
+      return requestResponse(path, init, callerSignal, timeoutMs, {
         ...options,
         isRetryAfterRefresh: true,
       });
     }
 
-    /*
-     * قاعده‌ی FE-027: نوشتن مالی بعد از تمدید بدون کنترل دوباره ارسال
-     * نمی‌شود. نشست الان معتبر است؛ فراخوان با همان Idempotency-Key
-     * (که تغییر نکرده) دوباره `submit` می‌کند — امن است چون تکرار
-     * همان کلید همان نتیجه را می‌گیرد، نه سند دوم.
-     */
     throw new ApiError(409, 'RETRY_AFTER_REFRESH', 'نشست شما تازه شد؛ لطفاً دوباره ثبت کنید.');
   }
 
-  if (response.status === 401) {
-    // این دومین تلاش همین درخواست بود و باز هم ۴۰۱ گرفت، یا مسیر تمدید خودش بود
-    useSessionStore.getState().clearSession();
-  }
-
+  if (response.status === 401) useSessionStore.getState().clearSession();
   if (!response.ok) await parseError(response);
+  return response;
+}
+
+/**
+ * جنریک روی **خود اسکیما** است، نه روی نوع خروجی.
+ *
+ * اسکیماهای ما `.transform()` دارند (رشته روی سیم → `bigint` در برنامه)،
+ * پس ورودی و خروجی‌شان یکی نیست و `ZodType<T>` نمی‌تواند توصیفشان کند.
+ * `z.infer<S>` نوع **پس از تبدیل** را می‌دهد — همان چیزی که صفحه می‌گیرد.
+ */
+async function request<S extends z.ZodTypeAny>(
+  path: string,
+  schema: S,
+  init: RequestInit = {},
+  callerSignal?: AbortSignal,
+  timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  options: RequestOptions = {},
+): Promise<z.infer<S>> {
+  const response = await requestResponse(path, init, callerSignal, timeoutMs, options);
 
   if (response.status === 204) {
     return undefined as z.infer<S>;
@@ -282,6 +275,29 @@ export function apiGet<S extends z.ZodTypeAny>(
   timeoutMs: number = DEFAULT_TIMEOUT_MS,
 ): Promise<z.infer<S>> {
   return request(path, schema, { method: 'GET' }, signal, timeoutMs);
+}
+
+export interface DownloadedFile {
+  readonly content: Blob;
+  readonly fileName: string | null;
+}
+
+/** GET احراز هویت‌شده برای فایل؛ همان چرخه‌ی timeout و refresh پاسخ JSON را دارد. */
+export async function apiGetFile(
+  path: string,
+  signal?: AbortSignal,
+  timeoutMs = 30_000,
+): Promise<DownloadedFile> {
+  const response = await requestResponse(
+    path,
+    { method: 'GET', headers: { Accept: 'application/pdf' } },
+    signal,
+    timeoutMs,
+    {},
+  );
+  const disposition = response.headers.get('Content-Disposition');
+  const fileName = disposition?.match(/filename="?([^";]+)"?/iu)?.[1] ?? null;
+  return { content: await response.blob(), fileName };
 }
 
 /**

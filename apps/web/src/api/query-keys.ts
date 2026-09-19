@@ -90,6 +90,7 @@ export const queryKeys = {
   salesInvoices: {
     all: () => ['sales-invoices'] as const,
     list: (query: SalesInvoiceListQuery) => [...queryKeys.salesInvoices.all(), 'list', query] as const,
+    detail: (invoiceId: string) => [...queryKeys.salesInvoices.all(), 'detail', invoiceId] as const,
     versions: (invoiceId: string) => [...queryKeys.salesInvoices.all(), 'versions', invoiceId] as const,
   },
 

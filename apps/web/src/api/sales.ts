@@ -1,4 +1,4 @@
-import { apiPost } from './client';
+import { apiGetFile, apiPost, type DownloadedFile } from './client';
 import {
   jewelryCashSaleSchema,
   jewelryCreditSaleSchema,
@@ -65,4 +65,12 @@ export function createCoinSale(
   signal?: AbortSignal,
 ): Promise<CoinSale> {
   return apiPost('/sales/invoices/coins', input, coinSaleSchema, idempotencyKey, signal);
+}
+
+/** PDF شماره‌دار فاکتور از snapshot تاریخی سرور، نه بازسازی DOM مرورگر. */
+export function getSalesInvoicePdf(
+  invoiceId: string,
+  signal?: AbortSignal,
+): Promise<DownloadedFile> {
+  return apiGetFile(`/sales/invoices/${invoiceId}/pdf`, signal);
 }

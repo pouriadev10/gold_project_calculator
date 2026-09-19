@@ -11,7 +11,12 @@ import {
   toSafeNumber,
 } from '@gold/core-calc';
 import type { JewelrySaleCalculation } from '@gold/core-calc';
-import type { Party, SalesInvoiceListItem } from '@/api/contracts';
+import type {
+  Party,
+  SalesInvoiceDetail,
+  SalesInvoiceListItem,
+  SalesInvoiceVersionHistory,
+} from '@/api/contracts';
 
 /**
  * داده‌ی ساختگی مشترک همه‌ی handlerها.
@@ -25,6 +30,8 @@ import type { Party, SalesInvoiceListItem } from '@/api/contracts';
 export const MAZNEH_RIAL = 480_000_000n;
 export const RATE_1000 = gramRate1000(MAZNEH_RIAL);
 export const FETCHED_AT = new Date('2026-07-30T09:12:00Z');
+export const MOCK_PROFIT_RATE_BPS = 700n;
+export const MOCK_TAX_RATE_BPS = 1000n;
 
 /** میلی‌گرم — بدون هیچ ضرب شناوری، حتی در داده‌ی ساختگی */
 const mg = (milligrams: number): bigint => BigInt(milligrams);
@@ -138,6 +145,147 @@ export const salesInvoiceRecords: SalesInvoiceListItem[] = Array.from(
     };
   },
 );
+
+const SALES_ITEM_TITLES = [
+  'دستبند ۱۸ عیار',
+  'سرویس کامل ۱۸ عیار',
+  'انگشتر ۱۸ عیار نگین‌دار',
+  'گوشواره عیار ۷۰۰',
+  'زنجیر گردن ۱۸ عیار',
+  'النگو عیار ۱۴',
+  'آویز طرح قلب',
+  'انگشتر مردانه عیار ۷۰۰',
+  'ست کامل عروس',
+  'دستبند مردانه کارتیه',
+] as const;
+
+function detailVersion(
+  invoice: SalesInvoiceListItem,
+  version: number,
+): SalesInvoiceDetail['versions'][number] {
+  const index = salesInvoiceRecords.indexOf(invoice);
+  const isCurrent = version === invoice.currentVersion;
+  const currentPayableRial = BigInt(invoice.payableRial ?? '0');
+  const payableRial = isCurrent ? currentPayableRial : currentPayableRial - 20_000_000n;
+  const receivableRial = index % 3 === 1 ? 50_000_000n : 0n;
+  const paidRial = payableRial - receivableRial;
+  const itemNumber = (index % SALES_ITEM_TITLES.length) + 1;
+  const pureWeightMg = BigInt(4_250 + index * 375);
+  const createdAt = new Date(
+    new Date(invoice.occurredAt).getTime() + (version - 1) * 60 * 60 * 1000,
+  ).toISOString();
+
+  return {
+    version,
+    reason: version === 1 ? null : 'WAGE_ERROR',
+    reasonDetail: version === 1 ? null : 'اصلاح اجرت ثبت‌شده',
+    actor: {
+      id: 'c1000000-0000-4000-8000-000000000002',
+      displayName: version === 1 ? 'صندوقدار فروشگاه' : 'مدیر فروشگاه',
+    },
+    createdAt,
+    payableRial: payableRial.toString(),
+    paidRial: paidRial.toString(),
+    receivableRial: receivableRial.toString(),
+    pureWeightMg: pureWeightMg.toString(),
+    items: [
+      {
+        itemType: 'JEWELRY',
+        itemId: `b1000000-0000-4000-8000-${String(itemNumber).padStart(12, '0')}`,
+        title: SALES_ITEM_TITLES[itemNumber - 1]!,
+        quantity: '1',
+        pureWeightMg: pureWeightMg.toString(),
+        karat: itemNumber === 4 || itemNumber === 8 ? 700 : itemNumber === 6 ? 585 : 750,
+        payableRial: payableRial.toString(),
+      },
+    ],
+    settingsSnapshot: {
+      baseQuoteKarat: null,
+      mithqalGramsX10k: null,
+      roundingUnitRial: DEFAULT_ROUNDING_UNIT.toString(),
+      roundingPolicy: 'ROUND_HALF_UP',
+      profitRateBps: MOCK_PROFIT_RATE_BPS.toString(),
+      taxRateBps: MOCK_TAX_RATE_BPS.toString(),
+    },
+    ledgerSummary: {
+      transactionCount: 1,
+      entryCount: receivableRial === 0n ? 4 : 5,
+      balanced: true,
+    },
+  };
+}
+
+/** جزئیات snapshot‌محور همان ردیف‌های فهرست؛ داده‌ی امروز در آن نقشی ندارد. */
+export const salesInvoiceDetailRecords: SalesInvoiceDetail[] = salesInvoiceRecords.map(
+  (invoice) => {
+    const party = partyRecords.find((candidate) => candidate.id === invoice.party.id)!;
+    const versions = Array.from({ length: invoice.currentVersion }, (_, index) =>
+      detailVersion(invoice, index + 1),
+    );
+    return {
+      id: invoice.id,
+      invoiceNumber: invoice.invoiceNumber,
+      status: invoice.status,
+      currentVersion: invoice.currentVersion,
+      party: {
+        id: party.id,
+        displayName: party.displayName,
+        type: party.type,
+        status: party.status,
+      },
+      occurredAt: invoice.occurredAt,
+      quoteSnapshot:
+        invoice.status === 'FINALIZED' && invoice.goldRatePerGramRial !== null
+          ? {
+              amountRial: MAZNEH_RIAL.toString(),
+              goldRatePerGramRial: invoice.goldRatePerGramRial,
+              observedAt: invoice.occurredAt,
+            }
+          : null,
+      versions,
+    };
+  },
+);
+
+/** پاسخ قرارداد واقعی `/versions` برای فاکتورهای قدیمی فهرست. */
+export const salesInvoiceVersionRecords: SalesInvoiceVersionHistory[] =
+  salesInvoiceDetailRecords.flatMap((detail) =>
+    detail.invoiceNumber === null
+      ? []
+      : [
+          {
+            invoiceId: detail.id,
+            invoiceNumber: detail.invoiceNumber,
+            versions: detail.versions.map((version) => ({
+              version: version.version,
+              reason: version.reason,
+              reasonDetail: version.reasonDetail,
+              partyId: detail.party.id,
+              actor: version.actor,
+              createdAt: version.createdAt,
+              payableRial: version.payableRial,
+              pureWeightMg: version.pureWeightMg,
+              karat: version.items.length === 1 ? version.items[0]!.karat : null,
+              items: version.items.map((item) => ({
+                itemType: item.itemType,
+                itemId: item.itemId,
+                quantity: item.quantity,
+                pureWeightMg: item.pureWeightMg,
+                karat: item.karat,
+              })),
+              totalsSnapshot: {
+                payableRial: version.payableRial,
+                paidRial: version.paidRial,
+                receivableRial: version.receivableRial,
+                pureWeightMg: version.pureWeightMg,
+              },
+              settingsSnapshot: version.settingsSnapshot,
+              ledgerEffects: [],
+              inventoryEffects: [],
+            })),
+          },
+        ],
+  );
 
 /**
  * جست‌وجوی `mg` فیکسچر با شناسه — `partyBalancesFor`/`partyStatementEntriesFor`
@@ -300,9 +448,6 @@ export const recentTransactions = [
  * واقعی نادیده گرفته می‌شوند. نرخ سود و مالیات همان مقدار seed مستأجر
  * (`tenant-initial-settings.ts`) است.
  */
-export const MOCK_PROFIT_RATE_BPS = 700n;
-export const MOCK_TAX_RATE_BPS = 1000n;
-
 export function priceJewelryFromVersion(
   version: {
     grossWeightMg: string;

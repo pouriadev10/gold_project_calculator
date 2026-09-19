@@ -192,10 +192,7 @@ const salesInvoiceDetailRoute = createRoute({
     parse: (raw: { invoiceId: string }) => ({ invoiceId: uuidSchema.parse(raw.invoiceId) }),
     stringify: (parsed: { invoiceId: string }) => ({ invoiceId: parsed.invoiceId }),
   },
-  component: lazyRouteComponent(
-    () => import('@/app/route-placeholders'),
-    'SalesInvoiceDetailPlaceholder',
-  ),
+  component: lazyRouteComponent(() => import('@/features/sales/SalesInvoiceDetailPage')),
 });
 
 const b2cBuybackStartRoute = createRoute({

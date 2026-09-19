@@ -16,6 +16,7 @@ import {
   priceQuoteSchema,
   profitReportSchema,
   recentInventoryMovementListSchema,
+  salesInvoiceDetailSchema,
   salesInvoiceListSchema,
   salesInvoiceVersionHistorySchema,
   transactionListSchema,
@@ -310,6 +311,17 @@ export function useInvoiceVersions(invoiceId: string | null) {
     queryKey: queryKeys.salesInvoices.versions(invoiceId ?? ''),
     queryFn: ({ signal }) =>
       apiGet(`/sales/invoices/${invoiceId}/versions`, salesInvoiceVersionHistorySchema, signal),
+    staleTime: Infinity,
+    enabled: invoiceId !== null,
+  });
+}
+
+/** جزئیات immutable فاکتور با نرخ و تنظیمات قفل‌شده — FE-065. */
+export function useSalesInvoiceDetail(invoiceId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.salesInvoices.detail(invoiceId ?? ''),
+    queryFn: ({ signal }) =>
+      apiGet(`/sales/invoices/${invoiceId}/detail`, salesInvoiceDetailSchema, signal),
     staleTime: Infinity,
     enabled: invoiceId !== null,
   });

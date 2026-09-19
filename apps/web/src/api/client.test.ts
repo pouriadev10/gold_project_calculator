@@ -3,7 +3,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { useSessionStore } from '@/stores/session-store';
 import { ApiError, NetworkError } from './api-error';
-import { apiGet, apiPost, apiPostRaw, apiPostReadOnly, newIdempotencyKey } from './client';
+import {
+  apiGet,
+  apiGetFile,
+  apiPost,
+  apiPostRaw,
+  apiPostReadOnly,
+  newIdempotencyKey,
+} from './client';
 import { dualAmountSchema } from './contracts';
 
 /**
@@ -443,5 +450,28 @@ describe('X-Request-Id', () => {
     await apiGet('/x', okSchema);
 
     expect(sentHeaders(spy, 0)['X-Request-Id']).not.toBe(sentHeaders(spy, 1)['X-Request-Id']);
+  });
+});
+
+describe('دانلود فایل احراز هویت‌شده', () => {
+  it('PDF و نام فایل را بدون JSON.parse برمی‌گرداند', async () => {
+    const spy = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) =>
+      new Response(new Blob(['pdf'], { type: 'application/pdf' }), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': 'attachment; filename="invoice-122.pdf"',
+        },
+      }),
+    );
+    vi.stubGlobal('fetch', spy);
+
+    const file = await apiGetFile('/sales/invoices/id/pdf');
+
+    expect(file.fileName).toBe('invoice-122.pdf');
+    expect(file.content.type).toBe('application/pdf');
+    expect((spy.mock.calls[0]?.[1]?.headers as Record<string, string>)['Accept']).toBe(
+      'application/pdf',
+    );
   });
 });

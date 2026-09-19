@@ -6,10 +6,6 @@ import { PlaceholderPage } from '@/components/common/PlaceholderPage';
  * بسته‌ی اولیه جدا بمانند — به‌جای اینکه هر مسیر chunk جداگانه بسازد.
  */
 
-export function SalesInvoiceDetailPlaceholder() {
-  return <PlaceholderPage title="جزئیات فاکتور" note="جزئیات و اصلاح فاکتور در گام‌های بعد می‌آید." />;
-}
-
 export function SettlementsNewPlaceholder() {
   return <PlaceholderPage title="ثبت تسویه" note="تسویه‌ی ترکیبی ریال/طلا/سکه در گام‌های بعد می‌آید." />;
 }

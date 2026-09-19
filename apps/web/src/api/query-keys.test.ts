@@ -29,6 +29,11 @@ describe('queryKeys', () => {
       'list',
       { limit: 10, offset: 0, status: 'FINALIZED' },
     ]);
+    expect(queryKeys.salesInvoices.detail('invoice-id')).toEqual([
+      ...queryKeys.salesInvoices.all(),
+      'detail',
+      'invoice-id',
+    ]);
     expect(queryKeys.transactions.recent(5)).toEqual([...queryKeys.transactions.all(), 'recent', 5]);
     expect(queryKeys.reports.profit('today')).toEqual([...queryKeys.reports.all(), 'profit', 'today']);
   });
