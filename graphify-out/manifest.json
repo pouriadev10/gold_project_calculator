@@ -2310,9 +2310,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/contracts.ts": {
-    "mtime": 1787598067.7989192,
-    "seen": 1789132525.9449134,
-    "ast_hash": "c54b7627324e0cb9237bf0c8d9f0cb03",
+    "mtime": 1789817229.56995,
+    "seen": 1789817893.3410435,
+    "ast_hash": "c5efbba702584b680914f40fa6a819e6",
     "semantic_hash": ""
   },
   "apps/web/src/api/error-presentation.test.ts": {
@@ -2358,9 +2358,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/queries.ts": {
-    "mtime": 1787426478.9838643,
-    "seen": 1789132525.9449196,
-    "ast_hash": "6a3bea608376fbac6efd56d848189e40",
+    "mtime": 1789817231.275255,
+    "seen": 1789817893.3410513,
+    "ast_hash": "c497da75bda154195b1cfd6c7d907ecf",
     "semantic_hash": ""
   },
   "apps/web/src/api/query-client.test.ts": {
@@ -2376,15 +2376,15 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/query-keys.test.ts": {
-    "mtime": 1787120586.438702,
-    "seen": 1789132525.9449222,
-    "ast_hash": "0766ea907d1ed5a4ab70373d504d2c71",
+    "mtime": 1789817235.5299034,
+    "seen": 1789817893.3410542,
+    "ast_hash": "2936d3740ee3083207bd5cddb113953c",
     "semantic_hash": ""
   },
   "apps/web/src/api/query-keys.ts": {
-    "mtime": 1787426478.9832518,
-    "seen": 1789132525.944923,
-    "ast_hash": "f66f245094d0637eaba9854eafb2899a",
+    "mtime": 1789817230.4130592,
+    "seen": 1789817893.3410552,
+    "ast_hash": "daa2a23750385d39a79d78502ac23122",
     "semantic_hash": ""
   },
   "apps/web/src/api/sales.ts": {
@@ -2412,15 +2412,15 @@
     "semantic_hash": ""
   },
   "apps/web/src/app/route-placeholders.tsx": {
-    "mtime": 1788029293.6522255,
-    "seen": 1789132525.9449267,
-    "ast_hash": "312295d46af012f7831cad0ac7fb8073",
+    "mtime": 1789817232.947069,
+    "seen": 1789817893.3410614,
+    "ast_hash": "fe0519741d913357b3575e844363dcd8",
     "semantic_hash": ""
   },
   "apps/web/src/app/router.tsx": {
-    "mtime": 1789046697.0459843,
-    "seen": 1789132525.9449275,
-    "ast_hash": "e17e06dbc53e89644299c196d0d54aa1",
+    "mtime": 1789817232.096782,
+    "seen": 1789817893.341062,
+    "ast_hash": "9d06c178b34aa95a3b01978a80ef1b8d",
     "semantic_hash": ""
   },
   "apps/web/src/components/common/AmountDisplay.test.tsx": {
@@ -3258,9 +3258,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/sales/CoinSaleForm.tsx": {
-    "mtime": 1787500773.224287,
-    "seen": 1789132525.9450302,
-    "ast_hash": "e2b26ebb2b3a9603745ba1da0be1c301",
+    "mtime": 1789817234.6997738,
+    "seen": 1789817893.3411934,
+    "ast_hash": "8d9101feb8e25433c28e5767a0a223d5",
     "semantic_hash": ""
   },
   "apps/web/src/features/sales/JewelryItemSelector.test.tsx": {
@@ -3360,9 +3360,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/sales/useJewelrySaleSubmit.ts": {
-    "mtime": 1787427287.1216588,
-    "seen": 1789132525.945042,
-    "ast_hash": "a681a0b4c2404ebb58aabc9cde80a135",
+    "mtime": 1789817233.8002813,
+    "seen": 1789817893.3412147,
+    "ast_hash": "2580e361300a11423f06ae3fdd16557d",
     "semantic_hash": ""
   },
   "apps/web/src/features/settings/SettingsPage.test.tsx": {
@@ -3552,15 +3552,15 @@
     "semantic_hash": ""
   },
   "apps/web/src/mocks/handlers/fixtures.ts": {
-    "mtime": 1787501741.0598266,
-    "seen": 1789132525.9450655,
-    "ast_hash": "fb3d8fa4e168e1949ed3158a106376d7",
+    "mtime": 1789817255.0948248,
+    "seen": 1789817893.3413224,
+    "ast_hash": "a570abb4a3f14519186470f3641f338f",
     "semantic_hash": ""
   },
   "apps/web/src/mocks/handlers/index.ts": {
-    "mtime": 1788950375.267734,
-    "seen": 1789132525.9450662,
-    "ast_hash": "235c979cc93b730fabd145fc1b5d9240",
+    "mtime": 1789817349.3109758,
+    "seen": 1789817893.3413236,
+    "ast_hash": "30d29483e880141c5f18364b7888cdf8",
     "semantic_hash": ""
   },
   "apps/web/src/stores/purchase-draft-store.test.ts": {
@@ -5034,9 +5034,9 @@
     "semantic_hash": ""
   },
   "FrontTasks.md": {
-    "mtime": 1789306695.0466194,
-    "seen": 1789306851.8460083,
-    "ast_hash": "15a3d1ad4c2fb4278455ae7c0182fd47",
+    "mtime": 1789817821.6618886,
+    "seen": 1789817893.3415813,
+    "ast_hash": "65b7297631d8505862175a0f8de2b837",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
@@ -5355,6 +5355,36 @@
     "mtime": 1789305675.5725455,
     "seen": 1789306564.0418246,
     "ast_hash": "feeeb19692179923c19e7e4be954f289",
+    "semantic_hash": ""
+  },
+  "apps/web/src/api/sales-invoice-list-contract.test.ts": {
+    "mtime": 1789816390.3214371,
+    "seen": 1789817893.3410566,
+    "ast_hash": "af78a2bbc3f377a00e6f55e39dbe6528",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/sales/SalesInvoiceList.test.tsx": {
+    "mtime": 1789816502.757257,
+    "seen": 1789817893.3412054,
+    "ast_hash": "36111bc031a75bee9b952d5b5dfc8e3b",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/sales/SalesInvoiceList.tsx": {
+    "mtime": 1789816502.7412581,
+    "seen": 1789817893.3412063,
+    "ast_hash": "2910d4265fca7613616a0fd0f99f579b",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/sales/SalesInvoicesPage.test.tsx": {
+    "mtime": 1789816593.528592,
+    "seen": 1789817893.341207,
+    "ast_hash": "f774cab590d624cb04ec2470acb70886",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/sales/SalesInvoicesPage.tsx": {
+    "mtime": 1789816502.7722578,
+    "seen": 1789817893.3412077,
+    "ast_hash": "dac90d14be8380319ab2c38d1e3dc4ee",
     "semantic_hash": ""
   }
 }
