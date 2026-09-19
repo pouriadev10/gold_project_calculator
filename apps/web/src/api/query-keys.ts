@@ -7,6 +7,7 @@ import type {
   PriceQuoteType,
   ProfitPeriod,
   ReportingDisplayUnit,
+  SalesInvoiceListQuery,
 } from './contracts';
 
 /**
@@ -88,6 +89,7 @@ export const queryKeys = {
   /** فاکتور فروش — `GET /sales/invoices/:id/versions` واقعی (BE-043، FE-046). */
   salesInvoices: {
     all: () => ['sales-invoices'] as const,
+    list: (query: SalesInvoiceListQuery) => [...queryKeys.salesInvoices.all(), 'list', query] as const,
     versions: (invoiceId: string) => [...queryKeys.salesInvoices.all(), 'versions', invoiceId] as const,
   },
 

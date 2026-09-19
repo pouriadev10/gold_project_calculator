@@ -19,9 +19,10 @@ import {
   createSecondHandCoinPurchaseSchema,
   createSecondHandGoldPurchaseSchema,
   DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
 } from '@gold/contracts';
 import { HttpResponse, http, delay } from 'msw';
-import type { JewelryItemVersion, Party } from '@/api/contracts';
+import type { JewelryItemVersion, Party, SalesInvoiceListItem } from '@/api/contracts';
 import {
   MAZNEH_RIAL,
   FETCHED_AT,
@@ -44,6 +45,7 @@ import {
   profitToday,
   RECENT_INVENTORY_MOVEMENTS,
   recentTransactions,
+  salesInvoiceRecords,
 } from './fixtures';
 
 /**
@@ -103,6 +105,35 @@ let invoiceCounter = 122;
  * ساختگی می‌شود.
  */
 const salesInvoiceVersions = new Map<string, unknown>();
+let salesInvoiceList: SalesInvoiceListItem[] = [...salesInvoiceRecords];
+
+/** فاکتور تازه باید بلافاصله در GET فهرست دیده شود، درست مثل سرور واقعی. */
+function recordSalesInvoice(input: {
+  readonly id: string;
+  readonly invoiceNumber: number;
+  readonly partyId: string;
+  readonly payableRial: string;
+  readonly quoteAmountRial: string;
+  readonly occurredAt: string;
+}): void {
+  const party = partyList.find((candidate) => candidate.id === input.partyId);
+  salesInvoiceList = [
+    {
+      id: input.id,
+      invoiceNumber: input.invoiceNumber,
+      status: 'FINALIZED',
+      currentVersion: 1,
+      party: {
+        id: input.partyId,
+        displayName: party?.displayName ?? 'شخص نامشخص',
+      },
+      payableRial: input.payableRial,
+      goldRatePerGramRial: gramRate1000(BigInt(input.quoteAmountRial)).toString(),
+      occurredAt: input.occurredAt,
+    },
+    ...salesInvoiceList,
+  ];
+}
 
 /** حافظه‌ی کلیدهای idempotency — تکرار همان کلید همان پاسخ را می‌دهد */
 const idempotencyCache = new Map<string, unknown>();
@@ -326,6 +357,15 @@ salesInvoiceVersions.set(result.invoiceId, {
   ],
 });
 
+recordSalesInvoice({
+  id: result.invoiceId,
+  invoiceNumber: result.invoiceNumber,
+  partyId: body.partyId,
+  payableRial: result.payableRial,
+  quoteAmountRial: quote.amountRial,
+  occurredAt: body.effectiveAt,
+});
+
 // فروش یک قطعه‌ی فیزیکی است — همان کالا دیگر در انبار نیست
 jewelryItemList = jewelryItemList.filter((item) => item.jewelryItemId !== body.jewelryItemId);
 
@@ -431,6 +471,15 @@ async function registerCoinSale(request: Request) {
     ledgerTransactionId: crypto.randomUUID(),
     inventoryMovementId: crypto.randomUUID(),
   };
+
+  recordSalesInvoice({
+    id: result.invoiceId,
+    invoiceNumber: result.invoiceNumber,
+    partyId: body.partyId,
+    payableRial: result.payableRial,
+    quoteAmountRial: quote.amountRial,
+    occurredAt: body.effectiveAt,
+  });
 
   // موجودی همان نوع کم می‌شود — منفی هم می‌تواند بشود، دقیقاً مثل موجودی واقعی
   const existingBalance = COIN_BALANCE_ROWS.find((row) => row.itemId === body.coinTypeId);
@@ -1582,6 +1631,48 @@ export const handlers = [
     // پارامتر شمارشی است، نه مالی — تجزیه‌ی صحیح کافی است
     const limit = Number.parseInt(new URL(request.url).searchParams.get('limit') ?? '5', 10);
     return HttpResponse.json({ items: recentTransactions.slice(0, limit) });
+  }),
+
+  /**
+   * `GET /sales/invoices` — View model فهرست FE-064. endpoint واقعی هنوز
+   * در `apps/api` وجود ندارد؛ شکل پاسخ در `api/contracts.ts` از مدل‌های
+   * واقعی سربرگ/نسخه/شخص گرفته شده و مستقل از صفحه ساخته نشده است.
+   */
+  http.get('/api/sales/invoices', async ({ request }) => {
+    await delay(READ_DELAY_MS);
+    const params = new URL(request.url).searchParams;
+    const requestedLimit = Number.parseInt(params.get('limit') ?? String(DEFAULT_PAGE_SIZE), 10);
+    const requestedOffset = Number.parseInt(params.get('offset') ?? '0', 10);
+    const limit =
+      Number.isFinite(requestedLimit) && requestedLimit > 0
+        ? Math.min(requestedLimit, MAX_PAGE_SIZE)
+        : DEFAULT_PAGE_SIZE;
+    const offset = Number.isFinite(requestedOffset) && requestedOffset > 0 ? requestedOffset : 0;
+    const invoiceNumber = params.get('invoiceNumber');
+    const partySearch = params.get('partySearch');
+    const status = params.get('status');
+    const from = params.get('from');
+    const to = params.get('to');
+    const fromTime = from ? new Date(from).getTime() : null;
+    const toTime = to ? new Date(to).getTime() : null;
+
+    const filtered = salesInvoiceList.filter((invoice) => {
+      const numberMatches =
+        !invoiceNumber || String(invoice.invoiceNumber ?? '').includes(invoiceNumber);
+      const partyMatches = matchesQuery(invoice.party.displayName, partySearch);
+      const statusMatches = !status || invoice.status === status;
+      const occurredAt = new Date(invoice.occurredAt).getTime();
+      const fromMatches = fromTime === null || occurredAt >= fromTime;
+      const toMatches = toTime === null || occurredAt <= toTime;
+      return numberMatches && partyMatches && statusMatches && fromMatches && toMatches;
+    });
+
+    return HttpResponse.json({
+      items: filtered.slice(offset, offset + limit),
+      total: filtered.length,
+      limit,
+      offset,
+    });
   }),
 
   /**

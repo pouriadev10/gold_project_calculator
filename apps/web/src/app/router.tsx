@@ -182,7 +182,7 @@ const salesCoinsNewRoute = createRoute({
 const salesInvoicesRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/sales/invoices',
-  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'SalesInvoicesPlaceholder'),
+  component: lazyRouteComponent(() => import('@/features/sales/SalesInvoicesPage')),
 });
 
 const salesInvoiceDetailRoute = createRoute({

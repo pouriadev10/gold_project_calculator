@@ -6,6 +6,9 @@ import {
   inventoryBalanceSchema,
   inventoryItemTypeSchema,
   isoDateTimeSchema,
+  nonNegativeBigIntStringSchema,
+  paginatedSchema,
+  paginationQuerySchema,
   priceQuoteAmountRialSchema,
   priceQuoteSchema as sharedPriceQuoteSchema,
   jewelryCashSaleSchema as sharedJewelryCashSaleSchema,
@@ -153,6 +156,85 @@ export const coinTypeListSchema = z.array(coinTypeVersionSchema);
 export type CoinTypeList = z.infer<typeof coinTypeListSchema>;
 
 /* ══════════════ View model محلی — بدون endpoint واقعی هنوز ══════════════ */
+
+/**
+ * ⚠️ بدون endpoint بک‌اندی در حال حاضر — View model فهرست فاکتورهای فروش
+ * برای FE-064. شکل آن مستقیماً از `sales_invoices`، نسخه‌ی جاری و `parties`
+ * می‌آید؛ بنابراین با رسید/تاریخچه موازی یا متناقض نیست. وقتی GET واقعی
+ * `/sales/invoices` اضافه شود، همین قرارداد باید به `@gold/contracts`
+ * منتقل شود و صفحه هیچ تغییری نکند.
+ *
+ * نرخ گرم ۱۰۰۰ روی هر ردیف قفل است تا تعویض واحد فهرست هرگز از مظنه‌ی
+ * امروز استفاده نکند. پیش‌نویس هنوز نرخ/مبلغ/شماره ندارد و null می‌ماند.
+ */
+export const salesInvoiceStatusSchema = z.enum(['DRAFT', 'FINALIZED']);
+
+export const salesInvoiceListQuerySchema = paginationQuerySchema
+  .extend({
+    invoiceNumber: z.string().regex(/^\d+$/u).max(20).optional(),
+    partySearch: z.string().trim().min(1).max(200).optional(),
+    status: salesInvoiceStatusSchema.optional(),
+    from: isoDateTimeSchema.optional(),
+    to: isoDateTimeSchema.optional(),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (
+      value.from !== undefined &&
+      value.to !== undefined &&
+      new Date(value.from).getTime() > new Date(value.to).getTime()
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['to'],
+        message: 'پایان بازه نباید پیش از شروع آن باشد',
+      });
+    }
+  });
+
+export const salesInvoiceListItemSchema = z
+  .object({
+    id: uuidSchema,
+    invoiceNumber: z.number().int().positive().nullable(),
+    status: salesInvoiceStatusSchema,
+    currentVersion: z.number().int().nonnegative(),
+    party: z.object({
+      id: uuidSchema,
+      displayName: z.string().min(1),
+    }),
+    payableRial: nonNegativeBigIntStringSchema.nullable(),
+    goldRatePerGramRial: nonNegativeBigIntStringSchema.nullable(),
+    occurredAt: isoDateTimeSchema,
+  })
+  .superRefine((value, context) => {
+    const draftShape =
+      value.status === 'DRAFT' &&
+      value.invoiceNumber === null &&
+      value.currentVersion === 0 &&
+      value.payableRial === null &&
+      value.goldRatePerGramRial === null;
+    const finalizedShape =
+      value.status === 'FINALIZED' &&
+      value.invoiceNumber !== null &&
+      value.currentVersion >= 1 &&
+      value.payableRial !== null &&
+      value.goldRatePerGramRial !== null &&
+      BigInt(value.goldRatePerGramRial) > 0n;
+
+    if (!draftShape && !finalizedShape) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'وضعیت فاکتور با شماره، نسخه و snapshot مالی آن سازگار نیست',
+      });
+    }
+  });
+
+export const salesInvoiceListSchema = paginatedSchema(salesInvoiceListItemSchema);
+
+export type SalesInvoiceStatus = z.infer<typeof salesInvoiceStatusSchema>;
+export type SalesInvoiceListQuery = z.infer<typeof salesInvoiceListQuerySchema>;
+export type SalesInvoiceListItem = z.infer<typeof salesInvoiceListItemSchema>;
+export type SalesInvoiceList = z.infer<typeof salesInvoiceListSchema>;
 
 /**
  * رشته‌ی ارقام صحیح روی سیم → `bigint` در برنامه.

@@ -11,7 +11,7 @@ import {
   toSafeNumber,
 } from '@gold/core-calc';
 import type { JewelrySaleCalculation } from '@gold/core-calc';
-import type { Party } from '@/api/contracts';
+import type { Party, SalesInvoiceListItem } from '@/api/contracts';
 
 /**
  * داده‌ی ساختگی مشترک همه‌ی handlerها.
@@ -112,6 +112,32 @@ export const partyRecords: Party[] = parties.map((p) => ({
   createdAt: NOW,
   updatedAt: NOW,
 }));
+
+/* ── فهرست فاکتورهای فروش (FE-064) ──────────────────────── */
+
+/**
+ * View model فهرست از همان سه منبع واقعی ساخته می‌شود: سربرگ فاکتور،
+ * نسخه‌ی جاری و شخص. یک پیش‌نویس عمداً در میان داده‌هاست تا وضعیت بدون
+ * شماره/مبلغ هم در توسعه و تست بصری دیده شود؛ فاکتورهای نسخه‌ی بالاتر از
+ * یک هم علامت «اصلاح‌شده» را فعال می‌کنند.
+ */
+export const salesInvoiceRecords: SalesInvoiceListItem[] = Array.from(
+  { length: 14 },
+  (_, index) => {
+    const party = partyRecords[index % partyRecords.length]!;
+    const isDraft = index === 4;
+    return {
+      id: `d5000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`,
+      invoiceNumber: isDraft ? null : 122 - index,
+      status: isDraft ? 'DRAFT' : 'FINALIZED',
+      currentVersion: isDraft ? 0 : index % 5 === 0 ? 2 : 1,
+      party: { id: party.id, displayName: party.displayName },
+      payableRial: isDraft ? null : (1_950_000_000n - BigInt(index) * 73_000_000n).toString(),
+      goldRatePerGramRial: isDraft ? null : RATE_1000.toString(),
+      occurredAt: new Date(FETCHED_AT.getTime() - index * DAY_MS).toISOString(),
+    };
+  },
+);
 
 /**
  * جست‌وجوی `mg` فیکسچر با شناسه — `partyBalancesFor`/`partyStatementEntriesFor`

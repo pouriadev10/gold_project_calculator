@@ -191,6 +191,7 @@ export default function CoinSaleForm() {
         queryClient.invalidateQueries({ queryKey: queryKeys.parties.all() }),
         queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all() }),
         queryClient.invalidateQueries({ queryKey: queryKeys.inventoryMovements.all() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.salesInvoices.all() }),
       ]);
 
       toast.success('فروش سکه ثبت شد', `${formatRial(sale.payableRial)} ریال`);

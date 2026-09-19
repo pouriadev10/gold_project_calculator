@@ -24,6 +24,11 @@ describe('queryKeys', () => {
       'list',
       { limit: 20, offset: 0 },
     ]);
+    expect(queryKeys.salesInvoices.list({ limit: 10, offset: 0, status: 'FINALIZED' })).toEqual([
+      ...queryKeys.salesInvoices.all(),
+      'list',
+      { limit: 10, offset: 0, status: 'FINALIZED' },
+    ]);
     expect(queryKeys.transactions.recent(5)).toEqual([...queryKeys.transactions.all(), 'recent', 5]);
     expect(queryKeys.reports.profit('today')).toEqual([...queryKeys.reports.all(), 'profit', 'today']);
   });
@@ -43,6 +48,7 @@ describe('queryKeys', () => {
     expect(queryKeys.parties.all()).toEqual(['parties']);
     expect(queryKeys.items.all()).toEqual(['items']);
     expect(queryKeys.jewelryItems.all()).toEqual(['jewelry-items']);
+    expect(queryKeys.salesInvoices.all()).toEqual(['sales-invoices']);
     expect(queryKeys.transactions.all()).toEqual(['transactions']);
     expect(queryKeys.reports.all()).toEqual(['reports']);
   });

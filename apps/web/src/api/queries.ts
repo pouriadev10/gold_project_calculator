@@ -16,6 +16,7 @@ import {
   priceQuoteSchema,
   profitReportSchema,
   recentInventoryMovementListSchema,
+  salesInvoiceListSchema,
   salesInvoiceVersionHistorySchema,
   transactionListSchema,
   type InventoryItemType,
@@ -26,6 +27,7 @@ import {
   type PriceQuoteType,
   type ProfitPeriod,
   type ReportingDisplayUnit,
+  type SalesInvoiceListQuery,
 } from './contracts';
 import { queryKeys } from './query-keys';
 
@@ -310,6 +312,35 @@ export function useInvoiceVersions(invoiceId: string | null) {
       apiGet(`/sales/invoices/${invoiceId}/versions`, salesInvoiceVersionHistorySchema, signal),
     staleTime: Infinity,
     enabled: invoiceId !== null,
+  });
+}
+
+/**
+ * فهرست فاکتورهای فروش — FE-064.
+ *
+ * صفحه‌بندی و تمام فیلترها سرورمحورند؛ `keepPreviousData` اجازه نمی‌دهد
+ * ورق‌زدن یا تغییر فیلتر، فهرست را لحظه‌ای به صفحه‌ی سفید تبدیل کند.
+ * endpoint فعلاً در توسعه با MSW پاسخ می‌دهد و قراردادش در
+ * `api/contracts.ts` به‌عنوان View model صریح ثبت شده است.
+ */
+export function useSalesInvoices(query: SalesInvoiceListQuery, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.salesInvoices.list(query),
+    queryFn: ({ signal }) => {
+      const params = new URLSearchParams({
+        limit: String(query.limit),
+        offset: String(query.offset),
+      });
+      if (query.invoiceNumber) params.set('invoiceNumber', query.invoiceNumber);
+      if (query.partySearch) params.set('partySearch', query.partySearch);
+      if (query.status) params.set('status', query.status);
+      if (query.from) params.set('from', query.from);
+      if (query.to) params.set('to', query.to);
+      return apiGet(`/sales/invoices?${params.toString()}`, salesInvoiceListSchema, signal);
+    },
+    staleTime: MINUTE,
+    placeholderData: keepPreviousData,
+    enabled,
   });
 }
 
