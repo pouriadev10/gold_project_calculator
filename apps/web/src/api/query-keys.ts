@@ -60,6 +60,8 @@ export const queryKeys = {
     all: () => ['jewelry-items'] as const,
     list: (query: JewelryItemQuery) => [...queryKeys.jewelryItems.all(), 'list', query] as const,
     detail: (id: string) => [...queryKeys.jewelryItems.all(), 'detail', id] as const,
+    effectiveDetail: (id: string, at: string) =>
+      [...queryKeys.jewelryItems.all(), 'effective-detail', id, at] as const,
   },
 
   /** کاتالوگ نوع سکه — `coinTypeVersionSchema` (BE-020)، بدون endpoint واقعی هنوز (FE-038). */
@@ -89,7 +91,8 @@ export const queryKeys = {
   /** فاکتور فروش — `GET /sales/invoices/:id/versions` واقعی (BE-043، FE-046). */
   salesInvoices: {
     all: () => ['sales-invoices'] as const,
-    list: (query: SalesInvoiceListQuery) => [...queryKeys.salesInvoices.all(), 'list', query] as const,
+    lists: () => [...queryKeys.salesInvoices.all(), 'list'] as const,
+    list: (query: SalesInvoiceListQuery) => [...queryKeys.salesInvoices.lists(), query] as const,
     detail: (invoiceId: string) => [...queryKeys.salesInvoices.all(), 'detail', invoiceId] as const,
     amendmentPolicy: (invoiceId: string) =>
       [...queryKeys.salesInvoices.all(), 'amendment-policy', invoiceId] as const,

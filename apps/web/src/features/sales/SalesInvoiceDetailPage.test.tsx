@@ -257,23 +257,23 @@ describe('SalesInvoiceDetailPage — اقدامات', () => {
     const buyback = screen.getByRole('link', { name: 'خرید مجدد B2C' });
     expect(buyback).toHaveAttribute('href', '/sales/invoices/$invoiceId/b2c-buyback');
     expect(buyback).toHaveAttribute('data-params', JSON.stringify({ invoiceId: DETAIL.id }));
-    expect(screen.getByRole('button', { name: 'شرایط اصلاح فاکتور' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'اصلاح فاکتور' })).toBeDisabled();
     expect(useInvoiceAmendmentPolicyMock).toHaveBeenCalledWith(DETAIL.id);
     expect(screen.getByText('اصلاح به مجوز مدیر یا مالک نیاز دارد.')).toBeInTheDocument();
     expect(screen.getByText('مهلت اصلاح عادی این فاکتور گذشته است.')).toBeInTheDocument();
   });
 
-  it('با تصمیم مجاز سرور امکان باز کردن راهنمای شروع اصلاح را می‌دهد', async () => {
+  it('با تصمیم مجاز سرور مسیر فرم اصلاح را باز می‌کند', () => {
     mockDetail();
     mockPolicy({ allowed: true, requiresManagerAuthorization: false, restrictions: [] });
     render(<SalesInvoiceDetailPage />);
 
-    const action = screen.getByRole('button', { name: 'شرایط اصلاح فاکتور' });
-    expect(action).toBeEnabled();
+    const action = screen.getByRole('link', { name: 'اصلاح فاکتور' });
+    expect(action).toHaveAttribute('href', '/sales/invoices/$invoiceId/amend');
+    expect(action).toHaveAttribute('data-params', JSON.stringify({ invoiceId: DETAIL.id }));
     expect(screen.getByText('شروع اصلاح برای این حساب مجاز است.')).toBeInTheDocument();
-    await userEvent.click(action);
     expect(
-      screen.getByText(/هنگام ثبت، سرور دلیل و اختلاف مبلغ واقعی را دوباره بررسی خواهد کرد/),
+      screen.getByText(/هنگام ثبت، سرور دلیل و اختلاف مبلغ واقعی را دوباره بررسی می‌کند/),
     ).toBeInTheDocument();
   });
 
@@ -282,7 +282,7 @@ describe('SalesInvoiceDetailPage — اقدامات', () => {
     mockPolicy({ allowed: true, requiresManagerAuthorization: true });
     render(<SalesInvoiceDetailPage />);
 
-    expect(screen.getByRole('button', { name: 'شرایط اصلاح فاکتور' })).toBeEnabled();
+    expect(screen.getByRole('link', { name: 'اصلاح فاکتور' })).toBeInTheDocument();
     expect(screen.getByText('اصلاح با مجوز مدیر برای این حساب مجاز است.')).toBeInTheDocument();
   });
 
@@ -290,17 +290,17 @@ describe('SalesInvoiceDetailPage — اقدامات', () => {
     mockDetail();
     mockPolicy({ allowed: true }, { isFetching: true });
     const { rerender } = render(<SalesInvoiceDetailPage />);
-    expect(screen.getByRole('button', { name: 'شرایط اصلاح فاکتور' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'اصلاح فاکتور' })).toBeDisabled();
     expect(screen.getByText('در حال بررسی مجوز اصلاح در سرور…')).toBeInTheDocument();
 
     mockPolicy({ allowed: true }, { isError: true });
     rerender(<SalesInvoiceDetailPage />);
-    expect(screen.getByRole('button', { name: 'شرایط اصلاح فاکتور' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'اصلاح فاکتور' })).toBeDisabled();
     expect(screen.getByText(/مجوز اصلاح دریافت نشد/)).toBeInTheDocument();
 
     mockPolicy({ allowed: true, invoiceVersion: DETAIL.currentVersion - 1 });
     rerender(<SalesInvoiceDetailPage />);
-    expect(screen.getByRole('button', { name: 'شرایط اصلاح فاکتور' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'اصلاح فاکتور' })).toBeDisabled();
     expect(screen.getByText(/پاسخ مجوز با نسخه جاری/)).toBeInTheDocument();
   });
 

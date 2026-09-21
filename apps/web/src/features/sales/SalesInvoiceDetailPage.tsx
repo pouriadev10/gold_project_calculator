@@ -394,7 +394,6 @@ function VersionHistory({ detail }: { detail: SalesInvoiceDetail }) {
 function InvoiceActions({ detail }: { detail: SalesInvoiceDetail }) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<unknown>(null);
-  const [showAmendmentInfo, setShowAmendmentInfo] = useState(false);
   const amendmentPolicy = useInvoiceAmendmentPolicy(detail.id);
   const policy =
     amendmentPolicy.data?.invoiceId === detail.id &&
@@ -469,17 +468,19 @@ function InvoiceActions({ detail }: { detail: SalesInvoiceDetail }) {
           </Button>
         )}
 
-        <Button
-          type="button"
-          size="action"
-          variant="outline"
-          disabled={!canStartAmendment}
-          aria-describedby="invoice-amendment-policy-status"
-          onClick={() => setShowAmendmentInfo((visible) => !visible)}
-        >
-          <FilePenLine className="size-5" aria-hidden="true" />
-          شرایط اصلاح فاکتور
-        </Button>
+        {canStartAmendment ? (
+          <Button asChild size="action" variant="outline">
+            <Link to="/sales/invoices/$invoiceId/amend" params={{ invoiceId: detail.id }}>
+              <FilePenLine className="size-5" aria-hidden="true" />
+              اصلاح فاکتور
+            </Link>
+          </Button>
+        ) : (
+          <Button type="button" size="action" variant="outline" disabled aria-describedby="invoice-amendment-policy-status">
+            <FilePenLine className="size-5" aria-hidden="true" />
+            اصلاح فاکتور
+          </Button>
+        )}
       </div>
       <div
         id="invoice-amendment-policy-status"
@@ -523,12 +524,7 @@ function InvoiceActions({ detail }: { detail: SalesInvoiceDetail }) {
             ) : null}
           </>
         ) : null}
-        {showAmendmentInfo && canStartAmendment ? (
-          <p>
-            مجوز شروع اصلاح تأیید شده است. ورود و ثبت تغییرات هنوز در این نسخه فعال نیست. هنگام
-            ثبت، سرور دلیل و اختلاف مبلغ واقعی را دوباره بررسی خواهد کرد.
-          </p>
-        ) : null}
+        {canStartAmendment ? <p>هنگام ثبت، سرور دلیل و اختلاف مبلغ واقعی را دوباره بررسی می‌کند.</p> : null}
       </div>
       {!canBuyBack ? (
         <p className="text-xs leading-5 text-muted-foreground">

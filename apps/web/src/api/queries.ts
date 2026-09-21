@@ -210,11 +210,12 @@ export function useItemSearch(query: string, kind?: string) {
  * کاتالوگ نوع سکه — `GET /inventory/coin-types` (FE-038).
  * ⚠️ بدون معادل بک‌اندی هنوز — فقط MSW پاسخ می‌دهد (توضیح در `api/contracts.ts`).
  */
-export function useCoinTypes() {
+export function useCoinTypes(enabled = true) {
   return useQuery({
     queryKey: queryKeys.coinTypes.all(),
     queryFn: ({ signal }) => apiGet('/inventory/coin-types', coinTypeListSchema, signal),
     staleTime: MINUTE,
+    enabled,
   });
 }
 
@@ -275,6 +276,21 @@ export function useJewelryItem(id: string | null) {
     queryFn: ({ signal }) => apiGet(`/inventory/jewelry-items/${id}`, jewelryItemVersionSchema, signal),
     staleTime: MINUTE,
     enabled: id !== null,
+  });
+}
+
+/** مشخصات مؤثر کالا در زمان صدور اولیه؛ همان تاریخی که اصلاح روی سرور قیمت‌گذاری می‌شود. */
+export function useJewelryItemAt(id: string | null, at: string | null) {
+  return useQuery({
+    queryKey: queryKeys.jewelryItems.effectiveDetail(id ?? '', at ?? ''),
+    queryFn: ({ signal }) =>
+      apiGet(
+        `/inventory/jewelry-items/${id}?at=${encodeURIComponent(at ?? '')}`,
+        jewelryItemVersionSchema,
+        signal,
+      ),
+    staleTime: Infinity,
+    enabled: id !== null && at !== null,
   });
 }
 

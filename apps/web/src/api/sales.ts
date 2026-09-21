@@ -1,5 +1,10 @@
 import { apiGetFile, apiPost, type DownloadedFile } from './client';
 import {
+  amendedSalesInvoiceSchema,
+  type AmendSalesInvoiceInput,
+  type AmendedSalesInvoice,
+} from '@gold/contracts';
+import {
   jewelryCashSaleSchema,
   jewelryCreditSaleSchema,
   coinSaleSchema,
@@ -73,4 +78,20 @@ export function getSalesInvoicePdf(
   signal?: AbortSignal,
 ): Promise<DownloadedFile> {
   return apiGetFile(`/sales/invoices/${invoiceId}/pdf`, signal);
+}
+
+/** ثبت نسخهٔ اصلاحی با کلید پایدار؛ همهٔ قیمت‌ها و اثرهای دفترکل را سرور تعیین می‌کند. */
+export function amendSalesInvoice(
+  invoiceId: string,
+  input: AmendSalesInvoiceInput,
+  idempotencyKey: string,
+  signal?: AbortSignal,
+): Promise<AmendedSalesInvoice> {
+  return apiPost(
+    `/sales/invoices/${invoiceId}/amend`,
+    input,
+    amendedSalesInvoiceSchema,
+    idempotencyKey,
+    signal,
+  );
 }
