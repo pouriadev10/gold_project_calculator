@@ -1914,6 +1914,34 @@ export const handlers = [
     return HttpResponse.json(found);
   }),
 
+  /** Sample server-owned preflight response; the browser never derives authorization. */
+  http.get('/api/sales/invoices/:invoiceId/amendment-policy', async ({ params }) => {
+    await delay(READ_DELAY_MS);
+    const found = salesInvoiceDetails.get(String(params.invoiceId));
+    if (!found) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 'NOT_FOUND',
+            message: 'فاکتور مورد نظر پیدا نشد',
+            fields: {},
+            requestId: crypto.randomUUID(),
+          },
+        },
+        { status: 404 },
+      );
+    }
+    return HttpResponse.json({
+      invoiceId: found.id,
+      invoiceVersion: found.currentVersion,
+      evaluatedAt: new Date().toISOString(),
+      allowed: false,
+      requiresManagerAuthorization: found.status === 'FINALIZED',
+      restrictions:
+        found.status === 'FINALIZED' ? ['OUTSIDE_CORRECTION_WINDOW'] : ['INVOICE_NOT_FINALIZED'],
+    });
+  }),
+
   /** دانلود آزمایشی همان endpoint واقعی PDF با نام فایل شماره فاکتور. */
   http.get('/api/sales/invoices/:invoiceId/pdf', async ({ params }) => {
     await delay(READ_DELAY_MS);

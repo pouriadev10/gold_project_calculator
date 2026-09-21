@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { amendSalesInvoiceSchema } from '../src/sales/invoice-amendments.js';
+import {
+  amendSalesInvoiceSchema,
+  invoiceAmendmentPreflightSchema,
+} from '../src/sales/invoice-amendments.js';
 
 const PARTY_ID = '11111111-1111-4111-8111-111111111111';
 const ITEM_ID = '22222222-2222-4222-8222-222222222222';
@@ -43,6 +46,30 @@ describe('invoice amendment contract (BE-054)', () => {
           paidRial: '0',
         },
       }).success,
+    ).toBe(false);
+  });
+});
+
+describe('invoice amendment preflight contract (FE-066)', () => {
+  const decision = {
+    invoiceId: 'd5000000-0000-4000-8000-000000000001',
+    invoiceVersion: 2,
+    evaluatedAt: '2026-09-21T09:10:00.000Z',
+    allowed: false,
+    requiresManagerAuthorization: true,
+    restrictions: ['OUTSIDE_CORRECTION_WINDOW'],
+  };
+
+  it('accepts a server-owned decision with a reason', () => {
+    expect(invoiceAmendmentPreflightSchema.parse(decision)).toEqual(decision);
+  });
+
+  it('rejects unknown restriction codes and a malformed invoice version', () => {
+    expect(
+      invoiceAmendmentPreflightSchema.safeParse({ ...decision, restrictions: ['UNKNOWN'] }).success,
+    ).toBe(false);
+    expect(
+      invoiceAmendmentPreflightSchema.safeParse({ ...decision, invoiceVersion: -1 }).success,
     ).toBe(false);
   });
 });

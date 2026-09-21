@@ -24,7 +24,7 @@ import {
   SalesInvoiceAmendmentSnapshotInvalidError,
   SalesInvoiceAmendmentUnsupportedItemsError,
 } from './invoice-amendments.errors';
-import type { AmendSalesInvoiceInput } from '@gold/contracts';
+import type { AmendSalesInvoiceInput, InvoiceAmendmentPreflight } from '@gold/contracts';
 import type { Database } from '../../platform/database/connect';
 import type {
   InventoryItemType,
@@ -192,6 +192,99 @@ export class InvoiceAmendmentsService {
     @Inject(PartiesService) private readonly parties: PartiesService,
     @Inject(SalesPricingService) private readonly pricing: SalesPricingService,
   ) {}
+
+  async getPreflight(
+    tenantId: string,
+    salesInvoiceId: string,
+    actorRole: RoleCode,
+  ): Promise<InvoiceAmendmentPreflight> {
+    return withTenantTransaction(this.db, tenantId, async (transaction) => {
+      const [invoice] = await transaction
+        .select()
+        .from(salesInvoices)
+        .where(and(eq(salesInvoices.tenantId, tenantId), eq(salesInvoices.id, salesInvoiceId)))
+        .limit(1);
+      if (invoice === undefined) throw new SalesInvoiceNotFoundError(salesInvoiceId);
+
+      const evaluatedAt = new Date();
+      const base = {
+        invoiceId: invoice.id,
+        invoiceVersion: invoice.currentVersion,
+        evaluatedAt: evaluatedAt.toISOString(),
+      };
+      if (
+        invoice.status !== 'FINALIZED' ||
+        invoice.invoiceNumber === null ||
+        invoice.quoteId === null ||
+        invoice.finalizedAt === null
+      ) {
+        return {
+          ...base,
+          allowed: false,
+          requiresManagerAuthorization: false,
+          restrictions: ['INVOICE_NOT_FINALIZED'],
+        };
+      }
+
+      const [currentVersion] = await transaction
+        .select({ id: salesInvoiceVersions.id, partyId: salesInvoiceVersions.partyId })
+        .from(salesInvoiceVersions)
+        .where(
+          and(
+            eq(salesInvoiceVersions.tenantId, tenantId),
+            eq(salesInvoiceVersions.salesInvoiceId, invoice.id),
+            eq(salesInvoiceVersions.version, invoice.currentVersion),
+          ),
+        )
+        .limit(1);
+      if (currentVersion === undefined) {
+        throw new SalesInvoiceAmendmentSnapshotInvalidError('Current invoice version is missing');
+      }
+      const items = await transaction
+        .select({ id: salesInvoiceItems.id })
+        .from(salesInvoiceItems)
+        .where(
+          and(
+            eq(salesInvoiceItems.tenantId, tenantId),
+            eq(salesInvoiceItems.salesInvoiceVersionId, currentVersion.id),
+          ),
+        );
+      if (items.length !== 1) {
+        return {
+          ...base,
+          allowed: false,
+          requiresManagerAuthorization: false,
+          restrictions: ['UNSUPPORTED_ITEMS'],
+        };
+      }
+      const [settlement] = await transaction
+        .select({ id: settlements.id })
+        .from(settlements)
+        .where(
+          and(
+            eq(settlements.tenantId, tenantId),
+            eq(settlements.partyId, currentVersion.partyId),
+            eq(settlements.status, 'FINALIZED'),
+            gt(settlements.finalizedAt, invoice.finalizedAt),
+          ),
+        )
+        .limit(1);
+      const decision = await this.policy.evaluateStartInTransaction(transaction, {
+        tenantId,
+        actorRole,
+        finalizedAt: invoice.finalizedAt,
+        requestedAt: evaluatedAt,
+        businessDayClosed: false,
+        isSettled: settlement !== undefined,
+      });
+      return {
+        ...base,
+        allowed: decision.allowed,
+        requiresManagerAuthorization: decision.requiresManagerAuthorization,
+        restrictions: [...decision.restrictions],
+      };
+    });
+  }
 
   async amend(command: AmendSalesInvoiceCommand): Promise<AmendedSalesInvoiceResult> {
     return withTenantTransaction(this.db, command.tenantId, (transaction) =>

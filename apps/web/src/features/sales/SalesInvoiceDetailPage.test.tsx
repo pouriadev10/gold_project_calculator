@@ -4,15 +4,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import type * as ReactRouter from '@tanstack/react-router';
 import type { SalesInvoiceDetail } from '@/api/contracts';
+import type { InvoiceAmendmentPreflight } from '@gold/contracts';
 import { ApiError } from '@/api/api-error';
 import { useUnitStore } from '@/stores/unit-store';
 import SalesInvoiceDetailPage from './SalesInvoiceDetailPage';
 
 const useSalesInvoiceDetailMock = vi.fn();
+const useInvoiceAmendmentPolicyMock = vi.fn();
 const getSalesInvoicePdfMock = vi.fn();
 
 vi.mock('@/api/queries', () => ({
   useSalesInvoiceDetail: (...args: unknown[]) => useSalesInvoiceDetailMock(...args),
+  useInvoiceAmendmentPolicy: (...args: unknown[]) => useInvoiceAmendmentPolicyMock(...args),
 }));
 
 vi.mock('@/api/sales', () => ({
@@ -140,8 +143,30 @@ function mockDetail(data: SalesInvoiceDetail = DETAIL): void {
   });
 }
 
+function mockPolicy(
+  overrides: Partial<InvoiceAmendmentPreflight> = {},
+  state: { isFetching?: boolean; isError?: boolean } = {},
+): void {
+  useInvoiceAmendmentPolicyMock.mockReturnValue({
+    data: {
+      invoiceId: DETAIL.id,
+      invoiceVersion: DETAIL.currentVersion,
+      evaluatedAt: '2026-09-18T09:01:00.000Z',
+      allowed: false,
+      requiresManagerAuthorization: true,
+      restrictions: ['OUTSIDE_CORRECTION_WINDOW'],
+      ...overrides,
+    } satisfies InvoiceAmendmentPreflight,
+    isFetching: state.isFetching ?? false,
+    isError: state.isError ?? false,
+    refetch: vi.fn(),
+  });
+}
+
 beforeEach(() => {
   useSalesInvoiceDetailMock.mockReset();
+  useInvoiceAmendmentPolicyMock.mockReset();
+  mockPolicy();
   getSalesInvoicePdfMock.mockReset();
   useUnitStore.setState({ unit: 'gold' });
   vi.stubGlobal('URL', {
@@ -225,15 +250,58 @@ describe('SalesInvoiceDetailPage — اقدامات', () => {
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:invoice');
   });
 
-  it('خرید مجدد را فقط برای مصرف‌کننده فعال می‌کند و اصلاح را تا policy سرور غیرفعال نگه می‌دارد', () => {
+  it('خرید مجدد را فقط برای مصرف‌کننده فعال می‌کند و دلیل منع اصلاح سرور را نشان می‌دهد', () => {
     mockDetail();
     render(<SalesInvoiceDetailPage />);
 
     const buyback = screen.getByRole('link', { name: 'خرید مجدد B2C' });
     expect(buyback).toHaveAttribute('href', '/sales/invoices/$invoiceId/b2c-buyback');
     expect(buyback).toHaveAttribute('data-params', JSON.stringify({ invoiceId: DETAIL.id }));
-    expect(screen.getByRole('button', { name: 'اصلاح فاکتور' })).toBeDisabled();
-    expect(screen.getByText(/policy سرور/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'شرایط اصلاح فاکتور' })).toBeDisabled();
+    expect(useInvoiceAmendmentPolicyMock).toHaveBeenCalledWith(DETAIL.id);
+    expect(screen.getByText('اصلاح به مجوز مدیر یا مالک نیاز دارد.')).toBeInTheDocument();
+    expect(screen.getByText('مهلت اصلاح عادی این فاکتور گذشته است.')).toBeInTheDocument();
+  });
+
+  it('با تصمیم مجاز سرور امکان باز کردن راهنمای شروع اصلاح را می‌دهد', async () => {
+    mockDetail();
+    mockPolicy({ allowed: true, requiresManagerAuthorization: false, restrictions: [] });
+    render(<SalesInvoiceDetailPage />);
+
+    const action = screen.getByRole('button', { name: 'شرایط اصلاح فاکتور' });
+    expect(action).toBeEnabled();
+    expect(screen.getByText('شروع اصلاح برای این حساب مجاز است.')).toBeInTheDocument();
+    await userEvent.click(action);
+    expect(
+      screen.getByText(/هنگام ثبت، سرور دلیل و اختلاف مبلغ واقعی را دوباره بررسی خواهد کرد/),
+    ).toBeInTheDocument();
+  });
+
+  it('برای نقش مدیر مجوز لازم را نشان می‌دهد ولی تصمیم مجاز سرور را مسدود نمی‌کند', () => {
+    mockDetail();
+    mockPolicy({ allowed: true, requiresManagerAuthorization: true });
+    render(<SalesInvoiceDetailPage />);
+
+    expect(screen.getByRole('button', { name: 'شرایط اصلاح فاکتور' })).toBeEnabled();
+    expect(screen.getByText('اصلاح با مجوز مدیر برای این حساب مجاز است.')).toBeInTheDocument();
+  });
+
+  it('هنگام بارگذاری، خطا یا پاسخ نسخهٔ قدیمی اجازهٔ شروع نمی‌دهد', () => {
+    mockDetail();
+    mockPolicy({ allowed: true }, { isFetching: true });
+    const { rerender } = render(<SalesInvoiceDetailPage />);
+    expect(screen.getByRole('button', { name: 'شرایط اصلاح فاکتور' })).toBeDisabled();
+    expect(screen.getByText('در حال بررسی مجوز اصلاح در سرور…')).toBeInTheDocument();
+
+    mockPolicy({ allowed: true }, { isError: true });
+    rerender(<SalesInvoiceDetailPage />);
+    expect(screen.getByRole('button', { name: 'شرایط اصلاح فاکتور' })).toBeDisabled();
+    expect(screen.getByText(/مجوز اصلاح دریافت نشد/)).toBeInTheDocument();
+
+    mockPolicy({ allowed: true, invoiceVersion: DETAIL.currentVersion - 1 });
+    rerender(<SalesInvoiceDetailPage />);
+    expect(screen.getByRole('button', { name: 'شرایط اصلاح فاکتور' })).toBeDisabled();
+    expect(screen.getByText(/پاسخ مجوز با نسخه جاری/)).toBeInTheDocument();
   });
 
   it('برای همکار، خرید مجدد B2C لینک نمی‌سازد', () => {

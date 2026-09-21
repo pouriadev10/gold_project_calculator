@@ -2,16 +2,18 @@ import {
   Body,
   ConflictException,
   Controller,
+  Get,
   Headers,
   HttpCode,
   HttpStatus,
   Inject,
+  NotFoundException,
   Param,
   Post,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import { amendSalesInvoiceSchema } from '@gold/contracts';
+import { amendSalesInvoiceSchema, uuidSchema } from '@gold/contracts';
 import { CurrentAuth } from '../../platform/auth/current-user.decorator';
 import { JwtAuthGuard } from '../../platform/auth/jwt-auth.guard';
 import { Roles } from '../../platform/auth/roles.decorator';
@@ -22,7 +24,12 @@ import { IdempotencyService } from '../../platform/idempotency/idempotency.servi
 import { RequestContextService } from '../../platform/request-context/request-context.service';
 import { ZodValidationPipe } from '../../shared/validation';
 import { InvoiceAmendmentsService } from './invoice-amendments.service';
-import type { AmendSalesInvoiceInput, AmendedSalesInvoice } from '@gold/contracts';
+import { SalesInvoiceNotFoundError } from './sales-invoices.errors';
+import type {
+  AmendSalesInvoiceInput,
+  AmendedSalesInvoice,
+  InvoiceAmendmentPreflight,
+} from '@gold/contracts';
 import type { AccessTokenPayload } from '../../platform/auth/token.service';
 
 const PATH = '/sales/invoices/:invoiceId/amend';
@@ -36,6 +43,20 @@ export class InvoiceAmendmentsController {
     @Inject(IdempotencyService) private readonly idempotency: IdempotencyService,
     @Inject(InvoiceAmendmentsService) private readonly amendments: InvoiceAmendmentsService,
   ) {}
+
+  @Get(':invoiceId/amendment-policy')
+  async getPreflight(
+    @Param('invoiceId', new ZodValidationPipe(uuidSchema)) invoiceId: string,
+    @CurrentAuth() auth: AccessTokenPayload | undefined,
+  ): Promise<InvoiceAmendmentPreflight> {
+    if (auth === undefined) throw new UnauthorizedException();
+    try {
+      return await this.amendments.getPreflight(this.context.getTenantId(), invoiceId, auth.role);
+    } catch (error) {
+      if (error instanceof SalesInvoiceNotFoundError) throw new NotFoundException(error.message);
+      throw error;
+    }
+  }
 
   @Post(':invoiceId/amend')
   @HttpCode(HttpStatus.CREATED)

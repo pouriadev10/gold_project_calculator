@@ -22,7 +22,8 @@ import {
   toSafeNumber,
 } from '@gold/core-calc';
 import type { SalesInvoiceDetail } from '@/api/contracts';
-import { useSalesInvoiceDetail } from '@/api/queries';
+import type { InvoiceAmendmentPreflight } from '@gold/contracts';
+import { useInvoiceAmendmentPolicy, useSalesInvoiceDetail } from '@/api/queries';
 import { getSalesInvoicePdf } from '@/api/sales';
 import { AmountDisplay, RateDisplay } from '@/components/common/AmountDisplay';
 import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
@@ -44,6 +45,17 @@ const REASON_LABEL: Readonly<Record<string, string>> = {
   PARTY_ERROR: 'اصلاح مشتری',
   PAYMENT_ERROR: 'اصلاح پرداخت',
   OTHER: 'سایر',
+};
+
+const POLICY_RESTRICTION_LABEL: Readonly<
+  Record<InvoiceAmendmentPreflight['restrictions'][number], string>
+> = {
+  INVOICE_NOT_FINALIZED: 'فاکتور هنوز نهایی نشده است.',
+  UNSUPPORTED_ITEMS: 'ترکیب اقلام این فاکتور با مسیر اصلاح فعلی پشتیبانی نمی‌شود.',
+  OUTSIDE_CORRECTION_WINDOW: 'مهلت اصلاح عادی این فاکتور گذشته است.',
+  BUSINESS_DAY_CLOSED: 'روز کاری این فاکتور بسته شده است.',
+  SETTLED_INVOICE: 'برای طرف‌حساب این فاکتور تسویه ثبت شده است.',
+  VARIANCE_EXCEEDS_MANAGER_THRESHOLD: 'اختلاف مبلغ از حد مجاز اصلاح عادی بیشتر است.',
 };
 
 function currentVersion(detail: SalesInvoiceDetail): InvoiceVersion | undefined {
@@ -382,6 +394,15 @@ function VersionHistory({ detail }: { detail: SalesInvoiceDetail }) {
 function InvoiceActions({ detail }: { detail: SalesInvoiceDetail }) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<unknown>(null);
+  const [showAmendmentInfo, setShowAmendmentInfo] = useState(false);
+  const amendmentPolicy = useInvoiceAmendmentPolicy(detail.id);
+  const policy =
+    amendmentPolicy.data?.invoiceId === detail.id &&
+    amendmentPolicy.data.invoiceVersion === detail.currentVersion
+      ? amendmentPolicy.data
+      : null;
+  const canStartAmendment =
+    !amendmentPolicy.isFetching && !amendmentPolicy.isError && policy?.allowed === true;
   const version = currentVersion(detail);
   const canBuyBack =
     detail.status === 'FINALIZED' &&
@@ -448,16 +469,67 @@ function InvoiceActions({ detail }: { detail: SalesInvoiceDetail }) {
           </Button>
         )}
 
-        <Button type="button" size="action" variant="outline" disabled>
+        <Button
+          type="button"
+          size="action"
+          variant="outline"
+          disabled={!canStartAmendment}
+          aria-describedby="invoice-amendment-policy-status"
+          onClick={() => setShowAmendmentInfo((visible) => !visible)}
+        >
           <FilePenLine className="size-5" aria-hidden="true" />
-          اصلاح فاکتور
+          شرایط اصلاح فاکتور
         </Button>
       </div>
-      <p className="flex items-start gap-1.5 text-xs leading-5 text-muted-foreground">
-        <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-        مجاز بودن اصلاح باید در مرحله بعد از policy سرور دریافت شود؛ این صفحه تصمیم حسابداری را در
-        مرورگر حدس نمی‌زند.
-      </p>
+      <div
+        id="invoice-amendment-policy-status"
+        className="space-y-2 text-sm leading-6"
+        aria-live="polite"
+      >
+        {amendmentPolicy.isFetching ? <p>در حال بررسی مجوز اصلاح در سرور…</p> : null}
+        {amendmentPolicy.isError ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <p>مجوز اصلاح دریافت نشد؛ اقدام تا پاسخ معتبر سرور غیرفعال است.</p>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => void amendmentPolicy.refetch()}
+            >
+              تلاش دوباره
+            </Button>
+          </div>
+        ) : null}
+        {!amendmentPolicy.isFetching && !amendmentPolicy.isError && policy === null ? (
+          <p>پاسخ مجوز با نسخه جاری فاکتور سازگار نیست؛ اصلاح غیرفعال است.</p>
+        ) : null}
+        {!amendmentPolicy.isFetching && !amendmentPolicy.isError && policy ? (
+          <>
+            <p className={policy.allowed ? 'text-credit' : 'text-warning'}>
+              {policy.allowed
+                ? policy.requiresManagerAuthorization
+                  ? 'اصلاح با مجوز مدیر برای این حساب مجاز است.'
+                  : 'شروع اصلاح برای این حساب مجاز است.'
+                : policy.requiresManagerAuthorization
+                  ? 'اصلاح به مجوز مدیر یا مالک نیاز دارد.'
+                  : 'اصلاح این فاکتور فعلاً مجاز نیست.'}
+            </p>
+            {policy.restrictions.length > 0 ? (
+              <ul className="list-disc space-y-1 ps-5">
+                {policy.restrictions.map((restriction) => (
+                  <li key={restriction}>{POLICY_RESTRICTION_LABEL[restriction]}</li>
+                ))}
+              </ul>
+            ) : null}
+          </>
+        ) : null}
+        {showAmendmentInfo && canStartAmendment ? (
+          <p>
+            مجوز شروع اصلاح تأیید شده است. ورود و ثبت تغییرات هنوز در این نسخه فعال نیست. هنگام
+            ثبت، سرور دلیل و اختلاف مبلغ واقعی را دوباره بررسی خواهد کرد.
+          </p>
+        ) : null}
+      </div>
       {!canBuyBack ? (
         <p className="text-xs leading-5 text-muted-foreground">
           خرید مجدد فقط برای فاکتور نهاییِ زیورآلاتِ مصرف‌کننده فعال است.

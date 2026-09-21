@@ -1,4 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { invoiceAmendmentPreflightSchema } from '@gold/contracts';
 import { apiGet } from './client';
 import {
   coinTypeListSchema,
@@ -323,6 +324,22 @@ export function useSalesInvoiceDetail(invoiceId: string | null) {
     queryFn: ({ signal }) =>
       apiGet(`/sales/invoices/${invoiceId}/detail`, salesInvoiceDetailSchema, signal),
     staleTime: Infinity,
+    enabled: invoiceId !== null,
+  });
+}
+
+/** A live, server-owned start decision; submission rechecks with the actual variance. */
+export function useInvoiceAmendmentPolicy(invoiceId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.salesInvoices.amendmentPolicy(invoiceId ?? ''),
+    queryFn: ({ signal }) =>
+      apiGet(
+        `/sales/invoices/${invoiceId}/amendment-policy`,
+        invoiceAmendmentPreflightSchema,
+        signal,
+      ),
+    staleTime: 0,
+    refetchOnMount: 'always',
     enabled: invoiceId !== null,
   });
 }

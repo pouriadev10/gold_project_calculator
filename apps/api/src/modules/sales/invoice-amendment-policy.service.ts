@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { toSafeNumber } from '@gold/core-calc';
 import { DRIZZLE } from '../../platform/database/database.module';
 import { withTenantTransaction } from '../../platform/database/tenant-transaction';
 import { VersionedSettingsService } from '../pricing/versioned-settings.service';
@@ -54,6 +55,11 @@ export interface EvaluateInvoiceAmendmentPolicyInput {
   readonly varianceRial: bigint;
 }
 
+export type EvaluateInvoiceAmendmentStartInput = Omit<
+  EvaluateInvoiceAmendmentPolicyInput,
+  'reason' | 'reasonDetail' | 'varianceRial'
+>;
+
 export interface InvoiceAmendmentPolicyDecision {
   readonly allowed: boolean;
   readonly requiresManagerAuthorization: boolean;
@@ -93,7 +99,7 @@ function correctionWindowEnd(finalizedAt: Date, correctionWindowMinutes: bigint)
   }
 
   const windowEnd = new Date(finalizedAt);
-  windowEnd.setUTCMinutes(windowEnd.getUTCMinutes() + Number(correctionWindowMinutes));
+  windowEnd.setUTCMinutes(windowEnd.getUTCMinutes() + toSafeNumber(correctionWindowMinutes));
   return windowEnd;
 }
 
@@ -127,6 +133,26 @@ export class InvoiceAmendmentPolicyService {
   ): Promise<InvoiceAmendmentPolicyDecision> {
     this.validateInput(input);
 
+    return this.evaluateFactsInTransaction(transaction, input);
+  }
+
+  /** Eligibility before a replacement is entered; never authorizes a final write. */
+  async evaluateStartInTransaction(
+    transaction: TenantTransaction,
+    input: EvaluateInvoiceAmendmentStartInput,
+  ): Promise<InvoiceAmendmentPolicyDecision> {
+    requireValidDate(input.finalizedAt, 'finalizedAt');
+    requireValidDate(input.requestedAt, 'requestedAt');
+    if (input.requestedAt.getTime() < input.finalizedAt.getTime()) {
+      throw new InvoiceAmendmentPolicyInvalidInputError('requestedAt cannot be before finalizedAt');
+    }
+    return this.evaluateFactsInTransaction(transaction, { ...input, varianceRial: 0n });
+  }
+
+  private async evaluateFactsInTransaction(
+    transaction: TenantTransaction,
+    input: EvaluateInvoiceAmendmentStartInput & { readonly varianceRial: bigint },
+  ): Promise<InvoiceAmendmentPolicyDecision> {
     const [correctionWindow, managerApprovalVariance] = await Promise.all([
       this.settings.getEffectiveInTransaction(
         transaction,
