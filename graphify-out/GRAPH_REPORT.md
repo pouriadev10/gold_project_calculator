@@ -1,46 +1,46 @@
 # Graph Report - gold project prd  (2026-09-21)
 
 ## Corpus Check
-- 890 files · ~631,252 words
+- 892 files · ~634,419 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 9107 nodes · 19660 edges · 500 communities (406 shown, 76 thin omitted)
+- 9128 nodes · 19785 edges · 504 communities (409 shown, 77 thin omitted)
 - Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 361 edges (avg confidence: 0.81)
 - Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
 - schema/index.ts
 - TenantTransaction
-- toPersianDigits
+- core-calc/src/index.ts
 - common/api-error.ts
 - router.tsx
-- core-calc/src/index.ts
-- cn
-- react
-- withTenantTransaction
-- @tanstack/react-query
-- @nestjs/common
-- SalesInvoiceDetailPage.tsx
+- toSafeNumber
 - PartySelector.tsx
+- cn
+- withTenantTransaction
+- client.ts
+- contracts/src/index.ts
+- lucide-react
+- SaleWizardPage.tsx
 - parties/parties.ts
-- sale-line-pricing.ts
-- common/index.ts
-- "roles"
-- settlements.service.ts
-- coin-types.service.ts
+- reporting-display.service.ts
+- uuidSchema
+- .getTenantId
+- mixed-settlements.service.ts
+- PartiesService
 - .getDashboard
 - pdf-invoice-exporter.service.ts
 - invoice-amendments.service.ts
 - @testing-library/react
 - contracts.ts
-- jewelry-items-api.e2e-spec.ts
+- profit-report.service.ts
 - handlers/index.ts
 - .agents/skills/design/scripts/cip/core.py
 - .claude/skills/design/scripts/cip/core.py
-- AuthService
+- user.dto.ts
 - persian.ts
-- price-feed.service.ts
+- price-feed.e2e-spec.ts
 - package.json
 - .agents/skills/design-system/scripts/slide_search_core.py
 - Tailwind CSS Utility Reference
@@ -50,14 +50,14 @@
 - ۴. مراحل — به همین ترتیب
 - Milestone 23 — سخت‌سازی نهایی
 - Brand Guidelines v1.0
-- .create
+- dev-tenant.controller.ts
 - Brand Guidelines v1.0
 - web/package.json
 - Design
 - Canvas Design System
 - Design
 - Canvas Design System
-- gramRate1000
+- .priceCoinInTransaction
 - spacing
 - grossMg
 - b2c-buybacks.service.ts
@@ -66,7 +66,7 @@
 - Tailwind CSS Responsive Design
 - Form & Input Components
 - Tailwind CSS Responsive Design
-- app.module.ts
+- @nestjs/common
 - Typography Specifications
 - ledger-posting.service.ts
 - Typography Specifications
@@ -80,7 +80,7 @@
 - shadcn/ui Accessibility Patterns
 - TestTailwindConfigGenerator
 - rial
-- .changeMemberRole
+- .createManual
 - dependencies
 - Logo Usage Rules
 - Component Specifications
@@ -97,9 +97,9 @@
 - radius
 - Asset Approval Checklist
 - Logo AI Prompt Engineering
-- request-id.middleware.ts
+- tenant-context.middleware.ts
 - .create
-- AuthController
+- CoinSaleForm.test.tsx
 - Asset Approval Checklist
 - Logo AI Prompt Engineering
 - Color Palette Management
@@ -129,14 +129,14 @@
 - گزارش تسک — سیستم ورود داده (`FRONTEND-NEXT.md`)
 - AGENTS.md — قواعد ثابت پروژه
 - DesignSystemGenerator
-- .createInTransaction
+- ledger-balance-constraint.e2e-spec.ts
 - DesignSystemGenerator
 - Milestone 22 — تست‌ها
 - core-calc/package.json
 - compilerOptions
 - .agents/skills/design-system/scripts/generate-slide.py
 - color
-- PartyStatementsService
+- main.tsx
 - api-exception.filter.ts
 - theme-store.ts
 - .claude/skills/design-system/scripts/generate-slide.py
@@ -160,7 +160,7 @@
 - .agents/skills/design-system/scripts/fetch-background.py
 - color
 - .agents/skills/ui-ux-pro-max/scripts/core.py
-- invoice-history.ts
+- InvoiceHistoryController
 - bigint-serialization.e2e-spec.ts
 - Asset Organization Guide
 - Primary Color Meanings
@@ -173,7 +173,7 @@
 - Brand Consistency Checklist
 - CIP Mockup Prompt Engineering
 - Color Semantics
-- second-hand-purchase-pdf.service.ts
+- party-balances.service.ts
 - invoice-amendments.ts
 - components.json
 - Brand Consistency Checklist
@@ -182,7 +182,7 @@
 - .agents/skills/design/scripts/icon/generate.py
 - BM25
 - inventory/opening-balances.ts
-- Secret
+- env.schema.ts
 - .claude/skills/design/scripts/icon/generate.py
 - BM25
 - Milestone 21 — Performance و PWA
@@ -199,7 +199,7 @@
 - Copywriting Formulas
 - Copywriting Formulas
 - ReportingController
-- tenant-context.middleware.ts
+- request-hash.spec.ts
 - CIP Design Reference
 - Icon Design Reference
 - Copywriting Formulas
@@ -249,7 +249,7 @@
 - .generate_config_string
 - devDependencies
 - .create
-- mixed-settlement.ts
+- .create
 - compilerOptions
 - compilerOptions
 - Primitive Tokens
@@ -268,7 +268,7 @@
 - .agents/skills/ui-styling/scripts/tests/test_tailwind_config_gen.py
 - Quick Reference
 - dualFromPure
-- .create
+- useSessionStore
 - compilerOptions
 - scripts
 - Core Visual Elements
@@ -291,10 +291,10 @@
 - Slide Strategies
 - ._base_config
 - scripts
-- .create
+- session-store.ts
 - .create
 - 0023_clammy_microbe.sql
-- GoldSettlementForm.test.tsx
+- .create
 - ErrorProbeController
 - mockServiceWorker.js
 - Brand
@@ -323,7 +323,7 @@
 - search
 - UI/UX Pro Max - Design Intelligence
 - "settlement_lines"
-- auth.dto.ts
+- api/auth.ts
 - ساختار پوشه‌های apps/web/src — FE-004
 - tenant.rules.ts
 - search
@@ -335,7 +335,7 @@
 - How to Use This Skill
 - nest-cli.json
 - app.controller.ts
-- JewelryItemSelector
+- CoinPurchaseForm.test.tsx
 - Slides Reference
 - HTML Slide Template
 - HTML Slide Template
@@ -362,11 +362,11 @@
 - Example Workflow
 - input
 - PoolLifecycle
-- vite.config.ts
+- auth/auth.ts
 - Brand Guidelines Template
-- auth.errors.ts
-- DatabaseConnectionError
-- LedgerAccountPartyNotFoundError
+- zustand
+- "tenant_memberships"
+- route-guards.ts
 - .claude/skills/ui-ux-pro-max/scripts/validate_data.py
 - Common Rules for Professional UI
 - Example Workflow
@@ -436,8 +436,8 @@
 - .test_add_colors
 - muted
 - primary-foreground
-- .getTenantId
-- msw
+- .create
+- OpeningBalanceCoinTypeUnavailableError
 - setup.ts
 - .claude/skills/design/references/slides-create.md
 - .claude/skills/slides/references/create.md
@@ -471,27 +471,31 @@
 - ring
 - secondary-foreground
 - drizzle-kit
-- env.schema.ts
+- main.ts
+- zod-validation.pipe.ts
 - 0013_yielding_sandman.sql
-- .describe
+- dev-context.controller.ts
 - 0015_tiny_black_crow.sql
 - 0008_aromatic_bromley.sql
 - 0009_same_red_wolf.sql
 - 0016_peaceful_strong_guy.sql
-- party-balances.service.ts
+- sales-pricing.service.ts
 - SecondHandPurchasePdfController
 - 0011_round_black_queen.sql
 - "ledger_accounts"
 - 0020_nostalgic_venus.sql
+- DevIdempotencyController
+- SettingsPage.test.tsx
 - "refresh_tokens"
 - "idempotency_records"
 - "parties"
 - 0010_huge_enchantress.sql
 - "document_counters"
+- .me
 - "rls_probes"
 - 0000_white_nightmare.sql
 - 0001_redundant_richard_fisk.sql
-- ApiExceptionFilter
+- .constructor
 
 ## God Nodes (most connected - your core abstractions)
 1. `TenantTransaction` - 147 edges
@@ -500,9 +504,9 @@
 4. `Database` - 114 edges
 5. `drizzle-orm` - 101 edges
 6. `cn()` - 95 edges
-7. `react` - 86 edges
-8. `karat` - 86 edges
-9. `toSafeNumber()` - 82 edges
+7. `react` - 88 edges
+8. `toSafeNumber()` - 86 edges
+9. `karat` - 86 edges
 10. `DRIZZLE` - 79 edges
 
 ## Surprising Connections (you probably didn't know these)
@@ -520,86 +524,86 @@
 ## Import Cycles
 - None detected.
 
-## Communities (500 total, 76 thin omitted)
+## Communities (504 total, 77 thin omitted)
 
 ### Community 0 - "schema/index.ts"
-Cohesion: 0.03
-Nodes (181): AppModule, Module, LedgerAccountNotFoundError, EnsurePartyLedgerAccountsInput, INITIAL_SYSTEM_ACCOUNTS, SyncCoinInventoryAccountInput, SystemLedgerAccountSeed, LedgerPostingInput (+173 more)
+Cohesion: 0.04
+Nodes (126): AppModule, Module, OpeningBalancesService, Injectable, LedgerAccountNotFoundError, AccountBalanceService, Inject, Injectable (+118 more)
 
 ### Community 1 - "TenantTransaction"
-Cohesion: 0.02
-Nodes (165): CoinTypesService, Inject, Injectable, InvalidInventoryItemIdentityError, NegativeInventoryError, ZeroInventoryMovementError, ALLOW_NEGATIVE_STOCK_SETTING, InventoryBalance (+157 more)
-
-### Community 2 - "toPersianDigits"
 Cohesion: 0.03
-Nodes (85): typeCount(), KaratInputProps, tap(), typeKarat(), editActive(), KeypadFieldDef, KeypadState, readFieldValue() (+77 more)
+Nodes (70): CoinMintTypeMismatchError, CoinTypeNotFoundError, CoinTypeVersionConflictError, InactiveCoinTypeError, InvalidCoinTypeVersionDateError, CoinSpecificationInput, CoinTypesService, CreateCoinTypeInput (+62 more)
+
+### Community 2 - "core-calc/src/index.ts"
+Cohesion: 0.02
+Nodes (107): CountInputProps, typeCount(), KaratInputProps, tap(), typeKarat(), editActive(), KeypadFieldDef, KeypadState (+99 more)
 
 ### Community 3 - "common/api-error.ts"
-Cohesion: 0.29
-Nodes (5): ErrorMapping, ApiErrorCode, apiErrorCodeSchema, apiErrorSchema, validError
+Cohesion: 0.40
+Nodes (3): apiErrorCodeSchema, apiErrorSchema, validError
 
 ### Community 4 - "router.tsx"
 Cohesion: 0.03
-Nodes (73): login(), logout(), refresh(), apiPostRaw(), requireAuth(), requireRole(), AppShell(), appShellRoute (+65 more)
+Nodes (79): apiGet(), ProfitReport, RecentInventoryMovement, useBalanceSummary(), useDashboard(), useItemSearch(), usePartySearch(), useProfitReport() (+71 more)
 
-### Community 5 - "core-calc/src/index.ts"
+### Community 5 - "toSafeNumber"
 Cohesion: 0.05
-Nodes (111): useCoinTypes(), useInventoryBalances(), useInvoiceVersions(), useLatestPriceQuote(), useParty(), usePartyBalances(), AmountDisplay(), AmountDisplayProps (+103 more)
+Nodes (122): deactivateParty(), createManualPriceQuote(), useCoinTypes(), useInvoiceVersions(), useLatestPriceQuote(), useParty(), usePartyBalances(), usePartyStatement() (+114 more)
 
-### Community 6 - "cn"
+### Community 6 - "PartySelector.tsx"
+Cohesion: 0.06
+Nodes (45): PartyStatus, PartyType, createSecondHandGoldPurchase(), useParties(), purchaseSecondHandRoute, PartyCandidate, PartySelector(), onSearchKeyDown() (+37 more)
+
+### Community 7 - "cn"
 Cohesion: 0.03
-Nodes (82): ApiErrorNoticeContent(), AppNav(), ITEMS, ignoreKeypadOutsideInteraction(), ResponsiveDialogContentProps, ResponsiveDialogProps, Variant, VariantContext (+74 more)
-
-### Community 7 - "react"
-Cohesion: 0.05
-Nodes (83): apiPatch(), PartyType, SalesInvoiceStatus, createJewelryItem(), updateJewelryItem(), createOpeningBalance(), createParty(), deactivateParty() (+75 more)
+Nodes (113): apiPatch(), SalesInvoiceStatus, createJewelryItem(), updateJewelryItem(), createParty(), updateParty(), useJewelryItem(), useJewelryItems() (+105 more)
 
 ### Community 8 - "withTenantTransaction"
 Cohesion: 0.03
-Nodes (76): containsPattern(), CreateJewelryItemInput, CreateJewelryItemVersionInput, DeactivateJewelryItemInput, financialSpecificationChanged(), JewelryFinancialSpecification, JewelryItemDetail, JewelryItemPage (+68 more)
+Nodes (81): InvalidJewelryItemVersionDateError, InvalidJewelryKaratError, InvalidJewelryWeightError, JewelryDeductionExceedsGrossError, JewelryItemCodeConflictError, JewelryItemNotFoundError, JewelryItemVersionConflictError, containsPattern() (+73 more)
 
-### Community 9 - "@tanstack/react-query"
+### Community 9 - "client.ts"
 Cohesion: 0.03
-Nodes (82): ApiError, NetworkError, apiGetFile(), apiPostReadOnly(), authHeader(), combineSignals(), generateUuid(), newIdempotencyKey() (+74 more)
+Nodes (92): ApiError, NetworkError, apiGetFile(), apiPostReadOnly(), authHeader(), combineSignals(), generateUuid(), newIdempotencyKey() (+84 more)
 
-### Community 10 - "@nestjs/common"
-Cohesion: 0.05
-Nodes (79): Inject, InactiveJewelryItemError, InvalidJewelryItemVersionDateError, InvalidJewelryKaratError, InvalidJewelryWeightError, JewelryDeductionExceedsGrossError, JewelryItemCodeConflictError, JewelryItemNotFoundError (+71 more)
+### Community 10 - "contracts/src/index.ts"
+Cohesion: 0.13
+Nodes (40): InactiveJewelryItemError, AuditHttpRequest, AuditHttpRequest, SecondHandCoinPurchaseInvalidInputError, SecondHandPurchaseCalculationError, SecondHandPurchaseNotFoundError, SecondHandPurchasePaidRialExceedsAmountError, SecondHandPurchasePartyNotFoundError (+32 more)
 
-### Community 11 - "SalesInvoiceDetailPage.tsx"
+### Community 11 - "lucide-react"
 Cohesion: 0.06
-Nodes (53): useInvoiceAmendmentPolicy(), usePriceQuoteHistory(), useSalesInvoices(), getSalesInvoicePdf(), salesInvoiceDetailRoute, CardSkeleton(), EmptyState(), ErrorState() (+45 more)
+Nodes (46): usePriceQuoteHistory(), useSalesInvoices(), EmptyState(), Badge(), BadgeProps, badgeVariants, Table, TableBody (+38 more)
 
-### Community 12 - "PartySelector.tsx"
-Cohesion: 0.03
-Nodes (94): JewelryCashSale, PartyStatus, PriceQuoteSource, useParties(), createJewelryCashSale(), createJewelryCreditSale(), PartyCandidate, PartySelector() (+86 more)
+### Community 12 - "SaleWizardPage.tsx"
+Cohesion: 0.04
+Nodes (79): apiPost(), DownloadedFile, CoinSale, coinSaleSchema, JewelryCashSale, jewelryCashSaleSchema, JewelryCreditSale, jewelryCreditSaleSchema (+71 more)
 
 ### Community 13 - "parties/parties.ts"
 Cohesion: 0.07
-Nodes (27): CreatePartyCommand, DeactivatePartyCommand, PartyAuditMetadata, UpdatePartyCommand, createPartySchema, displayNameSchema, mobileSchema, nationalIdSchema (+19 more)
+Nodes (36): auditRequestMetadata(), PartiesController, toResponse(), Body, Controller, Get, Headers, HttpCode (+28 more)
 
-### Community 14 - "sale-line-pricing.ts"
-Cohesion: 0.11
-Nodes (19): JewelryItemSelectorProps, DEFAULT_PROFIT_RATE_BPS, DEFAULT_TAX_RATE_BPS, defaultPricingFromAdhoc(), defaultPricingFromCatalog(), LinePricingResult, GOLDEN_PRICING, SaleLinePricingDialogProps (+11 more)
+### Community 14 - "reporting-display.service.ts"
+Cohesion: 0.05
+Nodes (43): SystemLedgerAccountSeed, SETTING_KEYS, assetDimensionKindEnum, coinMintTypeEnum, CoinType, IdempotencyRecord, idempotencyRecordStatus, StoredJson (+35 more)
 
-### Community 15 - "common/index.ts"
-Cohesion: 0.07
-Nodes (32): BigIntString, bigIntStringSchema, NonNegativeBigIntString, nonNegativeBigIntStringSchema, PositiveBigIntString, positiveBigIntStringSchema, QuantityString, WeightUgString (+24 more)
+### Community 15 - "uuidSchema"
+Cohesion: 0.04
+Nodes (64): BigIntString, bigIntStringSchema, NonNegativeBigIntString, nonNegativeBigIntStringSchema, PositiveBigIntString, positiveBigIntStringSchema, QuantityString, WeightUgString (+56 more)
 
-### Community 16 - ""roles""
-Cohesion: 0.11
-Nodes (23): "roles", "public"."tenants", "public"."users", "tenant_memberships", "users", JewelryItemsController, mapDomainError(), toResponse() (+15 more)
+### Community 16 - ".getTenantId"
+Cohesion: 0.04
+Nodes (59): "roles", JewelryItemsController, mapDomainError(), toResponse(), Body, Controller, Get, Headers (+51 more)
 
-### Community 17 - "settlements.service.ts"
-Cohesion: 0.16
-Nodes (14): InvalidSettlementFinalizeInputError, SettlementNotDraftError, SettlementNotFoundError, SettlementRequiresLinesError, assertFinalizeInput(), CreateDraftSettlementInput, FinalizedSettlement, FinalizeSettlementInput (+6 more)
+### Community 17 - "mixed-settlements.service.ts"
+Cohesion: 0.09
+Nodes (23): CreatedMixedSettlement, CreateMixedSettlementInput, MixedSettlementLineInput, MixedSettlementResultLine, SETTING_KEYS, ValuedMixedSettlementLine, InvalidSettlementFinalizeInputError, SettlementNotDraftError (+15 more)
 
-### Community 18 - "coin-types.service.ts"
-Cohesion: 0.16
-Nodes (11): CoinMintTypeMismatchError, CoinTypeNotFoundError, CoinTypeVersionConflictError, InactiveCoinTypeError, InvalidCoinTypeVersionDateError, CoinSpecificationInput, CreateCoinTypeInput, CreateCoinTypeVersionInput (+3 more)
+### Community 18 - "PartiesService"
+Cohesion: 0.06
+Nodes (25): Inject, Inject, Inject, Inject, Inject, normalizeMobile(), PartiesService, partyAuditData() (+17 more)
 
 ### Community 19 - ".getDashboard"
-Cohesion: 0.31
+Cohesion: 0.32
 Nodes (6): DashboardService, negate(), Injectable, utcDayBounds(), Dashboard, DashboardQuery
 
 ### Community 20 - "pdf-invoice-exporter.service.ts"
@@ -607,24 +611,24 @@ Cohesion: 0.12
 Nodes (27): InvoiceExportInput, ARABIC_FORMS, flattenSnapshot(), FontTable, formatDate(), formatInteger(), formatRial(), GlyphCode (+19 more)
 
 ### Community 21 - "invoice-amendments.service.ts"
-Cohesion: 0.04
-Nodes (62): PartyNotFoundError, LockedSale, DocumentCountersService, jalaliYearPeriodKey(), Inject, Injectable, InvoiceAmendmentPolicyDeniedError, InvoiceAmendmentPolicyInvalidInputError (+54 more)
+Cohesion: 0.06
+Nodes (35): InvoiceAmendmentPolicyDeniedError, InvoiceAmendmentPolicyInvalidInputError, InvoiceAmendmentPolicySettingInvalidError, InvoiceAmendmentRestriction, correctionWindowEnd(), EvaluateInvoiceAmendmentPolicyInput, EvaluateInvoiceAmendmentStartInput, hasManagerAuthorization() (+27 more)
 
 ### Community 22 - "@testing-library/react"
-Cohesion: 0.02
-Nodes (94): PriceQuote, AMOUNT, RATE, latestQuoteMock, CoinInventoryRow, BAHAR, NIM, PRIVATE (+86 more)
+Cohesion: 0.04
+Nodes (45): useInvoiceAmendmentPolicy(), useSalesInvoiceDetail(), getSalesInvoicePdf(), AMOUNT, RATE, OPTIONS, METHOD_ICON, METHOD_LABEL (+37 more)
 
 ### Community 23 - "contracts.ts"
-Cohesion: 0.03
-Nodes (100): apiGet(), apiPost(), DownloadedFile, bigintString, CoinSale, coinSaleSchema, CoinSettlement, coinSettlementSchema (+92 more)
+Cohesion: 0.02
+Nodes (107): bigintString, CoinSettlement, coinSettlementSchema, CoinTypeList, coinTypeListSchema, DualAmountDto, GoldSettlement, goldSettlementSchema (+99 more)
 
-### Community 24 - "jewelry-items-api.e2e-spec.ts"
-Cohesion: 0.15
-Nodes (17): ARABIC_KAF, ARABIC_YEH, createdItem(), createItem(), deactivateItem(), headers(), JewelryItemListResponse, JewelryItemResponse (+9 more)
+### Community 24 - "profit-report.service.ts"
+Cohesion: 0.07
+Nodes (35): LockedSale, ProfitMeasure, ReportRange, ZERO_MEASURE, jalaliYearPeriodKey(), CalculatedAmendment, AmendmentHistory, InvoiceHistoryService (+27 more)
 
 ### Community 25 - "handlers/index.ts"
 Cohesion: 0.05
-Nodes (57): SalesInvoiceDetail, salesInvoiceDetailSchema, SalesInvoiceListItem, finalizedDetail, bootstrap(), worker, balanceSummary, COIN_BALANCE_ROWS (+49 more)
+Nodes (60): SalesInvoiceDetail, salesInvoiceDetailSchema, SalesInvoiceListItem, finalizedDetail, balanceSummary, COIN_BALANCE_ROWS, COIN_TYPE, COIN_TYPE_VERSIONS (+52 more)
 
 ### Community 26 - ".agents/skills/design/scripts/cip/core.py"
 Cohesion: 0.06
@@ -634,17 +638,17 @@ Nodes (46): BM25, detect_domain(), get_cip_brief(), _load_csv(), Load CSV and re
 Cohesion: 0.06
 Nodes (46): BM25, detect_domain(), get_cip_brief(), _load_csv(), Load CSV and return list of dicts, Core search function using BM25, Auto-detect the most relevant domain from query, Main search function with auto-domain detection (+38 more)
 
-### Community 28 - "AuthService"
-Cohesion: 0.17
-Nodes (6): AuthService, Injectable, Inject, TokenService, Inject, Injectable
+### Community 28 - "user.dto.ts"
+Cohesion: 0.06
+Nodes (27): AuthController, toSessionResponse(), Body, Controller, HttpCode, Inject, Post, LoginInput (+19 more)
 
 ### Community 29 - "persian.ts"
 Cohesion: 0.07
 Nodes (41): FormCheck(), addBigIntStrings(), compareBigIntStrings(), formatIntegerString(), formatRial(), formatWeightMg(), parseBigIntString(), subtractBigIntStrings() (+33 more)
 
-### Community 30 - "price-feed.service.ts"
-Cohesion: 0.05
-Nodes (41): InvalidPriceFeedResultError, PriceFeedTimeoutError, PriceQuoteUnavailableError, PRICE_FEED_PROVIDER, PRICE_FEED_TIMEOUT_MS, PriceFeedProvider, PriceFeedResult, UnavailablePriceFeedProvider (+33 more)
+### Community 30 - "price-feed.e2e-spec.ts"
+Cohesion: 0.09
+Nodes (23): InvalidPriceFeedResultError, PriceFeedTimeoutError, PriceQuoteUnavailableError, PRICE_FEED_PROVIDER, PRICE_FEED_TIMEOUT_MS, PriceFeedProvider, PriceFeedResult, UnavailablePriceFeedProvider (+15 more)
 
 ### Community 31 - "package.json"
 Cohesion: 0.05
@@ -668,7 +672,7 @@ Nodes (43): Arbitrary Values, Aspect Ratio, Background Colors, Border Color, Bor
 
 ### Community 36 - "reporting.ts"
 Cohesion: 0.09
-Nodes (21): partyStatusSchema, partyTypeSchema, dashboardFinancialCardSchema, dashboardInventoryCoinSchema, dashboardQuerySchema, dashboardRawAmountSchema, dashboardSchema, partyBalanceReportQuerySchema (+13 more)
+Nodes (20): partyStatusSchema, partyTypeSchema, dashboardFinancialCardSchema, dashboardInventoryCoinSchema, dashboardQuerySchema, dashboardRawAmountSchema, dashboardSchema, partyBalanceReportQuerySchema (+12 more)
 
 ### Community 37 - "۴. مراحل — به همین ترتیب"
 Cohesion: 0.05
@@ -682,9 +686,9 @@ Nodes (40): [ ] FE-099 — مدیریت Unsaved Changes, [ ] FE-100 — مدیر
 Cohesion: 0.05
 Nodes (37): 1. Color Palette, 2. Typography, 3. Logo Usage, 4. Voice & Tone, 5. Imagery Guidelines, 6. Design Components, Accessibility, AI Image Generation (+29 more)
 
-### Community 40 - ".create"
-Cohesion: 0.18
-Nodes (9): DevTenantController, toResponse(), Body, Controller, Get, HttpCode, Inject, Param (+1 more)
+### Community 40 - "dev-tenant.controller.ts"
+Cohesion: 0.12
+Nodes (14): DevTenantController, TenantResponse, toResponse(), Body, Controller, Get, HttpCode, Inject (+6 more)
 
 ### Community 41 - "Brand Guidelines v1.0"
 Cohesion: 0.05
@@ -692,7 +696,7 @@ Nodes (37): 1. Color Palette, 2. Typography, 3. Logo Usage, 4. Voice & Tone, 5. 
 
 ### Community 42 - "web/package.json"
 Cohesion: 0.05
-Nodes (37): eslint-plugin-react-hooks, fast-check, @gold/contracts, @gold/core-calc, typescript, vazirmatn, vitest, zod (+29 more)
+Nodes (39): eslint-plugin-react-hooks, fast-check, @gold/contracts, @gold/core-calc, typescript, vazirmatn, vitest, zod (+31 more)
 
 ### Community 43 - "Design"
 Cohesion: 0.06
@@ -710,17 +714,17 @@ Nodes (35): Banner Design (Built-in), Banner: Design Rules, Banner: Quick Size R
 Cohesion: 0.06
 Nodes (35): 1. Visual Communication First, 2. Minimal Text Integration, 3. Expert Craftsmanship, 4. Systematic Patterns, Analog Meditation, Approach, Canvas Boundaries, Canvas Design System (+27 more)
 
-### Community 47 - "gramRate1000"
-Cohesion: 0.13
-Nodes (21): SalesPricingInvalidCoinInputError, SalesPricingQuoteNotFoundError, SalesPricingSettingInvalidError, isSettingRecord(), mithqalGramsX10k(), nonNegativeIntegerSetting(), positiveIntegerSetting(), settingString() (+13 more)
+### Community 47 - ".priceCoinInTransaction"
+Cohesion: 0.22
+Nodes (9): SalesInvoiceAmendmentPaidRialExceedsPayableError, SalesPricingInvalidCoinInputError, SalesPricingQuoteNotFoundError, SalesPricingSettingInvalidError, isSettingRecord(), mithqalGramsX10k(), nonNegativeIntegerSetting(), positiveIntegerSetting() (+1 more)
 
 ### Community 48 - "spacing"
 Cohesion: 0.06
 Nodes (34): $type, $value, $type, $value, $type, $value, $type, $value (+26 more)
 
 ### Community 49 - "grossMg"
-Cohesion: 0.15
-Nodes (25): priceJewelryFromVersion(), ArticleDeductions, articlePureMg(), chargeableGrossMg(), calculateJewelrySale(), JewelrySaleCalculationInput, JewelryWageType, requireNonNegative() (+17 more)
+Cohesion: 0.10
+Nodes (39): pureWeightOf(), pureWeightPreview(), ArticleDeductions, articlePureMg(), chargeableGrossMg(), calculateJewelrySale(), JewelrySaleCalculationInput, JewelryWageType (+31 more)
 
 ### Community 50 - "b2c-buybacks.service.ts"
 Cohesion: 0.12
@@ -746,17 +750,17 @@ Nodes (32): Accordion, Alert, Alert Dialog, Avatar, Badge, Button, Card, Checkbo
 Cohesion: 0.06
 Nodes (32): 1. Mobile-First Design, 2. Consistent Breakpoint Usage, 3. Test at Breakpoint Boundaries, 4. Use Container for Content Width, 5. Progressive Enhancement, 6. Avoid Too Many Breakpoints, Best Practices, Breakpoint System (+24 more)
 
-### Community 56 - "app.module.ts"
-Cohesion: 0.07
-Nodes (60): InitialCoinTypesService, Inject, Injectable, InventoryModule, Module, InitialAssetDimensionsService, Inject, Injectable (+52 more)
+### Community 56 - "@nestjs/common"
+Cohesion: 0.05
+Nodes (83): InitialCoinTypesService, Injectable, InventoryModule, Module, RequiredAssetDimensionNotFoundError, AssetDimensionsService, BASE_DIMENSIONS, SyncCoinAssetDimensionInput (+75 more)
 
 ### Community 57 - "Typography Specifications"
 Cohesion: 0.06
 Nodes (30): Accessibility, Base System, Best Practices, Clean & Modern, Common Font Pairings, Contrast Requirements, CSS Implementation, Editorial (+22 more)
 
 ### Community 58 - "ledger-posting.service.ts"
-Cohesion: 0.09
-Nodes (23): InactiveLedgerPostingAccountError, InactiveLedgerPostingDimensionError, InvalidLedgerPostingError, LedgerPostingAccountNotFoundError, LedgerPostingDimensionNotFoundError, UnbalancedLedgerPostingError, isLedgerEntryMetadata(), isPlainRecord() (+15 more)
+Cohesion: 0.06
+Nodes (37): CreatedOpeningBalance, CreateOpeningBalanceInput, OpeningBalanceLineInput, PreparedOpeningLine, InactiveLedgerPostingAccountError, InactiveLedgerPostingDimensionError, InvalidLedgerPostingError, LedgerPostingAccountNotFoundError (+29 more)
 
 ### Community 59 - "Typography Specifications"
 Cohesion: 0.06
@@ -771,8 +775,8 @@ Cohesion: 0.09
 Nodes (26): ansi_ljust(), _detect_page_type(), format_ascii_box(), format_markdown(), format_master_md(), format_page_override_md(), generate_design_system(), _generate_intelligent_overrides() (+18 more)
 
 ### Community 62 - "karat"
-Cohesion: 0.10
-Nodes (32): toCoinType(), PreviewSecondHandGoldPurchase, ResolvedSecondHandGoldPurchasePricing, toCoinType(), toCoinType(), toCoinType(), toCoinType(), toCoinType() (+24 more)
+Cohesion: 0.11
+Nodes (30): toCoinType(), PreviewSecondHandGoldPurchase, ResolvedSecondHandGoldPurchasePricing, toCoinType(), toCoinType(), toCoinType(), toCoinType(), toCoinType() (+22 more)
 
 ### Community 63 - ".claude/skills/ui-ux-pro-max/scripts/design_system.py"
 Cohesion: 0.09
@@ -799,12 +803,12 @@ Cohesion: 0.07
 Nodes (15): Test adding colors multiple times., Test adding custom fonts., Test adding custom breakpoints., Test TailwindConfigGenerator class., Test plugin recommendations for Next.js., Test generating JavaScript configuration., Test generating config with custom colors., Test validating config with no content paths. (+7 more)
 
 ### Community 69 - "rial"
-Cohesion: 0.12
-Nodes (29): OriginalJewelrySale, calculateSecondHandWeighing(), SecondHandWeighingCalculation, SecondHandWeighingInput, SecondHandWeighingResult, B2cBuybackDifferenceInput, calculateB2cBuybackDifference(), requireNonNegative() (+21 more)
+Cohesion: 0.15
+Nodes (20): OriginalJewelrySale, calculateSecondHandWeighing(), SecondHandWeighingCalculation, SecondHandWeighingInput, SecondHandWeighingResult, DEFAULT_PROFIT_RATE_BPS, DEFAULT_TAX_RATE_BPS, LinePricingResult (+12 more)
 
-### Community 70 - ".changeMemberRole"
-Cohesion: 0.18
-Nodes (11): auditRequestMetadata(), DevAuthzController, Body, Controller, Get, Headers, HttpCode, Param (+3 more)
+### Community 70 - ".createManual"
+Cohesion: 0.10
+Nodes (22): auditRequestMetadata(), PriceQuotesController, toResponse(), Body, Controller, Get, Headers, HttpCode (+14 more)
 
 ### Community 71 - "dependencies"
 Cohesion: 0.07
@@ -835,8 +839,8 @@ Cohesion: 0.07
 Nodes (29): componentها, Milestone 3 — طراحی پایه و Shell برنامه, routeها, [x] FE-011 — تثبیت Design System, [x] FE-012 — App Shell موبایل‌فرست, [x] FE-013 — Route Structure, [x] FE-014 — Loading، Empty و Error States عمومی, [x] FE-015 — Bottom Sheet و Dialog واکنش‌گرا (+21 more)
 
 ### Community 78 - "ReportingDisplayService"
-Cohesion: 0.19
-Nodes (9): Inject, isSettingRecord(), mithqalGramsX10k(), positiveIntegerSetting(), ReportingDisplayService, settingString(), Inject, Injectable (+1 more)
+Cohesion: 0.16
+Nodes (10): Inject, isSettingRecord(), mithqalGramsX10k(), positiveIntegerSetting(), ReportingDisplayService, settingString(), Inject, Injectable (+2 more)
 
 ### Community 79 - "Milestone 10 — فروش زیورآلات"
 Cohesion: 0.07
@@ -870,17 +874,17 @@ Nodes (25): Accessibility, Archival, Asset Approval Checklist, Automation Suppor
 Cohesion: 0.08
 Nodes (25): Common Pitfalls, Core Prompt Structure, Detailed Brief, Eco/Sustainable, Effective Keywords by Style, Fashion Brand, Healthcare, Industry-Specific Prompts (+17 more)
 
-### Community 87 - "request-id.middleware.ts"
-Cohesion: 0.20
-Nodes (9): RequestIdMiddleware, Injectable, WritableRequestId, REQUEST_ID_HEADER, RequestIdCarrier, isPublicPath(), MountedRequest, PUBLIC_PATH_PREFIXES (+1 more)
+### Community 87 - "tenant-context.middleware.ts"
+Cohesion: 0.14
+Nodes (15): RequestIdMiddleware, Injectable, WritableRequestId, readRequestId(), REQUEST_ID_HEADER, RequestIdCarrier, isPublicPath(), MountedRequest (+7 more)
 
 ### Community 88 - ".create"
-Cohesion: 0.25
-Nodes (9): B2cBuybacksController, Body, Controller, Headers, HttpCode, Param, Post, UseGuards (+1 more)
+Cohesion: 0.23
+Nodes (9): B2cBuybacksController, Body, Controller, Headers, HttpCode, Inject, Param, Post (+1 more)
 
-### Community 89 - "AuthController"
-Cohesion: 0.29
-Nodes (8): AuthController, toSessionResponse(), Body, Controller, HttpCode, Inject, Post, RefreshInput
+### Community 89 - "CoinSaleForm.test.tsx"
+Cohesion: 0.12
+Nodes (9): BAHAR, createCoinSaleMock, fillCoinAndPrice(), PRIVATE, typeDigits(), useCoinTypesMock, useInventoryBalancesMock, useLatestPriceQuoteMock (+1 more)
 
 ### Community 90 - "Asset Approval Checklist"
 Cohesion: 0.08
@@ -998,9 +1002,9 @@ Nodes (21): AGENTS.md — قواعد ثابت پروژه, graphify, Imported Cla
 Cohesion: 0.13
 Nodes (12): DesignSystemGenerator, Find matching reasoning rule for a category., Apply reasoning rules to search results., Select best matching result based on priority keywords., Extract results list from search result dict., Generate complete design system recommendation. variance/motion/density are…, Bucket a 1-10 dial value into its tier config. Returns None if value is None., Generates design system recommendations from aggregated searches. (+4 more)
 
-### Community 119 - ".createInTransaction"
-Cohesion: 0.27
-Nodes (7): CoinSettlementInvalidInputError, CoinSettlementPricingSettingInvalidError, CoinSettlementQuoteNotFoundError, isSettingRecord(), mithqalGramsX10k(), positiveIntegerSetting(), settingString()
+### Community 119 - "ledger-balance-constraint.e2e-spec.ts"
+Cohesion: 0.16
+Nodes (6): APP_DATABASE_ROLE, TENANT_SETTING, EntryInput, PostingTargets, TenantFixture, pg
 
 ### Community 120 - "DesignSystemGenerator"
 Cohesion: 0.12
@@ -1026,13 +1030,13 @@ Nodes (20): _e(), generate_chart_slide(), generate_cta_slide(), generate_deck(),
 Cohesion: 0.15
 Nodes (21): $type, $value, $type, $value, 500, 600, blue, green (+13 more)
 
-### Community 126 - "PartyStatementsService"
-Cohesion: 0.18
-Nodes (11): compareEvents(), eventRateKey(), PartyStatementsService, settlementKey(), snapshotIsoDate(), snapshotRecord(), sourceKey(), Inject (+3 more)
+### Community 126 - "main.tsx"
+Cohesion: 0.20
+Nodes (10): createQueryClient(), handleGlobalError(), isRetryableError(), setUnauthorizedHandler(), router, bootstrap(), container, queryClient (+2 more)
 
 ### Community 127 - "api-exception.filter.ts"
 Cohesion: 0.11
-Nodes (18): copyFields(), DEFAULT_MESSAGES, EMPTY_FIELDS, ErrorFields, HttpReply, HttpRequest, internalError(), isFastifyReply() (+10 more)
+Nodes (21): ApiExceptionFilter, copyFields(), DEFAULT_MESSAGES, EMPTY_FIELDS, ErrorFields, ErrorMapping, HttpReply, HttpRequest (+13 more)
 
 ### Community 128 - "theme-store.ts"
 Cohesion: 0.23
@@ -1075,8 +1079,8 @@ Cohesion: 0.10
 Nodes (19): Base Color Presets, Best Practices, Color Customization, Color Format, Component Customization, CSS Variable System, Customize Styles, Customize Variants (+11 more)
 
 ### Community 138 - "api/package.json"
-Cohesion: 0.11
-Nodes (18): fast-check, @gold/contracts, @gold/core-calc, typescript, vazirmatn, vitest, zod, name (+10 more)
+Cohesion: 0.10
+Nodes (20): fast-check, @gold/contracts, @gold/core-calc, typescript, vazirmatn, vitest, zod, name (+12 more)
 
 ### Community 139 - "۲. قواعد غیرقابل مذاکره"
 Cohesion: 0.10
@@ -1096,7 +1100,7 @@ Nodes (19): Base Color Presets, Best Practices, Color Customization, Color Forma
 
 ### Community 143 - "Milestone 15 — فاکتورها و اصلاح"
 Cohesion: 0.10
-Nodes (20): [ ] FE-067 — فرم اصلاح فاکتور, [ ] FE-068 — تاریخچه نسخه‌های فاکتور, Milestone 15 — فاکتورها و اصلاح, [x] FE-064 — فهرست فاکتورهای فروش, [x] FE-065 — صفحه جزئیات فاکتور, [x] FE-066 — بررسی مجاز بودن اصلاح, تمام است وقتی, تمام است وقتی (+12 more)
+Nodes (20): [ ] FE-068 — تاریخچه نسخه‌های فاکتور, Milestone 15 — فاکتورها و اصلاح, [x] FE-064 — فهرست فاکتورهای فروش, [x] FE-065 — صفحه جزئیات فاکتور, [x] FE-066 — بررسی مجاز بودن اصلاح, [x] FE-067 — فرم اصلاح فاکتور, تمام است وقتی, تمام است وقتی (+12 more)
 
 ### Community 144 - "Asset Organization Guide"
 Cohesion: 0.11
@@ -1122,9 +1126,9 @@ Nodes (19): $type, $value, background, foreground, muted-foreground, primary, pr
 Cohesion: 0.15
 Nodes (16): _domain_keywords(), _get_bm25(), _load_csv(), _load_product_keywords(), Load CSV and return list of dicts, with mtime-based caching., Fitted BM25 index for this file+columns, with mtime-based caching., Core search function using BM25. Returns (results, bm25_or_none)., Nearest known vocabulary terms for a query that returned 0 hits, so the caller… (+8 more)
 
-### Community 150 - "invoice-history.ts"
-Cohesion: 0.11
-Nodes (19): InvoiceHistoryController, Controller, Get, Param, UseGuards, signedDifference(), snapshotInteger(), snapshotRecord() (+11 more)
+### Community 150 - "InvoiceHistoryController"
+Cohesion: 0.24
+Nodes (8): InvoiceHistoryController, Controller, Get, Param, UseGuards, signedDifference(), SalesInvoiceAmendmentHistory, SalesInvoiceVersionHistory
 
 ### Community 151 - "bigint-serialization.e2e-spec.ts"
 Cohesion: 0.16
@@ -1174,13 +1178,13 @@ Nodes (17): Apparel (Polo/T-Shirt), Base Prompt Structure, Business Card, CIP Mo
 Cohesion: 0.11
 Nodes (17): Accent, Applying Semantic Tokens, Background & Foreground, Border & Ring, Color Semantics, Dark Mode Overrides, Destructive, Interactive States (+9 more)
 
-### Community 163 - "second-hand-purchase-pdf.service.ts"
-Cohesion: 0.08
-Nodes (30): PartyStatementPdfService, snapshotValue(), Inject, Injectable, SecondHandPurchaseNotFoundError, SecondHandPurchasePdfService, snapshotMoney(), snapshotRecord() (+22 more)
+### Community 163 - "party-balances.service.ts"
+Cohesion: 0.04
+Nodes (59): AccountBalances, LedgerPostingSource, Inject, PartyNotFoundError, PartyBalanceCoinTypeNotFoundError, PartyBalanceDisplaySettingInvalidError, PartyBalanceReferenceQuoteNotFoundError, addOptionalBalance() (+51 more)
 
 ### Community 164 - "invoice-amendments.ts"
-Cohesion: 0.12
-Nodes (16): InvoiceAmendmentsController, Body, Controller, Get, Headers, HttpCode, Param, Post (+8 more)
+Cohesion: 0.10
+Nodes (19): InvoiceAmendmentsController, Body, Controller, Get, Headers, HttpCode, Inject, Param (+11 more)
 
 ### Community 165 - "components.json"
 Cohesion: 0.11
@@ -1207,8 +1211,12 @@ Cohesion: 0.15
 Nodes (9): BM25, _normalize(), Apply synonym substitution before tokenizing., BM25 ranking algorithm for text search, Lowercase, normalize synonyms, split, remove punctuation, filter stopwords, Build BM25 index from documents, Score all documents against query, All indexed terms, for suggestion/typo-recovery purposes. (+1 more)
 
 ### Community 171 - "inventory/opening-balances.ts"
-Cohesion: 0.05
-Nodes (36): OpeningBalancesController, toOpeningBalanceResponse(), Body, Controller, Get, Headers, HttpCode, Post (+28 more)
+Cohesion: 0.07
+Nodes (25): Get, Query, centralBankCoinTypeVersionSchema, CoinMintType, coinMintTypeSchema, coinTypeVersionBaseSchema, coinTypeVersionSchema, nonCentralBankCoinTypeVersionSchema (+17 more)
+
+### Community 172 - "env.schema.ts"
+Cohesion: 0.15
+Nodes (8): envSchema, LOG_LEVELS, LogLevel, NODE_ENVS, NodeEnv, ParsedEnv, secretString(), Secret
 
 ### Community 173 - ".claude/skills/design/scripts/icon/generate.py"
 Cohesion: 0.18
@@ -1239,8 +1247,8 @@ Cohesion: 0.12
 Nodes (9): Tests for shadcn_add.py, Test ShadcnInstaller class., Test adding all components without config., Test listing installed components without config., Test listing installed components when they exist., Test initialization with default project root., Test initialization with dry run mode., Test getting installed components when files exist. (+1 more)
 
 ### Community 180 - ".valueCoinLineInTransaction"
-Cohesion: 0.24
-Nodes (8): MixedSettlementInsufficientCreditError, MixedSettlementInvalidInputError, MixedSettlementPricingSettingInvalidError, MixedSettlementQuoteNotFoundError, isSettingRecord(), mithqalGramsX10k(), positiveIntegerSetting(), settingString()
+Cohesion: 0.22
+Nodes (10): MixedSettlementInsufficientCreditError, MixedSettlementInvalidInputError, MixedSettlementPricingSettingInvalidError, MixedSettlementQuoteNotFoundError, isSettingRecord(), mithqalGramsX10k(), MixedSettlementsService, positiveIntegerSetting() (+2 more)
 
 ### Community 181 - "Design Principles"
 Cohesion: 0.12
@@ -1274,9 +1282,9 @@ Nodes (14): AIDA (Attention-Interest-Desire-Action), Before-After-Bridge, Contra
 Cohesion: 0.32
 Nodes (8): ReportingController, Controller, Get, Query, UseGuards, ReportingMazneh, PartyBalanceReport, PartyBalanceReportQuery
 
-### Community 189 - "tenant-context.middleware.ts"
-Cohesion: 0.18
-Nodes (12): InvalidIdempotencyKeyError, InvalidIdempotencyRequestError, MissingIdempotencyKeyError, readIdempotencyKey(), requireIdempotencyKey(), canonicalize(), hashIdempotencyRequest(), isRecord() (+4 more)
+### Community 189 - "request-hash.spec.ts"
+Cohesion: 0.22
+Nodes (10): InvalidIdempotencyKeyError, InvalidIdempotencyRequestError, MissingIdempotencyKeyError, readIdempotencyKey(), requireIdempotencyKey(), ExecuteIdempotentRequest, canonicalize(), hashIdempotencyRequest() (+2 more)
 
 ### Community 190 - "CIP Design Reference"
 Cohesion: 0.13
@@ -1347,8 +1355,8 @@ Cohesion: 0.14
 Nodes (14): dependencies, drizzle-orm, @gold/contracts, @gold/core-calc, @nestjs/common, @nestjs/core, @nestjs/jwt, @nestjs/platform-fastify (+6 more)
 
 ### Community 207 - ".getProfit"
-Cohesion: 0.20
-Nodes (13): addRialAtLockedRate(), difference(), isSnapshotRecord(), lockedRate1000(), mithqalGramsX10k(), ProfitReportService, responseMeasure(), snapshotInteger() (+5 more)
+Cohesion: 0.16
+Nodes (16): addPureAtLockedRate(), addRialAtLockedRate(), difference(), isSnapshotRecord(), lockedRate1000(), mithqalGramsX10k(), ProfitReportService, responseMeasure() (+8 more)
 
 ### Community 208 - "Banner Design - Multi-Format Creative Banner System"
 Cohesion: 0.14
@@ -1411,8 +1419,8 @@ Cohesion: 0.17
 Nodes (8): main(), Handle shadcn/ui component installation., shadcn/ui Component Installer Add shadcn/ui components to project with…, ShadcnInstaller, Test adding all components in dry run mode., Test listing installed components when none exist., Test checking for non-existent shadcn config., Test getting installed components without config.
 
 ### Community 223 - ".create"
-Cohesion: 0.13
-Nodes (13): GoldSettlementsController, PATH(), Body, Controller, Headers, HttpCode, Param, Post (+5 more)
+Cohesion: 0.17
+Nodes (10): GoldSettlementsController, PATH(), Body, Controller, Headers, HttpCode, Inject, Param (+2 more)
 
 ### Community 224 - ".claude/skills/brand/references/update.md"
 Cohesion: 0.15
@@ -1471,12 +1479,12 @@ Cohesion: 0.17
 Nodes (12): devDependencies, drizzle-kit, fast-check, @nestjs/cli, @nestjs/schematics, @nestjs/testing, @swc/core, @types/node (+4 more)
 
 ### Community 238 - ".create"
-Cohesion: 0.20
-Nodes (9): CoinSettlementsController, PATH(), Body, Controller, Headers, HttpCode, Param, Post (+1 more)
+Cohesion: 0.17
+Nodes (10): CoinSettlementsController, PATH(), Body, Controller, Headers, HttpCode, Inject, Param (+2 more)
 
-### Community 239 - "mixed-settlement.ts"
-Cohesion: 0.08
-Nodes (23): MixedSettlementsController, PATH(), Body, Controller, Headers, HttpCode, Param, Post (+15 more)
+### Community 239 - ".create"
+Cohesion: 0.15
+Nodes (11): MixedSettlementsController, PATH(), Body, Controller, Headers, HttpCode, Inject, Param (+3 more)
 
 ### Community 240 - "compilerOptions"
 Cohesion: 0.17
@@ -1547,12 +1555,12 @@ Cohesion: 0.18
 Nodes (11): 10. Charts & Data (LOW), 1. Accessibility (CRITICAL), 2. Touch & Interaction (CRITICAL), 3. Performance (HIGH), 4. Style Selection (HIGH), 5. Layout & Responsive (HIGH), 6. Typography & Color (MEDIUM), 7. Animation (MEDIUM) (+3 more)
 
 ### Community 257 - "dualFromPure"
-Cohesion: 0.29
-Nodes (8): directionFor(), addPureAtLockedRate(), addDual(), comparableGoldBalanceNumerator(), dualFromPure(), negateDual(), zeroDual(), RATE
+Cohesion: 0.33
+Nodes (7): directionFor(), addDual(), comparableGoldBalanceNumerator(), dualFromPure(), negateDual(), zeroDual(), RATE
 
-### Community 258 - ".create"
-Cohesion: 0.08
-Nodes (22): JewelryCashSalesController, Body, Controller, Headers, HttpCode, Post, UseGuards, JewelryCreditSalesController (+14 more)
+### Community 258 - "useSessionStore"
+Cohesion: 0.24
+Nodes (5): RequireRole(), PricingPage(), useHasRole(), useSessionStore, RoleCode
 
 ### Community 259 - "compilerOptions"
 Cohesion: 0.18
@@ -1642,21 +1650,21 @@ Nodes (6): Any, Path, Initialize generator. Args: typescript: If True, generate 
 Cohesion: 0.20
 Nodes (10): scripts, build, db:generate, db:migrate, dev, start, test, test:integration (+2 more)
 
-### Community 281 - ".create"
-Cohesion: 0.20
-Nodes (9): SecondHandCoinPurchasesController, Body, Controller, Headers, HttpCode, Post, UseGuards, CoinPurchaseReceiptState (+1 more)
+### Community 281 - "session-store.ts"
+Cohesion: 0.26
+Nodes (9): navigateMock, renderGuard(), SESSION, useSessionGuard(), consumeDeliberateLogoutFlag(), SESSION_STORAGE_KEY, SessionState, SESSION (+1 more)
 
 ### Community 282 - ".create"
-Cohesion: 0.22
-Nodes (8): SecondHandGoldPurchasesController, Body, Controller, Headers, HttpCode, Post, UseGuards, SecondHandGoldPurchase
+Cohesion: 0.17
+Nodes (10): SecondHandGoldPurchasesController, Body, Controller, Headers, HttpCode, Inject, Post, UseGuards (+2 more)
 
 ### Community 283 - "0023_clammy_microbe.sql"
 Cohesion: 0.11
 Nodes (23): prevent_sales_invoice_item_mutation(), prevent_sales_invoice_number_mutation(), prevent_sales_invoice_version_mutation(), "sales_invoice_items", sales_invoice_items_prevent_mutation, sales_invoice_items_tenant_version_idx, "sales_invoice_versions", sales_invoice_versions_prevent_mutation (+15 more)
 
-### Community 284 - "GoldSettlementForm.test.tsx"
-Cohesion: 0.20
-Nodes (7): createGoldSettlementMock, fillWeightAndKarat(), QUOTE_A, QUOTE_B, typeDigits(), useLatestPriceQuoteMock, usePartyBalancesMock
+### Community 284 - ".create"
+Cohesion: 0.18
+Nodes (9): OpeningBalancesController, toOpeningBalanceResponse(), Body, Controller, Headers, HttpCode, Inject, Post (+1 more)
 
 ### Community 285 - "ErrorProbeController"
 Cohesion: 0.27
@@ -1731,8 +1739,8 @@ Cohesion: 0.15
 Nodes (19): "ledger_entries", ledger_entries_prevent_mutation, ledger_entries_tenant_account_dimension_idx, ledger_entries_tenant_dimension_idx, ledger_entries_tenant_transaction_idx, "ledger_transactions", ledger_transactions_prevent_mutation, ledger_transactions_tenant_effective_at_idx (+11 more)
 
 ### Community 303 - "inventory/jewelry-items.ts"
-Cohesion: 0.11
-Nodes (21): DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, Paginated, paginatedSchema(), PaginationQuery, paginationQuerySchema, createJewelryItemSchema, financialSpecificationShape (+13 more)
+Cohesion: 0.12
+Nodes (20): DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, Paginated, paginatedSchema(), PaginationQuery, paginationQuerySchema, createJewelryItemSchema, financialSpecificationShape (+12 more)
 
 ### Community 304 - ".claude/skills/brand/scripts/sync-brand-to-tokens.cjs"
 Cohesion: 0.33
@@ -1770,9 +1778,9 @@ Nodes (7): How to Use, Primary Use Cases, Recommended, Rule Categories by Priori
 Cohesion: 0.13
 Nodes (18): prevent_settlement_line_mutation(), "settlement_lines", settlement_lines_prevent_mutation, settlement_lines_tenant_settlement_idx, "settlements", settlements_tenant_party_idx, settlements_tenant_status_idx, "public"."asset_dimensions" (+10 more)
 
-### Community 313 - "auth.dto.ts"
-Cohesion: 0.32
-Nodes (6): LoginInput, loginSchema, passwordSchema, refreshSchema, valid, emailSchema
+### Community 313 - "api/auth.ts"
+Cohesion: 0.26
+Nodes (9): login(), logout(), refresh(), apiPostRaw(), logoutMock, SESSION, useLogout(), markDeliberateLogout() (+1 more)
 
 ### Community 314 - "ساختار پوشه‌های apps/web/src — FE-004"
 Cohesion: 0.25
@@ -1818,9 +1826,9 @@ Nodes (6): collection, compilerOptions, deleteOutDir, tsConfigPath, $schema, sou
 Cohesion: 0.33
 Nodes (4): AppController, HealthResponse, Controller, Get
 
-### Community 325 - "JewelryItemSelector"
-Cohesion: 0.29
-Nodes (6): JewelryItemSelector(), addAdhocItem(), addCatalogItem(), onSearchKeyDown(), remainingStock(), toResultRow()
+### Community 325 - "CoinPurchaseForm.test.tsx"
+Cohesion: 0.05
+Nodes (32): useInventoryBalances(), inventoryCoinsRoute, CoinInventoryPage(), BAHAR, NIM, PRIVATE, useCoinTypesMock, useInventoryBalancesMock (+24 more)
 
 ### Community 326 - "Slides Reference"
 Cohesion: 0.29
@@ -1926,17 +1934,21 @@ Nodes (8): padding-x, input, $type, $value, focus-ring, padding-x, $type, $value
 Cohesion: 0.40
 Nodes (3): PoolLifecycle, Inject, Injectable
 
-### Community 352 - "vite.config.ts"
-Cohesion: 0.40
-Nodes (3): vite, vite-plugin-pwa, @vitejs/plugin-react
+### Community 352 - "auth/auth.ts"
+Cohesion: 0.24
+Nodes (8): loginEmailSchema, loginSchema, RefreshInput, refreshSchema, roleCodeSchema, sessionResponseSchema, sessionTenantSchema, sessionUserSchema
 
 ### Community 353 - "Brand Guidelines Template"
 Cohesion: 0.40
 Nodes (4): Brand Guidelines Template, Document Structure, Extractable Fields, Usage
 
-### Community 354 - "auth.errors.ts"
-Cohesion: 0.29
-Nodes (3): InvalidCredentialsError, InvalidRefreshTokenError, TenantSuspendedError
+### Community 354 - "zustand"
+Cohesion: 0.36
+Nodes (5): RECENT_JEWELRY_ITEMS_STORAGE_KEY, RecentJewelryItem, RecentJewelryItemsState, useRecentJewelryItemsStore, zustand
+
+### Community 355 - ""tenant_memberships""
+Cohesion: 0.33
+Nodes (5): "public"."tenants", "public"."users", "tenant_memberships", "users", "public"."roles"
 
 ### Community 357 - ".claude/skills/ui-ux-pro-max/scripts/validate_data.py"
 Cohesion: 0.60
@@ -2027,8 +2039,8 @@ Cohesion: 0.67
 Nodes (3): secondary-foreground, $type, $value
 
 ### Community 382 - ".create"
-Cohesion: 0.15
-Nodes (12): RialSettlementsController, Body, Controller, Headers, HttpCode, Param, Post, UseGuards (+4 more)
+Cohesion: 0.17
+Nodes (10): RialSettlementsController, Body, Controller, Headers, HttpCode, Inject, Param, Post (+2 more)
 
 ### Community 383 - "0028_far_hobgoblin.sql"
 Cohesion: 0.16
@@ -2066,9 +2078,9 @@ Nodes (3): muted, $type, $value
 Cohesion: 0.67
 Nodes (3): primary-foreground, $type, $value
 
-### Community 426 - ".getTenantId"
-Cohesion: 0.11
-Nodes (24): auditRequestMetadata(), PartiesController, toResponse(), Body, Controller, Get, Headers, HttpCode (+16 more)
+### Community 426 - ".create"
+Cohesion: 0.18
+Nodes (9): CoinSalesController, Body, Controller, Headers, HttpCode, Inject, Post, UseGuards (+1 more)
 
 ### Community 468 - "ring"
 Cohesion: 0.67
@@ -2078,17 +2090,17 @@ Nodes (3): ring, $type, $value
 Cohesion: 0.67
 Nodes (3): secondary-foreground, $type, $value
 
-### Community 471 - "env.schema.ts"
-Cohesion: 0.17
-Nodes (15): bootstrap(), APP_CONFIG, AppConfig, envSchema, LOG_LEVELS, LogLevel, NODE_ENVS, NodeEnv (+7 more)
+### Community 471 - "main.ts"
+Cohesion: 0.20
+Nodes (10): bootstrap(), APP_CONFIG, AppConfig, toAppConfig(), EnvValidationError, formatIssues(), loadEnv(), LONG_SECRET (+2 more)
 
 ### Community 473 - "0013_yielding_sandman.sql"
 Cohesion: 0.27
 Nodes (8): "jewelry_item_versions", jewelry_item_versions_effective_lookup_idx, jewelry_item_versions_tenant_item_version_unique, "jewelry_items", jewelry_items_tenant_code_unique, "public"."tenants", jewelry_item_versions_tenant_normalized_title_idx, "public"."jewelry_items"
 
-### Community 474 - ".describe"
-Cohesion: 0.20
-Nodes (3): Get, UseGuards, Get
+### Community 474 - "dev-context.controller.ts"
+Cohesion: 0.13
+Nodes (7): ContextResponse, DevContextController, Controller, Get, Inject, MissingRequestContextError, RequestContextStore
 
 ### Community 475 - "0015_tiny_black_crow.sql"
 Cohesion: 0.33
@@ -2106,9 +2118,9 @@ Nodes (7): restrict_versioned_setting_update(), "public"."tenants", "public"."us
 Cohesion: 0.36
 Nodes (7): "asset_dimensions", asset_dimensions_prevent_identity_mutation, asset_dimensions_tenant_code_unique, asset_dimensions_tenant_coin_type_unique, prevent_asset_dimension_identity_mutation(), "public"."coin_types", "public"."tenants"
 
-### Community 479 - "party-balances.service.ts"
-Cohesion: 0.11
-Nodes (18): AccountBalances, AccountBalanceService, Inject, Injectable, PartyBalanceCoinTypeNotFoundError, PartyBalanceDisplaySettingInvalidError, PartyBalanceReferenceQuoteNotFoundError, addOptionalBalance() (+10 more)
+### Community 479 - "sales-pricing.service.ts"
+Cohesion: 0.04
+Nodes (48): InvalidInventoryItemIdentityError, NegativeInventoryError, ZeroInventoryMovementError, ALLOW_NEGATIVE_STOCK_SETTING, InventoryBalance, InventoryMovementsService, isSettingRecord(), readBooleanSetting() (+40 more)
 
 ### Community 480 - "SecondHandPurchasePdfController"
 Cohesion: 0.25
@@ -2126,6 +2138,14 @@ Nodes (6): "ledger_accounts", ledger_accounts_tenant_code_unique, ledger_account
 Cohesion: 0.38
 Nodes (6): "opening_balances", opening_balances_prevent_mutation, opening_balances_tenant_effective_at_idx, prevent_opening_balance_mutation(), "public"."tenants", "public"."users"
 
+### Community 484 - "DevIdempotencyController"
+Cohesion: 0.50
+Nodes (3): DevIdempotencyController, Controller, Inject
+
+### Community 485 - "SettingsPage.test.tsx"
+Cohesion: 0.50
+Nodes (3): SettingsPage(), logoutMock, SESSION
+
 ### Community 486 - ""refresh_tokens""
 Cohesion: 0.50
 Nodes (4): "refresh_tokens", refresh_tokens_user_idx, "public"."tenants", "public"."users"
@@ -2142,29 +2162,25 @@ Nodes (4): "parties", parties_tenant_normalized_mobile_idx, parties_tenant_norma
 Cohesion: 0.67
 Nodes (3): "document_counters", document_counters_tenant_type_period_unique, "public"."tenants"
 
-### Community 503 - "ApiExceptionFilter"
-Cohesion: 0.50
-Nodes (3): ApiExceptionFilter, Inject, Catch
-
 ## Knowledge Gaps
-- **3449 isolated node(s):** `fs`, `path`, `fs`, `path`, `fs` (+3444 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 4841 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **76 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **3458 isolated node(s):** `fs`, `path`, `fs`, `path`, `fs` (+3453 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 4851 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **77 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `@nestjs/common` connect `@nestjs/common` to `schema/index.ts`, `TenantTransaction`, `withTenantTransaction`, `api/package.json`, `settlements.service.ts`, `coin-types.service.ts`, `pdf-invoice-exporter.service.ts`, `invoice-amendments.service.ts`, `bigint-serialization.e2e-spec.ts`, `price-feed.service.ts`, `second-hand-purchase-pdf.service.ts`, `b2c-buybacks.service.ts`, `app.module.ts`, `ledger-posting.service.ts`, `tenant-context.middleware.ts`, `app.controller.ts`, `request-id.middleware.ts`, `env.schema.ts`, `party-balances.service.ts`, `api-exception.filter.ts`?**
-  _High betweenness centrality (0.023) - this node is a cross-community bridge._
-- **Why does `react` connect `react` to `theme-store.ts`, `toPersianDigits`, `router.tsx`, `core-calc/src/index.ts`, `cn`, `@tanstack/react-query`, `web/package.json`, `SalesInvoiceDetailPage.tsx`, `PartySelector.tsx`, `@testing-library/react`, `contracts.ts`?**
-  _High betweenness centrality (0.010) - this node is a cross-community bridge._
+- **Why does `@nestjs/common` connect `@nestjs/common` to `schema/index.ts`, `TenantTransaction`, `withTenantTransaction`, `api/package.json`, `contracts/src/index.ts`, `reporting-display.service.ts`, `mixed-settlements.service.ts`, `pdf-invoice-exporter.service.ts`, `invoice-amendments.service.ts`, `bigint-serialization.e2e-spec.ts`, `profit-report.service.ts`, `price-feed.e2e-spec.ts`, `party-balances.service.ts`, `dev-tenant.controller.ts`, `b2c-buybacks.service.ts`, `ledger-posting.service.ts`, `app.controller.ts`, `main.ts`, `tenant-context.middleware.ts`, `zod-validation.pipe.ts`, `dev-context.controller.ts`, `sales-pricing.service.ts`, `ledger-balance-constraint.e2e-spec.ts`, `api-exception.filter.ts`?**
+  _High betweenness centrality (0.022) - this node is a cross-community bridge._
 - **Why does `scripts` connect `scripts` to `web/package.json`?**
   _High betweenness centrality (0.009) - this node is a cross-community bridge._
+- **Why does `RequestContextService` connect `contracts/src/index.ts` to `.getTenantId`, `.create`, `.create`, `party-balances.service.ts`, `invoice-amendments.ts`, `.create`, `@nestjs/common`, `.createManual`, `PartyBalanceReportService`, `tenant-context.middleware.ts`, `.create`, `dev-context.controller.ts`, `.create`, `SecondHandPurchasePdfController`, `DevIdempotencyController`, `.create`, `.create`, `.create`, `api-exception.filter.ts`?**
+  _High betweenness centrality (0.009) - this node is a cross-community bridge._
 - **What connects `fs`, `path`, `fs` to the rest of the system?**
-  _3449 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _3458 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `schema/index.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.028850377350956354 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.04420880277572024 - nodes in this community are weakly interconnected._
 - **Should `TenantTransaction` be split into smaller, more focused modules?**
-  _Cohesion score 0.017725613620964746 - nodes in this community are weakly interconnected._
-- **Should `toPersianDigits` be split into smaller, more focused modules?**
-  _Cohesion score 0.031496062992125984 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.03436241610738255 - nodes in this community are weakly interconnected._
+- **Should `core-calc/src/index.ts` be split into smaller, more focused modules?**
+  _Cohesion score 0.0249817287887848 - nodes in this community are weakly interconnected._

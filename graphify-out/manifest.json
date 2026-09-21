@@ -2358,9 +2358,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/queries.ts": {
-    "mtime": 1789988331.3264012,
-    "seen": 1789988666.8161721,
-    "ast_hash": "539ea98b646f38e29e3fab103508746a",
+    "mtime": 1789992036.0614882,
+    "seen": 1789992102.9873316,
+    "ast_hash": "d5882f7564a59424b9185643285ac773",
     "semantic_hash": ""
   },
   "apps/web/src/api/query-client.test.ts": {
@@ -2382,15 +2382,15 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/query-keys.ts": {
-    "mtime": 1789988332.470716,
-    "seen": 1789988666.816178,
-    "ast_hash": "deaa39ddfcc8ca183af6871ecc89143a",
+    "mtime": 1789991525.2928097,
+    "seen": 1789992102.987336,
+    "ast_hash": "60afac40022b6fac534f5e8f5783efd4",
     "semantic_hash": ""
   },
   "apps/web/src/api/sales.ts": {
-    "mtime": 1789819594.2477245,
-    "seen": 1789820752.945459,
-    "ast_hash": "4bddea2523f9d5ce79a68b592bc67f8f",
+    "mtime": 1789991041.4257169,
+    "seen": 1789992102.987339,
+    "ast_hash": "4c0d7938b0989cb9a91759bc4028debf",
     "semantic_hash": ""
   },
   "apps/web/src/api/settlements.ts": {
@@ -2418,9 +2418,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/app/router.tsx": {
-    "mtime": 1789819735.1805155,
-    "seen": 1789820752.9454637,
-    "ast_hash": "b1c4f5b73cca9d88c480dbaec96774e3",
+    "mtime": 1789991042.3271518,
+    "seen": 1789992102.9873438,
+    "ast_hash": "18c3e57bf6d0ec6a3e7b529c52d2f3ed",
     "semantic_hash": ""
   },
   "apps/web/src/components/common/AmountDisplay.test.tsx": {
@@ -5034,9 +5034,9 @@
     "semantic_hash": ""
   },
   "FrontTasks.md": {
-    "mtime": 1789988616.7924016,
-    "seen": 1789988666.8168445,
-    "ast_hash": "3cdd2c0f511eb3c69f90b3e2241d4b4f",
+    "mtime": 1789992058.9420125,
+    "seen": 1789992102.9878643,
+    "ast_hash": "2f783e2c7a11d339695b55648607df37",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
@@ -5394,15 +5394,15 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/sales/SalesInvoiceDetailPage.test.tsx": {
-    "mtime": 1789988545.833743,
-    "seen": 1789988666.8164222,
-    "ast_hash": "d4542c020e65bc23b157ab1d03ff5c60",
+    "mtime": 1789991701.8275466,
+    "seen": 1789992102.987493,
+    "ast_hash": "52d98beb6442d6eb93d6fbecd620ad0a",
     "semantic_hash": ""
   },
   "apps/web/src/features/sales/SalesInvoiceDetailPage.tsx": {
-    "mtime": 1789988544.8473997,
-    "seen": 1789988666.8164234,
-    "ast_hash": "99330232fe3dab6cdafaa0e0627a44df",
+    "mtime": 1789991043.2210052,
+    "seen": 1789992102.987494,
+    "ast_hash": "093ba1091a45e11a152ec6b322307986",
     "semantic_hash": ""
   },
   "apps/api/src/modules/sales/invoice-amendment-policy.service.spec.ts": {
@@ -5415,6 +5415,18 @@
     "mtime": 1789988138.5278633,
     "seen": 1789988666.8158598,
     "ast_hash": "f848b5d95f6da5daad1719e6115f0b9f",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/sales/SalesInvoiceAmendPage.test.tsx": {
+    "mtime": 1789992243.2160661,
+    "seen": 1789992395.5822737,
+    "ast_hash": "8a635e8093c57daf49bff4a0bc9dc692",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/sales/SalesInvoiceAmendPage.tsx": {
+    "mtime": 1789992268.206829,
+    "seen": 1789992395.5822752,
+    "ast_hash": "204a68bedb3af6f113a5c4818be24c41",
     "semantic_hash": ""
   }
 }
