@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { dualFromRial } from '@gold/core-calc';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type * as ReactRouter from '@tanstack/react-router';
 import type { ReactNode } from 'react';
@@ -8,6 +9,7 @@ import { ApiError } from '@/api/api-error';
 import type { Party, PartyBalances, PartyStatement } from '@/api/contracts';
 import type * as PartiesApi from '@/api/parties';
 import type * as Queries from '@/api/queries';
+import { useUnitStore } from '@/stores/unit-store';
 import PartyDetailPage from './PartyDetailPage';
 
 /**
@@ -134,6 +136,7 @@ const idleQuery = { data: undefined, isLoading: false, isError: false, refetch: 
 
 beforeEach(() => {
   mockDesktopViewport();
+  useUnitStore.setState({ unit: 'gold' });
   useQueryMocks.useParty.mockReset();
   useQueryMocks.usePartyBalances.mockReset();
   useQueryMocks.usePartyStatement.mockReset();
@@ -218,23 +221,78 @@ describe('PartyDetailPage — مانده چندواحدی', () => {
         rawBalances: {
           rial: '0',
           pureGoldMg: '0',
-          coins: [{ coinTypeId: 'd1000000-0000-4000-8000-000000000001', code: 'تمام بهار آزادی', count: 2 }],
+          coins: [
+            { coinTypeId: 'd1000000-0000-4000-8000-000000000001', code: 'تمام بهار آزادی', count: 2 },
+            { coinTypeId: 'd1000000-0000-4000-8000-000000000002', code: 'نیم سکه', count: -3 },
+          ],
         },
       }),
     });
     renderPage();
 
     expect(screen.getByText('تمام بهار آزادی')).toBeInTheDocument();
+    expect(screen.getByText('نیم سکه')).toBeInTheDocument();
     expect(screen.getByText('۲')).toBeInTheDocument();
+    expect(screen.getByText('نیم سکه').parentElement?.parentElement).toHaveTextContent(/−.*۳/u);
+    expect(screen.getByText('نیم سکه').parentElement?.parentElement).toHaveTextContent('بستانکار');
+    expect(screen.getByText(/سکه‌ها در جمع طلا و ریال ادغام نمی‌شوند/)).toBeInTheDocument();
   });
 
-  it('بدون مظنه: مقدار خام را نشان می‌دهد و ادعای معادل نمی‌کند', () => {
+  it('مقادیر خام را با تعویض واحد حفظ و فقط معادل‌های جداگانه را تغییر می‌دهد', async () => {
+    const rate1000 = 480000n;
+    const rial = 10000000n;
+    const pureGoldMg = -50000n;
+    const totalGoldMg = pureGoldMg + dualFromRial(rial, rate1000).pureMg;
+    useQueryMocks.usePartyBalances.mockReturnValue({
+      ...idleQuery,
+      data: balances({
+        rawBalances: { rial: rial.toString(), pureGoldMg: pureGoldMg.toString(), coins: [] },
+        convertedView: {
+          ...balances().convertedView!,
+          rialEquivalentPureGoldMg: dualFromRial(rial, rate1000).pureMg.toString(),
+          totalGoldDisplayPureMg: totalGoldMg.toString(),
+        },
+      }),
+    });
+    renderPage();
+
+    const card = screen.getByText('مانده چندواحدی').parentElement?.parentElement;
+    if (!card) throw new Error('کارت مانده پیدا نشد');
+    expect(card.querySelector('[data-unit="rial"][data-raw="10000000"]')).toBeInTheDocument();
+    expect(card.querySelector('[data-unit="gold"][data-raw="-50000"]')).toBeInTheDocument();
+    expect(card.querySelector(`[data-unit="gold"][data-raw="${totalGoldMg}"]`)).toBeInTheDocument();
+    expect(within(card).getByText('معادل با واحد انتخابی')).toBeInTheDocument();
+
+    await userEvent.click(within(card).getByRole('radio', { name: 'ریال' }));
+    expect(card.querySelector('[data-unit="rial"][data-raw="10000000"]')).toBeInTheDocument();
+    expect(card.querySelector('[data-unit="gold"][data-raw="-50000"]')).toBeInTheDocument();
+    expect(card.querySelector('[data-unit="rial"][data-raw="-14000000"]')).toBeInTheDocument();
+    expect(within(card).getByText('معادل با واحد انتخابی')).toBeInTheDocument();
+  });
+
+  it('بدون مظنه: مقدار خام را در هر انتخاب واحد نشان می‌دهد و ادعای معادل نمی‌کند', async () => {
     useQueryMocks.useLatestPriceQuote.mockReturnValue({ ...idleQuery, data: null });
     useQueryMocks.usePartyBalances.mockReturnValue({ ...idleQuery, data: balances({ convertedView: null }) });
     renderPage();
 
     expect(screen.getAllByText('معادل واحد دیگر بدون مظنه در دسترس نیست').length).toBeGreaterThan(0);
-    expect(screen.getByText('هنوز مظنه‌ای ثبت نشده — مانده کل معادل قابل‌محاسبه نیست.')).toBeInTheDocument();
+    expect(screen.getByText('مظنه مرجع معتبر در دسترس نیست — مانده کل معادل قابل‌محاسبه نیست.')).toBeInTheDocument();
+    expect(useQueryMocks.usePartyBalances).toHaveBeenCalledWith(TEST_PARTY_ID, {});
+    expect(document.querySelector('[data-unit="gold"][data-raw="412500"]')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('radio', { name: 'ریال' }));
+    expect(document.querySelector('[data-unit="gold"][data-raw="412500"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-unit="rial"][data-raw="0"]')).toBeInTheDocument();
+    expect(screen.getAllByText('معادل واحد دیگر بدون مظنه در دسترس نیست').length).toBeGreaterThan(0);
+  });
+
+  it('هنگام دریافت مظنه نیز مانده خام را درخواست می‌کند', () => {
+    useQueryMocks.useLatestPriceQuote.mockReturnValue({ ...idleQuery, isLoading: true });
+    useQueryMocks.usePartyBalances.mockReturnValue({ ...idleQuery, data: balances({ convertedView: null }) });
+    renderPage();
+
+    expect(useQueryMocks.usePartyBalances).toHaveBeenCalledWith(TEST_PARTY_ID, {});
+    expect(document.querySelector('[data-unit="gold"][data-raw="412500"]')).toBeInTheDocument();
+    expect(screen.getByText(/در حال دریافت مظنه مرجع/)).toBeInTheDocument();
   });
 
   it('شکست دریافت مانده: پیام خطا و تلاش دوباره', async () => {

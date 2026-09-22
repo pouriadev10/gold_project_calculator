@@ -9,6 +9,7 @@ import { queryKeys } from '@/api/query-keys';
 import { useLatestPriceQuote, useParty, usePartyBalances, usePartyStatement } from '@/api/queries';
 import type { Party, PartyBalances, PartyBalancesQuery, PartyStatementSourceType } from '@/api/contracts';
 import { AmountDisplay } from '@/components/common/AmountDisplay';
+import type { RawAmount } from '@/components/common/AmountDisplay';
 import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
 import { CardSkeleton } from '@/components/common/CardSkeleton';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -29,6 +30,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useIdempotentSubmit } from '@/hooks/useIdempotentSubmit';
 import { formatJalaliDateTime } from '@/lib/date';
 import { toast } from '@/stores/toast-store';
+import { useUnitStore } from '@/stores/unit-store';
 import { PartyFormDialog } from './PartyFormDialog';
 
 /**
@@ -68,8 +70,8 @@ const SOURCE_LABEL: Record<PartyStatementSourceType, string> = {
  * بدهکار/بستانکار — دقیقاً آینه‌ی `directionFor` واقعی
  * (`apps/api/src/modules/reporting/party-balance-report.service.ts`):
  * مثبت یعنی شخص به فروشگاه بدهکار است، منفی یعنی فروشگاه به شخص
- * بستانکار است. رنگ (`AmountDisplay`، `signed`) از این جدا است — همان
- * قرارداد بصری سبز/قرمز مثبت/منفی که `ProfitCard` هم استفاده می‌کند.
+ * بستانکار است. برچسب جهت مستقل از واحد انتخابی می‌ماند؛ رنگ‌کردن مبلغ
+ * صرفاً بر اساس علامت اینجا می‌توانست بدهکار را به‌اشتباه سبز نشان دهد.
  */
 function debtorCreditorLabel(raw: bigint): string {
   if (raw > 0n) return 'بدهکار';
@@ -85,7 +87,7 @@ function StatusBadge({ status }: { status: Party['status'] }) {
   );
 }
 
-/** یک ردیف مانده — یا `DualAmount` کامل (نرخ در دسترس)، یا فقط مقدار خام (بدون مظنه، بدون معادل). */
+/** مقدار اصلی هر بُعد همیشه دیده می‌شود؛ معادل فقط یک نمای جداگانه است. */
 function BalanceRow({
   label,
   raw,
@@ -97,25 +99,33 @@ function BalanceRow({
   dual: DualAmount | null;
   rawKind: 'rial' | 'gold';
 }) {
+  const activeUnit = useUnitStore((state) => state.unit);
+  const rawAmount: DualAmount | RawAmount = dual ?? { kind: 'raw', value: raw, unit: rawKind };
+
   return (
-    <div className="flex items-center justify-between gap-3 py-2">
+    <div className="flex flex-col gap-2 py-3 sm:flex-row sm:items-start sm:justify-between">
       <div className="space-y-0.5">
         <p className="text-sm text-muted-foreground">{label}</p>
-        <p className="text-xs text-muted-foreground">{debtorCreditorLabel(raw)}</p>
+        <p className="text-xs font-medium">{debtorCreditorLabel(raw)}</p>
       </div>
-      {dual ? (
-        <AmountDisplay amount={dual} signed size="md" />
-      ) : (
-        <div className="text-end">
-          <p className="tabular-nums text-sm font-semibold">
-            {rawKind === 'rial' ? formatRial(raw) : formatGram(raw)}
-            <span className="ms-1 text-xs font-normal text-muted-foreground">
-              {rawKind === 'rial' ? 'ریال' : 'گرم'}
-            </span>
-          </p>
-          <p className="text-xs text-muted-foreground">معادل واحد دیگر بدون مظنه در دسترس نیست</p>
+      <div className="min-w-0 space-y-2 sm:text-end">
+        <div>
+          <p className="text-xs text-muted-foreground">مانده اصلی</p>
+          <AmountDisplay amount={rawAmount} unit={rawKind} size="md" />
         </div>
-      )}
+        {activeUnit !== rawKind ? (
+          dual ? (
+            <div>
+              <p className="text-xs text-muted-foreground">معادل با واحد انتخابی</p>
+              <AmountDisplay amount={dual} size="sm" />
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              معادل واحد دیگر بدون مظنه در دسترس نیست
+            </p>
+          )
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -124,22 +134,35 @@ function PartyBalanceCard({ partyId }: { partyId: string }) {
   const latestQuote = useLatestPriceQuote('MAZNEH');
   const referenceQuoteId = latestQuote.data?.id;
   const balancesQuery: PartyBalancesQuery = referenceQuoteId ? { referenceQuoteId } : {};
-  const balances = usePartyBalances(partyId, balancesQuery, !latestQuote.isLoading);
+  // مقدار خام حتی بدون مظنه یا هنگام بارگذاری آن باید از دفترکل دریافت شود.
+  const balances = usePartyBalances(partyId, balancesQuery);
 
   return (
     <Card>
-      <CardHeader className="flex-row items-center justify-between space-y-0">
+      <CardHeader className="flex-col items-start gap-2 space-y-0 sm:flex-row sm:items-center sm:justify-between">
         <CardTitle className="text-sm">مانده چندواحدی</CardTitle>
         <UnitToggle />
       </CardHeader>
       <CardContent>
-        {/*
-          `usePartyBalances` عمداً `enabled: false` می‌ماند تا مظنه‌ی آخر
-          بیاید (پایین همین فایل). در TanStack Query v5، `isLoading` یک
-          query غیرفعال `false` است، نه `true` — بدون این OR، در همان
-          چندصدم‌ثانیه‌ی اول یک صفحه‌ی خالی به‌جای اسکلت دیده می‌شود.
-        */}
-        <PartyBalanceCardBody balances={{ ...balances, isLoading: latestQuote.isLoading || balances.isLoading }} />
+        <PartyBalanceCardBody balances={balances} partyId={partyId} />
+        {latestQuote.isLoading ? (
+          <p className="mt-2 text-xs text-muted-foreground">
+            در حال دریافت مظنه مرجع برای نمایش معادل…
+          </p>
+        ) : null}
+        {latestQuote.isError ? (
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-warning">
+            <p>مظنه مرجع دریافت نشد؛ مانده‌های اصلی همچنان معتبرند.</p>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => void latestQuote.refetch()}
+            >
+              تلاش دوباره
+            </Button>
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   );
@@ -147,7 +170,9 @@ function PartyBalanceCard({ partyId }: { partyId: string }) {
 
 function PartyBalanceCardBody({
   balances,
+  partyId,
 }: {
+  partyId: string;
   balances: {
     data: PartyBalances | undefined;
     isLoading: boolean;
@@ -165,12 +190,23 @@ function PartyBalanceCardBody({
     );
   }
   if (!balances.data) return null;
+  if (balances.data.partyId !== partyId) {
+    return (
+      <p role="alert" className="text-sm text-destructive">
+        پاسخ مانده به این شخص تعلق ندارد.
+      </p>
+    );
+  }
 
   const { rawBalances, convertedView } = balances.data;
   const rial = BigInt(rawBalances.rial);
   const pureGoldMg = BigInt(rawBalances.pureGoldMg);
-  const rate1000 = convertedView ? BigInt(convertedView.referenceMazneh.goldRatePerGramRial) : null;
+  const referenceRate = convertedView
+    ? BigInt(convertedView.referenceMazneh.goldRatePerGramRial)
+    : null;
+  const rate1000 = referenceRate !== null && referenceRate > 0n ? referenceRate : null;
   const totalGoldMg = convertedView ? BigInt(convertedView.totalGoldDisplayPureMg) : null;
+  const totalRial = rate1000 ? rial + dualFromPure(pureGoldMg, rate1000).rial : null;
 
   return (
     <div className="divide-y divide-border">
@@ -186,33 +222,52 @@ function PartyBalanceCardBody({
         rawKind="gold"
         dual={rate1000 ? dualFromPure(pureGoldMg, rate1000) : null}
       />
-      {rate1000 && totalGoldMg !== null ? (
-        <div className="flex items-center justify-between gap-3 py-2">
+      {rate1000 && totalGoldMg !== null && totalRial !== null ? (
+        <div className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-0.5">
             <p className="text-sm font-semibold">مانده کل معادل</p>
             <p className="text-xs text-muted-foreground">{debtorCreditorLabel(totalGoldMg)}</p>
           </div>
-          <AmountDisplay amount={dualFromPure(totalGoldMg, rate1000)} signed size="lg" />
+          <AmountDisplay amount={{ rial: totalRial, pureMg: totalGoldMg, rate1000 }} size="lg" />
         </div>
       ) : (
         <p className="py-2 text-xs text-muted-foreground">
-          هنوز مظنه‌ای ثبت نشده — مانده کل معادل قابل‌محاسبه نیست.
+          مظنه مرجع معتبر در دسترس نیست — مانده کل معادل قابل‌محاسبه نیست.
         </p>
       )}
 
       {rawBalances.coins.length > 0 ? (
-        <div className="space-y-2 py-2">
-          <p className="text-sm text-muted-foreground">سکه</p>
+        <div className="space-y-2 py-3">
+          <p className="text-sm font-semibold">سکه‌ها · مانده اصلی هر نوع</p>
           {rawBalances.coins.map((coin) => (
-            <div key={coin.coinTypeId} className="flex items-center justify-between gap-3">
-              <span className="text-sm">{coin.code}</span>
+            <div
+              key={coin.coinTypeId}
+              className="flex flex-wrap items-start justify-between gap-2 rounded-lg border border-border p-3"
+            >
+              <span className="min-w-0 text-sm">
+                <span className="block break-all font-medium">{coin.code}</span>
+                <span className="text-xs text-muted-foreground">
+                  {debtorCreditorLabel(BigInt(coin.count))}
+                </span>
+              </span>
               <span className="tabular-nums text-sm font-semibold">
                 {formatCoinCount(coin.count)}
                 <span className="ms-1 text-xs font-normal text-muted-foreground">عدد</span>
               </span>
             </div>
           ))}
+          <p className="text-xs leading-5 text-muted-foreground">
+            سکه‌ها در جمع طلا و ریال ادغام نمی‌شوند؛ مظنه طلا به‌تنهایی قیمت بازار و حباب هر نوع
+            سکه را تعیین نمی‌کند.
+          </p>
         </div>
+      ) : null}
+      {convertedView && rate1000 !== null ? (
+        <p className="py-2 text-xs leading-5 text-muted-foreground">
+          معادل‌ها با مظنه مرجعِ{' '}
+          {formatJalaliDateTime(new Date(convertedView.referenceMazneh.observedAt))} نمایش داده
+          می‌شوند؛ مانده‌های اصلی دفترکل تغییر نمی‌کنند.
+        </p>
       ) : null}
     </div>
   );
@@ -385,7 +440,7 @@ export default function PartyDetailPage() {
       <PageHeader title={party?.displayName ?? 'جزئیات شخص'}>
         <Link
           to="/parties"
-          className="inline-flex min-h-touch items-center gap-1 rounded-md px-2 text-sm text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="inline-flex min-h-touch cursor-pointer items-center gap-1 rounded-md px-2 text-sm text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <ChevronRight className="size-4" aria-hidden="true" />
           اشخاص

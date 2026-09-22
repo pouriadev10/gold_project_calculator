@@ -20,9 +20,16 @@ const SIZE_CLASS = {
   xl: 'text-3xl',
 } as const;
 
+/** مقدار خامِ تک‌واحدی؛ وقتی مظنه مرجع وجود ندارد نباید معادل ساختگی بسازیم. */
+export interface RawAmount {
+  readonly kind: 'raw';
+  readonly value: bigint;
+  readonly unit: MoneyUnit;
+}
+
 export interface AmountDisplayProps {
-  amount: DualAmount;
-  /** بازنویسی واحد فعال. اگر ندهی، تنظیم سراسری کاربر خوانده می‌شود. */
+  amount: DualAmount | RawAmount;
+  /** بازنویسی واحد برای مبلغ دومقیاسه؛ مقدار خام همیشه در واحد اصلی خودش می‌ماند. */
   unit?: MoneyUnit;
   /**
    * در واحد طلا، گرم را به معادل این عیار نشان بده (مثلاً ۷۵۰) به‌جای
@@ -48,12 +55,17 @@ export function AmountDisplay({
   className,
 }: AmountDisplayProps) {
   const globalUnit = useUnitStore((state) => state.unit);
-  const activeUnit = unit ?? globalUnit;
-
+  const isRawOnly = 'kind' in amount;
+  const activeUnit = isRawOnly ? amount.unit : (unit ?? globalUnit);
   const isGold = activeUnit === 'gold';
-  const goldMg = karat !== undefined ? fromPureMgSigned(amount.pureMg, karat) : amount.pureMg;
-  const raw = isGold ? goldMg : amount.rial;
-  const text = isGold ? formatGram(goldMg) : formatRial(amount.rial);
+  const raw = isRawOnly
+    ? amount.value
+    : isGold
+      ? karat !== undefined
+        ? fromPureMgSigned(amount.pureMg, karat)
+        : amount.pureMg
+      : amount.rial;
+  const text = isGold ? formatGram(raw) : formatRial(raw);
 
   const toneClass = signed
     ? raw > 0n

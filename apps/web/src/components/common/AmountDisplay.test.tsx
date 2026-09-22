@@ -106,6 +106,23 @@ describe('AmountDisplay — حالت‌های مرزی (FE-025)', () => {
     rerender(<AmountDisplay amount={noRate} unit="rial" />);
     expect(screen.getByText(/ریال/).closest('[data-unit]')?.getAttribute('data-raw')).toBe('0');
   });
+
+  it('مانده خام بدون مظنه را در واحد اصلی حفظ می‌کند و معادل ساختگی نمی‌سازد', async () => {
+    const user = userEvent.setup();
+    render(
+      <div>
+        <UnitToggle />
+        <AmountDisplay amount={{ kind: 'raw', value: -12500000n, unit: 'rial' }} />
+      </div>,
+    );
+
+    const raw = document.querySelector('[data-unit="rial"]');
+    expect(raw).toHaveAttribute('data-raw', '-12500000');
+    expect(raw).toHaveAttribute('data-unit', 'rial');
+    await user.click(screen.getByRole('radio', { name: 'ریال' }));
+    expect(raw).toHaveAttribute('data-raw', '-12500000');
+    expect(raw).toHaveAttribute('data-unit', 'rial');
+  });
 });
 
 describe('RateDisplay', () => {

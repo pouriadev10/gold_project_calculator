@@ -149,9 +149,8 @@ export function useParty(id: string) {
  *
  * `referenceQuoteId` باید صریح داده شود تا `convertedView` پر شود؛ بدونش
  * سرور `null` برمی‌گرداند (`party-balances.service.ts`) — یعنی معادل
- * طلایی/ریالی محاسبه‌ناپذیر است، نه صفر. صفحه‌ی جزئیات شخص همیشه با
- * `referenceQuoteId` آخرین مظنه فراخوانی می‌کند و اگر مظنه‌ای هنوز ثبت
- * نشده، `enabled: false` این query را اصلاً نمی‌فرستد.
+ * طلایی/ریالی محاسبه‌ناپذیر است، نه صفر. صفحه‌ی جزئیات شخص حتی بدون
+ * مظنه این query را می‌فرستد تا ماندهٔ خام دفترکل همیشه دیده شود.
  */
 export function usePartyBalances(id: string, query: PartyBalancesQuery, enabled = true) {
   return useQuery({
