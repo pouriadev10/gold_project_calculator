@@ -2358,9 +2358,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/queries.ts": {
-    "mtime": 1790072512.1712015,
-    "seen": 1790073217.1817331,
-    "ast_hash": "2bd592a70a8e55a7c434988485c2d870",
+    "mtime": 1790073733.774402,
+    "seen": 1790074367.2218401,
+    "ast_hash": "3cd76f4abe9cd27ea4122777cf03707f",
     "semantic_hash": ""
   },
   "apps/web/src/api/query-client.test.ts": {
@@ -2424,15 +2424,15 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/common/AmountDisplay.test.tsx": {
-    "mtime": 1786965220.039877,
-    "seen": 1789132525.9449282,
-    "ast_hash": "03ec3dbe6bd2338c7f25570bc065e502",
+    "mtime": 1790073774.601618,
+    "seen": 1790074367.2218547,
+    "ast_hash": "8dbb6f582f076f0e9f3625916088cbd9",
     "semantic_hash": ""
   },
   "apps/web/src/components/common/AmountDisplay.tsx": {
-    "mtime": 1786965220.0403793,
-    "seen": 1789132525.9449291,
-    "ast_hash": "28689787c7f617d327d3ccb73fb580cc",
+    "mtime": 1790074073.5822163,
+    "seen": 1790074367.2218556,
+    "ast_hash": "06d12f893bf89a814822ffbe8226cc50",
     "semantic_hash": ""
   },
   "apps/web/src/components/common/ApiErrorNotice.test.tsx": {
@@ -2970,15 +2970,15 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/parties/PartyDetailPage.test.tsx": {
-    "mtime": 1787101785.6762507,
-    "seen": 1789132525.9449944,
-    "ast_hash": "85439722b87d1f77c2cb06f8232bef6a",
+    "mtime": 1790074075.449021,
+    "seen": 1790074367.221943,
+    "ast_hash": "e9cdca30c5167c765b3acdad92d0afea",
     "semantic_hash": ""
   },
   "apps/web/src/features/parties/PartyDetailPage.tsx": {
-    "mtime": 1787101851.1899776,
-    "seen": 1789132525.9449954,
-    "ast_hash": "c2e9573c54a819439136da000431ef8a",
+    "mtime": 1790074102.857999,
+    "seen": 1790074367.2219439,
+    "ast_hash": "c91f865b95623b834333b5aba2a195e7",
     "semantic_hash": ""
   },
   "apps/web/src/features/parties/PartyFormDialog.test.tsx": {
@@ -5034,9 +5034,9 @@
     "semantic_hash": ""
   },
   "FrontTasks.md": {
-    "mtime": 1790073171.20727,
-    "seen": 1790073217.1821826,
-    "ast_hash": "2bdabb9a8e16342d7eee7359c50d22c3",
+    "mtime": 1790074319.0649948,
+    "seen": 1790074367.2223063,
+    "ast_hash": "c1f04efd4759f03152f75347493e72f2",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
