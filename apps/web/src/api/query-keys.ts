@@ -97,6 +97,7 @@ export const queryKeys = {
     amendmentPolicy: (invoiceId: string) =>
       [...queryKeys.salesInvoices.all(), 'amendment-policy', invoiceId] as const,
     versions: (invoiceId: string) => [...queryKeys.salesInvoices.all(), 'versions', invoiceId] as const,
+    amendments: (invoiceId: string) => [...queryKeys.salesInvoices.all(), 'amendments', invoiceId] as const,
   },
 
   transactions: {

@@ -5,7 +5,6 @@ import {
   ChevronRight,
   Download,
   FilePenLine,
-  History,
   Loader2,
   Package,
   RotateCcw,
@@ -35,17 +34,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { formatJalaliDateTime } from '@/lib/date';
+import { InvoiceVersionHistory } from './InvoiceVersionHistory';
 
 type InvoiceVersion = SalesInvoiceDetail['versions'][number];
-
-const REASON_LABEL: Readonly<Record<string, string>> = {
-  WEIGHT_ERROR: 'اصلاح وزن',
-  KARAT_ERROR: 'اصلاح عیار',
-  WAGE_ERROR: 'اصلاح اجرت',
-  PARTY_ERROR: 'اصلاح مشتری',
-  PAYMENT_ERROR: 'اصلاح پرداخت',
-  OTHER: 'سایر',
-};
 
 const POLICY_RESTRICTION_LABEL: Readonly<
   Record<InvoiceAmendmentPreflight['restrictions'][number], string>
@@ -341,56 +332,6 @@ function LedgerCard({ version }: { version: InvoiceVersion }) {
   );
 }
 
-function VersionHistory({ detail }: { detail: SalesInvoiceDetail }) {
-  const versions = [...detail.versions].sort((first, second) => second.version - first.version);
-  return (
-    <Card>
-      <CardHeader className="flex-row items-center gap-2 space-y-0">
-        <History className="size-5 text-muted-foreground" aria-hidden="true" />
-        <h2 className="text-sm font-semibold">تاریخچه نسخه‌ها</h2>
-      </CardHeader>
-      <CardContent>
-        <ol className="space-y-3">
-          {versions.map((version) => (
-            <li key={version.version} className="rounded-lg border border-border p-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="flex items-center gap-2">
-                  <span className="tabular-nums text-sm font-semibold">
-                    نسخه {formatCount(version.version)}
-                  </span>
-                  {version.version === detail.currentVersion ? (
-                    <Badge variant="default">جاری</Badge>
-                  ) : (
-                    <Badge variant="outline">قبلی</Badge>
-                  )}
-                </span>
-                <span className="tabular-nums text-xs text-muted-foreground">
-                  {formatJalaliDateTime(new Date(version.createdAt))}
-                </span>
-              </div>
-              <p className="mt-2 text-sm">
-                {version.reason === null
-                  ? 'صدور اولیه'
-                  : (REASON_LABEL[version.reason] ?? version.reason)}
-              </p>
-              {version.reasonDetail ? (
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  {version.reasonDetail}
-                </p>
-              ) : null}
-              {version.actor ? (
-                <p className="mt-2 text-xs text-muted-foreground">
-                  ثبت توسط {version.actor.displayName}
-                </p>
-              ) : null}
-            </li>
-          ))}
-        </ol>
-      </CardContent>
-    </Card>
-  );
-}
-
 function InvoiceActions({ detail }: { detail: SalesInvoiceDetail }) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<unknown>(null);
@@ -561,7 +502,7 @@ export function SalesInvoiceDetailView({ detail }: { readonly detail: SalesInvoi
             <SettingsCard version={version} />
             <LedgerCard version={version} />
           </div>
-          <VersionHistory detail={detail} />
+          <InvoiceVersionHistory invoiceId={detail.id} rate1000={rate1000} />
         </>
       )}
 

@@ -4,18 +4,22 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import type * as ReactRouter from '@tanstack/react-router';
 import type { SalesInvoiceDetail } from '@/api/contracts';
-import type { InvoiceAmendmentPreflight } from '@gold/contracts';
+import type { InvoiceAmendmentPreflight, SalesInvoiceAmendmentHistory, SalesInvoiceVersionHistory } from '@gold/contracts';
 import { ApiError } from '@/api/api-error';
 import { useUnitStore } from '@/stores/unit-store';
 import SalesInvoiceDetailPage from './SalesInvoiceDetailPage';
 
 const useSalesInvoiceDetailMock = vi.fn();
 const useInvoiceAmendmentPolicyMock = vi.fn();
+const useInvoiceVersionsMock = vi.fn();
+const useInvoiceAmendmentsMock = vi.fn();
 const getSalesInvoicePdfMock = vi.fn();
 
 vi.mock('@/api/queries', () => ({
   useSalesInvoiceDetail: (...args: unknown[]) => useSalesInvoiceDetailMock(...args),
   useInvoiceAmendmentPolicy: (...args: unknown[]) => useInvoiceAmendmentPolicyMock(...args),
+  useInvoiceVersions: (...args: unknown[]) => useInvoiceVersionsMock(...args),
+  useInvoiceAmendments: (...args: unknown[]) => useInvoiceAmendmentsMock(...args),
 }));
 
 vi.mock('@/api/sales', () => ({
@@ -141,6 +145,66 @@ function mockDetail(data: SalesInvoiceDetail = DETAIL): void {
     error: null,
     refetch: vi.fn(),
   });
+  const history: SalesInvoiceVersionHistory = {
+    invoiceId: data.id,
+    invoiceNumber: data.invoiceNumber ?? 122,
+    versions: data.versions.map((version) => ({
+      version: version.version,
+      reason: version.reason,
+      reasonDetail: version.reasonDetail,
+      partyId: data.party.id,
+      actor: version.actor,
+      createdAt: version.createdAt,
+      payableRial: version.payableRial,
+      pureWeightMg: version.pureWeightMg,
+      karat: version.items[0]?.karat ?? null,
+      items: version.items.map((item) => ({
+        itemType: item.itemType,
+        itemId: item.itemId,
+        quantity: item.quantity,
+        pureWeightMg: item.pureWeightMg,
+        karat: item.karat,
+      })),
+      totalsSnapshot: { payableRial: version.payableRial },
+      settingsSnapshot: version.settingsSnapshot,
+      ledgerEffects: [],
+      inventoryEffects: [],
+    })),
+  };
+  useInvoiceVersionsMock.mockReturnValue({ data: history, isLoading: false, isError: false, refetch: vi.fn() });
+  const amendments: SalesInvoiceAmendmentHistory = {
+    invoiceId: data.id,
+    invoiceNumber: data.invoiceNumber ?? 122,
+    amendments: data.versions.flatMap((version, index) => {
+      const before = data.versions[index - 1];
+      if (!before || version.reason === null) return [];
+      return [{
+        version: version.version,
+        reason: version.reason,
+        reasonDetail: version.reasonDetail,
+        actor: version.actor,
+        createdAt: version.createdAt,
+        changes: {
+          payableRial: {
+            before: before.payableRial,
+            after: version.payableRial,
+            delta: (BigInt(version.payableRial) - BigInt(before.payableRial)).toString(),
+          },
+          pureWeightMg: {
+            before: before.pureWeightMg,
+            after: version.pureWeightMg,
+            delta: before.pureWeightMg === null || version.pureWeightMg === null
+              ? null
+              : (BigInt(version.pureWeightMg) - BigInt(before.pureWeightMg)).toString(),
+          },
+          karat: { before: before.items[0]?.karat ?? null, after: version.items[0]?.karat ?? null },
+        },
+        ledgerEffects: [],
+        inventoryEffects: [],
+      }];
+    }),
+  };
+  useInvoiceAmendmentsMock.mockReturnValue({ data: amendments, isLoading: false, isError: false, refetch: vi.fn() });
 }
 
 function mockPolicy(
@@ -166,6 +230,8 @@ function mockPolicy(
 beforeEach(() => {
   useSalesInvoiceDetailMock.mockReset();
   useInvoiceAmendmentPolicyMock.mockReset();
+  useInvoiceVersionsMock.mockReset();
+  useInvoiceAmendmentsMock.mockReset();
   mockPolicy();
   getSalesInvoicePdfMock.mockReset();
   useUnitStore.setState({ unit: 'gold' });
@@ -229,6 +295,29 @@ describe('SalesInvoiceDetailPage — snapshot و نسخه جاری', () => {
     expect(within(history!).getByText('صدور اولیه')).toBeInTheDocument();
     expect(within(history!).getByText('جاری')).toBeInTheDocument();
     expect(within(history!).getByText('قبلی')).toBeInTheDocument();
+  });
+
+  it('اختلاف اصلاح را با نرخ قفل‌شده نشان می‌دهد و جزئیات نسخه قبلی فقط خواندنی است', async () => {
+    mockDetail();
+    render(<SalesInvoiceDetailPage />);
+
+    expect(useInvoiceVersionsMock).toHaveBeenCalledWith(DETAIL.id);
+    expect(useInvoiceAmendmentsMock).toHaveBeenCalledWith(DETAIL.id);
+    const history = screen.getByText('تاریخچه نسخه‌ها').closest('div')?.parentElement;
+    if (!history) throw new Error('تاریخچه نسخه‌ها پیدا نشد');
+    const currentRow = within(history).getByText('نسخه ۲').closest('li')!;
+    const previousRow = within(history).getByText('نسخه ۱').closest('li')!;
+    expect(currentRow.compareDocumentPosition(previousRow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const difference = within(currentRow).getByText('اختلاف مبلغ').parentElement!;
+    expect(difference.querySelector('[data-unit="gold"]')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('radio', { name: 'ریال' }));
+    expect(difference.querySelector('[data-unit="rial"]')).toHaveAttribute('data-raw', '50000000');
+
+    await userEvent.click(within(previousRow).getByText('مشاهده جزئیات نسخه ۱'));
+    expect(within(previousRow).getByText('مبلغ ثبت‌شده همین نسخه')).toBeVisible();
+    expect(within(previousRow).getByText('اقلام این نسخه')).toBeVisible();
+    expect(within(previousRow).getByText(/این نسخه و اثرهای حسابداری آن فقط خواندنی‌اند/)).toBeVisible();
+    expect(within(history).queryByRole('button', { name: /حذف/ })).not.toBeInTheDocument();
   });
 });
 

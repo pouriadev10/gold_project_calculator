@@ -21,12 +21,14 @@ import {
   DEFAULT_PAGE_SIZE,
   MAX_PAGE_SIZE,
 } from '@gold/contracts';
+import type { SalesInvoiceAmendmentHistory } from '@gold/contracts';
 import { HttpResponse, http, delay } from 'msw';
 import type {
   JewelryItemVersion,
   Party,
   SalesInvoiceDetail,
   SalesInvoiceListItem,
+  SalesInvoiceVersionHistory,
 } from '@/api/contracts';
 import {
   MAZNEH_RIAL,
@@ -111,9 +113,13 @@ let invoiceCounter = 122;
  * می‌دهد که هیچ‌وقت ثبت نشده و کل قاعده‌ی «رسید = پاسخ سرور» در توسعه
  * ساختگی می‌شود.
  */
-const salesInvoiceVersions = new Map<string, unknown>(
+const salesInvoiceVersions = new Map<string, SalesInvoiceVersionHistory>(
   salesInvoiceVersionRecords.map((history) => [history.invoiceId, history]),
 );
+
+function historyDifference(before: string | null, after: string | null): string | null {
+  return before === null || after === null ? null : (BigInt(after) - BigInt(before)).toString();
+}
 const salesInvoiceDetails = new Map<string, SalesInvoiceDetail>(
   salesInvoiceDetailRecords.map((detail) => [detail.id, detail]),
 );
@@ -1996,5 +2002,43 @@ export const handlers = [
       );
     }
     return HttpResponse.json(found);
+  }),
+
+  http.get('/api/sales/invoices/:invoiceId/amendments', async ({ params }) => {
+    await delay(READ_DELAY_MS);
+    const found = salesInvoiceVersions.get(String(params.invoiceId));
+    if (!found) {
+      return HttpResponse.json(
+        { error: { code: 'NOT_FOUND', message: 'فاکتور مورد نظر پیدا نشد', fields: {}, requestId: crypto.randomUUID() } },
+        { status: 404 },
+      );
+    }
+    const amendments: SalesInvoiceAmendmentHistory['amendments'] = found.versions.flatMap((version, index) => {
+      const before = found.versions[index - 1];
+      if (!before || version.reason === null) return [];
+      return [{
+        version: version.version,
+        reason: version.reason,
+        reasonDetail: version.reasonDetail,
+        actor: version.actor,
+        createdAt: version.createdAt,
+        changes: {
+          pureWeightMg: {
+            before: before.pureWeightMg,
+            after: version.pureWeightMg,
+            delta: historyDifference(before.pureWeightMg, version.pureWeightMg),
+          },
+          payableRial: {
+            before: before.payableRial,
+            after: version.payableRial,
+            delta: historyDifference(before.payableRial, version.payableRial),
+          },
+          karat: { before: before.karat, after: version.karat },
+        },
+        ledgerEffects: version.ledgerEffects,
+        inventoryEffects: version.inventoryEffects,
+      }];
+    });
+    return HttpResponse.json({ invoiceId: found.invoiceId, invoiceNumber: found.invoiceNumber, amendments } satisfies SalesInvoiceAmendmentHistory);
   }),
 ];

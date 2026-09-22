@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { invoiceAmendmentPreflightSchema } from '@gold/contracts';
+import { invoiceAmendmentPreflightSchema, salesInvoiceAmendmentHistorySchema } from '@gold/contracts';
 import { apiGet } from './client';
 import {
   coinTypeListSchema,
@@ -328,6 +328,17 @@ export function useInvoiceVersions(invoiceId: string | null) {
     queryKey: queryKeys.salesInvoices.versions(invoiceId ?? ''),
     queryFn: ({ signal }) =>
       apiGet(`/sales/invoices/${invoiceId}/versions`, salesInvoiceVersionHistorySchema, signal),
+    staleTime: Infinity,
+    enabled: invoiceId !== null,
+  });
+}
+
+/** اختلاف‌های immutable هر اصلاح — همان snapshot تاریخی سرور، نه محاسبه با نرخ امروز. */
+export function useInvoiceAmendments(invoiceId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.salesInvoices.amendments(invoiceId ?? ''),
+    queryFn: ({ signal }) =>
+      apiGet(`/sales/invoices/${invoiceId}/amendments`, salesInvoiceAmendmentHistorySchema, signal),
     staleTime: Infinity,
     enabled: invoiceId !== null,
   });

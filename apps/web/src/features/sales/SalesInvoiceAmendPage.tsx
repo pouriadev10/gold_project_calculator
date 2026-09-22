@@ -308,6 +308,7 @@ function AmendmentForm({
       onCompleted(next);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.salesInvoices.versions(detail.id) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.salesInvoices.amendments(detail.id) }),
         queryClient.invalidateQueries({
           queryKey: queryKeys.salesInvoices.detail(detail.id),
           refetchType: 'none',
