@@ -8,6 +8,7 @@ import {
   itemListSchema,
   jewelryItemListSchema,
   jewelryItemVersionSchema,
+  ledgerProfitReportSchema,
   partyBalanceReportSchema,
   partyBalanceSummarySchema,
   partyBalancesSchema,
@@ -26,6 +27,7 @@ import {
   type JewelryItemQuery,
   type PartyBalancesQuery,
   type PartyListQuery,
+  type LedgerProfitReportQuery,
   type PartyBalanceReportQuery,
   type PartyReportDirection,
   type PartyStatementQuery,
@@ -86,6 +88,30 @@ export function useProfitReport(period: ProfitPeriod) {
     queryKey: queryKeys.reports.profit(period),
     queryFn: ({ signal }) => apiGet(`/reports/profit?period=${period}`, profitReportSchema, signal),
     staleTime: MINUTE,
+  });
+}
+
+/**
+ * گزارش سود — `GET /reporting/profit` (BE-060، FE-075).
+ *
+ * همه‌ی اعداد را سرور از snapshotهای تغییرناپذیر فاکتورها و خریدهای
+ * دست‌دوم می‌سازد؛ طلای معادل هر رویداد با مظنه‌ی قفل‌شده‌ی همان رویداد است.
+ * `to` در سرور انحصاری است (`lt`). `staleTime: 0` تا پس از یک فروش،
+ * بازگشت به این صفحه عدد کهنه نشان ندهد.
+ */
+export function useLedgerProfitReport(query: LedgerProfitReportQuery, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.reports.ledgerProfit(query),
+    queryFn: ({ signal }) => {
+      const params = new URLSearchParams();
+      if (query.from) params.set('from', query.from);
+      if (query.to) params.set('to', query.to);
+      const qs = params.toString();
+      return apiGet(`/reporting/profit${qs ? `?${qs}` : ''}`, ledgerProfitReportSchema, signal);
+    },
+    staleTime: 0,
+    placeholderData: keepPreviousData,
+    enabled,
   });
 }
 

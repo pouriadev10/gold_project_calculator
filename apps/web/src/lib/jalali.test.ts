@@ -14,6 +14,7 @@ import {
   isValidTimeZone,
   jalaliMonthLength,
   jalaliPresetRange,
+  jalaliRangeToHalfOpenIso,
   jalaliRangeToIso,
   jalaliToDayNumber,
   jalaliToday,
@@ -152,6 +153,29 @@ describe('بازه و میان‌برها', () => {
     expect(jalaliRangeToIso({ from: { year: 1405, month: 7, day: 1 }, to: null }, TEHRAN)).toEqual({
       from: '2026-09-22T20:30:00.000Z',
     });
+  });
+
+  it('برای to انحصاری، مرز پایان نیمه‌شب روز بعد است', () => {
+    expect(
+      jalaliRangeToHalfOpenIso(
+        { from: { year: 1405, month: 7, day: 1 }, to: { year: 1405, month: 7, day: 30 } },
+        TEHRAN,
+      ),
+    ).toEqual({ from: '2026-09-22T20:30:00.000Z', to: '2026-10-22T20:30:00.000Z' });
+    // یک روز تنها: from < to اکید، همان شرط profitReportQuerySchema.
+    expect(
+      jalaliRangeToHalfOpenIso(
+        { from: { year: 1405, month: 7, day: 18 }, to: { year: 1405, month: 7, day: 18 } },
+        TEHRAN,
+      ),
+    ).toEqual({ from: '2026-10-09T20:30:00.000Z', to: '2026-10-10T20:30:00.000Z' });
+    expect(jalaliRangeToHalfOpenIso({ from: null, to: null }, TEHRAN)).toEqual({});
+    expect(
+      jalaliRangeToHalfOpenIso(
+        { from: { year: 1405, month: 7, day: 2 }, to: { year: 1405, month: 7, day: 1 } },
+        TEHRAN,
+      ),
+    ).toBeNull();
   });
 
   it('بازه‌ی وارونه null است', () => {

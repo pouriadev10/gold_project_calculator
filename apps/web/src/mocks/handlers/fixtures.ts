@@ -832,6 +832,51 @@ export function dashboardFor(displayUnit: 'GOLD' | 'RIAL') {
   };
 }
 
+/* ── گزارش سود واقعی (BE-060، FE-075) ─────────────────────── */
+
+function profitMeasure(rialAmount: bigint) {
+  return { rial: rialAmount.toString(), goldEquivalentMg: dualFromRial(rialAmount, RATE_1000).pureMg.toString() };
+}
+
+/**
+ * `GET /reporting/profit` — شکل `profitReportSchema` واقعی. روابط همان
+ * `ProfitReportService`: ناخالص = درآمد − بهای تمام‌شده، عملیاتی = ناخالص −
+ * حباب سکه، کل = ناخالص + اثر نوسان طلا. چهره‌ی طلایی هر سطر جداگانه تبدیل
+ * و سپس با همان روابط ترکیب می‌شود (مثل جمع per-event سرور). بازه‌ای که
+ * کاملاً بعد از `FETCHED_AT` باشد خالی است تا حالت «بدون داده» در dev دیده شود.
+ */
+export function ledgerProfitReportFor(from: string | null, to: string | null) {
+  const empty = from !== null && new Date(from).getTime() > FETCHED_AT.getTime();
+  const revenue = empty ? 0n : 850_000_000n;
+  const costOfGoods = empty ? 0n : 700_000_000n;
+  const coinBubbleEffect = empty ? 0n : 15_000_000n;
+  const goldPriceEffect = empty ? 0n : -8_000_000n;
+  const measures = {
+    revenue: profitMeasure(revenue),
+    costOfGoods: profitMeasure(costOfGoods),
+    coinBubbleEffect: profitMeasure(coinBubbleEffect),
+    goldPriceEffect: profitMeasure(goldPriceEffect),
+  };
+  const combine = (
+    left: { rial: string; goldEquivalentMg: string },
+    right: { rial: string; goldEquivalentMg: string },
+    sign: 1n | -1n,
+  ) => ({
+    rial: (BigInt(left.rial) + sign * BigInt(right.rial)).toString(),
+    goldEquivalentMg: (BigInt(left.goldEquivalentMg) + sign * BigInt(right.goldEquivalentMg)).toString(),
+  });
+  const grossProfit = combine(measures.revenue, measures.costOfGoods, -1n);
+
+  return {
+    from,
+    to,
+    ...measures,
+    grossProfit,
+    operatingProfit: combine(grossProfit, measures.coinBubbleEffect, -1n),
+    totalProfit: combine(grossProfit, measures.goldPriceEffect, 1n),
+  };
+}
+
 /* ── آخرین حرکات موجودی (FE-040) ──────────────────────────── */
 
 /**

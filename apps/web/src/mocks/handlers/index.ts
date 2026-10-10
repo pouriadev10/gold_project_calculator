@@ -42,6 +42,7 @@ import {
   dashboardFor,
   itemRecords,
   JEWELRY_BALANCE_ROWS,
+  ledgerProfitReportFor,
   jewelryItemVersionRecords,
   PARTY_RIAL_BALANCE,
   partyBalanceReportFor,
@@ -1828,6 +1829,28 @@ export const handlers = [
     };
     idempotencyCache.set(key, created);
     return HttpResponse.json(created, { status: 201 });
+  }),
+
+  /** `GET /reporting/profit` — قرارداد نهایی BE-060 (`profitReportSchema`، FE-075). */
+  http.get('/api/reporting/profit', async ({ request }) => {
+    await delay(READ_DELAY_MS);
+    const searchParams = new URL(request.url).searchParams;
+    const from = searchParams.get('from');
+    const to = searchParams.get('to');
+    if (from !== null && to !== null && new Date(from).getTime() >= new Date(to).getTime()) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: '"from" must be before "to"',
+            fields: { to: ['"from" must be before "to"'] },
+            requestId: crypto.randomUUID(),
+          },
+        },
+        { status: 400 },
+      );
+    }
+    return HttpResponse.json(ledgerProfitReportFor(from, to));
   }),
 
   /** `GET /reporting/dashboard` — قرارداد نهایی BE-062ایش (FE-040). */

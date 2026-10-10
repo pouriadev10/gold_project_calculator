@@ -93,6 +93,12 @@ export {
   partyReportDirectionSchema,
   partyBalanceReportSchema,
   partyBalanceReportQuerySchema,
+  // گزارش سود واقعی BE-060 (FE-075). نام جدا، چون `profitReportSchema` پایین‌تر
+  // view model محلیِ فقط‌MSW کارت سود صفحه‌ی اصلی است.
+  profitReportSchema as ledgerProfitReportSchema,
+  profitReportQuerySchema as ledgerProfitReportQuerySchema,
+  type ProfitReport as LedgerProfitReport,
+  type ProfitReportQuery as LedgerProfitReportQuery,
   type PartyBalanceReport,
   type PartyBalanceReportQuery,
   type PartyReportDirection,

@@ -265,7 +265,8 @@ const reportingProfitRoute = createRoute({
   path: '/reporting/profit',
   // نقش‌محور — FE-028. لینک مستقیم برای CASHIER به /forbidden می‌رود، نه یک ۴۰۴ گنگ.
   beforeLoad: requireRole(PROFIT_REPORT_ROLES),
-  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'ReportingProfitPlaceholder'),
+  // گزارش سود واقعی — FE-075.
+  component: lazyRouteComponent(() => import('@/features/reporting/ProfitReportPage')),
 });
 
 const settingsRoute = createRoute({

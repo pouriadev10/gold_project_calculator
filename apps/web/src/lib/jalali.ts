@@ -315,6 +315,22 @@ export function jalaliRangeToIso(
   };
 }
 
+/**
+ * همان بازه برای endpointهایی که `to` را **انحصاری** می‌خوانند (`lt`، مثل
+ * گزارش سود BE-060): `to` نیمه‌شب آغاز روزِ بعد از روز آخر است، تا رویدادی
+ * در آخرین میلی‌ثانیه‌ی روز آخر هم بیرون نماند.
+ */
+export function jalaliRangeToHalfOpenIso(
+  range: JalaliDateRange,
+  timeZone: string,
+): { from?: string; to?: string } | null {
+  if (isInvertedRange(range)) return null;
+  return {
+    ...(range.from ? { from: startOfJalaliDay(range.from, timeZone).toISOString() } : {}),
+    ...(range.to ? { to: startOfJalaliDay(addJalaliDays(range.to, 1), timeZone).toISOString() } : {}),
+  };
+}
+
 export type JalaliRangePreset = 'today' | 'week' | 'month';
 
 /** میان‌برها: امروز، هفته‌ی جاری (شنبه تا جمعه)، ماه شمسی جاری. */

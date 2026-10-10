@@ -1,5 +1,6 @@
 import type {
   InventoryItemType,
+  LedgerProfitReportQuery,
   PartyBalanceReportQuery,
   PartyReportDirection,
   JewelryItemQuery,
@@ -117,5 +118,8 @@ export const queryKeys = {
   reports: {
     all: () => ['reports'] as const,
     profit: (period: ProfitPeriod) => [...queryKeys.reports.all(), 'profit', period] as const,
+    /** گزارش سود واقعی — `GET /reporting/profit` (BE-060، FE-075). */
+    ledgerProfit: (query: LedgerProfitReportQuery) =>
+      [...queryKeys.reports.all(), 'ledger-profit', query] as const,
   },
 } as const;
