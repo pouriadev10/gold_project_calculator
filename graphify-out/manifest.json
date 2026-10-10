@@ -864,8 +864,8 @@
     "semantic_hash": ""
   },
   "apps/api/src/modules/parties/party-statements.service.ts": {
-    "mtime": 1786965220.0043018,
-    "seen": 1789132525.9447317,
+    "mtime": 1791638476.971164,
+    "seen": 1791640111.3253021,
     "ast_hash": "8b47028c15578ad37021573598d73116",
     "semantic_hash": ""
   },
@@ -2100,8 +2100,8 @@
     "semantic_hash": ""
   },
   "apps/api/test/party-statements.e2e-spec.ts": {
-    "mtime": 1786965220.0299976,
-    "seen": 1789132525.9448884,
+    "mtime": 1791638476.9722917,
+    "seen": 1791640111.3255117,
     "ast_hash": "c9dd61491694ff23d7cf323181d16ef5",
     "semantic_hash": ""
   },
@@ -2358,9 +2358,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/queries.ts": {
-    "mtime": 1790073733.774402,
-    "seen": 1790074367.2218401,
-    "ast_hash": "3cd76f4abe9cd27ea4122777cf03707f",
+    "mtime": 1791639346.1325085,
+    "seen": 1791640111.3255575,
+    "ast_hash": "02fb8e9c37e3e447920bf0903fda9979",
     "semantic_hash": ""
   },
   "apps/web/src/api/query-client.test.ts": {
@@ -2418,9 +2418,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/app/router.tsx": {
-    "mtime": 1789991042.3271518,
-    "seen": 1789992102.9873438,
-    "ast_hash": "18c3e57bf6d0ec6a3e7b529c52d2f3ed",
+    "mtime": 1791639426.1583893,
+    "seen": 1791640111.3255708,
+    "ast_hash": "9cacdb7cb68eb0753b75c2f251a7c2bb",
     "semantic_hash": ""
   },
   "apps/web/src/components/common/AmountDisplay.test.tsx": {
@@ -2970,15 +2970,15 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/parties/PartyDetailPage.test.tsx": {
-    "mtime": 1790074075.449021,
-    "seen": 1790074367.221943,
-    "ast_hash": "e9cdca30c5167c765b3acdad92d0afea",
+    "mtime": 1791639864.573025,
+    "seen": 1791640111.3256636,
+    "ast_hash": "7afc1cf8d48dca40fa83cdae8cf6204b",
     "semantic_hash": ""
   },
   "apps/web/src/features/parties/PartyDetailPage.tsx": {
-    "mtime": 1790074102.857999,
-    "seen": 1790074367.2219439,
-    "ast_hash": "c91f865b95623b834333b5aba2a195e7",
+    "mtime": 1791639438.315714,
+    "seen": 1791640111.3256643,
+    "ast_hash": "40c983d30bf68a5b0e83edb23253ca44",
     "semantic_hash": ""
   },
   "apps/web/src/features/parties/PartyFormDialog.test.tsx": {
@@ -3552,15 +3552,15 @@
     "semantic_hash": ""
   },
   "apps/web/src/mocks/handlers/fixtures.ts": {
-    "mtime": 1789819152.4984193,
-    "seen": 1789820752.9456537,
-    "ast_hash": "14018360bf889db92a73a275c25b5948",
+    "mtime": 1791639460.6723926,
+    "seen": 1791640111.3257794,
+    "ast_hash": "ea3e7c43d9c89e27695ef161f416c08a",
     "semantic_hash": ""
   },
   "apps/web/src/mocks/handlers/index.ts": {
-    "mtime": 1790072666.7714498,
-    "seen": 1790073217.1819355,
-    "ast_hash": "c63944e18976fa80a859d01ac57c27b1",
+    "mtime": 1791639460.6733787,
+    "seen": 1791640111.3257802,
+    "ast_hash": "d8aca68d0d53b038161c4131449faff6",
     "semantic_hash": ""
   },
   "apps/web/src/stores/purchase-draft-store.test.ts": {
@@ -3804,8 +3804,8 @@
     "semantic_hash": ""
   },
   "packages/contracts/src/parties/parties.ts": {
-    "mtime": 1786965220.1498072,
-    "seen": 1789132525.9450963,
+    "mtime": 1791638476.9772482,
+    "seen": 1791640111.3258848,
     "ast_hash": "319b2abcaa8291d7a87f8ad4c2ee610d",
     "semantic_hash": ""
   },
@@ -5034,9 +5034,9 @@
     "semantic_hash": ""
   },
   "FrontTasks.md": {
-    "mtime": 1790074319.0649948,
-    "seen": 1790074367.2223063,
-    "ast_hash": "c1f04efd4759f03152f75347493e72f2",
+    "mtime": 1791640046.4536679,
+    "seen": 1791640111.3260999,
+    "ast_hash": "6312932bf51c0123ebfc83bdeb47183c",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
@@ -5433,6 +5433,30 @@
     "mtime": 1790072980.8623211,
     "seen": 1790073217.1818788,
     "ast_hash": "70b37c88eed30185091afb5fa3ec7bd8",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/parties/PartyStatementPage.test.tsx": {
+    "mtime": 1791639830.3443396,
+    "seen": 1791640111.3256705,
+    "ast_hash": "06d411d7399b9f80ff94412c25eb11a6",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/parties/PartyStatementPage.tsx": {
+    "mtime": 1791639419.010831,
+    "seen": 1791640111.3256714,
+    "ast_hash": "1d0bfb527b501684db397c2d1d5c2924",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/parties/party-statement.test.ts": {
+    "mtime": 1791639487.251052,
+    "seen": 1791640111.3256745,
+    "ast_hash": "cbdb1ab35b3fcf8b0e6b9221b09104f4",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/parties/party-statement.ts": {
+    "mtime": 1791639314.8756373,
+    "seen": 1791640111.3256755,
+    "ast_hash": "2eb07dd24ead4a515717cc0ecf5ee19b",
     "semantic_hash": ""
   }
 }
