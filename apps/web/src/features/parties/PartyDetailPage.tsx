@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from '@tanstack/react-router';
-import { ChevronRight, Landmark, Loader2, Pencil, ReceiptText } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Landmark, Loader2, Pencil, ReceiptText } from 'lucide-react';
 import { dualFromPure, dualFromRial, formatCoinCount, formatGram, formatRial, toSafeNumber } from '@gold/core-calc';
 import type { DualAmount } from '@gold/core-calc';
 import { deactivateParty } from '@/api/parties';
 import { queryKeys } from '@/api/query-keys';
 import { useLatestPriceQuote, useParty, usePartyBalances, usePartyStatement } from '@/api/queries';
-import type { Party, PartyBalances, PartyBalancesQuery, PartyStatementSourceType } from '@/api/contracts';
+import type { Party, PartyBalances, PartyBalancesQuery } from '@/api/contracts';
 import { AmountDisplay } from '@/components/common/AmountDisplay';
 import type { RawAmount } from '@/components/common/AmountDisplay';
 import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
@@ -32,6 +32,7 @@ import { formatJalaliDateTime } from '@/lib/date';
 import { toast } from '@/stores/toast-store';
 import { useUnitStore } from '@/stores/unit-store';
 import { PartyFormDialog } from './PartyFormDialog';
+import { SOURCE_LABEL, debtorCreditorLabel } from './party-statement';
 
 /**
  * صفحه‌ی جزئیات شخص — FE-034.
@@ -41,8 +42,8 @@ import { PartyFormDialog } from './PartyFormDialog';
  * معاملات (`GET /parties/:id/statement`، BE-057؛ فقط ۵ ردیف آخر، بدون
  * فیلتر — همان بخش «صورت‌حساب» هم هست). دو بخش دیگر لینک به مسیرهایی
  * هستند که صفحه‌ی واقعی‌شان کار تسک جدایی است: «ثبت تسویه» به
- * `/parties/:partyId/settlements/new` (FE-055، اکنون فقط جانگه‌دار) و
- * صورت‌حساب کامل با فیلتر/pagination به FE-070 (هنوز مسیر ندارد).
+ * `/parties/:partyId/settlements/new` (FE-055) و صورت‌حساب کامل با
+ * فیلتر/pagination به `/parties/:partyId/statement` (FE-070).
  *
  * «ویرایش» همان `PartyFormDialog` ساخته‌ی FE-033 را باز می‌کند — این
  * صفحه دومین (و اولین واقعی، غیر از ردیف لیست) نقطه‌ی ورود آن است.
@@ -56,28 +57,6 @@ import { PartyFormDialog } from './PartyFormDialog';
  */
 
 const TYPE_LABEL: Record<Party['type'], string> = { CONSUMER: 'مصرف‌کننده', BUSINESS: 'همکار' };
-
-const SOURCE_LABEL: Record<PartyStatementSourceType, string> = {
-  OPENING_BALANCE: 'مانده افتتاحیه',
-  SALES_INVOICE: 'فاکتور فروش',
-  SECOND_HAND_PURCHASE: 'خرید دست‌دوم',
-  SETTLEMENT: 'تسویه',
-  SALES_INVOICE_AMENDMENT: 'اصلاح فاکتور',
-  LEDGER_REVERSAL: 'برگشت سند',
-};
-
-/**
- * بدهکار/بستانکار — دقیقاً آینه‌ی `directionFor` واقعی
- * (`apps/api/src/modules/reporting/party-balance-report.service.ts`):
- * مثبت یعنی شخص به فروشگاه بدهکار است، منفی یعنی فروشگاه به شخص
- * بستانکار است. برچسب جهت مستقل از واحد انتخابی می‌ماند؛ رنگ‌کردن مبلغ
- * صرفاً بر اساس علامت اینجا می‌توانست بدهکار را به‌اشتباه سبز نشان دهد.
- */
-function debtorCreditorLabel(raw: bigint): string {
-  if (raw > 0n) return 'بدهکار';
-  if (raw < 0n) return 'بستانکار';
-  return 'تسویه';
-}
 
 function StatusBadge({ status }: { status: Party['status'] }) {
   return status === 'ACTIVE' ? (
@@ -287,9 +266,16 @@ function RecentActivityCard({ partyId }: { partyId: string }) {
       <CardHeader>
         <CardTitle className="text-sm">آخرین معاملات</CardTitle>
         <p className="text-xs text-muted-foreground">
-          صورت‌حساب کامل با فیلتر بازه و pagination به‌زودی اضافه می‌شود؛ این‌جا فقط
-          ۵ رویداد آخر است.
+          فقط ۵ رویداد؛ صورت‌حساب کامل با بازه، فیلتر و مانده‌ی جاری در صفحه‌ی جدا است.
         </p>
+        <Link
+          to="/parties/$partyId/statement"
+          params={{ partyId }}
+          className="inline-flex min-h-touch cursor-pointer items-center gap-1 self-start rounded-md text-sm font-medium text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          مشاهده صورت‌حساب کامل
+          <ChevronLeft className="size-4" aria-hidden="true" />
+        </Link>
       </CardHeader>
       <CardContent>
         {isLoading ? <CardSkeleton lines={3} /> : null}

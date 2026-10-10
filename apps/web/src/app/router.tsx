@@ -119,6 +119,17 @@ const partyDetailRoute = createRoute({
   component: lazyRouteComponent(() => import('@/features/parties/PartyDetailPage')),
 });
 
+/** صورت‌حساب کامل شخص با بازه/فیلتر/pagination — FE-070. بدون beforeLoad، مثل خود جزئیات شخص. */
+const partyStatementRoute = createRoute({
+  getParentRoute: () => appShellRoute,
+  path: '/parties/$partyId/statement',
+  params: {
+    parse: (raw: { partyId: string }) => ({ partyId: uuidSchema.parse(raw.partyId) }),
+    stringify: (parsed: { partyId: string }) => ({ partyId: parsed.partyId }),
+  },
+  component: lazyRouteComponent(() => import('@/features/parties/PartyStatementPage')),
+});
+
 /**
  * «ثبت تسویه» شخص — FE-055. مسیر واقعی طبق `FrontTasks.md` دقیقاً همین
  * است: `/parties/:partyId/settlements/new`، نه مسیر تخت `/settlements/new`
@@ -302,6 +313,7 @@ const routeTree = rootRoute.addChildren([
     pricingRoute,
     partiesRoute,
     partyDetailRoute,
+    partyStatementRoute,
     partySettlementsNewRoute,
     inventoryRoute,
     inventoryJewelryRoute,

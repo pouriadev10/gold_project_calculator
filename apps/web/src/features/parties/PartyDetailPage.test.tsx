@@ -392,3 +392,13 @@ describe('PartyDetailPage — ثبت تسویه', () => {
     );
   });
 });
+
+describe('PartyDetailPage — صورت‌حساب کامل (FE-070)', () => {
+  it('کارت آخرین معاملات به صفحه‌ی صورت‌حساب همین شخص لینک می‌دهد', () => {
+    renderPage();
+    expect(screen.getByRole('link', { name: /مشاهده صورت‌حساب کامل/ })).toHaveAttribute(
+      'href',
+      `/parties/${TEST_PARTY_ID}/statement`,
+    );
+  });
+});

@@ -616,7 +616,18 @@ export function partyStatementEntriesFor(party: { id: string; mg: number }) {
       },
       quantity: (sign * (base / 4n)).toString(),
       runningBalance: (sign * base).toString(),
-      documentRateSnapshots: [],
+      // شکل واقعی snapshot فاکتور فروش در `party-statements.service.ts`
+      documentRateSnapshots: [
+        {
+          quoteId: 'c1000000-0000-4000-8000-000000000001',
+          quoteAmountRial: MAZNEH_RIAL.toString(),
+          quoteObservedAt: new Date(now - 1 * DAY_MS).toISOString(),
+          pricingSnapshot: {
+            totals: {},
+            settings: { baseQuoteKarat: '705', mithqalGrams: '4.6083' },
+          },
+        },
+      ],
     },
     {
       ledgerTransactionId: `e1000000-0000-4000-8000-${party.id.slice(-11)}0`,

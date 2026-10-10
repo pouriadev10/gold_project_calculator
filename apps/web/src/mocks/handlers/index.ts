@@ -1092,10 +1092,10 @@ export const handlers = [
   }),
 
   /**
-   * `GET /parties/:id/statement` — قرارداد نهایی BE-057 (`partyStatementSchema`،
-   * FE-034). فیلترهای بازه/نوع سند/بُعد اینجا اعمال نمی‌شوند — «آخرین
-   * معاملات» فقط `limit` کوچک بدون فیلتر می‌فرستد؛ نسخه‌ی کامل فیلتردار
-   * کار FE-070 است.
+   * `GET /parties/:id/statement` — قرارداد نهایی BE-057 (`partyStatementSchema`).
+   * فیلترهای بازه/نوع سند/بُعد مثل سرور واقعی پیش از صفحه‌بندی اعمال
+   * می‌شوند (FE-070)؛ `runningBalance` ساختگی fixture دست‌نخورده می‌ماند،
+   * همان‌طور که سرور مانده را پیش از فیلتر روی کل دفتر حساب می‌کند.
    */
   http.get('/api/parties/:id/statement', async ({ params, request }) => {
     await delay(READ_DELAY_MS);
@@ -1106,7 +1106,16 @@ export const handlers = [
     const searchParams = new URL(request.url).searchParams;
     const limit = Number.parseInt(searchParams.get('limit') ?? '50', 10);
     const offset = Number.parseInt(searchParams.get('offset') ?? '0', 10);
-    const entries = partyStatementEntriesFor({ id, mg: partyMgById[id] ?? 0 });
+    const from = searchParams.get('from');
+    const to = searchParams.get('to');
+    const sourceType = searchParams.get('sourceType');
+    const dimensionId = searchParams.get('dimensionId');
+    const entries = partyStatementEntriesFor({ id, mg: partyMgById[id] ?? 0 })
+      .filter((entry) => !from || entry.effectiveAt >= new Date(from).toISOString())
+      .filter((entry) => !to || entry.effectiveAt <= new Date(to).toISOString())
+      .filter((entry) => !sourceType || entry.source.type === sourceType)
+      .filter((entry) => !dimensionId || entry.dimension.id === dimensionId)
+      .sort((a, b) => a.effectiveAt.localeCompare(b.effectiveAt));
 
     return HttpResponse.json({
       items: entries.slice(offset, offset + limit),

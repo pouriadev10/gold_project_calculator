@@ -168,13 +168,15 @@ export function usePartyBalances(id: string, query: PartyBalancesQuery, enabled 
 }
 
 /**
- * صورت‌حساب شخص — `GET /parties/:id/statement` (BE-057، FE-034).
+ * صورت‌حساب شخص — `GET /parties/:id/statement` (BE-057).
  *
- * اینجا فقط برای «آخرین معاملات» (`limit` کوچک، بدون فیلتر) استفاده
- * می‌شود؛ صفحه‌ی کامل صورت‌حساب با بازه‌ی تاریخ/فیلتر نوع سند/بُعد کار
- * FE-070 است.
+ * دو مصرف‌کننده دارد: «آخرین معاملات» صفحه‌ی جزئیات شخص (FE-034، `limit`
+ * کوچک بدون فیلتر) و صفحه‌ی کامل صورت‌حساب با بازه/نوع سند/بُعد (FE-070).
+ * صفحه‌ی قبلی حین رفتن به صفحه یا فیلتر بعدی نگه داشته می‌شود تا فهرست
+ * چشمک نزند؛ مصرف‌کننده با `isPlaceholderData` حالت «در حال به‌روزرسانی»
+ * را نشان می‌دهد.
  */
-export function usePartyStatement(id: string, query: PartyStatementQuery) {
+export function usePartyStatement(id: string, query: PartyStatementQuery, enabled = true) {
   return useQuery({
     queryKey: queryKeys.parties.statement(id, query),
     queryFn: ({ signal }) => {
@@ -190,6 +192,10 @@ export function usePartyStatement(id: string, query: PartyStatementQuery) {
       return apiGet(`/parties/${id}/statement?${params.toString()}`, partyStatementSchema, signal);
     },
     staleTime: MINUTE,
+    // داده‌ی قبلی فقط وقتی جانگه‌دار می‌شود که مال همین شخص باشد؛ رفتن از
+    // یک شخص به شخص دیگر نباید لحظه‌ای ردیف‌های نفر قبلی را نشان دهد.
+    placeholderData: (previous) => (previous?.partyId === id ? previous : undefined),
+    enabled,
   });
 }
 
