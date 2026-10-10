@@ -2412,15 +2412,15 @@
     "semantic_hash": ""
   },
   "apps/web/src/app/route-placeholders.tsx": {
-    "mtime": 1791642983.1478305,
-    "seen": 1791643327.3497252,
-    "ast_hash": "f8306122b4147dab8554fd4ccd59c380",
+    "mtime": 1791643699.8864381,
+    "seen": 1791643960.199466,
+    "ast_hash": "43b204b685a6fd44c945c58e2c589eb4",
     "semantic_hash": ""
   },
   "apps/web/src/app/router.tsx": {
-    "mtime": 1791642983.1467874,
-    "seen": 1791643327.3497262,
-    "ast_hash": "86edf17838a3ee0fb202548510e2fb87",
+    "mtime": 1791643699.8859265,
+    "seen": 1791643960.1994689,
+    "ast_hash": "1d60d1ef77e3d3d088ec7f75a790bc77",
     "semantic_hash": ""
   },
   "apps/web/src/components/common/AmountDisplay.test.tsx": {
@@ -3558,9 +3558,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/mocks/handlers/index.ts": {
-    "mtime": 1791643053.2075882,
-    "seen": 1791643327.349932,
-    "ast_hash": "fe1a3b6a9b69517d830e73e1dcc773c4",
+    "mtime": 1791643699.8874743,
+    "seen": 1791643960.1998372,
+    "ast_hash": "382abb4f66e758291f809dc265ac9262",
     "semantic_hash": ""
   },
   "apps/web/src/stores/purchase-draft-store.test.ts": {
@@ -5034,9 +5034,9 @@
     "semantic_hash": ""
   },
   "FrontTasks.md": {
-    "mtime": 1791643281.6941514,
-    "seen": 1791643327.3501906,
-    "ast_hash": "3e20021302b249737d0dc09564b28840",
+    "mtime": 1791643909.453851,
+    "seen": 1791643960.2002254,
+    "ast_hash": "78fddb0a952b5ceb48665e4db0a00e70",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
@@ -5496,27 +5496,45 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/reporting/DebtorsPage.test.tsx": {
-    "mtime": 1791643137.4133472,
-    "seen": 1791643327.3498578,
-    "ast_hash": "8a8488b849690d70a93a2fb97b25a3ac",
+    "mtime": 1791643761.9135306,
+    "seen": 1791643960.199707,
+    "ast_hash": "160bc1681227005905551c4f6976b9df",
     "semantic_hash": ""
   },
   "apps/web/src/features/reporting/DebtorsPage.tsx": {
-    "mtime": 1791642966.1324003,
-    "seen": 1791643327.3498588,
-    "ast_hash": "349e02762b92db002af5f9777a1a9f1c",
+    "mtime": 1791643699.7740786,
+    "seen": 1791643960.1997087,
+    "ast_hash": "44459017b5613d49722f6a11d5c49fa5",
     "semantic_hash": ""
   },
   "apps/web/src/features/reporting/party-balance-report.test.ts": {
-    "mtime": 1791643092.7655387,
-    "seen": 1791643327.3498595,
-    "ast_hash": "b13ce6506bb4118799044f877c357f42",
+    "mtime": 1791643778.944508,
+    "seen": 1791643960.199712,
+    "ast_hash": "bfb706201b1c65a18a7d33c65b790bed",
     "semantic_hash": ""
   },
   "apps/web/src/features/reporting/party-balance-report.ts": {
-    "mtime": 1791642912.9652534,
-    "seen": 1791643327.3498604,
-    "ast_hash": "98ac85f674540bf93be69545550759d9",
+    "mtime": 1791643613.759522,
+    "seen": 1791643960.1997135,
+    "ast_hash": "c46ea5a2d243b2349fd365b0fd9bbfa6",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/reporting/CreditorsPage.test.tsx": {
+    "mtime": 1791643762.4569192,
+    "seen": 1791643960.1997027,
+    "ast_hash": "ab0a0d74087bed60e83c6cc028cecfee",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/reporting/CreditorsPage.tsx": {
+    "mtime": 1791643699.816229,
+    "seen": 1791643960.199705,
+    "ast_hash": "884763b395781b878544ab761ecafd98",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/reporting/PartyBalanceReportPage.tsx": {
+    "mtime": 1791643699.2178242,
+    "seen": 1791643960.1997106,
+    "ast_hash": "45ad68e53b2a060c1ce7ab4397c24b5d",
     "semantic_hash": ""
   }
 }
