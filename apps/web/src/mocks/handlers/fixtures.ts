@@ -745,20 +745,46 @@ export function partyStatementEntriesFor(party: { id: string; mg: number }) {
 
 /* ── داشبورد موجودی (FE-040) ──────────────────────────────── */
 
-/** `dashboardFinancialCardSchema` واقعی — `{raw:{rial,pureGoldMg}, displayAmount}`. */
-function dashboardCard(rial: bigint, displayUnit: 'GOLD' | 'RIAL') {
-  const dual = dualFromRial(rial, RATE_1000);
+/**
+ * `dashboardFinancialCardSchema` واقعی — آینه‌ی `toFinancialCard` سرور:
+ * مقدار خام علامت‌دار به‌علاوه‌ی `displayAmount` در واحد خواسته‌شده.
+ */
+function dashboardCard(raw: { rial: bigint; pureGoldMg: bigint }, displayUnit: 'GOLD' | 'RIAL') {
   return {
-    raw: { rial: dual.rial.toString(), pureGoldMg: dual.pureMg.toString() },
-    displayAmount: (displayUnit === 'GOLD' ? dual.pureMg : dual.rial).toString(),
+    raw: { rial: raw.rial.toString(), pureGoldMg: raw.pureGoldMg.toString() },
+    displayAmount: (displayUnit === 'GOLD'
+      ? raw.pureGoldMg + dualFromRial(raw.rial, RATE_1000).pureMg
+      : raw.rial + dualFromPure(raw.pureGoldMg, RATE_1000).rial
+    ).toString(),
   };
 }
 
 /**
- * `GET /reporting/dashboard` واقعی (BE-062‌ish). فقط `inventory` و
- * `currentMazneh` را `InventoryDashboardPage` (FE-040) واقعاً می‌خواند؛
- * بخش‌های مالی (`today`/`partyBalances`) هم برای معتبربودن پاسخ کنار
- * `dashboardSchema` واقعی پر شده‌اند، نه چون این صفحه نمایششان می‌دهد.
+ * جمع بدهکاران/بستانکاران مثل `loadPartyBalancesInTransaction` سرور: هر شخص
+ * با مانده‌ی قابل‌مقایسه‌اش (ریال + طلا با مظنه‌ی جاری) در یک طرف می‌نشیند و
+ * مقادیر خام علامت‌دارش جمع می‌شود — یعنی جمع بستانکاران منفی است.
+ */
+function dashboardPartyTotals() {
+  const debtors = { rial: 0n, pureGoldMg: 0n };
+  const creditors = { rial: 0n, pureGoldMg: 0n };
+  for (const party of parties) {
+    const rial = PARTY_RIAL_BALANCE[party.id] ?? 0n;
+    const pureGoldMg = mg(party.mg);
+    const comparable = comparableGoldBalanceNumerator(pureGoldMg, rial, RATE_1000);
+    const side = comparable > 0n ? debtors : comparable < 0n ? creditors : null;
+    if (side) {
+      side.rial += rial;
+      side.pureGoldMg += pureGoldMg;
+    }
+  }
+  return { debtors, creditors };
+}
+
+/**
+ * `GET /reporting/dashboard` واقعی (BE-059). `InventoryDashboardPage` (FE-040)
+ * موجودی و مظنه را می‌خواند و داشبورد اصلی (FE-074) همه‌ی بخش‌ها را؛ پس
+ * کارت‌های مالی همان شکل سرور را دارند: جریان‌های امروز فقط ریالی‌اند
+ * (`pureGoldMg: 0`) و جمع بستانکاران علامت منفی دارد.
  *
  * `inventory.coins` دقیقاً همان چیزی است که `COIN_BALANCE_ROWS` (FE-038)
  * برمی‌گرداند — این دو mock باید هم‌خوان بمانند، چون در بک‌اند واقعی هر دو
@@ -767,6 +793,7 @@ function dashboardCard(rial: bigint, displayUnit: 'GOLD' | 'RIAL') {
 export function dashboardFor(displayUnit: 'GOLD' | 'RIAL') {
   const { start, end } = { start: new Date(FETCHED_AT), end: new Date(FETCHED_AT.getTime() + DAY_MS) };
   start.setUTCHours(0, 0, 0, 0);
+  const partyTotals = dashboardPartyTotals();
 
   return {
     asOf: FETCHED_AT.toISOString(),
@@ -780,15 +807,15 @@ export function dashboardFor(displayUnit: 'GOLD' | 'RIAL') {
       goldRatePerGramRial: RATE_1000.toString(),
     },
     today: {
-      sales: dashboardCard(85_000_000n, displayUnit),
-      purchases: dashboardCard(32_000_000n, displayUnit),
-      receipts: dashboardCard(50_000_000n, displayUnit),
-      payments: dashboardCard(12_000_000n, displayUnit),
+      sales: dashboardCard({ rial: 85_000_000n, pureGoldMg: 0n }, displayUnit),
+      purchases: dashboardCard({ rial: 32_000_000n, pureGoldMg: 0n }, displayUnit),
+      receipts: dashboardCard({ rial: 50_000_000n, pureGoldMg: 0n }, displayUnit),
+      payments: dashboardCard({ rial: 12_000_000n, pureGoldMg: 0n }, displayUnit),
       invoiceCount: 6,
     },
     partyBalances: {
-      debtors: dashboardCard(creditMg > 0n ? (creditMg * RATE_1000) / 1000n : 0n, displayUnit),
-      creditors: dashboardCard(debitMg < 0n ? (-debitMg * RATE_1000) / 1000n : 0n, displayUnit),
+      debtors: dashboardCard(partyTotals.debtors, displayUnit),
+      creditors: dashboardCard(partyTotals.creditors, displayUnit),
       coinsRemainSeparate: true as const,
     },
     inventory: {

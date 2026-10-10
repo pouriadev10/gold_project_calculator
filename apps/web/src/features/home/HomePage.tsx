@@ -1,13 +1,13 @@
 import { Link } from '@tanstack/react-router';
 import { Minus, Plus } from 'lucide-react';
-import { useBalanceSummary, useRecentTransactions } from '@/api/queries';
+import { useRecentTransactions } from '@/api/queries';
 import { RequireRole } from '@/components/common/RequireRole';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { UnitToggle } from '@/components/common/UnitToggle';
 import { Button } from '@/components/ui/button';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { PROFIT_REPORT_ROLES } from '@/lib/permissions';
-import { BalanceCard } from './BalanceCard';
+import { DashboardOverview } from './DashboardOverview';
 import { MaznehBar } from './MaznehBar';
 import { ProfitCard } from './ProfitCard';
 import { RecentTransactions } from './RecentTransactions';
@@ -16,7 +16,12 @@ import { RecentTransactions } from './RecentTransactions';
  * صفحه‌ی اصلی — اولین چیزی که کاربر پس از ورود می‌بیند.
  *
  * ترتیب از بالا به پایین عمدی است و از BOOTSTRAP گام ۷ می‌آید:
- * مظنه → کلید واحد → مانده → سود → آخرین معامله‌ها → منطقه‌ی شست.
+ * مظنه → کلید واحد → داشبورد (امروز، مانده‌ی اشخاص، موجودی) → سود →
+ * آخرین معامله‌ها → منطقه‌ی شست.
+ *
+ * کارت‌های داشبورد (FE-074) از `GET /reporting/dashboard` واقعی می‌آیند و
+ * جای کارت «مانده حساب‌ها»ی قبلی را گرفته‌اند که روی view model محلی
+ * `/parties/balance-summary` (فقط MSW) ساخته شده بود.
  *
  * دو دکمه‌ی فروش و خرید در **یک‌سوم پایین** نشسته‌اند و روی ۳۶۰px بدون
  * اسکرول دیده می‌شوند. اقدام اصلی هرگز بالای صفحه نمی‌رود — دست کاربر
@@ -24,7 +29,6 @@ import { RecentTransactions } from './RecentTransactions';
  */
 export function HomePage() {
   const isOnline = useOnlineStatus();
-  const balance = useBalanceSummary();
   const transactions = useRecentTransactions(5);
 
   return (
@@ -41,11 +45,9 @@ export function HomePage() {
       </div>
 
       <div className="flex-1 space-y-4 px-4 pb-action lg:grid lg:grid-cols-2 lg:items-start lg:gap-4 lg:space-y-0 xl:grid-cols-3">
-        <BalanceCard
-          data={balance.data}
-          isError={balance.isError}
-          onRetry={() => void balance.refetch()}
-        />
+        <div className="lg:col-span-2 xl:col-span-3">
+          <DashboardOverview />
+        </div>
         {/* گزارش سود — FE-028: CASHIER نمی‌بیند، نه چون UI قشنگ‌تر می‌شود، چون دامنه‌ی دسترسی همین است */}
         <RequireRole roles={PROFIT_REPORT_ROLES}>
           <ProfitCard />
