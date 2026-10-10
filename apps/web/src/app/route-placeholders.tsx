@@ -10,10 +10,6 @@ export function SettlementsNewPlaceholder() {
   return <PlaceholderPage title="ثبت تسویه" note="تسویه‌ی ترکیبی ریال/طلا/سکه در گام‌های بعد می‌آید." />;
 }
 
-export function ReportingDebtorsPlaceholder() {
-  return <PlaceholderPage title="بدهکاران" note="فهرست بدهکاران در گام‌های بعد می‌آید." />;
-}
-
 export function ReportingCreditorsPlaceholder() {
   return <PlaceholderPage title="بستانکاران" note="فهرست بستانکاران در گام‌های بعد می‌آید." />;
 }

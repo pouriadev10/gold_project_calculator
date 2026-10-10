@@ -8,6 +8,7 @@ import {
   itemListSchema,
   jewelryItemListSchema,
   jewelryItemVersionSchema,
+  partyBalanceReportSchema,
   partyBalanceSummarySchema,
   partyBalancesSchema,
   partyListSchema,
@@ -25,6 +26,8 @@ import {
   type JewelryItemQuery,
   type PartyBalancesQuery,
   type PartyListQuery,
+  type PartyBalanceReportQuery,
+  type PartyReportDirection,
   type PartyStatementQuery,
   type PriceQuoteType,
   type ProfitPeriod,
@@ -195,6 +198,43 @@ export function usePartyStatement(id: string, query: PartyStatementQuery, enable
     // داده‌ی قبلی فقط وقتی جانگه‌دار می‌شود که مال همین شخص باشد؛ رفتن از
     // یک شخص به شخص دیگر نباید لحظه‌ای ردیف‌های نفر قبلی را نشان دهد.
     placeholderData: (previous) => (previous?.partyId === id ? previous : undefined),
+    enabled,
+  });
+}
+
+const REPORT_PATH: Record<PartyReportDirection, string> = {
+  DEBTOR: '/reporting/debtors',
+  CREDITOR: '/reporting/creditors',
+};
+
+/**
+ * فهرست بدهکاران/بستانکاران — `GET /reporting/debtors|creditors` (BE-058، FE-072).
+ *
+ * `referenceQuoteId` الزامی است: سرور ریال و طلا را فقط با یک مظنه‌ی مرجع
+ * مقایسه و مرتب می‌کند. ترتیب به اندازه‌ی مانده‌ی قابل‌مقایسه است، نه به
+ * واحد نمایش؛ پس صفحه همیشه با یک `displayUnit` ثابت می‌پرسد و کلید واحد
+ * فقط نمایش را عوض می‌کند، بدون درخواست تازه.
+ */
+export function usePartyBalanceReport(
+  direction: PartyReportDirection,
+  query: PartyBalanceReportQuery,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: queryKeys.parties.balanceReport(direction, query),
+    queryFn: ({ signal }) => {
+      const params = new URLSearchParams({
+        limit: String(query.limit),
+        offset: String(query.offset),
+        displayUnit: query.displayUnit,
+        referenceQuoteId: query.referenceQuoteId,
+        sortDirection: query.sortDirection,
+      });
+      if (query.search) params.set('search', query.search);
+      return apiGet(`${REPORT_PATH[direction]}?${params.toString()}`, partyBalanceReportSchema, signal);
+    },
+    staleTime: MINUTE,
+    placeholderData: keepPreviousData,
     enabled,
   });
 }

@@ -1,5 +1,7 @@
 import type {
   InventoryItemType,
+  PartyBalanceReportQuery,
+  PartyReportDirection,
   JewelryItemQuery,
   PartyBalancesQuery,
   PartyListQuery,
@@ -47,6 +49,13 @@ export const queryKeys = {
       [...queryKeys.parties.all(), 'balances', id, query] as const,
     statement: (id: string, query: PartyStatementQuery) =>
       [...queryKeys.parties.all(), 'statement', id, query] as const,
+    /**
+     * فهرست بدهکاران/بستانکاران (BE-058، FE-072). عمداً زیر `parties` است تا
+     * هر ثبت فروش/خرید/تسویه که `parties.all()` را باطل می‌کند، این گزارش را
+     * هم تازه کند.
+     */
+    balanceReport: (direction: PartyReportDirection, query: PartyBalanceReportQuery) =>
+      [...queryKeys.parties.all(), 'balance-report', direction, query] as const,
   },
 
   items: {

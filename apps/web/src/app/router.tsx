@@ -249,7 +249,8 @@ const settlementsNewRoute = createRoute({
 const reportingDebtorsRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/reporting/debtors',
-  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'ReportingDebtorsPlaceholder'),
+  // فهرست بدهکاران — FE-072. بدون beforeLoad نقش‌محور: ReportingController هیچ @Roles تفکیک‌کننده‌ای ندارد.
+  component: lazyRouteComponent(() => import('@/features/reporting/DebtorsPage')),
 });
 
 const reportingCreditorsRoute = createRoute({

@@ -1,5 +1,6 @@
 import {
   calculateJewelrySale,
+  comparableGoldBalanceNumerator,
   DEFAULT_ROUNDING_UNIT,
   dualFromPure,
   dualFromRial,
@@ -585,6 +586,84 @@ export function partyBalancesFor(
     defaultDisplayUnit: 'GOLD' as const,
     rawBalances: { rial: rial.toString(), pureGoldMg: pureGoldMg.toString(), coins },
     convertedView,
+  };
+}
+
+/**
+ * `GET /reporting/debtors|creditors` — آینه‌ی `PartyBalanceReportService`
+ * (BE-058، FE-072): عضویت با مانده‌ی قابل‌مقایسه یا سکه‌ی هم‌جهت، ترتیب به
+ * اندازه‌ی مانده‌ی قابل‌مقایسه و سپس نام، و `displayBalance` با همان فرمول
+ * سرور. جست‌وجو اینجا فقط زیررشته‌ی ساده‌ی نام است.
+ */
+export function partyBalanceReportFor(
+  direction: 'DEBTOR' | 'CREDITOR',
+  parties: ReadonlyArray<Party>,
+  referenceQuote: { id: string; amountRial: string; observedAt: string },
+  query: {
+    search: string | null;
+    displayUnit: 'GOLD' | 'RIAL';
+    sortDirection: 'ASC' | 'DESC';
+    limit: number;
+    offset: number;
+  },
+) {
+  const rate1000 = gramRate1000(BigInt(referenceQuote.amountRial));
+  const rows = parties
+    .filter((party) => !query.search || party.displayName.includes(query.search))
+    .map((party) => {
+      const rial = PARTY_RIAL_BALANCE[party.id] ?? 0n;
+      const pureGoldMg = mg(partyMgById[party.id] ?? 0);
+      const coins = (PARTY_COIN_BALANCE[party.id] ?? []).filter((coin) => coin.count !== 0);
+      const comparable = comparableGoldBalanceNumerator(pureGoldMg, rial, rate1000);
+      const displayBalance =
+        query.displayUnit === 'GOLD'
+          ? pureGoldMg + dualFromRial(rial, rate1000).pureMg
+          : rial + dualFromPure(pureGoldMg, rate1000).rial;
+      return {
+        comparable,
+        hasDebtorCoin: coins.some((coin) => coin.count > 0),
+        hasCreditorCoin: coins.some((coin) => coin.count < 0),
+        item: {
+          party: {
+            id: party.id,
+            displayName: party.displayName,
+            type: party.type,
+            status: party.status,
+            mobile: party.mobile,
+          },
+          rawBalances: { rial: rial.toString(), pureGoldMg: pureGoldMg.toString(), coins },
+          displayBalance: displayBalance.toString(),
+          convertibleDirection:
+            comparable > 0n ? ('DEBTOR' as const) : comparable < 0n ? ('CREDITOR' as const) : ('SETTLED' as const),
+          coinsRemainSeparate: true as const,
+        },
+      };
+    })
+    .filter((row) =>
+      direction === 'DEBTOR'
+        ? row.comparable > 0n || row.hasDebtorCoin
+        : row.comparable < 0n || row.hasCreditorCoin,
+    )
+    .sort((left, right) => {
+      const a = left.comparable < 0n ? -left.comparable : left.comparable;
+      const b = right.comparable < 0n ? -right.comparable : right.comparable;
+      if (a !== b) return (a > b ? 1 : -1) * (query.sortDirection === 'DESC' ? -1 : 1);
+      return left.item.party.displayName.localeCompare(right.item.party.displayName);
+    });
+
+  return {
+    direction,
+    displayUnit: query.displayUnit,
+    referenceMazneh: {
+      id: referenceQuote.id,
+      amountRial: referenceQuote.amountRial,
+      observedAt: referenceQuote.observedAt,
+      goldRatePerGramRial: rate1000.toString(),
+    },
+    items: rows.slice(query.offset, query.offset + query.limit).map((row) => row.item),
+    total: rows.length,
+    limit: query.limit,
+    offset: query.offset,
   };
 }
 
