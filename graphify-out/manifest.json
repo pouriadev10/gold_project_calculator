@@ -2454,9 +2454,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/common/CardSkeleton.tsx": {
-    "mtime": 1786707307.1179483,
-    "seen": 1789132525.9449317,
-    "ast_hash": "71f7bc0d78c97255d399aca573d6e1b1",
+    "mtime": 1791645123.7998123,
+    "seen": 1791645427.3740444,
+    "ast_hash": "182197b49cc301e5669a31c86149c00c",
     "semantic_hash": ""
   },
   "apps/web/src/components/common/EmptyState.tsx": {
@@ -2795,16 +2795,10 @@
     "ast_hash": "1355319256925d1bce36772945912ef0",
     "semantic_hash": ""
   },
-  "apps/web/src/features/home/BalanceCard.tsx": {
-    "mtime": 1786707307.1239538,
-    "seen": 1789132525.9449737,
-    "ast_hash": "790b4dc94706b9ac472e984621e23f90",
-    "semantic_hash": ""
-  },
   "apps/web/src/features/home/HomePage.tsx": {
-    "mtime": 1787256029.9851959,
-    "seen": 1789132525.9449747,
-    "ast_hash": "6039977d831d4ab91f2433e43c7849b7",
+    "mtime": 1791645107.41236,
+    "seen": 1791645427.3741465,
+    "ast_hash": "94e0e8f527d1a42493f89e28f317b2bc",
     "semantic_hash": ""
   },
   "apps/web/src/features/home/MaznehBar.test.tsx": {
@@ -3552,9 +3546,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/mocks/handlers/fixtures.ts": {
-    "mtime": 1791643053.2065399,
-    "seen": 1791643327.3499312,
-    "ast_hash": "d2a05c6eb34b3ed250af59c4045fed9d",
+    "mtime": 1791645152.2492297,
+    "seen": 1791645427.3743856,
+    "ast_hash": "b4858657648c8ca7587ec6d109e23d59",
     "semantic_hash": ""
   },
   "apps/web/src/mocks/handlers/index.ts": {
@@ -5034,9 +5028,9 @@
     "semantic_hash": ""
   },
   "FrontTasks.md": {
-    "mtime": 1791643909.453851,
-    "seen": 1791643960.2002254,
-    "ast_hash": "78fddb0a952b5ceb48665e4db0a00e70",
+    "mtime": 1791645334.2238307,
+    "seen": 1791645427.3747847,
+    "ast_hash": "7c40d21da272b0c58f72f948d5f0e96b",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
@@ -5535,6 +5529,30 @@
     "mtime": 1791643699.2178242,
     "seen": 1791643960.1997106,
     "ast_hash": "45ad68e53b2a060c1ce7ab4397c24b5d",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/home/DashboardOverview.test.tsx": {
+    "mtime": 1791645209.4133518,
+    "seen": 1791645427.3741424,
+    "ast_hash": "5df4e2953ba6eb03c0e4cc10d9dac708",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/home/DashboardOverview.tsx": {
+    "mtime": 1791645094.341952,
+    "seen": 1791645427.3741446,
+    "ast_hash": "521af4696815f1b0f1f47a88edf2ce3b",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/home/dashboard-amounts.test.ts": {
+    "mtime": 1791645209.3739383,
+    "seen": 1791645427.3741548,
+    "ast_hash": "f60e757d690ce2bf526af78cbc42d3e0",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/home/dashboard-amounts.ts": {
+    "mtime": 1791645059.7414155,
+    "seen": 1791645427.3741562,
+    "ast_hash": "251b649c9accfa70ebdf713a507d7e0d",
     "semantic_hash": ""
   }
 }
