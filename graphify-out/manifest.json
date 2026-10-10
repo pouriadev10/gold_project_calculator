@@ -2310,9 +2310,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/contracts.ts": {
-    "mtime": 1789819081.7264385,
-    "seen": 1789820752.9454436,
-    "ast_hash": "168cb2f057c55101458ef8c17bbfc9a2",
+    "mtime": 1791642895.2982361,
+    "seen": 1791643327.3497055,
+    "ast_hash": "ed99c9686606e2dd4f36f1289e2e0217",
     "semantic_hash": ""
   },
   "apps/web/src/api/error-presentation.test.ts": {
@@ -2358,9 +2358,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/queries.ts": {
-    "mtime": 1791639346.1325085,
-    "seen": 1791640111.3255575,
-    "ast_hash": "02fb8e9c37e3e447920bf0903fda9979",
+    "mtime": 1791642895.299776,
+    "seen": 1791643327.3497143,
+    "ast_hash": "0349c44225e88cc52a91c8f854897cb5",
     "semantic_hash": ""
   },
   "apps/web/src/api/query-client.test.ts": {
@@ -2382,9 +2382,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/query-keys.ts": {
-    "mtime": 1790072511.2479558,
-    "seen": 1790073217.1817374,
-    "ast_hash": "40fbbbcf89fb14bc0846b807f696272a",
+    "mtime": 1791642895.2987697,
+    "seen": 1791643327.349718,
+    "ast_hash": "9e636e0fe96dddb93a15887e044e0260",
     "semantic_hash": ""
   },
   "apps/web/src/api/sales.ts": {
@@ -2412,15 +2412,15 @@
     "semantic_hash": ""
   },
   "apps/web/src/app/route-placeholders.tsx": {
-    "mtime": 1789820624.0245895,
-    "seen": 1789820752.9454625,
-    "ast_hash": "36fc8f4cdea81189869bd77b68747945",
+    "mtime": 1791642983.1478305,
+    "seen": 1791643327.3497252,
+    "ast_hash": "f8306122b4147dab8554fd4ccd59c380",
     "semantic_hash": ""
   },
   "apps/web/src/app/router.tsx": {
-    "mtime": 1791639426.1583893,
-    "seen": 1791640111.3255708,
-    "ast_hash": "9cacdb7cb68eb0753b75c2f251a7c2bb",
+    "mtime": 1791642983.1467874,
+    "seen": 1791643327.3497262,
+    "ast_hash": "86edf17838a3ee0fb202548510e2fb87",
     "semantic_hash": ""
   },
   "apps/web/src/components/common/AmountDisplay.test.tsx": {
@@ -3552,15 +3552,15 @@
     "semantic_hash": ""
   },
   "apps/web/src/mocks/handlers/fixtures.ts": {
-    "mtime": 1791639460.6723926,
-    "seen": 1791640111.3257794,
-    "ast_hash": "ea3e7c43d9c89e27695ef161f416c08a",
+    "mtime": 1791643053.2065399,
+    "seen": 1791643327.3499312,
+    "ast_hash": "d2a05c6eb34b3ed250af59c4045fed9d",
     "semantic_hash": ""
   },
   "apps/web/src/mocks/handlers/index.ts": {
-    "mtime": 1791641872.682873,
-    "seen": 1791642619.4523413,
-    "ast_hash": "95dbcaa6129cb57d4f115592bc628a86",
+    "mtime": 1791643053.2075882,
+    "seen": 1791643327.349932,
+    "ast_hash": "fe1a3b6a9b69517d830e73e1dcc773c4",
     "semantic_hash": ""
   },
   "apps/web/src/stores/purchase-draft-store.test.ts": {
@@ -5034,9 +5034,9 @@
     "semantic_hash": ""
   },
   "FrontTasks.md": {
-    "mtime": 1791642572.0132296,
-    "seen": 1791642619.4525862,
-    "ast_hash": "a80960fc4f73fa004ed0d16dbf908489",
+    "mtime": 1791643281.6941514,
+    "seen": 1791643327.3501906,
+    "ast_hash": "3e20021302b249737d0dc09564b28840",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
@@ -5493,6 +5493,30 @@
     "mtime": 1791641974.9688537,
     "seen": 1791642619.4523308,
     "ast_hash": "9c40d06b927de31110c30d793b84bcf4",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/reporting/DebtorsPage.test.tsx": {
+    "mtime": 1791643137.4133472,
+    "seen": 1791643327.3498578,
+    "ast_hash": "8a8488b849690d70a93a2fb97b25a3ac",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/reporting/DebtorsPage.tsx": {
+    "mtime": 1791642966.1324003,
+    "seen": 1791643327.3498588,
+    "ast_hash": "349e02762b92db002af5f9777a1a9f1c",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/reporting/party-balance-report.test.ts": {
+    "mtime": 1791643092.7655387,
+    "seen": 1791643327.3498595,
+    "ast_hash": "b13ce6506bb4118799044f877c357f42",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/reporting/party-balance-report.ts": {
+    "mtime": 1791642912.9652534,
+    "seen": 1791643327.3498604,
+    "ast_hash": "98ac85f674540bf93be69545550759d9",
     "semantic_hash": ""
   }
 }
