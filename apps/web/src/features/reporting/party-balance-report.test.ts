@@ -2,9 +2,16 @@ import { dualFromPure, dualFromRial } from '@gold/core-calc';
 import { describe, expect, it } from 'vitest';
 import { partyBalanceReportSchema } from '@/api/contracts';
 import { partyBalanceReportFor, partyRecords } from '@/mocks/handlers/fixtures';
-import { convertibleBalance, listedByCoinOnly, type PartyBalanceReportItem } from './party-balance-report';
+import {
+  REPORT_COPY,
+  convertibleBalance,
+  listedByCoinOnly,
+  magnitude,
+  magnitudeDual,
+  type PartyBalanceReportItem,
+} from './party-balance-report';
 
-/** FE-072 — توابع خالص فهرست بدهکاران. */
+/** FE-072/FE-073 — توابع خالص فهرست بدهکاران و بستانکاران. */
 
 const RATE = 4_800_000n;
 const REFERENCE = {
@@ -59,6 +66,45 @@ describe('convertibleBalance', () => {
     expect(listedByCoinOnly(item(0n, 1n, 1n), 'DEBTOR')).toBe(false);
     expect(listedByCoinOnly({ ...item(0n, 0n, 0n), convertibleDirection: 'SETTLED' }, 'DEBTOR')).toBe(true);
     expect(listedByCoinOnly({ ...item(0n, -5n, -5n), convertibleDirection: 'CREDITOR' }, 'DEBTOR')).toBe(true);
+  });
+});
+
+describe('اندازه و جهت', () => {
+  it('اندازه‌ی هر دو چهره را بدون علامت می‌دهد', () => {
+    expect(magnitude(-5n)).toBe(5n);
+    expect(magnitude(5n)).toBe(5n);
+    expect(magnitudeDual({ rial: -10n, pureMg: -2n, rate1000: RATE })).toEqual({ rial: 10n, pureMg: 2n, rate1000: RATE });
+  });
+
+  it('حضور فقط به‌خاطر سکه در فهرست بستانکاران', () => {
+    expect(listedByCoinOnly({ ...item(0n, -1n, -1n), convertibleDirection: 'CREDITOR' }, 'CREDITOR')).toBe(false);
+    expect(listedByCoinOnly(item(0n, 1n, 1n), 'CREDITOR')).toBe(true);
+  });
+
+  it('متن دو فهرست هیچ رشته‌ی مشترکی جز ساختار ندارد', () => {
+    const debtor = Object.values(REPORT_COPY.DEBTOR).flatMap((value) => (typeof value === 'string' ? [value] : Object.values(value)));
+    const creditor = Object.values(REPORT_COPY.CREDITOR).flatMap((value) => (typeof value === 'string' ? [value] : Object.values(value)));
+    expect(debtor.filter((text) => creditor.includes(text))).toEqual([]);
+  });
+});
+
+describe('mock MSW فهرست بستانکاران', () => {
+  const report = partyBalanceReportFor('CREDITOR', partyRecords, REFERENCE, {
+    search: null,
+    displayUnit: 'GOLD',
+    sortDirection: 'DESC',
+    limit: 200,
+    offset: 0,
+  });
+
+  it('با قرارداد واقعی سازگار است و فقط بستانکاران یا دارندگان سکه‌ی بستانکار را دارد', () => {
+    expect(partyBalanceReportSchema.parse(report)).toEqual(report);
+    expect(report.direction).toBe('CREDITOR');
+    expect(report.items.length).toBeGreaterThan(0);
+    for (const row of report.items) {
+      const hasCreditorCoin = row.rawBalances.coins.some((coin) => coin.count < 0);
+      expect(row.convertibleDirection === 'CREDITOR' || hasCreditorCoin).toBe(true);
+    }
   });
 });
 

@@ -256,7 +256,8 @@ const reportingDebtorsRoute = createRoute({
 const reportingCreditorsRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/reporting/creditors',
-  component: lazyRouteComponent(() => import('@/app/route-placeholders'), 'ReportingCreditorsPlaceholder'),
+  // فهرست بستانکاران — FE-073. مثل بدهکاران بدون beforeLoad نقش‌محور.
+  component: lazyRouteComponent(() => import('@/features/reporting/CreditorsPage')),
 });
 
 const reportingProfitRoute = createRoute({

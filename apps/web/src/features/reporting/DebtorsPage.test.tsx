@@ -163,6 +163,8 @@ describe('DebtorsPage — FE-072', () => {
     render(<DebtorsPage />);
 
     expect(screen.getByRole('heading', { name: 'بدهکاران' })).toBeInTheDocument();
+    expect(screen.getByText('بدهکار یعنی این شخص به فروشگاه بدهکار است.')).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'بیشترین بدهی' })).toBeInTheDocument();
     expect(screen.getByRole('radiogroup', { name: 'واحد نمایش اعداد' })).toBeInTheDocument();
     expect(useQueryMocks.useLatestPriceQuote).toHaveBeenCalledWith('MAZNEH');
     expect(useQueryMocks.usePartyBalanceReport).toHaveBeenCalledWith('DEBTOR', {
@@ -208,7 +210,11 @@ describe('DebtorsPage — FE-072', () => {
     expect(within(maryam!).getAllByRole('listitem')).toHaveLength(1);
 
     expect(screen.getAllByText('به‌خاطر سکه‌ی بدهکار در فهرست است')).toHaveLength(1);
-    expect(screen.getByText('تسویه')).toBeInTheDocument();
+    // مریم: مانده‌ی معادل، ریال و طلای خالص هر سه صفر و «تسویه».
+    expect(screen.getAllByText('تسویه')).toHaveLength(3);
+    // تعداد سکه‌ی بستانکار با اندازه نمایش داده می‌شود؛ جهت را برچسب می‌گوید، نه علامت.
+    expect(hosseinCoins[1]).toHaveTextContent('۱');
+    expect(hosseinCoins[1]).not.toHaveTextContent('−');
   });
 
   it('opens the party from its name', () => {

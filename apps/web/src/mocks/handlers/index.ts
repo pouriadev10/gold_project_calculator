@@ -1128,34 +1128,36 @@ export const handlers = [
     });
   }),
 
-  /** `GET /reporting/debtors` — قرارداد نهایی BE-058 (`partyBalanceReportSchema`، FE-072). */
-  http.get('/api/reporting/debtors', async ({ request }) => {
-    await delay(READ_DELAY_MS);
-    const searchParams = new URL(request.url).searchParams;
-    const quote = maznehQuoteHistory.find((q) => q.id === searchParams.get('referenceQuoteId'));
-    if (!quote) {
-      return HttpResponse.json(
-        {
-          error: {
-            code: 'NOT_FOUND',
-            message: 'مظنه‌ی مرجع پیدا نشد',
-            fields: {},
-            requestId: crypto.randomUUID(),
+  /** `GET /reporting/debtors|creditors` — قرارداد نهایی BE-058 (`partyBalanceReportSchema`، FE-072/FE-073). */
+  ...(['debtors', 'creditors'] as const).map((path) =>
+    http.get(`/api/reporting/${path}`, async ({ request }) => {
+      await delay(READ_DELAY_MS);
+      const searchParams = new URL(request.url).searchParams;
+      const quote = maznehQuoteHistory.find((q) => q.id === searchParams.get('referenceQuoteId'));
+      if (!quote) {
+        return HttpResponse.json(
+          {
+            error: {
+              code: 'NOT_FOUND',
+              message: 'مظنه‌ی مرجع پیدا نشد',
+              fields: {},
+              requestId: crypto.randomUUID(),
+            },
           },
-        },
-        { status: 404 },
+          { status: 404 },
+        );
+      }
+      return HttpResponse.json(
+        partyBalanceReportFor(path === 'debtors' ? 'DEBTOR' : 'CREDITOR', partyList, quote, {
+          search: searchParams.get('search')?.trim() || null,
+          displayUnit: searchParams.get('displayUnit') === 'RIAL' ? 'RIAL' : 'GOLD',
+          sortDirection: searchParams.get('sortDirection') === 'ASC' ? 'ASC' : 'DESC',
+          limit: Number.parseInt(searchParams.get('limit') ?? String(DEFAULT_PAGE_SIZE), 10),
+          offset: Number.parseInt(searchParams.get('offset') ?? '0', 10),
+        }),
       );
-    }
-    return HttpResponse.json(
-      partyBalanceReportFor('DEBTOR', partyList, quote, {
-        search: searchParams.get('search')?.trim() || null,
-        displayUnit: searchParams.get('displayUnit') === 'RIAL' ? 'RIAL' : 'GOLD',
-        sortDirection: searchParams.get('sortDirection') === 'ASC' ? 'ASC' : 'DESC',
-        limit: Number.parseInt(searchParams.get('limit') ?? String(DEFAULT_PAGE_SIZE), 10),
-        offset: Number.parseInt(searchParams.get('offset') ?? '0', 10),
-      }),
-    );
-  }),
+    }),
+  ),
 
   /** `POST /parties/:id/deactivate` — قرارداد نهایی BE-024 (`partySchema`، FE-034). */
   http.post('/api/parties/:id/deactivate', async ({ params, request }) => {
