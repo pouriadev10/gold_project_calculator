@@ -2310,9 +2310,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/contracts.ts": {
-    "mtime": 1791642895.2982361,
-    "seen": 1791643327.3497055,
-    "ast_hash": "ed99c9686606e2dd4f36f1289e2e0217",
+    "mtime": 1791646339.7087522,
+    "seen": 1791646749.6183324,
+    "ast_hash": "ab31a84a129a5648ce03a19cd2309350",
     "semantic_hash": ""
   },
   "apps/web/src/api/error-presentation.test.ts": {
@@ -2358,9 +2358,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/queries.ts": {
-    "mtime": 1791642895.299776,
-    "seen": 1791643327.3497143,
-    "ast_hash": "0349c44225e88cc52a91c8f854897cb5",
+    "mtime": 1791646339.7097516,
+    "seen": 1791646749.618345,
+    "ast_hash": "25796f19245a51f664ed485345308a3f",
     "semantic_hash": ""
   },
   "apps/web/src/api/query-client.test.ts": {
@@ -2382,9 +2382,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/query-keys.ts": {
-    "mtime": 1791642895.2987697,
-    "seen": 1791643327.349718,
-    "ast_hash": "9e636e0fe96dddb93a15887e044e0260",
+    "mtime": 1791646339.7097516,
+    "seen": 1791646749.6183505,
+    "ast_hash": "5fa9fcc4cdcb1666726970a223a8eb41",
     "semantic_hash": ""
   },
   "apps/web/src/api/sales.ts": {
@@ -2412,15 +2412,15 @@
     "semantic_hash": ""
   },
   "apps/web/src/app/route-placeholders.tsx": {
-    "mtime": 1791643699.8864381,
-    "seen": 1791643960.199466,
-    "ast_hash": "43b204b685a6fd44c945c58e2c589eb4",
+    "mtime": 1791646425.1291735,
+    "seen": 1791646749.6183605,
+    "ast_hash": "ebd634f2bb8ba204c9bddc4f1f8a6260",
     "semantic_hash": ""
   },
   "apps/web/src/app/router.tsx": {
-    "mtime": 1791643699.8859265,
-    "seen": 1791643960.1994689,
-    "ast_hash": "1d60d1ef77e3d3d088ec7f75a790bc77",
+    "mtime": 1791646425.1291735,
+    "seen": 1791646749.6183622,
+    "ast_hash": "55419517e31ece7ecd7c46cddf270712",
     "semantic_hash": ""
   },
   "apps/web/src/components/common/AmountDisplay.test.tsx": {
@@ -3546,15 +3546,15 @@
     "semantic_hash": ""
   },
   "apps/web/src/mocks/handlers/fixtures.ts": {
-    "mtime": 1791645152.2492297,
-    "seen": 1791645427.3743856,
-    "ast_hash": "b4858657648c8ca7587ec6d109e23d59",
+    "mtime": 1791646425.1301742,
+    "seen": 1791646749.618675,
+    "ast_hash": "91b8c359103ac353dfa36575388f2f12",
     "semantic_hash": ""
   },
   "apps/web/src/mocks/handlers/index.ts": {
-    "mtime": 1791643699.8874743,
-    "seen": 1791643960.1998372,
-    "ast_hash": "382abb4f66e758291f809dc265ac9262",
+    "mtime": 1791646470.4450061,
+    "seen": 1791646749.6186762,
+    "ast_hash": "dc8d182e15909b479cc70a972a2e51d7",
     "semantic_hash": ""
   },
   "apps/web/src/stores/purchase-draft-store.test.ts": {
@@ -5028,9 +5028,9 @@
     "semantic_hash": ""
   },
   "FrontTasks.md": {
-    "mtime": 1791645334.2238307,
-    "seen": 1791645427.3747847,
-    "ast_hash": "7c40d21da272b0c58f72f948d5f0e96b",
+    "mtime": 1791646677.7481246,
+    "seen": 1791646749.6190157,
+    "ast_hash": "82c6176cfe82f81ca245020e6fecc27a",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
@@ -5478,15 +5478,15 @@
     "semantic_hash": ""
   },
   "apps/web/src/lib/jalali.test.ts": {
-    "mtime": 1791642010.960574,
-    "seen": 1791642619.4523296,
-    "ast_hash": "930bd2ecf2cab51959291c84ca60cae1",
+    "mtime": 1791646339.707746,
+    "seen": 1791646749.6186593,
+    "ast_hash": "0d4b94428b365cbac0af056ebeba568d",
     "semantic_hash": ""
   },
   "apps/web/src/lib/jalali.ts": {
-    "mtime": 1791641974.9688537,
-    "seen": 1791642619.4523308,
-    "ast_hash": "9c40d06b927de31110c30d793b84bcf4",
+    "mtime": 1791646339.0316048,
+    "seen": 1791646749.6186607,
+    "ast_hash": "0997f8b28147dcc2ff6ac803c6e1c893",
     "semantic_hash": ""
   },
   "apps/web/src/features/reporting/DebtorsPage.test.tsx": {
@@ -5553,6 +5553,30 @@
     "mtime": 1791645059.7414155,
     "seen": 1791645427.3741562,
     "ast_hash": "251b649c9accfa70ebdf713a507d7e0d",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/reporting/ProfitReportPage.test.tsx": {
+    "mtime": 1791646517.780531,
+    "seen": 1791646749.618564,
+    "ast_hash": "2c44b83d641aa1b7381de8385c1ca566",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/reporting/ProfitReportPage.tsx": {
+    "mtime": 1791646400.451256,
+    "seen": 1791646749.618565,
+    "ast_hash": "c9eb46bea6ee222433e0eda616741ce8",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/reporting/profit-report.test.ts": {
+    "mtime": 1791646517.6083086,
+    "seen": 1791646749.61857,
+    "ast_hash": "101f8aa735c409fe0862b0e2e46df86d",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/reporting/profit-report.ts": {
+    "mtime": 1791646373.4452152,
+    "seen": 1791646749.6185715,
+    "ast_hash": "838e28bff2babf76230cfa8a99de7759",
     "semantic_hash": ""
   }
 }
