@@ -21,7 +21,7 @@ const sessionWithRole = (role: 'OWNER' | 'MANAGER' | 'CASHIER') => ({
   refreshToken: 'r',
   expiresInSeconds: 900,
   user: { id: 'u1', email: 'x@example.com', displayName: 'کاربر' },
-  tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه' },
+  tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه', timezone: 'Asia/Tehran' },
   role,
 });
 

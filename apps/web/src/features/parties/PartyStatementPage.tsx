@@ -9,12 +9,12 @@ import { AmountDisplay, RateDisplay } from '@/components/common/AmountDisplay';
 import { CardSkeleton } from '@/components/common/CardSkeleton';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorState } from '@/components/common/ErrorState';
+import { JalaliDateRangeFilter } from '@/components/common/JalaliDateRangeFilter';
 import { PageHeader } from '@/components/common/PageHeader';
 import { UnitToggle } from '@/components/common/UnitToggle';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import {
   Table,
@@ -25,7 +25,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { useTenantTimeZone } from '@/hooks/useTenantTimeZone';
 import { formatJalaliDateTime } from '@/lib/date';
+import { EMPTY_JALALI_RANGE, jalaliRangeToIso, type JalaliDateRange } from '@/lib/jalali';
 import { useUnitStore } from '@/stores/unit-store';
 import {
   SOURCE_LABEL,
@@ -48,21 +50,13 @@ import type { LockedStatementRate, PartyStatementDimension, PartyStatementEntry 
  * همان سند ساخته می‌شود (قاعده‌ی ۲-۸)، نه با مظنه‌ی امروز؛ ردیف بدون
  * snapshot قابل‌استفاده فقط مقدار خام را نشان می‌دهد. سکه هرگز تبدیل نمی‌شود.
  *
- * ورودی تاریخ فعلاً همان `type="date"` بومی FE-064 است؛ کامپوننت مشترک
- * تقویم شمسی کار FE-071 است. خروجی PDF طبق تسک «در آینده» است و اینجا
- * ساخته نشده.
+ * بازه‌ی تاریخ با فیلتر مشترک شمسی FE-071 انتخاب و با مرز روزِ منطقه‌ی
+ * مستأجر به `from`/`to` تبدیل می‌شود. خروجی PDF طبق تسک «در آینده» است و
+ * اینجا ساخته نشده.
  */
 
 const PAGE_SIZE = 20;
 const DESKTOP_QUERY = '(min-width: 640px)';
-
-function startOfLocalDay(date: string): string {
-  return new Date(`${date}T00:00:00.000`).toISOString();
-}
-
-function endOfLocalDay(date: string): string {
-  return new Date(`${date}T23:59:59.999`).toISOString();
-}
 
 function ceilDivide(dividend: number, divisor: number): number {
   const remainder = dividend % divisor;
@@ -369,8 +363,8 @@ export default function PartyStatementPage() {
   const { partyId } = useParams({ from: '/app-shell/parties/$partyId/statement' });
   const party = useParty(partyId);
 
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
+  const [dateRange, setDateRange] = useState<JalaliDateRange>(EMPTY_JALALI_RANGE);
+  const timeZone = useTenantTimeZone();
   const [sourceType, setSourceType] = useState<PartyStatementSourceType | ''>('');
   const [dimension, setDimension] = useState<PartyStatementDimension | null>(null);
   const [offset, setOffset] = useState(0);
@@ -385,20 +379,19 @@ export default function PartyStatementPage() {
     [dimension],
   );
 
-  const invalidDateRange = fromDate !== '' && toDate !== '' && fromDate > toDate;
+  const isoRange = jalaliRangeToIso(dateRange, timeZone);
   const query: PartyStatementQuery = {
     limit: PAGE_SIZE,
     offset,
-    ...(!invalidDateRange && fromDate ? { from: startOfLocalDay(fromDate) } : {}),
-    ...(!invalidDateRange && toDate ? { to: endOfLocalDay(toDate) } : {}),
+    ...isoRange,
     ...(sourceType ? { sourceType } : {}),
     ...(dimension ? { dimensionId: dimension.id } : {}),
   };
-  const hasFilters = fromDate !== '' || toDate !== '' || sourceType !== '' || dimension !== null;
+  const hasFilters =
+    dateRange.from !== null || dateRange.to !== null || sourceType !== '' || dimension !== null;
 
   function clearFilters(): void {
-    setFromDate('');
-    setToDate('');
+    setDateRange(EMPTY_JALALI_RANGE);
     setSourceType('');
     setDimension(null);
     setOffset(0);
@@ -439,40 +432,18 @@ export default function PartyStatementPage() {
             ) : null}
           </div>
 
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <div className="min-w-0 space-y-1.5">
-              <label htmlFor="statement-from-date" className="block text-sm font-medium">
-                از تاریخ
-              </label>
-              <Input
-                id="statement-from-date"
-                type="date"
-                className="min-w-0"
-                value={fromDate}
-                onChange={(event) => {
-                  setFromDate(event.target.value);
-                  setOffset(0);
-                }}
-              />
-            </div>
+          <JalaliDateRangeFilter
+            idPrefix="statement-date"
+            value={dateRange}
+            timeZone={timeZone}
+            onChange={(next) => {
+              setDateRange(next);
+              setOffset(0);
+            }}
+          />
 
+          <div className="grid grid-cols-2 gap-3">
             <div className="min-w-0 space-y-1.5">
-              <label htmlFor="statement-to-date" className="block text-sm font-medium">
-                تا تاریخ
-              </label>
-              <Input
-                id="statement-to-date"
-                type="date"
-                className="min-w-0"
-                value={toDate}
-                onChange={(event) => {
-                  setToDate(event.target.value);
-                  setOffset(0);
-                }}
-              />
-            </div>
-
-            <div className="col-span-2 min-w-0 space-y-1.5 sm:col-span-1">
               <label htmlFor="statement-source-type" className="block text-sm font-medium">
                 نوع سند
               </label>
@@ -493,7 +464,7 @@ export default function PartyStatementPage() {
               </Select>
             </div>
 
-            <div className="col-span-2 min-w-0 space-y-1.5 sm:col-span-1">
+            <div className="min-w-0 space-y-1.5">
               <label htmlFor="statement-dimension" className="block text-sm font-medium">
                 بُعد
               </label>
@@ -516,14 +487,9 @@ export default function PartyStatementPage() {
             </div>
           </div>
 
-          {invalidDateRange ? (
-            <p className="text-sm text-destructive" role="alert">
-              تاریخ پایان نمی‌تواند پیش از تاریخ شروع باشد.
-            </p>
-          ) : null}
         </section>
 
-        {!invalidDateRange ? (
+        {isoRange !== null ? (
           <StatementResults partyId={partyId} query={query} onOffsetChange={setOffset} />
         ) : null}
       </main>

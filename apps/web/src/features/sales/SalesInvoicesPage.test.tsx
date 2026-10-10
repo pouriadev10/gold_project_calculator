@@ -1,9 +1,11 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import type * as ReactRouter from '@tanstack/react-router';
+import type { SessionResponse } from '@/api/contracts';
 import type * as Queries from '@/api/queries';
+import { useSessionStore } from '@/stores/session-store';
 import { useUnitStore } from '@/stores/unit-store';
 import SalesInvoicesPage from './SalesInvoicesPage';
 
@@ -24,6 +26,18 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
     ),
   };
 });
+
+/** دوشنبه ۲۰ مهر ۱۴۰۵ — فقط `Date` جعلی می‌شود تا debounce و userEvent واقعی بمانند. */
+const NOW = new Date('2026-10-12T08:00:00.000Z');
+
+const SESSION: SessionResponse = {
+  accessToken: 'a',
+  refreshToken: 'r',
+  expiresInSeconds: 900,
+  user: { id: 'u1', email: 'owner@example.com', displayName: 'مالک' },
+  tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه', timezone: 'Asia/Tehran' },
+  role: 'OWNER',
+};
 
 function lastQuery(): Record<string, unknown> | undefined {
   const call = useSalesInvoicesMock.mock.calls.at(-1) as [Record<string, unknown>] | undefined;
@@ -58,6 +72,14 @@ beforeEach(() => {
     refetch: vi.fn(),
   });
   useUnitStore.setState({ unit: 'gold' });
+  useSessionStore.setState({ session: SESSION });
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(NOW);
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+  useSessionStore.setState({ session: null });
 });
 
 describe('SalesInvoicesPage — FE-064', () => {
@@ -78,35 +100,35 @@ describe('SalesInvoicesPage — FE-064', () => {
     );
   });
 
-  it('فیلتر شخص، وضعیت و تاریخ را به query می‌فرستد', async () => {
+  it('فیلتر شخص، وضعیت و بازه‌ی شمسی را با مرز روز منطقه‌ی مستأجر به query می‌فرستد', async () => {
     const user = userEvent.setup();
     render(<SalesInvoicesPage />);
 
     await user.type(screen.getByLabelText('شخص'), 'مرادی');
     await user.selectOptions(screen.getByLabelText('وضعیت'), 'FINALIZED');
-    fireEvent.change(screen.getByLabelText('از تاریخ'), { target: { value: '2026-09-01' } });
-    fireEvent.change(screen.getByLabelText('تا تاریخ'), { target: { value: '2026-09-19' } });
+    await user.click(screen.getByRole('button', { name: 'این ماه' }));
 
-    const expectedFrom = new Date('2026-09-01T00:00:00.000').toISOString();
-    const expectedTo = new Date('2026-09-19T23:59:59.999').toISOString();
+    // مهر ۱۴۰۵ در تهران (+۰۳:۳۰): از نیمه‌شب ۱ مهر تا آخرین میلی‌ثانیه‌ی ۳۰ مهر.
     await waitFor(() =>
       expect(lastQuery()).toEqual({
         limit: 10,
         offset: 0,
         partySearch: 'مرادی',
         status: 'FINALIZED',
-        from: expectedFrom,
-        to: expectedTo,
+        from: '2026-09-22T20:30:00.000Z',
+        to: '2026-10-22T20:29:59.999Z',
       }),
     );
   });
 
-  it('بازه‌ی وارونه را اعلام می‌کند و تا اصلاح آن درخواست تازه نمی‌سازد', () => {
+  it('بازه‌ی وارونه را اعلام می‌کند و تا اصلاح آن درخواست تازه نمی‌سازد', async () => {
+    const user = userEvent.setup();
     render(<SalesInvoicesPage />);
 
-    fireEvent.change(screen.getByLabelText('از تاریخ'), { target: { value: '2026-09-19' } });
+    await user.click(screen.getByRole('button', { name: /از تاریخ/ }));
+    await user.click(screen.getByRole('button', { name: '۱۹ مهر ۱۴۰۵' }));
     const callsBeforeInvalidRange = useSalesInvoicesMock.mock.calls.length;
-    fireEvent.change(screen.getByLabelText('تا تاریخ'), { target: { value: '2026-09-01' } });
+    await user.click(screen.getByRole('button', { name: '۱ مهر ۱۴۰۵' }));
 
     expect(screen.getByRole('alert')).toHaveTextContent(
       'تاریخ پایان نمی‌تواند پیش از تاریخ شروع باشد.',

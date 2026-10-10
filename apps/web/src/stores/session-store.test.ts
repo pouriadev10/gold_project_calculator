@@ -11,7 +11,7 @@ const SESSION = {
   refreshToken: 'r',
   expiresInSeconds: 900,
   user: { id: 'u1', email: 'owner@example.com', displayName: 'مدیر فروشگاه' },
-  tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه' },
+  tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه', timezone: 'Asia/Tehran' },
   role: 'OWNER' as const,
 };
 

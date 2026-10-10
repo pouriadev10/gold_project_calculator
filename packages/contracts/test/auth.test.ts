@@ -59,7 +59,7 @@ describe('sessionResponseSchema', () => {
     refreshToken: 'r.t.k',
     expiresInSeconds: 900,
     user: { id: 'u1', email: 'owner@example.com', displayName: 'مدیر فروشگاه' },
-    tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه' },
+    tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه', timezone: 'Asia/Tehran' },
     role: 'OWNER',
   };
 
@@ -76,6 +76,14 @@ describe('sessionResponseSchema', () => {
 
   it.each(['OWNER', 'MANAGER', 'CASHIER'])('نقش %s را می‌پذیرد', (role) => {
     expect(sessionResponseSchema.parse({ ...valid, role }).role).toBe(role);
+  });
+
+  it('منطقه‌ی زمانی مستأجر الزامی است — مرز روز فیلترهای تاریخ با آن ساخته می‌شود (FE-071)', () => {
+    const { timezone: _timezone, ...tenantWithoutZone } = valid.tenant;
+    expect(sessionResponseSchema.safeParse({ ...valid, tenant: tenantWithoutZone }).success).toBe(false);
+    expect(
+      sessionResponseSchema.safeParse({ ...valid, tenant: { ...valid.tenant, timezone: '' } }).success,
+    ).toBe(false);
   });
 
   it('نقش خارج از فهرست فاز ۱ را رد می‌کند — FE-028 روی همین enum تصمیم می‌گیرد', () => {

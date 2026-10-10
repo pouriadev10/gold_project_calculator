@@ -54,10 +54,16 @@ export const sessionUserSchema = z.object({
   displayName: z.string(),
 });
 
+/**
+ * `timezone` نام IANA ستون `tenants.timezone` است (FE-071). مرز روزِ
+ * فیلترهای تاریخ در فرانت با همین منطقه ساخته می‌شود، نه با منطقه‌ی
+ * دستگاه کاربر.
+ */
 export const sessionTenantSchema = z.object({
   id: z.string(),
   slug: z.string(),
   name: z.string(),
+  timezone: z.string().min(1),
 });
 
 export const sessionResponseSchema = z.object({

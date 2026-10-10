@@ -20,7 +20,7 @@ interface SessionBody {
   refreshToken: string;
   expiresInSeconds: number;
   user: { id: string; email: string; displayName: string };
-  tenant: { id: string; slug: string; name: string };
+  tenant: { id: string; slug: string; name: string; timezone: string };
   role: string;
 }
 
@@ -139,6 +139,8 @@ describe('احراز هویت (نیازمند PostgreSQL واقعی)', () => {
       expect(body.refreshToken).toBeTruthy();
       expect(body.role).toBe('MANAGER');
       expect(body.tenant.slug).toBe(tenantActive.slug);
+      // FE-071: مقدار پیش‌فرض ستون `tenants.timezone`، نه fallback کد.
+      expect(body.tenant.timezone).toBe('Asia/Tehran');
       expect(body.expiresInSeconds).toBeGreaterThan(0);
     });
 
@@ -278,9 +280,14 @@ describe('احراز هویت (نیازمند PostgreSQL واقعی)', () => {
 
       expect(response.statusCode).toBe(200);
 
-      const body = response.json<{ user: { email: string }; role: string }>();
+      const body = response.json<{
+        user: { email: string };
+        tenant: { timezone: string };
+        role: string;
+      }>();
 
       expect(body.user.email).toBe(member.email);
+      expect(body.tenant.timezone).toBe('Asia/Tehran');
       expect(body.role).toBe('MANAGER');
       expect(response.body).not.toContain('$argon2');
     });

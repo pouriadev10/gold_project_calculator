@@ -1,12 +1,13 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MAX_PAGE_SIZE } from '@gold/contracts';
 import { dualFromPure, gramRate1000 } from '@gold/core-calc';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import type * as ReactRouter from '@tanstack/react-router';
-import type { PartyStatement, PartyStatementQuery } from '@/api/contracts';
+import type { PartyStatement, PartyStatementQuery, SessionResponse } from '@/api/contracts';
 import type * as Queries from '@/api/queries';
+import { useSessionStore } from '@/stores/session-store';
 import { useUnitStore } from '@/stores/unit-store';
 import PartyStatementPage from './PartyStatementPage';
 
@@ -193,6 +194,8 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.useRealTimers();
+  useSessionStore.setState({ session: null });
 });
 
 describe('PartyStatementPage — FE-070', () => {
@@ -313,22 +316,36 @@ describe('PartyStatementPage — FE-070', () => {
     expect(lastResultQuery()).toEqual({ limit: 20, offset: 0 });
   });
 
-  it('sends the date range as local-day ISO bounds and blocks an inverted range', () => {
+  it('sends the Jalali range as tenant-timezone ISO bounds and blocks an inverted range', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-12T08:00:00.000Z')); // ۲۰ مهر ۱۴۰۵
+    useSessionStore.setState({
+      session: {
+        accessToken: 'a',
+        refreshToken: 'r',
+        expiresInSeconds: 900,
+        user: { id: 'u1', email: 'owner@example.com', displayName: 'مالک' },
+        tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه', timezone: 'Asia/Tehran' },
+        role: 'OWNER',
+      } satisfies SessionResponse,
+    });
+    const user = userEvent.setup();
     render(<PartyStatementPage />);
 
-    fireEvent.change(screen.getByLabelText('از تاریخ'), { target: { value: '2026-09-01' } });
-    fireEvent.change(screen.getByLabelText('تا تاریخ'), { target: { value: '2026-09-30' } });
+    await user.click(screen.getByRole('button', { name: 'امروز' }));
     expect(lastResultQuery()).toEqual({
       limit: 20,
       offset: 0,
-      from: new Date('2026-09-01T00:00:00.000').toISOString(),
-      to: new Date('2026-09-30T23:59:59.999').toISOString(),
+      from: '2026-10-11T20:30:00.000Z',
+      to: '2026-10-12T20:29:59.999Z',
     });
 
+    await user.click(screen.getByRole('button', { name: /تا تاریخ/ }));
     const callsBefore = resultQueries().length;
-    fireEvent.change(screen.getByLabelText('از تاریخ'), { target: { value: '2026-10-05' } });
+    await user.click(screen.getByRole('button', { name: '۱ مهر ۱۴۰۵' }));
     expect(screen.getByRole('alert')).toHaveTextContent('تاریخ پایان نمی‌تواند پیش از تاریخ شروع باشد.');
     expect(resultQueries()).toHaveLength(callsBefore);
+    expect(screen.queryByRole('listitem')).not.toBeInTheDocument();
   });
 
   it('paginates with page indicator and disables navigation while the next page loads', () => {

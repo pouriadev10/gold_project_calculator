@@ -38,7 +38,12 @@ interface SessionResponse {
   readonly refreshToken: string;
   readonly expiresInSeconds: number;
   readonly user: { readonly id: string; readonly email: string; readonly displayName: string };
-  readonly tenant: { readonly id: string; readonly slug: string; readonly name: string };
+  readonly tenant: {
+    readonly id: string;
+    readonly slug: string;
+    readonly name: string;
+    readonly timezone: string;
+  };
   readonly role: string;
 }
 
@@ -56,6 +61,7 @@ function toSessionResponse(session: AuthSession): SessionResponse {
       id: session.tenant.id,
       slug: session.tenant.slug,
       name: session.tenant.name,
+      timezone: session.tenant.timezone,
     },
     role: session.role,
   };
@@ -115,7 +121,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   async me(@CurrentAuth() auth: AccessTokenPayload | undefined): Promise<{
     user: { id: string; email: string; displayName: string };
-    tenant: { id: string; slug: string; name: string };
+    tenant: { id: string; slug: string; name: string; timezone: string };
     role: string;
   }> {
     // نگهبان تضمینش می‌کند؛ این بررسی فقط نوع را باریک می‌کند.
@@ -143,6 +149,7 @@ export class AuthController {
         id: described.tenant.id,
         slug: described.tenant.slug,
         name: described.tenant.name,
+        timezone: described.tenant.timezone,
       },
       role: described.role,
     };

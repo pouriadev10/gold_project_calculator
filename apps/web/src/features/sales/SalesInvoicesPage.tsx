@@ -2,12 +2,15 @@ import { useState } from 'react';
 import { FilterX, Search } from 'lucide-react';
 import { toLatinDigits } from '@gold/core-calc';
 import type { SalesInvoiceListQuery, SalesInvoiceStatus } from '@/api/contracts';
+import { JalaliDateRangeFilter } from '@/components/common/JalaliDateRangeFilter';
 import { PageHeader } from '@/components/common/PageHeader';
 import { UnitToggle } from '@/components/common/UnitToggle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useTenantTimeZone } from '@/hooks/useTenantTimeZone';
+import { EMPTY_JALALI_RANGE, jalaliRangeToIso, type JalaliDateRange } from '@/lib/jalali';
 import { SalesInvoiceList } from './SalesInvoiceList';
 
 const PAGE_SIZE = 10;
@@ -18,33 +21,26 @@ const STATUS_LABEL: Record<SalesInvoiceStatus, string> = {
   FINALIZED: 'نهایی',
 };
 
-function startOfLocalDay(date: string): string {
-  return new Date(`${date}T00:00:00.000`).toISOString();
-}
-
-function endOfLocalDay(date: string): string {
-  return new Date(`${date}T23:59:59.999`).toISOString();
-}
-
 /**
  * فهرست فاکتورهای فروش — FE-064.
  *
- * فیلترها و pagination سرورمحورند. تبدیل مبلغ با نرخ قفل‌شده‌ی همان
- * ردیف انجام می‌شود، نه مظنه‌ی زنده؛ به همین دلیل UnitToggle روی تاریخچه
+ * فیلترها و pagination سرورمحورند. بازه‌ی تاریخ شمسی با فیلتر مشترک FE-071
+ * و مرز روزِ منطقه‌ی مستأجر به `from`/`to` قرارداد تبدیل می‌شود. تبدیل
+ * مبلغ با نرخ قفل‌شده‌ی همان ردیف انجام می‌شود، نه مظنه‌ی زنده؛ به همین دلیل UnitToggle روی تاریخچه
  * نتیجه‌ای پایدار نشان می‌دهد.
  */
 export default function SalesInvoicesPage() {
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [partySearch, setPartySearch] = useState('');
   const [status, setStatus] = useState<SalesInvoiceStatus | ''>('');
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
+  const [dateRange, setDateRange] = useState<JalaliDateRange>(EMPTY_JALALI_RANGE);
+  const timeZone = useTenantTimeZone();
   const [offset, setOffset] = useState(0);
 
   const debouncedInvoiceNumber = useDebouncedValue(invoiceNumber, SEARCH_DEBOUNCE_MS).trim();
   const debouncedPartySearch = useDebouncedValue(partySearch, SEARCH_DEBOUNCE_MS).trim();
   const normalizedInvoiceNumber = toLatinDigits(debouncedInvoiceNumber).replace(/[^0-9]/gu, '');
-  const invalidDateRange = fromDate !== '' && toDate !== '' && fromDate > toDate;
+  const isoRange = jalaliRangeToIso(dateRange, timeZone);
 
   const query: SalesInvoiceListQuery = {
     limit: PAGE_SIZE,
@@ -52,12 +48,15 @@ export default function SalesInvoicesPage() {
     ...(normalizedInvoiceNumber && { invoiceNumber: normalizedInvoiceNumber }),
     ...(debouncedPartySearch && { partySearch: debouncedPartySearch }),
     ...(status && { status }),
-    ...(!invalidDateRange && fromDate ? { from: startOfLocalDay(fromDate) } : {}),
-    ...(!invalidDateRange && toDate ? { to: endOfLocalDay(toDate) } : {}),
+    ...isoRange,
   };
 
   const hasFilters =
-    invoiceNumber !== '' || partySearch !== '' || status !== '' || fromDate !== '' || toDate !== '';
+    invoiceNumber !== '' ||
+    partySearch !== '' ||
+    status !== '' ||
+    dateRange.from !== null ||
+    dateRange.to !== null;
 
   function resetPage(): void {
     setOffset(0);
@@ -67,8 +66,7 @@ export default function SalesInvoicesPage() {
     setInvoiceNumber('');
     setPartySearch('');
     setStatus('');
-    setFromDate('');
-    setToDate('');
+    setDateRange(EMPTY_JALALI_RANGE);
     setOffset(0);
   }
 
@@ -151,48 +149,20 @@ export default function SalesInvoicesPage() {
                 ))}
               </Select>
             </div>
-
-            <div className="min-w-0 space-y-1.5">
-              <label htmlFor="invoice-from-date" className="block text-sm font-medium">
-                از تاریخ
-              </label>
-              <Input
-                id="invoice-from-date"
-                type="date"
-                className="min-w-0"
-                value={fromDate}
-                onChange={(event) => {
-                  setFromDate(event.target.value);
-                  resetPage();
-                }}
-              />
-            </div>
-
-            <div className="min-w-0 space-y-1.5">
-              <label htmlFor="invoice-to-date" className="block text-sm font-medium">
-                تا تاریخ
-              </label>
-              <Input
-                id="invoice-to-date"
-                type="date"
-                className="min-w-0"
-                value={toDate}
-                onChange={(event) => {
-                  setToDate(event.target.value);
-                  resetPage();
-                }}
-              />
-            </div>
           </div>
 
-          {invalidDateRange ? (
-            <p className="text-sm text-destructive" role="alert">
-              تاریخ پایان نمی‌تواند پیش از تاریخ شروع باشد.
-            </p>
-          ) : null}
+          <JalaliDateRangeFilter
+            idPrefix="invoice-date"
+            value={dateRange}
+            timeZone={timeZone}
+            onChange={(next) => {
+              setDateRange(next);
+              resetPage();
+            }}
+          />
         </section>
 
-        {!invalidDateRange ? <SalesInvoiceList query={query} onOffsetChange={setOffset} /> : null}
+        {isoRange !== null ? <SalesInvoiceList query={query} onOffsetChange={setOffset} /> : null}
       </main>
     </div>
   );

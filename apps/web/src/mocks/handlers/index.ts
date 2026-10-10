@@ -238,7 +238,7 @@ function issueSession(key: string, email: keyof typeof DEMO_USERS) {
     refreshToken,
     expiresInSeconds: 900,
     user: { id: demoUser.id, email, displayName: demoUser.displayName },
-    tenant: { id: 'tnt-demo-1', slug: DEMO_TENANT_SLUG, name: 'زرگری نمونه' },
+    tenant: { id: 'tnt-demo-1', slug: DEMO_TENANT_SLUG, name: 'زرگری نمونه', timezone: 'Asia/Tehran' },
     role: demoUser.role,
   };
 }
