@@ -64,6 +64,9 @@ const COUNT_SHORTCUTS: readonly Shortcut[] = [
 export const SHORTCUTS_BY_KIND: Record<NumericFieldKind, readonly Shortcut[]> = {
   karat: KARAT_SHORTCUTS,
   weight: WEIGHT_SHORTCUTS,
+  // بدون میان‌بر: وزن مرجع سکه در مقیاس میکروگرم است و میان‌برهای وزن (مثقال، ÷۵)
+  // روی میلی‌گرم تعریف شده‌اند؛ این فیلد فقط در تنظیمات انواع سکه (FE-081) است.
+  coinWeight: [],
   rial: AMOUNT_SHORTCUTS,
   mazneh: AMOUNT_SHORTCUTS,
   count: COUNT_SHORTCUTS,

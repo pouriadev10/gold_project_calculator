@@ -282,6 +282,13 @@ const generalSettingsRoute = createRoute({
   component: lazyRouteComponent(() => import('@/features/settings/GeneralSettingsPage')),
 });
 
+/** انواع سکه‌ی نسخه‌دار — FE-081. خواندن برای همه؛ نوع یا نسخه‌ی تازه فقط OWNER/MANAGER. */
+const coinTypeSettingsRoute = createRoute({
+  getParentRoute: () => appShellRoute,
+  path: '/settings/coin-types',
+  component: lazyRouteComponent(() => import('@/features/settings/CoinTypeSettingsPage')),
+});
+
 const forbiddenRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/forbidden',
@@ -343,6 +350,7 @@ const routeTree = rootRoute.addChildren([
     reportingProfitRoute,
     settingsRoute,
     generalSettingsRoute,
+    coinTypeSettingsRoute,
     forbiddenRoute,
     ...devRoutes,
   ]),

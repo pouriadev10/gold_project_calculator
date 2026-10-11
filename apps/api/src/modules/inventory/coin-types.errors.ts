@@ -42,3 +42,14 @@ export class InactiveCoinTypeError extends Error {
     this.coinTypeId = coinTypeId;
   }
 }
+
+/** کد نوع سکه در این مستأجر تکراری است — کد هویت ثابت نوع است و دوبار ساخته نمی‌شود. */
+export class CoinTypeCodeConflictError extends Error {
+  readonly code: string;
+
+  constructor(code: string) {
+    super(`Coin type code "${code}" already exists for this tenant`);
+    this.name = 'CoinTypeCodeConflictError';
+    this.code = code;
+  }
+}

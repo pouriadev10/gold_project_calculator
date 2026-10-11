@@ -500,8 +500,8 @@ const COIN_TYPE = {
 
 /**
  * فهرست نسخه‌ی جاری هر نوع سکه — `coinTypeVersionSchema` واقعی (BE-020).
- * ⚠️ FE-038: بدون endpoint واقعی هنوز، فقط `GET /api/inventory/coin-types`
- * mock (توضیح در `api/contracts.ts`). وزن‌ها از بخش ۳ `CLAUDE.md` (میکروگرم
+ * seed تاریخچه‌ی mock انواع سکه (`GET /api/inventory/coin-types[/history]`،
+ * FE-038/FE-081). وزن‌ها از بخش ۳ `CLAUDE.md` (میکروگرم
  * — تنها استثنای مجاز `bigint` غیرمیلی‌گرمی، دقیقاً برای همین مشخصات مرجع).
  */
 export const COIN_TYPE_VERSIONS = [

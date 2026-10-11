@@ -34,3 +34,10 @@ export const OPENING_BALANCE_ROLES: readonly RoleCode[] = ['OWNER', 'MANAGER'];
  * (`general-settings.controller.ts`، FE-080). خواندن برای هر سه نقش باز است.
  */
 export const GENERAL_SETTINGS_EDIT_ROLES: readonly RoleCode[] = ['OWNER', 'MANAGER'];
+
+/**
+ * `@Roles('OWNER', 'MANAGER')` روی `POST /inventory/coin-types` و
+ * `POST /inventory/coin-types/:id/versions` (`coin-types.controller.ts`، FE-081).
+ * خواندن برای هر سه نقش باز است.
+ */
+export const COIN_TYPE_EDIT_ROLES: readonly RoleCode[] = ['OWNER', 'MANAGER'];

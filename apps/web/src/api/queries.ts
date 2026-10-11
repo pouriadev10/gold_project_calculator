@@ -2,6 +2,7 @@ import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
 import { invoiceAmendmentPreflightSchema, salesInvoiceAmendmentHistorySchema } from '@gold/contracts';
 import { apiGet } from './client';
 import {
+  coinTypeCatalogSchema,
   coinTypeListSchema,
   dashboardSchema,
   inventoryBalanceListSchema,
@@ -320,8 +321,8 @@ export function useItemSearch(query: string, kind?: string) {
 }
 
 /**
- * کاتالوگ نوع سکه — `GET /inventory/coin-types` (FE-038).
- * ⚠️ بدون معادل بک‌اندی هنوز — فقط MSW پاسخ می‌دهد (توضیح در `api/contracts.ts`).
+ * کاتالوگ نوع سکه — `GET /inventory/coin-types` (FE-038؛ endpoint واقعی FE-081).
+ * نسخه‌ی مؤثر همین لحظه‌ی هر نوع، فعال و غیرفعال.
  */
 export function useCoinTypes(enabled = true) {
   return useQuery({
@@ -329,6 +330,18 @@ export function useCoinTypes(enabled = true) {
     queryFn: ({ signal }) => apiGet('/inventory/coin-types', coinTypeListSchema, signal),
     staleTime: MINUTE,
     enabled,
+  });
+}
+
+/**
+ * همه‌ی انواع سکه با تاریخچه‌ی کامل نسخه‌ها — `GET /inventory/coin-types/history`
+ * (FE-081، صفحه‌ی تنظیمات انواع سکه). هر سه نقش می‌خوانند.
+ */
+export function useCoinTypeCatalog() {
+  return useQuery({
+    queryKey: queryKeys.coinTypes.history(),
+    queryFn: ({ signal }) => apiGet('/inventory/coin-types/history', coinTypeCatalogSchema, signal),
+    staleTime: MINUTE,
   });
 }
 

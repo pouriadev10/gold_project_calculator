@@ -5,6 +5,7 @@ import { IdempotencyModule } from '../../platform/idempotency/idempotency.module
 import { UsersModule } from '../../platform/users/users.module';
 import { LedgerModule } from '../ledger/ledger.module';
 import { PricingModule } from '../pricing/pricing.module';
+import { CoinTypesController } from './coin-types.controller';
 import { CoinTypesService } from './coin-types.service';
 import { InitialCoinTypesService } from './initial-coin-types.service';
 import { InventoryMovementsService } from './inventory-movements.service';
@@ -14,7 +15,7 @@ import { OpeningBalancesController } from './opening-balances.controller';
 import { OpeningBalancesService } from './opening-balances.service';
 
 /**
- * کالای زیورآلات، آبشده و سکه — BE-025 تا BE-028.
+ * کالای زیورآلات، آبشده و سکه — BE-025 تا BE-028؛ API انواع سکه FE-081.
  *
  * `AuthModule` و `UsersModule` برای نگهبان نقش لازم‌اند (نقش از دیتابیس
  * خوانده می‌شود، نه از توکن) و `IdempotencyModule` برای مسیرهای نوشتنی.
@@ -26,7 +27,7 @@ import { OpeningBalancesService } from './opening-balances.service';
  */
 @Module({
   imports: [AuditModule, AuthModule, IdempotencyModule, LedgerModule, PricingModule, UsersModule],
-  controllers: [JewelryItemsController, OpeningBalancesController],
+  controllers: [CoinTypesController, JewelryItemsController, OpeningBalancesController],
   providers: [
     CoinTypesService,
     InitialCoinTypesService,

@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { ClipboardList, Coins, LogOut, Palette, SlidersHorizontal } from 'lucide-react';
+import { CircleDollarSign, ClipboardList, Coins, LogOut, Palette, SlidersHorizontal } from 'lucide-react';
 import { PageHeader } from '@/components/common/PageHeader';
 import { RequireRole } from '@/components/common/RequireRole';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
@@ -14,7 +14,8 @@ import { useSessionStore } from '@/stores/session-store';
  * تنظیمات — صفحه‌ی «بیشتر».
  *
  * واحد نمایش و پوسته (تنظیم این دستگاه)، به‌علاوه‌ی لینک تنظیمات عمومی
- * نسخه‌دار مستأجر (FE-080، `/settings/general`).
+ * نسخه‌دار مستأجر (FE-080، `/settings/general`) و انواع سکه (FE-081،
+ * `/settings/coin-types`).
  */
 
 function SettingRow({
@@ -79,6 +80,17 @@ export function SettingsPage() {
           control={
             <Button type="button" variant="outline" asChild>
               <Link to="/settings/general">مشاهده</Link>
+            </Button>
+          }
+        />
+
+        <SettingRow
+          icon={CircleDollarSign}
+          title="انواع سکه"
+          hint="وزن، عیار، ضرب بانک مرکزی و فعال بودن هر نوع سکه — نسخه‌دار."
+          control={
+            <Button type="button" variant="outline" asChild>
+              <Link to="/settings/coin-types">مشاهده</Link>
             </Button>
           }
         />

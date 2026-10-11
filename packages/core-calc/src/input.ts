@@ -37,6 +37,11 @@ export interface DigitSpec {
 export const DIGIT_SPECS = {
   /** گرم با سه رقم اعشار → میلی‌گرم */
   weight: { decimals: 3, maxIntegerDigits: 6 },
+  /**
+   * وزن مرجع نوع سکه: گرم با شش رقم اعشار → میکروگرم (`grossWeightUg`).
+   * فقط برای مشخصات نوع سکه، تا وزن رسمی مثل ۴٫۰۶۶۵ گرم گرد نشود.
+   */
+  coinWeight: { decimals: 6, maxIntegerDigits: 3 },
   /** عیار صحیح */
   karat: { decimals: 0, maxIntegerDigits: 4 },
   /** ریال — بدون اعشار */

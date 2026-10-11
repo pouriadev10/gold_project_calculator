@@ -10,8 +10,7 @@ import CoinInventoryPage from './CoinInventoryPage';
 /**
  * FE-038 — موجودی سکه.
  *
- * سه query مستقل mock می‌شود: `useCoinTypes` (کاتالوگ، بدون معادل بک‌اندی
- * هنوز)، `useInventoryBalances` (مانده‌ی واقعی BE-028) و `useLatestPriceQuote`
+ * سه query مستقل mock می‌شود: `useCoinTypes` (کاتالوگ، FE-081)، `useInventoryBalances` (مانده‌ی واقعی BE-028) و `useLatestPriceQuote`
  * (که `useMazneh` روی آن سوار است — مستقیم mock کردنِ خودِ `useMazneh` غیرممکن
  * است چون این فایل export نشده جز از طریق hook، پس لایه‌ی زیرینش mock می‌شود).
  *

@@ -46,6 +46,7 @@ export interface NumericFieldProps {
 
 const UNIT_LABEL: Record<NumericFieldKind, string> = {
   weight: 'گرم',
+  coinWeight: 'گرم',
   karat: '',
   rial: 'ریال',
   mazneh: 'ریال',
@@ -59,6 +60,7 @@ function displayValue(kind: NumericFieldKind, raw: string, value: bigint): strin
 
   switch (kind) {
     case 'weight':
+    case 'coinWeight':
     case 'percent':
       // حین تایپ، خود بافر نمایش داده می‌شود تا «۱۲٫» و صفرهای انتهایی نپرند
       return toPersianDigits(raw.replace('.', '٫'));

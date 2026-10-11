@@ -74,9 +74,14 @@ export const queryKeys = {
       [...queryKeys.jewelryItems.all(), 'effective-detail', id, at] as const,
   },
 
-  /** کاتالوگ نوع سکه — `coinTypeVersionSchema` (BE-020)، بدون endpoint واقعی هنوز (FE-038). */
+  /**
+   * انواع سکه — `GET /inventory/coin-types` (نسخه‌ی جاری، FE-038) و
+   * `GET /inventory/coin-types/history` (تاریخچه، FE-081). کلید تاریخچه زیر
+   * `all` است تا یک invalidate هر دو را تازه کند.
+   */
   coinTypes: {
     all: () => ['coin-types'] as const,
+    history: () => [...queryKeys.coinTypes.all(), 'history'] as const,
   },
 
   /** مانده‌ی موجودی — `GET /inventory/balances` واقعی (BE-028). */

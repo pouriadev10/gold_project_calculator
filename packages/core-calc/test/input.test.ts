@@ -104,6 +104,13 @@ describe('تبدیل به bigint — بدون هیچ float', () => {
     expect(digitsToBigInt('.5', WEIGHT)).toBe(500n);
   });
 
+  it('وزن مرجع سکه با شش رقم اعشار دقیقاً میکروگرم می‌دهد', () => {
+    const COIN_WEIGHT = DIGIT_SPECS.coinWeight;
+    expect(digitsToBigInt('4.0665', COIN_WEIGHT)).toBe(4_066_500n);
+    expect(digitsToBigInt('8.133', COIN_WEIGHT)).toBe(8_133_000n);
+    expect(type('1.0166009', COIN_WEIGHT)).toBe('1.016600');
+  });
+
   it('عیار و ریال بدون اعشارند', () => {
     expect(digitsToBigInt('750', KARAT)).toBe(750n);
     expect(digitsToBigInt('12500000', RIAL)).toBe(12_500_000n);

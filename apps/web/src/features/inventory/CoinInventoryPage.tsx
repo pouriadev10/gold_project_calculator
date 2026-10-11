@@ -10,9 +10,8 @@ import { CoinInventoryList, type CoinInventoryRow } from './CoinInventoryList';
 /**
  * صفحه‌ی موجودی سکه — FE-038.
  *
- * دو fetch مستقل را ادغام می‌کند: کاتالوگ نوع سکه (`useCoinTypes`، فعلاً
- * فقط mock — بدون معادل بک‌اندی هنوز، همان الگوی `itemSchema`/
- * `profitReportSchema` در `api/contracts.ts`) و مانده‌ی واقعی هر نوع
+ * دو fetch مستقل را ادغام می‌کند: کاتالوگ نوع سکه (`useCoinTypes`،
+ * `GET /inventory/coin-types` — endpoint واقعی از FE-081) و مانده‌ی واقعی هر نوع
  * (`GET /inventory/balances?itemType=COIN`، BE-028 واقعی). نوع سکه‌ای که
  * هیچ حرکتی نداشته اصلاً در پاسخ balances نیست — نه اینکه صفر باشد — پس
  * ادغام اینجا صریحاً برای هر کاتالوگ‌آیتم مانده‌ی نیامده را صفر می‌گیرد؛

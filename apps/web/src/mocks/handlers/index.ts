@@ -18,11 +18,13 @@ import type { CoinType } from '@gold/core-calc';
 import {
   createSecondHandCoinPurchaseSchema,
   createSecondHandGoldPurchaseSchema,
+  createCoinTypeSchema,
+  createCoinTypeVersionSchema,
   DEFAULT_PAGE_SIZE,
   MAX_PAGE_SIZE,
   updateGeneralSettingSchema,
 } from '@gold/contracts';
-import type { SalesInvoiceAmendmentHistory } from '@gold/contracts';
+import type { CoinTypeHistory, CoinTypeVersion, SalesInvoiceAmendmentHistory } from '@gold/contracts';
 import { HttpResponse, http, delay } from 'msw';
 import type {
   JewelryItemVersion,
@@ -177,6 +179,58 @@ const mockGeneralSettings = new Map<string, { value: string; version: number; va
   ['sales.invoice_correction_window_minutes', { value: '30', version: 1, validFrom: '2026-07-01T00:00:00.000Z', createdBy: null }],
   ['sales.manager_approval_variance_rial', { value: '0', version: 1, validFrom: '2026-07-01T00:00:00.000Z', createdBy: null }],
 ]);
+
+/**
+ * انواع سکه‌ی mock با تاریخچه (FE-081) — از همان `COIN_TYPE_VERSIONS`. هر POST
+ * نسخه‌ی تازه‌ای از «اکنون» می‌سازد و نسخه‌ی قبلی را با `validTo` می‌بندد؛
+ * هیچ نسخه‌ای overwrite نمی‌شود. `GET /inventory/coin-types` نسخه‌ی جاری را
+ * از همین‌جا می‌خواند تا نوع تازه در فرم‌های dev هم دیده شود.
+ */
+const mockCoinTypeHistory: Array<{ coinTypeId: string; code: string; versions: CoinTypeVersion[] }> =
+  COIN_TYPE_VERSIONS.map((version) => ({ coinTypeId: version.coinTypeId, code: version.code, versions: [version] }));
+
+function mockCoinTypeVersion(
+  coinTypeId: string,
+  code: string,
+  version: number,
+  spec: { title: string; mintType: CoinTypeVersion['mintType']; grossWeightUg: string; karat: number; active: boolean },
+): CoinTypeVersion {
+  const shared = {
+    id: crypto.randomUUID(),
+    coinTypeId,
+    code,
+    title: spec.title,
+    grossWeightUg: spec.grossWeightUg,
+    karat: spec.karat,
+    validFrom: new Date().toISOString(),
+    validTo: null,
+    version,
+    active: spec.active,
+  };
+  // isCentralBankMinted مثل سرور از نوع ضرب مشتق می‌شود، نه از ورودی.
+  return spec.mintType === 'CENTRAL_BANK'
+    ? { ...shared, mintType: 'CENTRAL_BANK', isCentralBankMinted: true }
+    : { ...shared, mintType: spec.mintType, isCentralBankMinted: false };
+}
+
+function idempotencyRequired() {
+  return HttpResponse.json(
+    { error: { code: 'IDEMPOTENCY_KEY_REQUIRED', message: 'هدر Idempotency-Key اجباری است', fields: {}, requestId: crypto.randomUUID() } },
+    { status: 400 },
+  );
+}
+
+function coinTypeValidationError(issues: ReadonlyArray<{ path: PropertyKey[]; message: string }>) {
+  const fields: Record<string, string[]> = {};
+  for (const issue of issues) {
+    const field = String(issue.path[0] ?? 'body');
+    (fields[field] ??= []).push(issue.message);
+  }
+  return HttpResponse.json(
+    { error: { code: 'VALIDATION_ERROR', message: 'مشخصات نوع سکه نامعتبر است', fields, requestId: crypto.randomUUID() } },
+    { status: 400 },
+  );
+}
 
 /**
  * تاریخچه‌ی مظنه‌ی MAZNEH — نزولی بر اساس `observedAt` (همان ترتیب
@@ -1792,12 +1846,68 @@ export const handlers = [
   }),
 
   /**
-   * `GET /inventory/coin-types` — FE-038. ⚠️ بدون معادل بک‌اندی هنوز
-   * (توضیح در `api/contracts.ts`) — فقط کاتالوگ ساختگی برمی‌گرداند.
+   * `GET /inventory/coin-types` — FE-038 (endpoint واقعی FE-081). نسخه‌ی جاری
+   * هر نوع از تاریخچه‌ی mock که POSTهای زیر به‌روزش می‌کنند.
    */
   http.get('/api/inventory/coin-types', async () => {
     await delay(READ_DELAY_MS);
-    return HttpResponse.json(COIN_TYPE_VERSIONS);
+    return HttpResponse.json(mockCoinTypeHistory.map((type) => type.versions[0]));
+  }),
+
+  /**
+   * `GET /inventory/coin-types/history` و دو POST انواع سکه — FE-081، همان
+   * قرارداد `CoinTypesController`. نقش در mock سنجیده نمی‌شود (سرور `@Roles` دارد).
+   */
+  http.get('/api/inventory/coin-types/history', async () => {
+    await delay(READ_DELAY_MS);
+    const types: CoinTypeHistory[] = mockCoinTypeHistory.map((type) => ({ ...type, versions: [...type.versions] }));
+    return HttpResponse.json({ types });
+  }),
+
+  http.post('/api/inventory/coin-types', async ({ request }) => {
+    await delay(WRITE_DELAY_MS);
+    const idempotencyKey = request.headers.get('Idempotency-Key');
+    if (!idempotencyKey) return idempotencyRequired();
+    const cached = idempotencyCache.get(idempotencyKey);
+    if (cached) return HttpResponse.json(cached, { status: 201 });
+
+    const parsed = createCoinTypeSchema.safeParse(await request.json());
+    if (!parsed.success) return coinTypeValidationError(parsed.error.issues);
+    if (mockCoinTypeHistory.some((type) => type.code === parsed.data.code)) {
+      return HttpResponse.json(
+        { error: { code: 'CONFLICT', message: `کد «${parsed.data.code}» قبلاً ثبت شده است`, fields: {}, requestId: crypto.randomUUID() } },
+        { status: 409 },
+      );
+    }
+    const coinTypeId = crypto.randomUUID();
+    const created = mockCoinTypeVersion(coinTypeId, parsed.data.code, 1, parsed.data);
+    mockCoinTypeHistory.push({ coinTypeId, code: parsed.data.code, versions: [created] });
+    idempotencyCache.set(idempotencyKey, created);
+    return HttpResponse.json(created, { status: 201 });
+  }),
+
+  http.post('/api/inventory/coin-types/:coinTypeId/versions', async ({ request, params }) => {
+    await delay(WRITE_DELAY_MS);
+    const idempotencyKey = request.headers.get('Idempotency-Key');
+    if (!idempotencyKey) return idempotencyRequired();
+    const cached = idempotencyCache.get(idempotencyKey);
+    if (cached) return HttpResponse.json(cached, { status: 201 });
+
+    const type = mockCoinTypeHistory.find((candidate) => candidate.coinTypeId === params.coinTypeId);
+    if (!type) {
+      return HttpResponse.json(
+        { error: { code: 'NOT_FOUND', message: 'نوع سکه پیدا نشد', fields: {}, requestId: crypto.randomUUID() } },
+        { status: 404 },
+      );
+    }
+    const parsed = createCoinTypeVersionSchema.safeParse(await request.json());
+    if (!parsed.success) return coinTypeValidationError(parsed.error.issues);
+
+    const previous = type.versions[0]!;
+    const created = mockCoinTypeVersion(type.coinTypeId, type.code, previous.version + 1, parsed.data);
+    type.versions = [created, { ...previous, validTo: created.validFrom }, ...type.versions.slice(1)];
+    idempotencyCache.set(idempotencyKey, created);
+    return HttpResponse.json(created, { status: 201 });
   }),
 
   /**

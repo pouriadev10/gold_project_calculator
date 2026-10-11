@@ -81,6 +81,10 @@ export {
   updateJewelryItemSchema,
   coinMintTypeSchema,
   coinTypeVersionSchema,
+  coinTypeCatalogSchema,
+  coinTypeHistorySchema,
+  createCoinTypeSchema,
+  createCoinTypeVersionSchema,
   inventoryItemTypeSchema,
   inventoryBalanceSchema,
   openingBalanceLineSchema,
@@ -142,6 +146,10 @@ export {
   type UpdateJewelryItemInput,
   type CoinMintType,
   type CoinTypeVersion,
+  type CoinTypeCatalog,
+  type CoinTypeHistory,
+  type CreateCoinTypeInput,
+  type CreateCoinTypeVersionInput,
   type InventoryItemType,
   type InventoryBalance,
   type OpeningBalanceLine,
@@ -167,13 +175,9 @@ export const inventoryBalanceListSchema = z.array(inventoryBalanceSchema);
 export type InventoryBalanceList = z.infer<typeof inventoryBalanceListSchema>;
 
 /**
- * ⚠️ بدون معادل بک‌اندی هنوز — `coinTypeVersionSchema` واقعی است (BE-020)
- * ولی `apps/api` فعلاً هیچ controller‌ای برای فهرست‌کردن آن ندارد
- * (`InventoryModule.controllers` فقط `JewelryItemsController` و
- * `OpeningBalancesController` دارد). مسیر `/inventory/coin-types` اینجا
- * فقط با MSW پاسخ داده می‌شود، نه سرور واقعی — همان الگوی
- * `itemSchema`/`profitReportSchema` پایین‌تر. وقتی endpoint واقعی اضافه
- * شد، این فقط یک تغییر مسیر است، نه تغییر schema.
+ * پاسخ `GET /inventory/coin-types` — نسخه‌ی مؤثر همین لحظه‌ی هر نوع سکه،
+ * فعال و غیرفعال (`CoinTypesController`، FE-081؛ پیش از آن فقط MSW).
+ * پوشش آرایه اینجاست چون `packages/contracts` برایش envelope جدا ندارد.
  */
 export const coinTypeListSchema = z.array(coinTypeVersionSchema);
 export type CoinTypeList = z.infer<typeof coinTypeListSchema>;

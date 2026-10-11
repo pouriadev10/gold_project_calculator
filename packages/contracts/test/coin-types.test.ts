@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { coinTypeVersionSchema } from '../src/inventory/coin-types.js';
+import {
+  coinTypeCatalogSchema,
+  coinTypeVersionSchema,
+  createCoinTypeSchema,
+  createCoinTypeVersionSchema,
+} from '../src/inventory/coin-types.js';
 
 const centralBankCoin = {
   id: 'a4555172-3398-4a25-8fe6-b058650e5e9c',
@@ -33,6 +38,57 @@ describe('coin type contract', () => {
         ...centralBankCoin,
         mintType: 'PRIVATE_MINT',
         isCentralBankMinted: true,
+      }).success,
+    ).toBe(false);
+  });
+});
+
+describe('coin type settings input — FE-081', () => {
+  const spec = {
+    title: 'ربع سکه بهار آزادی',
+    mintType: 'CENTRAL_BANK',
+    grossWeightUg: '2033200',
+    karat: 900,
+    active: true,
+  } as const;
+
+  it('accepts a new type with an immutable code and an exact microgram weight', () => {
+    expect(createCoinTypeSchema.parse({ code: ' ROB ', ...spec })).toEqual({ code: 'ROB', ...spec });
+  });
+
+  it('never lets the client claim bubble eligibility or pick the start date', () => {
+    expect(createCoinTypeVersionSchema.safeParse({ ...spec, isCentralBankMinted: true }).success).toBe(false);
+    expect(
+      createCoinTypeVersionSchema.safeParse({ ...spec, validFrom: '2026-10-01T00:00:00.000Z' }).success,
+    ).toBe(false);
+  });
+
+  it.each([
+    ['a JSON number weight', { grossWeightUg: 2033200 }],
+    ['a zero weight', { grossWeightUg: '0' }],
+    ['a fractional weight', { grossWeightUg: '2033.2' }],
+    ['karat 0', { karat: 0 }],
+    ['karat above 1000', { karat: 1001 }],
+    ['an empty title', { title: '   ' }],
+    ['an unknown mint', { mintType: 'BULLION' }],
+  ])('rejects %s', (_label, patch) => {
+    expect(createCoinTypeVersionSchema.safeParse({ ...spec, ...patch }).success).toBe(false);
+  });
+
+  it('describes the full history of each type, newest version first', () => {
+    const catalog = coinTypeCatalogSchema.parse({
+      types: [
+        {
+          coinTypeId: centralBankCoin.coinTypeId,
+          code: centralBankCoin.code,
+          versions: [centralBankCoin],
+        },
+      ],
+    });
+    expect(catalog.types[0]?.versions).toHaveLength(1);
+    expect(
+      coinTypeCatalogSchema.safeParse({
+        types: [{ coinTypeId: centralBankCoin.coinTypeId, code: 'X', versions: [] }],
       }).success,
     ).toBe(false);
   });
