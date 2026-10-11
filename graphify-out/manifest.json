@@ -2568,9 +2568,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/common/Toaster.tsx": {
-    "mtime": 1786965220.042983,
-    "seen": 1789132525.9449458,
-    "ast_hash": "729ff15f882d5657e6470de58f6f79a3",
+    "mtime": 1791735359.4285874,
+    "seen": 1791735564.984563,
+    "ast_hash": "a86d690ef50220cd764f3673e182a431",
     "semantic_hash": ""
   },
   "apps/web/src/components/common/UnitToggle.test.tsx": {
@@ -2730,9 +2730,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/ui/sheet.tsx": {
-    "mtime": 1785500611.6695404,
-    "seen": 1789132525.9449658,
-    "ast_hash": "27a27905ab430d4fdab8dfc706bafc08",
+    "mtime": 1791735359.4296527,
+    "seen": 1791735564.9845898,
+    "ast_hash": "8ed78ebbb0f5384c7d4f305d090e847f",
     "semantic_hash": ""
   },
   "apps/web/src/components/ui/skeleton.tsx": {
@@ -2964,15 +2964,15 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/parties/PartyDetailPage.test.tsx": {
-    "mtime": 1791639864.573025,
-    "seen": 1791640111.3256636,
-    "ast_hash": "7afc1cf8d48dca40fa83cdae8cf6204b",
+    "mtime": 1791735359.4312696,
+    "seen": 1791735564.9846315,
+    "ast_hash": "4fef3b9ebe19b236e5d0db07e8e906de",
     "semantic_hash": ""
   },
   "apps/web/src/features/parties/PartyDetailPage.tsx": {
-    "mtime": 1791639438.315714,
-    "seen": 1791640111.3256643,
-    "ast_hash": "40c983d30bf68a5b0e83edb23253ca44",
+    "mtime": 1791735359.4323258,
+    "seen": 1791735564.9846325,
+    "ast_hash": "479b7f9ba63d93c3ae53fea86f2efdc2",
     "semantic_hash": ""
   },
   "apps/web/src/features/parties/PartyFormDialog.test.tsx": {
@@ -2994,9 +2994,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/parties/PartyList.tsx": {
-    "mtime": 1786967373.027098,
-    "seen": 1789132525.9449985,
-    "ast_hash": "d738664556cbc017aba4d551d2fb9905",
+    "mtime": 1791735359.4328568,
+    "seen": 1791735564.984636,
+    "ast_hash": "a683ffba83aadeb98d6faa9b7b65f6fb",
     "semantic_hash": ""
   },
   "apps/web/src/features/parties/SettlementsNewPage.test.tsx": {
@@ -3306,15 +3306,15 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/sales/SaleSummary.test.tsx": {
-    "mtime": 1787425325.2452521,
-    "seen": 1789132525.9450362,
-    "ast_hash": "f5bcc58ebe1ca56416a48385f34f8ada",
+    "mtime": 1791735359.4344344,
+    "seen": 1791735564.9847145,
+    "ast_hash": "d2171b95dd96e5ba0c39c9f454530275",
     "semantic_hash": ""
   },
   "apps/web/src/features/sales/SaleSummary.tsx": {
-    "mtime": 1787424581.2298064,
-    "seen": 1789132525.9450371,
-    "ast_hash": "6e6d1d450dcfdb72c8cadffd6ec2d4e6",
+    "mtime": 1791735359.4344344,
+    "seen": 1791735564.9847155,
+    "ast_hash": "daa4e8a7ddc2a234e1bd6651f09da770",
     "semantic_hash": ""
   },
   "apps/web/src/features/sales/SaleWizardPage.test.tsx": {
@@ -3678,9 +3678,9 @@
     "semantic_hash": ""
   },
   "eslint.config.js": {
-    "mtime": 1786561105.0768857,
-    "seen": 1789132525.9450812,
-    "ast_hash": "ad2da028921bcb12fc45b3ac27ac1fa5",
+    "mtime": 1791735359.4375637,
+    "seen": 1791735564.9848042,
+    "ast_hash": "1ba987caa078b77b7828d1b3072b9a47",
     "semantic_hash": ""
   },
   "package.json": {
@@ -5028,9 +5028,9 @@
     "semantic_hash": ""
   },
   "FrontTasks.md": {
-    "mtime": 1791734523.4625342,
-    "seen": 1791734565.6912723,
-    "ast_hash": "8f2a077673fe317bfdaf304e3dfa586f",
+    "mtime": 1791735456.7863214,
+    "seen": 1791735564.9850345,
+    "ast_hash": "d86f016b76b13402d2efdf03ca5852b1",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
@@ -5418,9 +5418,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/sales/SalesInvoiceAmendPage.tsx": {
-    "mtime": 1790072513.093847,
-    "seen": 1790073217.1818922,
-    "ast_hash": "d4fee27c4ce810892ce88796daedd249",
+    "mtime": 1791735359.4360087,
+    "seen": 1791735564.984719,
+    "ast_hash": "5666acdd0f2b0c48d31bbaa28fd32dcf",
     "semantic_hash": ""
   },
   "apps/web/src/features/sales/InvoiceVersionHistory.tsx": {
@@ -5526,9 +5526,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/reporting/PartyBalanceReportPage.tsx": {
-    "mtime": 1791643699.2178242,
-    "seen": 1791643960.1997106,
-    "ast_hash": "45ad68e53b2a060c1ce7ab4397c24b5d",
+    "mtime": 1791735359.4339137,
+    "seen": 1791735564.9846814,
+    "ast_hash": "eb941a7a81f30c865c87f65def258b16",
     "semantic_hash": ""
   },
   "apps/web/src/features/home/DashboardOverview.test.tsx": {
@@ -5538,9 +5538,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/home/DashboardOverview.tsx": {
-    "mtime": 1791645094.341952,
-    "seen": 1791645427.3741446,
-    "ast_hash": "521af4696815f1b0f1f47a88edf2ce3b",
+    "mtime": 1791735359.4301739,
+    "seen": 1791735564.9846015,
+    "ast_hash": "99d4c4a9f421e2aa28ef7aa7fa93c318",
     "semantic_hash": ""
   },
   "apps/web/src/features/home/dashboard-amounts.test.ts": {
@@ -5682,15 +5682,15 @@
     "semantic_hash": ""
   },
   "apps/web/src/lib/receipt-share.test.ts": {
-    "mtime": 1791727212.6832552,
-    "seen": 1791727512.3973463,
-    "ast_hash": "c675a1b9cf42bf5ba08d25ab27b013c2",
+    "mtime": 1791735359.4370534,
+    "seen": 1791735564.9847744,
+    "ast_hash": "641dc2226f5f97fdff8064521aa8c4ba",
     "semantic_hash": ""
   },
   "apps/web/src/lib/receipt-share.ts": {
-    "mtime": 1791726881.341904,
-    "seen": 1791727512.3973472,
-    "ast_hash": "8ad112a21636e33cb59b887b6635f559",
+    "mtime": 1791735359.4375637,
+    "seen": 1791735564.9847753,
+    "ast_hash": "f45ff9cbb9e86fe07186209d52488878",
     "semantic_hash": ""
   },
   "apps/api/src/modules/pricing/general-settings.controller.ts": {
@@ -5799,6 +5799,24 @@
     "mtime": 1791734152.4807396,
     "seen": 1791734565.6910837,
     "ast_hash": "860cf40ab876c6742a6125292652453f",
+    "semantic_hash": ""
+  },
+  "apps/web/src/lib/bidi.test.ts": {
+    "mtime": 1791735038.664747,
+    "seen": 1791735564.984761,
+    "ast_hash": "98ee5ed65820790f16e538e469c2218b",
+    "semantic_hash": ""
+  },
+  "apps/web/src/lib/bidi.ts": {
+    "mtime": 1791735038.6355305,
+    "seen": 1791735564.9847627,
+    "ast_hash": "0d1667f25754b3b9399a1ff52ffa1a90",
+    "semantic_hash": ""
+  },
+  "docs/rtl-audit.md": {
+    "mtime": 1791735433.126603,
+    "seen": 1791735564.9850507,
+    "ast_hash": "51d77cc67b2a281665cfe82d333bc105",
     "semantic_hash": ""
   }
 }
