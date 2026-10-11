@@ -980,6 +980,48 @@ export const handlers = [
   }),
 
   /**
+   * `GET /pricing/feed/status` — FE-082، همان `priceFeedStatusSchema` واقعی.
+   * منبع فعال = آخرین مظنه‌ی ذخیره‌شده؛ آخرین مظنه‌ی هر منبع از همان تاریخچه.
+   * provider mock «پیکربندی‌شده» است تا مسیر fallback در dev دیده شود.
+   */
+  http.get('/api/pricing/feed/status', async () => {
+    await delay(READ_DELAY_MS);
+    return HttpResponse.json({
+      quoteType: 'MAZNEH',
+      providerConfigured: true,
+      activeQuote: maznehQuoteHistory[0] ?? null,
+      latestFeedQuote: maznehQuoteHistory.find((quote) => quote.source === 'FEED') ?? null,
+      latestManualQuote: maznehQuoteHistory.find((quote) => quote.source === 'MANUAL') ?? null,
+      checkedAt: new Date().toISOString(),
+    });
+  }),
+
+  /**
+   * `POST /pricing/feed/refresh` — FE-082. mock هیچ فید واقعی‌ای ندارد، پس همیشه
+   * مثل provider قطع رفتار می‌کند: fallback به آخرین مظنه‌ی ذخیره‌شده (یا
+   * `UNAVAILABLE` اگر هیچ مظنه‌ای نباشد) — دقیقاً همان قرارداد سرور.
+   */
+  http.post('/api/pricing/feed/refresh', async ({ request }) => {
+    await delay(WRITE_DELAY_MS);
+    const key = request.headers.get('Idempotency-Key');
+    if (!key) {
+      return HttpResponse.json(
+        { error: { code: 'IDEMPOTENCY_KEY_REQUIRED', message: 'هدر Idempotency-Key اجباری است', fields: {}, requestId: crypto.randomUUID() } },
+        { status: 400 },
+      );
+    }
+    const cached = idempotencyCache.get(key);
+    if (cached) return HttpResponse.json(cached);
+
+    const latest = maznehQuoteHistory[0];
+    const body = latest
+      ? { outcome: 'FALLBACK' as const, failure: 'PROVIDER_TIMEOUT' as const, quote: latest }
+      : { outcome: 'UNAVAILABLE' as const, failure: 'PROVIDER_TIMEOUT' as const, quote: null };
+    idempotencyCache.set(key, body);
+    return HttpResponse.json(body);
+  }),
+
+  /**
    * `GET /parties` — قرارداد نهایی BE-024 (`partyListQuerySchema`/`partyListSchema`):
    * `search` نام **یا** موبایل را می‌گردد، `type`/`status` فیلتر می‌کنند،
    * `limit`/`offset` صفحه‌بندی سرور-محور واقعی است (نه سمت کلاینت مثل

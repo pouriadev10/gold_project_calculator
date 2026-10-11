@@ -8,6 +8,7 @@ import {
 import { PRICE_FEED_PROVIDER, PRICE_FEED_TIMEOUT_MS } from './price-feed.provider';
 import { PriceQuotesService } from './price-quotes.service';
 import type { PriceQuote, PriceQuoteSource, PriceQuoteType } from '../../platform/database/schema';
+import type { TenantTransaction } from '../../platform/database/tenant-transaction';
 import type { PriceFeedProvider, PriceFeedResult } from './price-feed.provider';
 
 export interface ResolveLatestPriceQuoteInput {
@@ -34,6 +35,26 @@ export type PriceQuoteResolution =
       readonly outcome: 'FALLBACK';
       readonly failure: 'PROVIDER_ERROR' | 'PROVIDER_TIMEOUT';
     };
+
+export type PriceFeedFailureReason = 'NOT_CONFIGURED' | 'PROVIDER_ERROR' | 'PROVIDER_TIMEOUT';
+
+/** نتیجه‌ی تماس با provider، پیش از هر نوشتنی در دیتابیس. */
+export type PriceFeedAttempt =
+  | { readonly ok: true; readonly result: PriceFeedResult }
+  | { readonly ok: false; readonly failure: PriceFeedFailureReason };
+
+/** نتیجه‌ی «دریافت از فید» دستی صفحه‌ی منبع مظنه (FE-082). */
+export type PriceFeedRefreshOutcome =
+  | { readonly outcome: 'FEED'; readonly failure: null; readonly quote: PriceQuote }
+  | { readonly outcome: 'FALLBACK'; readonly failure: PriceFeedFailureReason; readonly quote: PriceQuote }
+  | { readonly outcome: 'UNAVAILABLE'; readonly failure: PriceFeedFailureReason; readonly quote: null };
+
+export interface PriceFeedStatusRecord {
+  readonly providerConfigured: boolean;
+  readonly activeQuote: PriceQuote | undefined;
+  readonly latestFeedQuote: PriceQuote | undefined;
+  readonly latestManualQuote: PriceQuote | undefined;
+}
 
 function isValidFeedResult(value: PriceFeedResult): boolean {
   return (
@@ -85,10 +106,7 @@ export class PriceFeedService {
     }
 
     try {
-      const result = await withTimeout(this.provider.fetchLatest(), this.timeoutMs);
-      if (!isValidFeedResult(result) || result.quoteType !== input.quoteType) {
-        throw new InvalidPriceFeedResultError();
-      }
+      const result = await this.fetchFromProvider(input.quoteType);
 
       const quote = await this.quotes.createFeed({
         tenantId: input.tenantId,
@@ -111,5 +129,64 @@ export class PriceFeedService {
         failure: error instanceof PriceFeedTimeoutError ? 'PROVIDER_TIMEOUT' : 'PROVIDER_ERROR',
       };
     }
+  }
+
+  /**
+   * تماس با provider، **بیرون از هر تراکنش دیتابیس**: انتظار تا سقف timeout
+   * نباید یک اتصال دیتابیس را نگه دارد. هیچ خطایی بیرون نمی‌زند.
+   */
+  async attemptFeed(quoteType: PriceQuoteType): Promise<PriceFeedAttempt> {
+    if (!this.provider.configured) {
+      return { ok: false, failure: 'NOT_CONFIGURED' };
+    }
+    try {
+      return { ok: true, result: await this.fetchFromProvider(quoteType) };
+    } catch (error) {
+      return { ok: false, failure: error instanceof PriceFeedTimeoutError ? 'PROVIDER_TIMEOUT' : 'PROVIDER_ERROR' };
+    }
+  }
+
+  /**
+   * نتیجه‌ی تلاش را ثبت می‌کند: مظنه‌ی تازه‌ی فید، یا fallback به آخرین مظنه‌ی
+   * ذخیره‌شده از هر منبع. فقط شاخه‌ی موفق چیزی می‌نویسد.
+   */
+  async settleAttemptInTransaction(
+    transaction: TenantTransaction,
+    tenantId: string,
+    quoteType: PriceQuoteType,
+    attempt: PriceFeedAttempt,
+  ): Promise<PriceFeedRefreshOutcome> {
+    if (attempt.ok) {
+      const quote = await this.quotes.createFeedInTransaction(transaction, {
+        tenantId,
+        quoteType: attempt.result.quoteType,
+        amountRial: attempt.result.amountRial,
+        observedAt: attempt.result.observedAt,
+      });
+      return { outcome: 'FEED', failure: null, quote };
+    }
+
+    const fallback = await this.quotes.latestInTransaction(transaction, tenantId, quoteType);
+    return fallback === undefined
+      ? { outcome: 'UNAVAILABLE', failure: attempt.failure, quote: null }
+      : { outcome: 'FALLBACK', failure: attempt.failure, quote: fallback };
+  }
+
+  /** منبع فعال (منبع آخرین مظنه‌ی ذخیره‌شده) و آخرین مظنه‌ی هر منبع، بدون تماس با provider. */
+  async status(tenantId: string, quoteType: PriceQuoteType): Promise<PriceFeedStatusRecord> {
+    const [activeQuote, latestFeedQuote, latestManualQuote] = await Promise.all([
+      this.quotes.latest(tenantId, quoteType),
+      this.quotes.latest(tenantId, quoteType, 'FEED'),
+      this.quotes.latest(tenantId, quoteType, 'MANUAL'),
+    ]);
+    return { providerConfigured: this.provider.configured, activeQuote, latestFeedQuote, latestManualQuote };
+  }
+
+  private async fetchFromProvider(quoteType: PriceQuoteType): Promise<PriceFeedResult> {
+    const result = await withTimeout(this.provider.fetchLatest(), this.timeoutMs);
+    if (!isValidFeedResult(result) || result.quoteType !== quoteType) {
+      throw new InvalidPriceFeedResultError();
+    }
+    return result;
   }
 }

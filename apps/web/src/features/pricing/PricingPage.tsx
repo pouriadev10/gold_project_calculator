@@ -5,9 +5,12 @@ import { useHasRole } from '@/hooks/useHasRole';
 import { MANUAL_QUOTE_ENTRY_ROLES } from '@/lib/permissions';
 import { ManualQuoteForm } from './ManualQuoteForm';
 import { QuoteHistoryList } from './QuoteHistoryList';
+import { QuoteSourceCard } from './QuoteSourceCard';
 
 /**
  * صفحه‌ی مظنه — FE-030/FE-031. مقصد لینک «ثبت دستی» در `MaznehBar` (FE-029).
+ * از FE-082 «تنظیمات مظنه و منابع» هم هست: کارت `QuoteSourceCard` بالای صفحه
+ * منبع فعال، وضعیت فید و fallback را نشان می‌دهد؛ ورود دستی همان فرم زیرش است.
  *
  * نمایش «آخرین مظنه‌ی ثبت‌شده» بعد از ثبت مستقیماً از پاسخ سرور در
  * `ManualQuoteForm` می‌آید، نه از یک fetch جدا؛ فهرست تاریخچه‌ی زیرش
@@ -36,6 +39,8 @@ export default function PricingPage() {
       <PageHeader title="مظنه" />
 
       <div className="flex-1 space-y-6 p-4 pb-96">
+        <QuoteSourceCard />
+
         <div className="space-y-4">
           {canEnter ? (
             <ManualQuoteForm />

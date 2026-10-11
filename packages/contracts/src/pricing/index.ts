@@ -5,3 +5,4 @@
  */
 export * from './price-quotes.js';
 export * from './general-settings.js';
+export * from './price-feed.js';

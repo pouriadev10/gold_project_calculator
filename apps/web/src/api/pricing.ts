@@ -1,5 +1,11 @@
 import { apiPost } from './client';
-import { priceQuoteSchema, type CreateManualPriceQuoteInput, type PriceQuote } from './contracts';
+import {
+  priceFeedRefreshResultSchema,
+  priceQuoteSchema,
+  type CreateManualPriceQuoteInput,
+  type PriceFeedRefreshResult,
+  type PriceQuote,
+} from './contracts';
 
 /**
  * ثبت مظنه‌ی دستی — `POST /pricing/quotes/manual` (BE-021).
@@ -22,4 +28,19 @@ export function createManualPriceQuote(
     amountRial: amountRial.toString(),
   };
   return apiPost('/pricing/quotes/manual', body, priceQuoteSchema, idempotencyKey, signal);
+}
+
+/**
+ * تلاش دستی برای دریافت مظنه از فید — `POST /pricing/feed/refresh` (FE-082).
+ * فقط OWNER و MANAGER. شکست فید خطای HTTP نیست: نتیجه `FALLBACK` (آخرین
+ * مظنه‌ی ذخیره‌شده همچنان معتبر) یا `UNAVAILABLE` (هیچ مظنه‌ای نیست) است.
+ */
+export function refreshPriceFeed(idempotencyKey: string, signal?: AbortSignal): Promise<PriceFeedRefreshResult> {
+  return apiPost(
+    '/pricing/feed/refresh',
+    { quoteType: 'MAZNEH' },
+    priceFeedRefreshResultSchema,
+    idempotencyKey,
+    signal,
+  );
 }

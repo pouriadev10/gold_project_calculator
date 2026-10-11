@@ -52,7 +52,8 @@ function auditRequestMetadata(request: AuditHttpRequest): {
   };
 }
 
-function toResponse(quote: PriceQuote): PriceQuoteResponse {
+/** شکل JSON یک مظنه — مشترک با `PriceFeedController` (FE-082). */
+export function toPriceQuoteResponse(quote: PriceQuote): PriceQuoteResponse {
   return {
     id: quote.id,
     quoteType: quote.quoteType,
@@ -109,7 +110,7 @@ export class PriceQuotesController {
 
           return {
             status: HttpStatus.CREATED,
-            body: toResponse(quote),
+            body: toPriceQuoteResponse(quote),
           };
         },
       });
@@ -129,7 +130,7 @@ export class PriceQuotesController {
   ): Promise<PriceQuoteResponse | null> {
     const quote = await this.quotes.latest(this.context.getTenantId(), query.quoteType);
 
-    return quote === undefined ? null : toResponse(quote);
+    return quote === undefined ? null : toPriceQuoteResponse(quote);
   }
 
   @Get()
@@ -138,6 +139,6 @@ export class PriceQuotesController {
   ): Promise<readonly PriceQuoteResponse[]> {
     const quotes = await this.quotes.list(this.context.getTenantId(), query.quoteType);
 
-    return quotes.map(toResponse);
+    return quotes.map(toPriceQuoteResponse);
   }
 }

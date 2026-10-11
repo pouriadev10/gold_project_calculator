@@ -19,6 +19,8 @@ import PricingPage from './PricingPage';
 vi.mock('@/api/queries', async (importOriginal) => ({
   ...(await importOriginal<typeof Queries>()),
   usePriceQuoteHistory: () => ({ data: [], isLoading: false, isError: false, refetch: vi.fn() }),
+  // کارت منبع مظنه (FE-082) جداگانه در `QuoteSourceCard.test.tsx` تست می‌شود.
+  usePriceFeedStatus: () => ({ data: undefined, isLoading: true, isError: false, refetch: vi.fn() }),
 }));
 const sessionWithRole = (role: 'OWNER' | 'MANAGER' | 'CASHIER') => ({
   accessToken: 'a',

@@ -12,6 +12,8 @@ export interface PriceFeedResult {
  * neither a particular vendor nor this interface; they consume a resolved quote.
  */
 export interface PriceFeedProvider {
+  /** `false` فقط برای adapter جای‌خالی؛ صفحه‌ی منبع مظنه (FE-082) آن را «فقط دستی» نشان می‌دهد. */
+  readonly configured: boolean;
   fetchLatest(): Promise<PriceFeedResult>;
 }
 
@@ -20,6 +22,8 @@ export const PRICE_FEED_TIMEOUT_MS = Symbol('PRICE_FEED_TIMEOUT_MS');
 
 /** The default adapter proves the fallback path without coupling phase 1 to a vendor. */
 export class UnavailablePriceFeedProvider implements PriceFeedProvider {
+  readonly configured = false;
+
   fetchLatest(): Promise<never> {
     return Promise.reject(new Error('هیچ provider مظنه‌ای پیکربندی نشده است'));
   }

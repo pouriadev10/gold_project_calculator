@@ -19,6 +19,7 @@ import type { PriceFeedProvider, PriceFeedResult } from '../src/modules/pricing/
 import type { INestApplicationContext } from '@nestjs/common';
 
 class ControlledPriceFeedProvider implements PriceFeedProvider {
+  readonly configured = true;
   calls = 0;
   response: () => Promise<PriceFeedResult> = async () => {
     throw new Error('provider not configured for this test');

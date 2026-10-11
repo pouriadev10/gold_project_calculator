@@ -17,6 +17,7 @@ import {
   partyListSchema,
   partySchema,
   partyStatementSchema,
+  priceFeedStatusSchema,
   priceQuoteListSchema,
   priceQuoteSchema,
   profitReportSchema,
@@ -73,6 +74,19 @@ export function usePriceQuoteHistory(quoteType: PriceQuoteType = 'MAZNEH') {
     queryKey: queryKeys.pricing.history(quoteType),
     queryFn: ({ signal }) =>
       apiGet(`/pricing/quotes?quoteType=${quoteType}`, priceQuoteListSchema, signal),
+    staleTime: MINUTE,
+  });
+}
+
+/**
+ * منبع فعال مظنه و وضعیت فید — `GET /pricing/feed/status` (FE-082). فقط
+ * رکوردهای ذخیره‌شده را می‌خواند و هرگز به provider وصل نمی‌شود؛ هر سه نقش.
+ */
+export function usePriceFeedStatus(quoteType: PriceQuoteType = 'MAZNEH') {
+  return useQuery({
+    queryKey: queryKeys.pricing.feedStatus(quoteType),
+    queryFn: ({ signal }) =>
+      apiGet(`/pricing/feed/status?quoteType=${quoteType}`, priceFeedStatusSchema, signal),
     staleTime: MINUTE,
   });
 }

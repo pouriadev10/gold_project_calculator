@@ -11,6 +11,8 @@ import {
   paginationQuerySchema,
   priceQuoteAmountRialSchema,
   priceQuoteSchema as sharedPriceQuoteSchema,
+  priceFeedStatusSchema as sharedPriceFeedStatusSchema,
+  priceFeedFailureSchema,
   jewelryCashSaleSchema as sharedJewelryCashSaleSchema,
   jewelryCreditSaleSchema as sharedJewelryCreditSaleSchema,
   coinSaleSchema as sharedCoinSaleSchema,
@@ -421,6 +423,28 @@ export type PriceQuoteSource = PriceQuote['source'];
  */
 export const priceQuoteListSchema = z.array(priceQuoteSchema);
 export type PriceQuoteList = z.infer<typeof priceQuoteListSchema>;
+
+/* ── GET /api/pricing/feed/status و POST .../refresh — FE-082 ──── */
+
+/**
+ * آینه‌ی `priceFeedStatusSchema` و `priceFeedRefreshResultSchema` واقعی، با
+ * همان `priceQuoteSchema` بالا (مبلغ `bigint`). منبع فعال = منبع `activeQuote`،
+ * یعنی آخرین مظنه‌ی ذخیره‌شده — همانی که فروش با `quoteId`اش قیمت می‌خورد.
+ */
+export const priceFeedStatusSchema = sharedPriceFeedStatusSchema.extend({
+  activeQuote: priceQuoteSchema.nullable(),
+  latestFeedQuote: priceQuoteSchema.nullable(),
+  latestManualQuote: priceQuoteSchema.nullable(),
+});
+export type PriceFeedStatus = z.infer<typeof priceFeedStatusSchema>;
+
+export const priceFeedRefreshResultSchema = z.discriminatedUnion('outcome', [
+  z.object({ outcome: z.literal('FEED'), failure: z.null(), quote: priceQuoteSchema }),
+  z.object({ outcome: z.literal('FALLBACK'), failure: priceFeedFailureSchema, quote: priceQuoteSchema }),
+  z.object({ outcome: z.literal('UNAVAILABLE'), failure: priceFeedFailureSchema, quote: z.null() }),
+]);
+export type PriceFeedRefreshResult = z.infer<typeof priceFeedRefreshResultSchema>;
+export type PriceFeedFailure = z.infer<typeof priceFeedFailureSchema>;
 
 /* ── GET /api/parties/balance-summary ──────────────────────── */
 

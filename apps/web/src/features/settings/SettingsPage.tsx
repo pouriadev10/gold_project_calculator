@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { CircleDollarSign, ClipboardList, Coins, LogOut, Palette, SlidersHorizontal } from 'lucide-react';
+import { CircleDollarSign, ClipboardList, Coins, LogOut, Palette, SlidersHorizontal, TrendingUp } from 'lucide-react';
 import { PageHeader } from '@/components/common/PageHeader';
 import { RequireRole } from '@/components/common/RequireRole';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
@@ -15,7 +15,7 @@ import { useSessionStore } from '@/stores/session-store';
  *
  * واحد نمایش و پوسته (تنظیم این دستگاه)، به‌علاوه‌ی لینک تنظیمات عمومی
  * نسخه‌دار مستأجر (FE-080، `/settings/general`) و انواع سکه (FE-081،
- * `/settings/coin-types`).
+ * `/settings/coin-types`) و مظنه و منابع (FE-082، همان `/pricing`).
  */
 
 function SettingRow({
@@ -91,6 +91,17 @@ export function SettingsPage() {
           control={
             <Button type="button" variant="outline" asChild>
               <Link to="/settings/coin-types">مشاهده</Link>
+            </Button>
+          }
+        />
+
+        <SettingRow
+          icon={TrendingUp}
+          title="مظنه و منابع"
+          hint="منبع فعال مظنه، وضعیت فید، fallback و ثبت دستی."
+          control={
+            <Button type="button" variant="outline" asChild>
+              <Link to="/pricing">مشاهده</Link>
             </Button>
           }
         />

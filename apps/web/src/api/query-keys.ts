@@ -38,6 +38,9 @@ export const queryKeys = {
       [...queryKeys.pricing.all(), 'latest', quoteType] as const,
     history: (quoteType: PriceQuoteType) =>
       [...queryKeys.pricing.all(), 'history', quoteType] as const,
+    /** `GET /pricing/feed/status` (FE-082) — زیر `all` تا ثبت دستی هم تازه‌اش کند. */
+    feedStatus: (quoteType: PriceQuoteType) =>
+      [...queryKeys.pricing.all(), 'feed-status', quoteType] as const,
   },
 
   parties: {

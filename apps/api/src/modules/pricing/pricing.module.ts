@@ -11,6 +11,7 @@ import {
   PRICE_FEED_TIMEOUT_MS,
   UnavailablePriceFeedProvider,
 } from './price-feed.provider';
+import { PriceFeedController } from './price-feed.controller';
 import { PriceFeedService } from './price-feed.service';
 import { PriceQuotesController } from './price-quotes.controller';
 import { PriceQuotesService } from './price-quotes.service';
@@ -23,7 +24,7 @@ import { VersionedSettingsService } from './versioned-settings.service';
  */
 @Module({
   imports: [AuditModule, AuthModule, IdempotencyModule, UsersModule],
-  controllers: [PriceQuotesController, GeneralSettingsController],
+  controllers: [PriceQuotesController, PriceFeedController, GeneralSettingsController],
   providers: [
     VersionedSettingsService,
     GeneralSettingsService,

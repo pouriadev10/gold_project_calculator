@@ -41,3 +41,9 @@ export const GENERAL_SETTINGS_EDIT_ROLES: readonly RoleCode[] = ['OWNER', 'MANAG
  * خواندن برای هر سه نقش باز است.
  */
 export const COIN_TYPE_EDIT_ROLES: readonly RoleCode[] = ['OWNER', 'MANAGER'];
+
+/**
+ * `@Roles('OWNER', 'MANAGER')` روی `POST /pricing/feed/refresh`
+ * (`price-feed.controller.ts`، FE-082). وضعیت فید برای هر سه نقش خواندنی است.
+ */
+export const PRICE_FEED_REFRESH_ROLES: readonly RoleCode[] = ['OWNER', 'MANAGER'];
