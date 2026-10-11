@@ -1,4 +1,5 @@
 import { formatCoinCount, formatCount, formatGram, formatRial } from '@gold/core-calc';
+import { isolateBidi } from './bidi';
 import { formatJalaliDateTime } from '@/lib/date';
 
 /**
@@ -49,11 +50,11 @@ export interface SaleReceiptShareInput {
 }
 
 export function saleReceiptShareText(input: SaleReceiptShareInput): ReceiptShareContent {
-  const title = `رسید فروش ${input.shopName ?? ''}`.trim();
+  const title = `رسید فروش ${isolateBidi(stripUrls(input.shopName ?? ''))}`.trim();
   return build(title, [
     `فاکتور شماره ${formatCount(input.invoiceNumber)}`,
     `تاریخ: ${formatJalaliDateTime(input.issuedAt)}`,
-    input.customerName ? `مشتری: ${input.customerName}` : null,
+    input.customerName ? `مشتری: ${isolateBidi(stripUrls(input.customerName))}` : null,
     input.pureWeightMg !== null && input.pureWeightMg > 0n ? `وزن خالص: ${formatGram(input.pureWeightMg)} گرم` : null,
     input.payableRial !== null ? `جمع فاکتور: ${rial(input.payableRial)}` : null,
     input.paidRial !== null ? `پرداخت‌شده: ${rial(input.paidRial)}` : null,
@@ -75,10 +76,10 @@ export interface PurchaseReceiptShareInput {
 }
 
 export function purchaseReceiptShareText(input: PurchaseReceiptShareInput): ReceiptShareContent {
-  const title = `رسید ${input.kindLabel} ${input.shopName ?? ''}`.trim();
+  const title = `رسید ${input.kindLabel} ${isolateBidi(stripUrls(input.shopName ?? ''))}`.trim();
   return build(title, [
     // فقط شناسه‌ی کوتاه برای پیگیری حضوری — نه لینک.
-    `شماره سند: ${input.purchaseId.slice(0, 8)}`,
+    `شماره سند: ${isolateBidi(input.purchaseId.slice(0, 8))}`,
     input.pureWeightMg !== undefined ? `وزن خالص: ${formatGram(input.pureWeightMg)} گرم` : null,
     input.coinCount !== undefined ? `تعداد: ${formatCoinCount(input.coinCount)} عدد` : null,
     `مبلغ خرید: ${rial(input.amountRial)}`,

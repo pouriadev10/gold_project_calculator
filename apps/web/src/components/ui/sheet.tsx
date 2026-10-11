@@ -36,10 +36,12 @@ const sheetVariants = cva(
         top: "inset-x-0 top-0 border-b data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top",
         bottom:
           "inset-x-0 bottom-0 border-t data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
-        // نام‌گذاری منطقی، نه چپ/راست: در RTL خودبه‌خود قرینه می‌شود
+        // نام‌گذاری منطقی، نه چپ/راست. جای پنل (`start-0`/`end-0`) خودبه‌خود قرینه
+        // می‌شود ولی نام انیمیشن لغزش فیزیکی است، پس برای هر جهت صریح نوشته شده
+        // (FE-083): در RTL «start» لبه‌ی راست است.
         start:
-          "inset-y-0 start-0 h-full w-3/4 border-e data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm",
-        end: "inset-y-0 end-0 h-full w-3/4 border-s data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left sm:max-w-sm",
+          "inset-y-0 start-0 h-full w-3/4 border-e data-[state=closed]:rtl:slide-out-to-right data-[state=open]:rtl:slide-in-from-right data-[state=closed]:ltr:slide-out-to-left data-[state=open]:ltr:slide-in-from-left sm:max-w-sm",
+        end: "inset-y-0 end-0 h-full w-3/4 border-s data-[state=closed]:rtl:slide-out-to-left data-[state=open]:rtl:slide-in-from-left data-[state=closed]:ltr:slide-out-to-right data-[state=open]:ltr:slide-in-from-right sm:max-w-sm",
       },
     },
     defaultVariants: {

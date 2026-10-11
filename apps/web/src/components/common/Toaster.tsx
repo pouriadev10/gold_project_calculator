@@ -51,7 +51,9 @@ export function Toaster() {
   const dismiss = useToastStore((state) => state.dismiss);
 
   return (
-    <ToastProvider duration={5000}>
+    // RTL (FE-083): روی دسکتاپ toast در گوشه‌ی `end` (پایین-چپ) است؛ کشیدن برای
+    // بستن باید به همان لبه باشد، نه پیش‌فرض Radix (`right`) که به وسط صفحه می‌برد.
+    <ToastProvider duration={5000} swipeDirection="left">
       {toasts.map(({ id, variant, title, description, duration, open }) => {
         const Icon = VARIANT_ICON[variant];
         return (

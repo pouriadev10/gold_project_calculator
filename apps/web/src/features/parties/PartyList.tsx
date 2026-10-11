@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, Pencil, Users } from 'lucide-react';
-import { formatCount } from '@gold/core-calc';
+import { formatCount, toPersianDigits } from '@gold/core-calc';
 import { useParties } from '@/api/queries';
 import type { Party, PartyListQuery, PartyType } from '@/api/contracts';
 import { CardSkeleton } from '@/components/common/CardSkeleton';
@@ -141,7 +141,7 @@ export function PartyList({ query, onOffsetChange, onEdit }: PartyListProps) {
                     <PartyName party={party} />
                   </TableCell>
                   <TableCell className="tabular-nums" dir="ltr">
-                    {party.mobile ?? '—'}
+                    {party.mobile ? toPersianDigits(party.mobile) : '—'}
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline">{TYPE_LABEL[party.type]}</Badge>
@@ -169,7 +169,7 @@ export function PartyList({ query, onOffsetChange, onEdit }: PartyListProps) {
                 >
                   <p className="truncate font-medium">{party.displayName}</p>
                   <p className="tabular-nums text-xs text-muted-foreground" dir="ltr">
-                    {party.mobile ?? '—'}
+                    {party.mobile ? toPersianDigits(party.mobile) : '—'}
                   </p>
                 </Link>
                 <div className="flex shrink-0 items-center gap-2">

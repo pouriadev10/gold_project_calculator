@@ -114,7 +114,7 @@ describe('SaleSummary — مشتری', () => {
 
     expect(screen.getByText('حسین مرادی')).toBeInTheDocument();
     expect(screen.getByText('مصرف‌کننده')).toBeInTheDocument();
-    expect(screen.getByText('09121234567')).toBeInTheDocument();
+    expect(screen.getByText('۰۹۱۲۱۲۳۴۵۶۷')).toBeInTheDocument();
   });
 
   it('بدون مشتری، پیام مناسب نشان می‌دهد نه کرش', () => {

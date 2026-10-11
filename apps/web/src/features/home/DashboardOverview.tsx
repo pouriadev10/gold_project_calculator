@@ -209,7 +209,7 @@ export function DashboardOverview() {
               <ul className="space-y-1" aria-label="موجودی انواع سکه">
                 {data.inventory.coins.map((coin) => (
                   <li key={coin.coinTypeId} className="flex items-baseline justify-between gap-2 text-sm">
-                    <span className="truncate">{coin.code}</span>
+                    <bdi className="truncate">{coin.code}</bdi>
                     <span className="shrink-0 font-semibold tabular-nums">
                       {formatCoinCount(coin.count)}
                       <span className="ms-1 text-xs font-normal text-muted-foreground">عدد</span>

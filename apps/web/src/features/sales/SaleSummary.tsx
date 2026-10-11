@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { AlertTriangle } from 'lucide-react';
-import { dualFromRial, formatCount, formatGram, gramRate1000 } from '@gold/core-calc';
+import { dualFromRial, formatCount, formatGram, gramRate1000, toPersianDigits } from '@gold/core-calc';
 import type { PriceQuoteSource } from '@/api/contracts';
 import { AmountDisplay, RateDisplay } from '@/components/common/AmountDisplay';
 import { Badge } from '@/components/ui/badge';
@@ -144,7 +144,7 @@ export function SaleSummary() {
               <Badge variant="outline">{PARTY_TYPE_LABEL[party.type]}</Badge>
               {party.mobile ? (
                 <span className="tabular-nums text-xs text-muted-foreground" dir="ltr">
-                  {party.mobile}
+                  {toPersianDigits(party.mobile)}
                 </span>
               ) : null}
             </div>

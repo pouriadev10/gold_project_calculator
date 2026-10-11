@@ -125,7 +125,7 @@ function CoinPositions({ item }: { item: PartyBalanceReportItem }) {
           key={coin.coinTypeId}
           className="inline-flex items-baseline gap-1 rounded-md border border-border px-2 py-1 text-xs"
         >
-          <span className="font-medium">{coin.code}</span>
+          <bdi className="font-medium">{coin.code}</bdi>
           <span className="tabular-nums font-semibold" data-raw={String(coin.count)}>
             {formatCoinCount(coin.count < 0 ? -coin.count : coin.count)}
           </span>

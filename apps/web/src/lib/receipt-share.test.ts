@@ -90,7 +90,8 @@ describe('purchaseReceiptShareText', () => {
       coinCount: 2,
     });
     expect(share.title).toBe('رسید خرید سکه زرگری نمونه');
-    expect(share.text).toContain('شماره سند: 7c9e6679');
+    // شناسه‌ی لاتین با FSI…PDI از متن فارسی اطرافش جدا می‌شود (FE-083).
+    expect(share.text).toContain('شماره سند: ⁨7c9e6679⁩');
     expect(share.text).not.toContain('7425-40de');
     expect(share.text).toContain('تعداد: ۲ عدد');
     expect(share.text).toContain('مانده طلب فروشنده: ۱۰۰٬۰۰۰٬۰۰۰ ریال');

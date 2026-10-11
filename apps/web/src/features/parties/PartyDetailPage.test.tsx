@@ -179,8 +179,9 @@ describe('PartyDetailPage — مشخصات', () => {
   it('نوع، موبایل، کد ملی و یادداشت را نشان می‌دهد', () => {
     renderPage();
     expect(screen.getByText('مصرف‌کننده')).toBeInTheDocument();
-    expect(screen.getByText('09121234567')).toBeInTheDocument();
-    expect(screen.getByText('0012345678')).toBeInTheDocument();
+    // شناسه‌ها با ارقام فارسی نمایش داده می‌شوند؛ مقدار ذخیره‌شده لاتین می‌ماند (FE-083).
+    expect(screen.getByText('۰۹۱۲۱۲۳۴۵۶۷')).toBeInTheDocument();
+    expect(screen.getByText('۰۰۱۲۳۴۵۶۷۸')).toBeInTheDocument();
     expect(screen.getByText('مشتری قدیمی')).toBeInTheDocument();
   });
 

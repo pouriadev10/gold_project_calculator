@@ -43,6 +43,7 @@ import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useIdempotentSubmit } from '@/hooks/useIdempotentSubmit';
+import { isolateBidi } from '@/lib/bidi';
 import type { PartySelection } from '@/stores/recent-parties-store';
 
 const REASONS: readonly { value: InvoiceAmendmentReason; label: string }[] = [
@@ -378,7 +379,7 @@ function AmendmentForm({
                 ) : null}
                 {jewelry.data?.items.map((row) => (
                   <option key={row.jewelryItemId} value={row.jewelryItemId}>
-                    {row.title} · {row.code}
+                    {row.title} · {isolateBidi(row.code)}
                   </option>
                 ))}
               </Select>

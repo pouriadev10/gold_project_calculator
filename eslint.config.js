@@ -49,10 +49,15 @@ const noFloatMath = [
  *
  * مرز ابتدای کلاس شامل `:` هم هست، وگرنه واریانت‌ها از تور رد می‌شوند:
  * `sm:text-left` و `lg:ml-4` هم باید بگیرند، نه فقط شکل بی‌پیشوند.
+ *
+ * FE-083: گوشه‌های گرد تکی (`rounded-tl-`…)، `float-left/right`، فاصله‌ی
+ * اسکرول و انیمیشن‌های لغزشی (`slide-in-from-left`…) هم جهت‌دارند و اضافه
+ * شدند. استثنا فقط کلاسی است که صریحاً با `rtl:` یا `ltr:` محدود شده —
+ * آن کلاس عمداً برای یک جهت نوشته شده (مثل انیمیشن لغزش `sheet.tsx`).
  */
-const CLASS_BOUNDARY = `(^|[\\s"'\`:])`;
+const CLASS_BOUNDARY = `(^|[\\s"'\`]|(?<!(rtl|ltr)):)`;
 const DIRECTIONAL_CLASS = new RegExp(
-  `${CLASS_BOUNDARY}(-?(ml|mr|pl|pr|left|right|border-l|border-r|rounded-l|rounded-r|inset-l|inset-r)-|text-(left|right)(\\s|$|["'\`]))`,
+  `${CLASS_BOUNDARY}(-?(ml|mr|pl|pr|left|right|border-l|border-r|rounded-l|rounded-r|rounded-tl|rounded-tr|rounded-bl|rounded-br|inset-l|inset-r|scroll-ml|scroll-mr|scroll-pl|scroll-pr)-|(text|float)-(left|right)(\\s|$|["'\`])|slide-(in-from|out-to)-(left|right))`,
 );
 
 /** ۴ — رنگ hex خام. */
@@ -62,12 +67,12 @@ const noDirectionalClasses = [
   {
     selector: `Literal[value=${DIRECTIONAL_CLASS.toString()}]`,
     message:
-      'کلاس جهت‌دار ممنوع (RTL). به‌جای ml-/mr-/pl-/pr-/left-/right-/text-left/text-right از ms-/me-/ps-/pe-/start-/end-/text-start/text-end استفاده کن.',
+      'کلاس جهت‌دار ممنوع (RTL). به‌جای ml-/mr-/pl-/pr-/left-/right-/text-left/text-right/rounded-tl-… از ms-/me-/ps-/pe-/start-/end-/text-start/text-end/rounded-ss-… استفاده کن؛ برای انیمیشن لغزش صریحاً rtl:/ltr: بنویس.',
   },
   {
     selector: `TemplateElement[value.raw=${DIRECTIONAL_CLASS.toString()}]`,
     message:
-      'کلاس جهت‌دار ممنوع (RTL). به‌جای ml-/mr-/pl-/pr-/left-/right-/text-left/text-right از ms-/me-/ps-/pe-/start-/end-/text-start/text-end استفاده کن.',
+      'کلاس جهت‌دار ممنوع (RTL). به‌جای ml-/mr-/pl-/pr-/left-/right-/text-left/text-right/rounded-tl-… از ms-/me-/ps-/pe-/start-/end-/text-start/text-end/rounded-ss-… استفاده کن؛ برای انیمیشن لغزش صریحاً rtl:/ltr: بنویس.',
   },
 ];
 

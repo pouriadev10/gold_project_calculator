@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, Landmark, Loader2, Pencil, ReceiptText } from 'lucide-react';
-import { dualFromPure, dualFromRial, formatCoinCount, formatGram, formatRial, toSafeNumber } from '@gold/core-calc';
+import { dualFromPure, dualFromRial, formatCoinCount, formatGram, formatRial, toPersianDigits, toSafeNumber } from '@gold/core-calc';
 import type { DualAmount } from '@gold/core-calc';
 import { deactivateParty } from '@/api/parties';
 import { queryKeys } from '@/api/query-keys';
@@ -224,7 +224,7 @@ function PartyBalanceCardBody({
               className="flex flex-wrap items-start justify-between gap-2 rounded-lg border border-border p-3"
             >
               <span className="min-w-0 text-sm">
-                <span className="block break-all font-medium">{coin.code}</span>
+                <bdi className="block break-all font-medium">{coin.code}</bdi>
                 <span className="text-xs text-muted-foreground">
                   {debtorCreditorLabel(BigInt(coin.count))}
                 </span>
@@ -392,13 +392,13 @@ function PartyProfileCard({ party, onEdit }: { party: Party; onEdit: () => void 
           <div className="flex justify-between gap-3">
             <dt className="text-muted-foreground">موبایل</dt>
             <dd className="tabular-nums" dir="ltr">
-              {party.mobile ?? '—'}
+              {party.mobile ? toPersianDigits(party.mobile) : '—'}
             </dd>
           </div>
           <div className="flex justify-between gap-3">
             <dt className="text-muted-foreground">کد ملی</dt>
             <dd className="tabular-nums" dir="ltr">
-              {party.nationalId ?? '—'}
+              {party.nationalId ? toPersianDigits(party.nationalId) : '—'}
             </dd>
           </div>
           {party.notes ? (
