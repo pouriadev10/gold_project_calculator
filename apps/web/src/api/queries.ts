@@ -8,6 +8,7 @@ import {
   itemListSchema,
   jewelryItemListSchema,
   jewelryItemVersionSchema,
+  generalSettingsSchema,
   ledgerProfitReportSchema,
   partyBalanceReportSchema,
   partyBalanceSummarySchema,
@@ -141,6 +142,18 @@ export function useLedgerProfitTrend(queries: readonly LedgerProfitReportQuery[]
         },
       };
     },
+  });
+}
+
+/**
+ * تنظیمات عمومی مستأجر — `GET /settings/general` (FE-080). مقدار مؤثر همین
+ * لحظه‌ی هر کلید با شماره‌ی نسخه و شروع اعتبارش؛ هر سه نقش می‌خوانند.
+ */
+export function useGeneralSettings() {
+  return useQuery({
+    queryKey: queryKeys.settings.general(),
+    queryFn: ({ signal }) => apiGet('/settings/general', generalSettingsSchema, signal),
+    staleTime: MINUTE,
   });
 }
 

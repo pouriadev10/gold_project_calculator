@@ -28,3 +28,9 @@ export const MANUAL_QUOTE_ENTRY_ROLES: readonly RoleCode[] = ['OWNER', 'MANAGER'
  * دارد؛ باز هم ثابت جدا، به همان استدلال بالا.
  */
 export const OPENING_BALANCE_ROLES: readonly RoleCode[] = ['OWNER', 'MANAGER'];
+
+/**
+ * `@Roles('OWNER', 'MANAGER')` روی `POST /settings/general`
+ * (`general-settings.controller.ts`، FE-080). خواندن برای هر سه نقش باز است.
+ */
+export const GENERAL_SETTINGS_EDIT_ROLES: readonly RoleCode[] = ['OWNER', 'MANAGER'];

@@ -275,6 +275,13 @@ const settingsRoute = createRoute({
   component: SettingsPage,
 });
 
+/** تنظیمات عمومی نسخه‌دار مستأجر — FE-080. خواندن برای همه؛ ویرایش داخل صفحه فقط OWNER/MANAGER. */
+const generalSettingsRoute = createRoute({
+  getParentRoute: () => appShellRoute,
+  path: '/settings/general',
+  component: lazyRouteComponent(() => import('@/features/settings/GeneralSettingsPage')),
+});
+
 const forbiddenRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/forbidden',
@@ -335,6 +342,7 @@ const routeTree = rootRoute.addChildren([
     reportingCreditorsRoute,
     reportingProfitRoute,
     settingsRoute,
+    generalSettingsRoute,
     forbiddenRoute,
     ...devRoutes,
   ]),

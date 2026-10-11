@@ -4,3 +4,4 @@
  * قراردادهای مظنه‌ی ثبت‌شده و منبع آن‌ها.
  */
 export * from './price-quotes.js';
+export * from './general-settings.js';

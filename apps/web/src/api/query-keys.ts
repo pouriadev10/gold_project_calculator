@@ -86,6 +86,12 @@ export const queryKeys = {
       [...queryKeys.inventoryBalances.all(), itemType] as const,
   },
 
+  /** تنظیمات عمومی مستأجر — `GET /settings/general` (FE-080). */
+  settings: {
+    all: () => ['settings'] as const,
+    general: () => [...queryKeys.settings.all(), 'general'] as const,
+  },
+
   /** داشبورد گزارش‌گیری — `GET /reporting/dashboard` واقعی (BE-062‌ish، FE-040). */
   dashboard: {
     all: () => ['dashboard'] as const,

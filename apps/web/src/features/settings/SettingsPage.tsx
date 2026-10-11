@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { ClipboardList, Coins, LogOut, Palette } from 'lucide-react';
+import { ClipboardList, Coins, LogOut, Palette, SlidersHorizontal } from 'lucide-react';
 import { PageHeader } from '@/components/common/PageHeader';
 import { RequireRole } from '@/components/common/RequireRole';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
@@ -13,8 +13,8 @@ import { useSessionStore } from '@/stores/session-store';
 /**
  * تنظیمات — صفحه‌ی «بیشتر».
  *
- * فعلاً فقط دو تنظیم سراسری دارد: واحد نمایش و پوسته. جای بقیه‌ی
- * تنظیمات (مالیات، عیار پیش‌فرض، پشتیبان‌گیری) در فازهای بعد همین‌جاست.
+ * واحد نمایش و پوسته (تنظیم این دستگاه)، به‌علاوه‌ی لینک تنظیمات عمومی
+ * نسخه‌دار مستأجر (FE-080، `/settings/general`).
  */
 
 function SettingRow({
@@ -72,6 +72,17 @@ export function SettingsPage() {
           control={<ThemeToggle />}
         />
 
+        <SettingRow
+          icon={SlidersHorizontal}
+          title="تنظیمات عمومی"
+          hint="عیار پیش‌فرض خرید، گرد کردن، عیار گزارش و قواعد اصلاح فاکتور — نسخه‌دار."
+          control={
+            <Button type="button" variant="outline" asChild>
+              <Link to="/settings/general">مشاهده</Link>
+            </Button>
+          }
+        />
+
         <RequireRole roles={OPENING_BALANCE_ROLES}>
           <Card>
             <CardContent className="flex flex-col gap-3 pt-6 sm:flex-row sm:items-center sm:justify-between">
@@ -117,7 +128,7 @@ export function SettingsPage() {
         ) : null}
 
         <p className="px-1 text-xs text-muted-foreground">
-          تنظیمات مالیات، عیار پیش‌فرض و پشتیبان‌گیری در گام‌های بعد به همین صفحه اضافه می‌شوند.
+          تنظیمات مالیات و پشتیبان‌گیری در گام‌های بعد به همین صفحه اضافه می‌شوند.
         </p>
       </div>
     </div>

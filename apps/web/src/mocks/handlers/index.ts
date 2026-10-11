@@ -20,6 +20,7 @@ import {
   createSecondHandGoldPurchaseSchema,
   DEFAULT_PAGE_SIZE,
   MAX_PAGE_SIZE,
+  updateGeneralSettingSchema,
 } from '@gold/contracts';
 import type { SalesInvoiceAmendmentHistory } from '@gold/contracts';
 import { HttpResponse, http, delay } from 'msw';
@@ -163,6 +164,19 @@ const idempotencyCache = new Map<string, unknown>();
  * `GET /purchase/second-hand/:id/pdf` مثل سرور، سند ناشناخته را ۴۰۴ بدهد.
  */
 const mockSecondHandPurchaseIds = new Set<string>();
+
+/**
+ * تنظیمات عمومی mock (FE-080) — مقدارها همان seed واقعی `INITIAL_TENANT_SETTINGS`.
+ * هر POST یک نسخه‌ی تازه می‌سازد؛ نسخه‌ی قبلی overwrite نمی‌شود.
+ */
+const mockGeneralSettings = new Map<string, { value: string; version: number; validFrom: string; createdBy: string | null }>([
+  ['purchase.second_hand_default_karat', { value: '740', version: 1, validFrom: '2026-07-01T00:00:00.000Z', createdBy: null }],
+  ['pricing.rial_rounding_unit', { value: '1000', version: 1, validFrom: '2026-07-01T00:00:00.000Z', createdBy: null }],
+  ['pricing.rounding_policy', { value: 'HALF_UP', version: 1, validFrom: '2026-07-01T00:00:00.000Z', createdBy: null }],
+  ['reporting.default_display_karat', { value: '750', version: 1, validFrom: '2026-07-01T00:00:00.000Z', createdBy: null }],
+  ['sales.invoice_correction_window_minutes', { value: '30', version: 1, validFrom: '2026-07-01T00:00:00.000Z', createdBy: null }],
+  ['sales.manager_approval_variance_rial', { value: '0', version: 1, validFrom: '2026-07-01T00:00:00.000Z', createdBy: null }],
+]);
 
 /**
  * تاریخچه‌ی مظنه‌ی MAZNEH — نزولی بر اساس `observedAt` (همان ترتیب
@@ -1837,6 +1851,57 @@ export const handlers = [
     };
     idempotencyCache.set(key, created);
     return HttpResponse.json(created, { status: 201 });
+  }),
+
+  /**
+   * `GET`/`POST /settings/general` — FE-080، شکل `generalSettingsSchema` واقعی.
+   * POST با همان `updateGeneralSettingSchema` قرارداد اعتبارسنجی می‌شود و نسخه‌ی
+   * تازه می‌سازد. نقش در mock سنجیده نمی‌شود (سرور واقعی `@Roles` دارد).
+   */
+  http.get('/api/settings/general', async () => {
+    await delay(READ_DELAY_MS);
+    return HttpResponse.json({
+      settings: [...mockGeneralSettings.entries()].map(([key, setting]) => ({ key, ...setting })),
+    });
+  }),
+
+  http.post('/api/settings/general', async ({ request }) => {
+    await delay(WRITE_DELAY_MS);
+    const idempotencyKey = request.headers.get('Idempotency-Key');
+    if (!idempotencyKey) {
+      return HttpResponse.json(
+        { error: { code: 'IDEMPOTENCY_KEY_REQUIRED', message: 'هدر Idempotency-Key اجباری است', fields: {}, requestId: crypto.randomUUID() } },
+        { status: 400 },
+      );
+    }
+    const cached = idempotencyCache.get(idempotencyKey);
+    if (cached) return HttpResponse.json(cached, { status: 201 });
+
+    const parsed = updateGeneralSettingSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'مقدار تنظیم نامعتبر است',
+            fields: { value: parsed.error.issues.map((issue) => issue.message) },
+            requestId: crypto.randomUUID(),
+          },
+        },
+        { status: 400 },
+      );
+    }
+    const previous = mockGeneralSettings.get(parsed.data.key);
+    const next = {
+      value: parsed.data.value,
+      version: (previous?.version ?? 0) + 1,
+      validFrom: new Date().toISOString(),
+      createdBy: null,
+    };
+    mockGeneralSettings.set(parsed.data.key, next);
+    const body = { key: parsed.data.key, ...next };
+    idempotencyCache.set(idempotencyKey, body);
+    return HttpResponse.json(body, { status: 201 });
   }),
 
   /** `GET /reporting/profit` — قرارداد نهایی BE-060 (`profitReportSchema`، FE-075). */

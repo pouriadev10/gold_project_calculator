@@ -3,6 +3,8 @@ import { AuditModule } from '../../platform/audit/audit.module';
 import { AuthModule } from '../../platform/auth/auth.module';
 import { IdempotencyModule } from '../../platform/idempotency/idempotency.module';
 import { UsersModule } from '../../platform/users/users.module';
+import { GeneralSettingsController } from './general-settings.controller';
+import { GeneralSettingsService } from './general-settings.service';
 import { InitialTenantSettingsService } from './initial-tenant-settings.service';
 import {
   PRICE_FEED_PROVIDER,
@@ -21,9 +23,10 @@ import { VersionedSettingsService } from './versioned-settings.service';
  */
 @Module({
   imports: [AuditModule, AuthModule, IdempotencyModule, UsersModule],
-  controllers: [PriceQuotesController],
+  controllers: [PriceQuotesController, GeneralSettingsController],
   providers: [
     VersionedSettingsService,
+    GeneralSettingsService,
     InitialTenantSettingsService,
     PriceQuotesService,
     PriceFeedService,
