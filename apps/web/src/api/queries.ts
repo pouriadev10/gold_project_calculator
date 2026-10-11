@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
 import { invoiceAmendmentPreflightSchema, salesInvoiceAmendmentHistorySchema } from '@gold/contracts';
 import { apiGet } from './client';
 import {
@@ -99,19 +99,48 @@ export function useProfitReport(period: ProfitPeriod) {
  * `to` در سرور انحصاری است (`lt`). `staleTime: 0` تا پس از یک فروش،
  * بازگشت به این صفحه عدد کهنه نشان ندهد.
  */
+function fetchLedgerProfit(query: LedgerProfitReportQuery, signal: AbortSignal) {
+  const params = new URLSearchParams();
+  if (query.from) params.set('from', query.from);
+  if (query.to) params.set('to', query.to);
+  const qs = params.toString();
+  return apiGet(`/reporting/profit${qs ? `?${qs}` : ''}`, ledgerProfitReportSchema, signal);
+}
+
 export function useLedgerProfitReport(query: LedgerProfitReportQuery, enabled = true) {
   return useQuery({
     queryKey: queryKeys.reports.ledgerProfit(query),
-    queryFn: ({ signal }) => {
-      const params = new URLSearchParams();
-      if (query.from) params.set('from', query.from);
-      if (query.to) params.set('to', query.to);
-      const qs = params.toString();
-      return apiGet(`/reporting/profit${qs ? `?${qs}` : ''}`, ledgerProfitReportSchema, signal);
-    },
+    queryFn: ({ signal }) => fetchLedgerProfit(query, signal),
     staleTime: 0,
     placeholderData: keepPreviousData,
     enabled,
+  });
+}
+
+/**
+ * روند سود — یک `GET /reporting/profit` برای هر دوره (FE-076). BE-060 سری
+ * زمانی ندارد؛ هر عدد همچنان محاسبه‌ی سرور برای همان دوره است. کلید کش
+ * همان `useLedgerProfitReport` است، پس دوره‌ای که با بازه‌ی اصلی یکی باشد
+ * دوباره گرفته نمی‌شود. `data` فقط وقتی پر است که همه‌ی دوره‌ها رسیده باشند.
+ */
+export function useLedgerProfitTrend(queries: readonly LedgerProfitReportQuery[]) {
+  return useQueries({
+    queries: queries.map((query) => ({
+      queryKey: queryKeys.reports.ledgerProfit(query),
+      queryFn: ({ signal }: { signal: AbortSignal }) => fetchLedgerProfit(query, signal),
+      staleTime: MINUTE,
+    })),
+    combine: (results) => {
+      const reports = results.flatMap((result) => (result.data === undefined ? [] : [result.data]));
+      return {
+        data: reports.length === results.length ? reports : undefined,
+        isLoading: results.some((result) => result.isLoading),
+        isError: results.some((result) => result.isError),
+        refetch: () => {
+          for (const result of results) if (result.isError) void result.refetch();
+        },
+      };
+    },
   });
 }
 

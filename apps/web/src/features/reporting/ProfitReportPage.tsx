@@ -19,6 +19,7 @@ import {
 } from '@/lib/jalali';
 import { cn } from '@/lib/utils';
 import { UNIT_LABEL, useUnitStore, type MoneyUnit } from '@/stores/unit-store';
+import { ProfitTrend } from './ProfitTrend';
 import { PROFIT_ROWS, isEmptyProfitReport, measureFace, type ProfitRow } from './profit-report';
 
 /**
@@ -33,7 +34,8 @@ import { PROFIT_ROWS, isEmptyProfitReport, measureFace, type ProfitRow } from '.
  *
  * بازه با فیلتر مشترک شمسی FE-071 و مرز روزِ منطقه‌ی مستأجر انتخاب می‌شود
  * و چون `to` در سرور انحصاری است به شکل نیمه‌باز فرستاده می‌شود. پیش‌فرض
- * «این ماه» است؛ پاک‌کردن بازه یعنی کل دوره. نمودار ندارد (FE-076).
+ * «این ماه» است؛ پاک‌کردن بازه یعنی کل دوره. نمودار روند (FE-076) زیر
+ * breakdown است و ECharts را فقط پس از رندر خودش، تنبل بارگذاری می‌کند.
  */
 
 function otherUnit(unit: MoneyUnit): MoneyUnit {
@@ -152,7 +154,12 @@ export default function ProfitReportPage() {
           <JalaliDateRangeFilter idPrefix="profit-date" value={range} timeZone={timeZone} onChange={setRange} />
         </section>
 
-        {isoRange !== null ? <ProfitResults query={isoRange} range={range} /> : null}
+        {isoRange !== null ? (
+          <>
+            <ProfitResults query={isoRange} range={range} />
+            <ProfitTrend range={range} timeZone={timeZone} />
+          </>
+        ) : null}
       </main>
     </div>
   );

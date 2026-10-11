@@ -16,9 +16,12 @@ import ProfitReportPage from './ProfitReportPage';
  */
 
 const useLedgerProfitReportMock = vi.fn();
+const useLedgerProfitTrendMock = vi.fn();
 vi.mock('@/api/queries', async (importOriginal) => ({
   ...(await importOriginal<typeof Queries>()),
   useLedgerProfitReport: (...args: unknown[]) => useLedgerProfitReportMock(...args),
+  // روند (FE-076) در تست جدای خودش پوشش داده شده؛ این‌جا فقط در حال بارگذاری.
+  useLedgerProfitTrend: (...args: unknown[]) => useLedgerProfitTrendMock(...args),
 }));
 
 /** دوشنبه ۲۰ مهر ۱۴۰۵، تهران. */
@@ -67,6 +70,8 @@ beforeEach(() => {
   useUnitStore.setState({ unit: 'gold' });
   useLedgerProfitReportMock.mockReset();
   useLedgerProfitReportMock.mockReturnValue(result(report()));
+  useLedgerProfitTrendMock.mockReset();
+  useLedgerProfitTrendMock.mockReturnValue({ data: undefined, isLoading: true, isError: false, refetch: vi.fn() });
 });
 
 afterEach(() => {
