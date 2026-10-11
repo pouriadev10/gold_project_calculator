@@ -2358,9 +2358,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/queries.ts": {
-    "mtime": 1791646339.7097516,
-    "seen": 1791646749.618345,
-    "ast_hash": "25796f19245a51f664ed485345308a3f",
+    "mtime": 1791724046.6998148,
+    "seen": 1791724577.624587,
+    "ast_hash": "7cdf682a9fd593b111a9b662ad025c44",
     "semantic_hash": ""
   },
   "apps/web/src/api/query-client.test.ts": {
@@ -5028,9 +5028,9 @@
     "semantic_hash": ""
   },
   "FrontTasks.md": {
-    "mtime": 1791646677.7481246,
-    "seen": 1791646749.6190157,
-    "ast_hash": "82c6176cfe82f81ca245020e6fecc27a",
+    "mtime": 1791724532.1429248,
+    "seen": 1791724577.6254213,
+    "ast_hash": "821e5b37e9634eb8cebaecde06f26e7c",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
@@ -5556,15 +5556,15 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/reporting/ProfitReportPage.test.tsx": {
-    "mtime": 1791646517.780531,
-    "seen": 1791646749.618564,
-    "ast_hash": "2c44b83d641aa1b7381de8385c1ca566",
+    "mtime": 1791724193.262019,
+    "seen": 1791724577.6248326,
+    "ast_hash": "238f2541e5b8f6d5a744c3f728aba332",
     "semantic_hash": ""
   },
   "apps/web/src/features/reporting/ProfitReportPage.tsx": {
-    "mtime": 1791646400.451256,
-    "seen": 1791646749.618565,
-    "ast_hash": "c9eb46bea6ee222433e0eda616741ce8",
+    "mtime": 1791724132.1092832,
+    "seen": 1791724577.6248343,
+    "ast_hash": "e352ef0781f8281044cd0486764e12cc",
     "semantic_hash": ""
   },
   "apps/web/src/features/reporting/profit-report.test.ts": {
@@ -5577,6 +5577,54 @@
     "mtime": 1791646373.4452152,
     "seen": 1791646749.6185715,
     "ast_hash": "838e28bff2babf76230cfa8a99de7759",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/reporting/ProfitTrend.test.tsx": {
+    "mtime": 1791724312.8719013,
+    "seen": 1791724577.6248364,
+    "ast_hash": "137444aa304ecaaf84df9810c443be2c",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/reporting/ProfitTrend.tsx": {
+    "mtime": 1791724118.4169145,
+    "seen": 1791724577.6248384,
+    "ast_hash": "6262251655c84900a7c1cec25f0ee3b3",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/reporting/ProfitTrendChart.test.tsx": {
+    "mtime": 1791724282.3703997,
+    "seen": 1791724577.6248398,
+    "ast_hash": "ba38ce60179d09a90774887b4f1800f3",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/reporting/ProfitTrendChart.tsx": {
+    "mtime": 1791724097.3510556,
+    "seen": 1791724577.6248412,
+    "ast_hash": "b7f34b9ea3b88fc3545abb255bf6efba",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/reporting/profit-trend-echarts.test.ts": {
+    "mtime": 1791724263.417368,
+    "seen": 1791724577.6248488,
+    "ast_hash": "e593827d7c05a886cff6ed89493702fa",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/reporting/profit-trend-echarts.ts": {
+    "mtime": 1791723963.2623203,
+    "seen": 1791724577.6248503,
+    "ast_hash": "2f5427cbf09a326951654dcd2011cc07",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/reporting/profit-trend.test.ts": {
+    "mtime": 1791724193.71653,
+    "seen": 1791724577.6248515,
+    "ast_hash": "f39acd163e73d35a2bc41af4d19301cb",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/reporting/profit-trend.ts": {
+    "mtime": 1791723923.3532808,
+    "seen": 1791724577.6248527,
+    "ast_hash": "89f0f9026a3144c61efc2486ab6e9e9f",
     "semantic_hash": ""
   }
 }
