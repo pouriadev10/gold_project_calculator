@@ -672,15 +672,15 @@
     "semantic_hash": ""
   },
   "apps/api/src/modules/inventory/coin-types.errors.ts": {
-    "mtime": 1786707255.6152718,
-    "seen": 1789132525.9447074,
-    "ast_hash": "53865f9c2389cabad1ebfcffde27fa91",
+    "mtime": 1791732080.3861868,
+    "seen": 1791732868.4033573,
+    "ast_hash": "f23edafa4b36e3bf5723969ae533780f",
     "semantic_hash": ""
   },
   "apps/api/src/modules/inventory/coin-types.service.ts": {
-    "mtime": 1786707255.6161323,
-    "seen": 1789132525.9447083,
-    "ast_hash": "db8a94c64e8b67d653310d4bbb834e49",
+    "mtime": 1791732120.8243995,
+    "seen": 1791732868.4033592,
+    "ast_hash": "9099986c9fa36bf635dea91e1ad9ecc4",
     "semantic_hash": ""
   },
   "apps/api/src/modules/inventory/initial-coin-types.service.ts": {
@@ -708,9 +708,9 @@
     "semantic_hash": ""
   },
   "apps/api/src/modules/inventory/inventory.module.ts": {
-    "mtime": 1786392733.2918851,
-    "seen": 1789132525.9447122,
-    "ast_hash": "45352036af45dc1ad47c7fe83441d6d0",
+    "mtime": 1791732120.8259144,
+    "seen": 1791732868.4033673,
+    "ast_hash": "ef1aaee42c101f7b81c274bec43da185",
     "semantic_hash": ""
   },
   "apps/api/src/modules/inventory/jewelry-items.controller.ts": {
@@ -2310,9 +2310,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/contracts.ts": {
-    "mtime": 1791729862.186186,
-    "seen": 1791730284.3598218,
-    "ast_hash": "023acc1c16cfdcf414b03104acc0ec3b",
+    "mtime": 1791732281.1484802,
+    "seen": 1791732868.4038138,
+    "ast_hash": "d28cd8836e7b06acd75b081d73b49602",
     "semantic_hash": ""
   },
   "apps/web/src/api/error-presentation.test.ts": {
@@ -2358,9 +2358,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/queries.ts": {
-    "mtime": 1791729862.1882422,
-    "seen": 1791730284.35983,
-    "ast_hash": "e6b760335840e0c46c02f2c837b8a498",
+    "mtime": 1791732281.1500442,
+    "seen": 1791732868.4038305,
+    "ast_hash": "0859b04b6b1603191351e3edb20708e3",
     "semantic_hash": ""
   },
   "apps/web/src/api/query-client.test.ts": {
@@ -2382,9 +2382,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/query-keys.ts": {
-    "mtime": 1791729862.186186,
-    "seen": 1791730284.3598337,
-    "ast_hash": "f4b79162c651b264e5359bbb7e5ce235",
+    "mtime": 1791732281.149495,
+    "seen": 1791732868.4038372,
+    "ast_hash": "c769b25c9b7ab0affc4faf137582e512",
     "semantic_hash": ""
   },
   "apps/web/src/api/sales.ts": {
@@ -2418,9 +2418,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/app/router.tsx": {
-    "mtime": 1791729963.32636,
-    "seen": 1791730284.359843,
-    "ast_hash": "ec2de50a6e6985005a6961acaea937cd",
+    "mtime": 1791732281.1516201,
+    "seen": 1791732868.4038527,
+    "ast_hash": "a486c2e24418ec40e692dd257e55245a",
     "semantic_hash": ""
   },
   "apps/web/src/components/common/AmountDisplay.test.tsx": {
@@ -2628,9 +2628,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/keypad/NumericField.tsx": {
-    "mtime": 1788949121.3036923,
-    "seen": 1789132525.9449534,
-    "ast_hash": "3a7dde97e4be77ac803fafe5588036d8",
+    "mtime": 1791732202.21568,
+    "seen": 1791732868.4039168,
+    "ast_hash": "bff402161cf7f7dafce7a7e85a318771",
     "semantic_hash": ""
   },
   "apps/web/src/components/keypad/NumericKeypad.tsx": {
@@ -2676,9 +2676,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/keypad/shortcuts.ts": {
-    "mtime": 1787124311.1915808,
-    "seen": 1789132525.944959,
-    "ast_hash": "8d917dc1739eb650aa3be3eaee68e426",
+    "mtime": 1791732202.2171965,
+    "seen": 1791732868.4039292,
+    "ast_hash": "d7da8bf1eadada46f2b77fb4470dccec",
     "semantic_hash": ""
   },
   "apps/web/src/components/ui/badge.tsx": {
@@ -2844,15 +2844,15 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/inventory/CoinInventoryPage.test.tsx": {
-    "mtime": 1787249331.0062191,
-    "seen": 1789132525.9449801,
-    "ast_hash": "327061a929eb22321d834b0c31bf2b1a",
+    "mtime": 1791732798.7059808,
+    "seen": 1791732868.403981,
+    "ast_hash": "88cc56abca43be6db7ffd25fe8ca79ce",
     "semantic_hash": ""
   },
   "apps/web/src/features/inventory/CoinInventoryPage.tsx": {
-    "mtime": 1787248554.9811933,
-    "seen": 1789132525.944981,
-    "ast_hash": "9d7c4463f3dbb9088423f7ece6c37a94",
+    "mtime": 1791732798.7054698,
+    "seen": 1791732868.4039826,
+    "ast_hash": "c1c57fbe07916ce34e85d7e2698fd5ca",
     "semantic_hash": ""
   },
   "apps/web/src/features/inventory/InventoryDashboardPage.test.tsx": {
@@ -3366,9 +3366,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/settings/SettingsPage.tsx": {
-    "mtime": 1791729963.3253548,
-    "seen": 1791730284.36005,
-    "ast_hash": "721f7486a56be61853845fc17d20342c",
+    "mtime": 1791732281.1527421,
+    "seen": 1791732868.404198,
+    "ast_hash": "8440fc53e3994b211e3478f805ce1c5f",
     "semantic_hash": ""
   },
   "apps/web/src/hooks/useDebouncedValue.test.ts": {
@@ -3492,9 +3492,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/lib/permissions.ts": {
-    "mtime": 1791729862.1896677,
-    "seen": 1791730284.3600805,
-    "ast_hash": "b961864f40302b71c210070ca08d21d0",
+    "mtime": 1791732281.150568,
+    "seen": 1791732868.404245,
+    "ast_hash": "7e12b5f0c531df3a5a5f9b7c7584b587",
     "semantic_hash": ""
   },
   "apps/web/src/lib/persian-text.test.ts": {
@@ -3546,15 +3546,15 @@
     "semantic_hash": ""
   },
   "apps/web/src/mocks/handlers/fixtures.ts": {
-    "mtime": 1791646425.1301742,
-    "seen": 1791646749.618675,
-    "ast_hash": "91b8c359103ac353dfa36575388f2f12",
+    "mtime": 1791732798.704433,
+    "seen": 1791732868.4042623,
+    "ast_hash": "8b53fec3cb87a912e600644bec7a5b34",
     "semantic_hash": ""
   },
   "apps/web/src/mocks/handlers/index.ts": {
-    "mtime": 1791729995.8867354,
-    "seen": 1791730284.3600912,
-    "ast_hash": "0f1256c86664fbec8a618cb856805375",
+    "mtime": 1791732798.7039087,
+    "seen": 1791732868.404264,
+    "ast_hash": "8c8e6c00a56528d98774cafb80b39324",
     "semantic_hash": ""
   },
   "apps/web/src/stores/purchase-draft-store.test.ts": {
@@ -3756,9 +3756,9 @@
     "semantic_hash": ""
   },
   "packages/contracts/src/inventory/coin-types.ts": {
-    "mtime": 1785921229.8165276,
-    "seen": 1789132525.945091,
-    "ast_hash": "347588130a1c5bb04e771a24075e3f57",
+    "mtime": 1791731988.998365,
+    "seen": 1791732868.4043193,
+    "ast_hash": "4c4b5c01f298cf00538b74a3fbce2043",
     "semantic_hash": ""
   },
   "packages/contracts/src/inventory/index.ts": {
@@ -3942,9 +3942,9 @@
     "semantic_hash": ""
   },
   "packages/contracts/test/coin-types.test.ts": {
-    "mtime": 1785921229.8175278,
-    "seen": 1789132525.945114,
-    "ast_hash": "e391d64445ecadd8449a6cc97c130728",
+    "mtime": 1791732005.1199334,
+    "seen": 1791732868.4043732,
+    "ast_hash": "4eb0e58a4d3b1a816a9629743124593a",
     "semantic_hash": ""
   },
   "packages/contracts/test/date-time.test.ts": {
@@ -4062,9 +4062,9 @@
     "semantic_hash": ""
   },
   "packages/core-calc/src/input.ts": {
-    "mtime": 1787120180.1995363,
-    "seen": 1789132525.9451287,
-    "ast_hash": "7ae021e178c380aa60353b21ea6c4d4a",
+    "mtime": 1791732202.2131557,
+    "seen": 1791732868.4044049,
+    "ast_hash": "ce44ea020b3311a4b81342806d10b363",
     "semantic_hash": ""
   },
   "packages/core-calc/src/jewelry-sale.ts": {
@@ -4152,9 +4152,9 @@
     "semantic_hash": ""
   },
   "packages/core-calc/test/input.test.ts": {
-    "mtime": 1787120197.428423,
-    "seen": 1789132525.9451506,
-    "ast_hash": "add066141e03ec6295f9206fbd48050f",
+    "mtime": 1791732202.2141676,
+    "seen": 1791732868.4044282,
+    "ast_hash": "f8976d2d6c5d08c32d3f6712b5d73a40",
     "semantic_hash": ""
   },
   "packages/core-calc/test/jewelry-sale.test.ts": {
@@ -5028,9 +5028,9 @@
     "semantic_hash": ""
   },
   "FrontTasks.md": {
-    "mtime": 1791730231.1499286,
-    "seen": 1791730284.3605053,
-    "ast_hash": "1bd72f6502a2630d1e16438170eec497",
+    "mtime": 1791732819.2270784,
+    "seen": 1791732868.4046767,
+    "ast_hash": "ad865531ea15cd5cee403df315c112cb",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
@@ -5733,6 +5733,36 @@
     "mtime": 1791729672.6973355,
     "seen": 1791730284.360132,
     "ast_hash": "b51e1337be857b3512b3bc034d2ea23f",
+    "semantic_hash": ""
+  },
+  "apps/api/src/modules/inventory/coin-types.controller.spec.ts": {
+    "mtime": 1791732156.5862658,
+    "seen": 1791732868.403352,
+    "ast_hash": "a9fec6b87fef04f82c1042562e118795",
+    "semantic_hash": ""
+  },
+  "apps/api/src/modules/inventory/coin-types.controller.ts": {
+    "mtime": 1791732120.8254073,
+    "seen": 1791732868.403355,
+    "ast_hash": "4528e385be74d9a6fd65f704d924c8af",
+    "semantic_hash": ""
+  },
+  "apps/web/src/api/coin-types.ts": {
+    "mtime": 1791732281.1870105,
+    "seen": 1791732868.4038103,
+    "ast_hash": "6f2a1d974dbdcd3d3d7c01a5774626de",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/settings/CoinTypeSettingsPage.test.tsx": {
+    "mtime": 1791732540.11466,
+    "seen": 1791732868.4041896,
+    "ast_hash": "09db2a18daed9f01ae0950d741a866e0",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/settings/CoinTypeSettingsPage.tsx": {
+    "mtime": 1791732480.7806392,
+    "seen": 1791732868.4041915,
+    "ast_hash": "06c2b5d7338f2a37286d9386830a35f9",
     "semantic_hash": ""
   }
 }
