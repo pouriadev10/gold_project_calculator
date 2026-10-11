@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useCallback } from 'react';
 import { Link, useParams } from '@tanstack/react-router';
 import {
   AlertTriangle,
   ChevronRight,
   Download,
+  Eye,
   FilePenLine,
   Loader2,
   Package,
@@ -23,16 +24,19 @@ import {
 import type { SalesInvoiceDetail } from '@/api/contracts';
 import type { InvoiceAmendmentPreflight } from '@gold/contracts';
 import { useInvoiceAmendmentPolicy, useSalesInvoiceDetail } from '@/api/queries';
+import { presentPdfError } from '@/api/error-presentation';
 import { getSalesInvoicePdf } from '@/api/sales';
 import { AmountDisplay, RateDisplay } from '@/components/common/AmountDisplay';
-import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
+import { ApiErrorNoticeContent } from '@/components/common/ApiErrorNotice';
 import { CardSkeleton } from '@/components/common/CardSkeleton';
+import { PdfPreviewPanel } from '@/components/common/PdfPreviewPanel';
 import { ErrorState } from '@/components/common/ErrorState';
 import { PageHeader } from '@/components/common/PageHeader';
 import { UnitToggle } from '@/components/common/UnitToggle';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { usePdfFile } from '@/hooks/usePdfFile';
 import { formatJalaliDateTime } from '@/lib/date';
 import { InvoiceVersionHistory } from './InvoiceVersionHistory';
 
@@ -332,9 +336,80 @@ function LedgerCard({ version }: { version: InvoiceVersion }) {
   );
 }
 
+/**
+ * PDF فاکتور — FE-077. سرور همیشه نسخه‌ی **جاری** را از snapshot تغییرناپذیر
+ * می‌سازد و سند مستأجر دیگر را ۴۰۴ می‌دهد؛ فرانت فقط برای فاکتور نهایی
+ * شماره‌دار درخواست می‌دهد (هر سه نقش مجازند، همان `@Roles` کنترلر). با
+ * عوض شدن نسخه‌ی جاری پیش‌نمایش قبلی دور ریخته می‌شود تا PDF کهنه نماند.
+ */
+function InvoicePdf({ detail }: { detail: SalesInvoiceDetail }) {
+  const fetchFile = useCallback(
+    (signal: AbortSignal) => getSalesInvoicePdf(detail.id, signal),
+    [detail.id],
+  );
+  const pdf = usePdfFile({
+    fetchFile,
+    fallbackFileName: `invoice-${detail.invoiceNumber ?? detail.id}`,
+    resetKey: `${detail.id}:${detail.currentVersion}`,
+  });
+  const available = detail.status === 'FINALIZED' && detail.invoiceNumber !== null;
+  const busy = pdf.pending !== null;
+
+  return (
+    <div className="space-y-2">
+      <div className="grid grid-cols-2 gap-2">
+        <Button
+          type="button"
+          size="action"
+          onClick={() => void pdf.download()}
+          disabled={!available || busy}
+          aria-describedby="invoice-pdf-status"
+        >
+          {pdf.pending === 'download' ? (
+            <Loader2 className="size-5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+          ) : (
+            <Download className="size-5" aria-hidden="true" />
+          )}
+          دریافت PDF
+        </Button>
+        <Button
+          type="button"
+          size="action"
+          variant="outline"
+          onClick={() => void pdf.openPreview()}
+          disabled={!available || busy}
+          aria-describedby="invoice-pdf-status"
+        >
+          {pdf.pending === 'preview' ? (
+            <Loader2 className="size-5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+          ) : (
+            <Eye className="size-5" aria-hidden="true" />
+          )}
+          پیش‌نمایش
+        </Button>
+      </div>
+      <p id="invoice-pdf-status" className="text-xs leading-5 text-muted-foreground" aria-live="polite">
+        {!available
+          ? 'PDF فقط برای فاکتور نهایی‌شده‌ی شماره‌دار صادر می‌شود.'
+          : busy
+            ? 'در حال دریافت PDF از سرور…'
+            : `PDF نسخه‌ی جاری (نسخه ${formatCount(detail.currentVersion)}) از snapshot تغییرناپذیر سرور ساخته می‌شود.`}
+      </p>
+      {pdf.error ? <ApiErrorNoticeContent presentation={presentPdfError(pdf.error)} /> : null}
+      {pdf.preview ? (
+        <PdfPreviewPanel
+          url={pdf.preview.url}
+          fileName={pdf.preview.fileName}
+          title={`پیش‌نمایش فاکتور ${formatCount(detail.invoiceNumber ?? 0)}`}
+          onClose={pdf.closePreview}
+          onSave={pdf.savePreview}
+        />
+      ) : null}
+    </div>
+  );
+}
+
 function InvoiceActions({ detail }: { detail: SalesInvoiceDetail }) {
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [downloadError, setDownloadError] = useState<unknown>(null);
   const amendmentPolicy = useInvoiceAmendmentPolicy(detail.id);
   const policy =
     amendmentPolicy.data?.invoiceId === detail.id &&
@@ -350,51 +425,13 @@ function InvoiceActions({ detail }: { detail: SalesInvoiceDetail }) {
     detail.party.status === 'ACTIVE' &&
     version?.items.some((item) => item.itemType === 'JEWELRY') === true;
 
-  async function downloadPdf(): Promise<void> {
-    if (detail.invoiceNumber === null || isDownloading) return;
-    setDownloadError(null);
-    setIsDownloading(true);
-    try {
-      const file = await getSalesInvoicePdf(detail.id);
-      const url = URL.createObjectURL(file.content);
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = file.fileName ?? `invoice-${detail.invoiceNumber}.pdf`;
-      document.body.append(anchor);
-      anchor.click();
-      anchor.remove();
-      URL.revokeObjectURL(url);
-    } catch (error: unknown) {
-      setDownloadError(error);
-    } finally {
-      setIsDownloading(false);
-    }
-  }
-
   return (
     <section className="space-y-3" aria-labelledby="invoice-actions-title">
       <h2 id="invoice-actions-title" className="text-sm font-semibold">
         اقدامات
       </h2>
-      {downloadError ? <ApiErrorNotice error={downloadError} /> : null}
-      <div className="grid gap-2 sm:grid-cols-3">
-        <Button
-          type="button"
-          size="action"
-          onClick={() => void downloadPdf()}
-          disabled={detail.status !== 'FINALIZED' || isDownloading}
-        >
-          {isDownloading ? (
-            <Loader2
-              className="size-5 animate-spin motion-reduce:animate-none"
-              aria-hidden="true"
-            />
-          ) : (
-            <Download className="size-5" aria-hidden="true" />
-          )}
-          دریافت PDF
-        </Button>
-
+      <InvoicePdf detail={detail} />
+      <div className="grid gap-2 sm:grid-cols-2">
         {canBuyBack ? (
           <Button asChild type="button" size="action" variant="outline">
             <Link to="/sales/invoices/$invoiceId/b2c-buyback" params={{ invoiceId: detail.id }}>

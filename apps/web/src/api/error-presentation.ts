@@ -1,3 +1,4 @@
+import { InvalidPdfError } from '@/lib/pdf-file';
 import { ApiError, NetworkError } from './api-error';
 
 /**
@@ -165,4 +166,27 @@ export function presentApiError(error: unknown): ApiErrorPresentation {
     EMPTY_FIELDS,
     error.requestId,
   );
+}
+
+/**
+ * خطای دریافت PDF یک سند (FE-077/FE-078). سرور برای سندِ مستأجر دیگر،
+ * پیش‌نویس یا ناموجود همان ۴۰۴ را برمی‌گرداند؛ پیام همین سه حالت را بی‌آنکه
+ * وجود سند را در مستأجر دیگر لو دهد می‌گوید.
+ */
+export function presentPdfError(error: unknown): ApiErrorPresentation {
+  if (error instanceof InvalidPdfError) {
+    return presentation('server', 'فایل PDF معتبر دریافت نشد', 'پاسخ سرور فایل PDF نبود؛ دوباره تلاش کنید.');
+  }
+  const base = presentApiError(error);
+  if (base.kind === 'not-found') {
+    return {
+      ...base,
+      title: 'PDF این سند در دسترس نیست',
+      message: 'سند پیدا نشد، هنوز نهایی نشده یا به این فروشگاه تعلق ندارد.',
+    };
+  }
+  if (base.kind === 'forbidden') {
+    return { ...base, title: 'اجازه دریافت این PDF را ندارید' };
+  }
+  return base;
 }

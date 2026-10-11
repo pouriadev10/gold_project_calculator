@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
@@ -322,21 +322,103 @@ describe('SalesInvoiceDetailPage — snapshot و نسخه جاری', () => {
 });
 
 describe('SalesInvoiceDetailPage — اقدامات', () => {
-  it('PDF را با endpoint احراز هویت‌شده دانلود می‌کند', async () => {
+  it('PDF نسخه‌ی جاری را با endpoint احراز هویت‌شده و نام امن دانلود می‌کند', async () => {
     mockDetail();
     const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    let downloadName = '';
+    click.mockImplementation(function (this: HTMLAnchorElement) {
+      downloadName = this.download;
+    });
     getSalesInvoicePdfMock.mockResolvedValue({
-      content: new Blob(['pdf'], { type: 'application/pdf' }),
+      content: new Blob(['%PDF-1.4 invoice'], { type: 'application/pdf' }),
+      fileName: '../evil/invoice-122.pdf',
+    });
+    render(<SalesInvoiceDetailPage />);
+
+    expect(screen.getByText(/PDF نسخه‌ی جاری \(نسخه ۲\)/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'دریافت PDF' }));
+
+    await waitFor(() => expect(click).toHaveBeenCalledOnce());
+    expect(getSalesInvoicePdfMock).toHaveBeenCalledWith(DETAIL.id, expect.any(AbortSignal));
+    expect(downloadName).toBe('invoice-122.pdf');
+    expect(URL.createObjectURL).toHaveBeenCalledOnce();
+  });
+
+  it('پیش‌نمایش PDF را درون صفحه با ذخیره و باز کردن در تب جدید نشان می‌دهد و هنگام بستن آزاد می‌کند', async () => {
+    mockDetail();
+    getSalesInvoicePdfMock.mockResolvedValue({
+      content: new Blob(['%PDF-1.4 invoice'], { type: 'application/pdf' }),
+      fileName: null,
+    });
+    render(<SalesInvoiceDetailPage />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'پیش‌نمایش' }));
+
+    const panel = await screen.findByRole('region', { name: 'پیش‌نمایش فاکتور ۱۲۲' });
+    expect(panel.querySelector('object')).toHaveAttribute('data', 'blob:invoice');
+    expect(within(panel).getByText('invoice-122.pdf')).toBeInTheDocument();
+    expect(within(panel).getByRole('link', { name: /باز کردن در تب جدید/ })).toHaveAttribute('target', '_blank');
+    expect(within(panel).getByRole('button', { name: /ذخیره فایل/ })).toBeInTheDocument();
+
+    await userEvent.click(within(panel).getByRole('button', { name: 'بستن پیش‌نمایش' }));
+    expect(screen.queryByRole('region', { name: /پیش‌نمایش فاکتور/ })).not.toBeInTheDocument();
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:invoice');
+  });
+
+  it('پاسخ غیر PDF را خطا می‌داند و هیچ فایلی نمی‌سازد', async () => {
+    mockDetail();
+    getSalesInvoicePdfMock.mockResolvedValue({
+      content: new Blob(['<html>login</html>'], { type: 'application/pdf' }),
       fileName: 'invoice-122.pdf',
     });
     render(<SalesInvoiceDetailPage />);
 
     await userEvent.click(screen.getByRole('button', { name: 'دریافت PDF' }));
 
-    expect(getSalesInvoicePdfMock).toHaveBeenCalledWith(DETAIL.id);
-    expect(click).toHaveBeenCalledOnce();
-    expect(URL.createObjectURL).toHaveBeenCalledOnce();
+    expect(await screen.findByText('فایل PDF معتبر دریافت نشد')).toBeInTheDocument();
+    expect(URL.createObjectURL).not.toHaveBeenCalled();
+  });
+
+  it('فاکتور مستأجر دیگر (۴۰۴ سرور) را بدون لو دادن وجودش رد می‌کند', async () => {
+    mockDetail();
+    getSalesInvoicePdfMock.mockRejectedValue(new ApiError(404, 'NOT_FOUND', 'not found'));
+    render(<SalesInvoiceDetailPage />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'پیش‌نمایش' }));
+
+    expect(await screen.findByText('PDF این سند در دسترس نیست')).toBeInTheDocument();
+    expect(screen.getByText('سند پیدا نشد، هنوز نهایی نشده یا به این فروشگاه تعلق ندارد.')).toBeInTheDocument();
+    expect(URL.createObjectURL).not.toHaveBeenCalled();
+    expect(screen.queryByRole('region', { name: /پیش‌نمایش فاکتور/ })).not.toBeInTheDocument();
+  });
+
+  it('برای پیش‌نویس PDF درخواست نمی‌دهد و دلیلش را می‌گوید', () => {
+    mockDetail({ ...DETAIL, status: 'DRAFT', invoiceNumber: null });
+    render(<SalesInvoiceDetailPage />);
+
+    expect(screen.getByRole('button', { name: 'دریافت PDF' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'پیش‌نمایش' })).toBeDisabled();
+    expect(screen.getByText('PDF فقط برای فاکتور نهایی‌شده‌ی شماره‌دار صادر می‌شود.')).toBeInTheDocument();
+    expect(getSalesInvoicePdfMock).not.toHaveBeenCalled();
+  });
+
+  it('با رسیدن نسخه‌ی تازه، پیش‌نمایش نسخه‌ی قبلی دور ریخته می‌شود', async () => {
+    mockDetail();
+    getSalesInvoicePdfMock.mockResolvedValue({
+      content: new Blob(['%PDF-1.4 invoice'], { type: 'application/pdf' }),
+      fileName: 'invoice-122.pdf',
+    });
+    const { rerender } = render(<SalesInvoiceDetailPage />);
+    await userEvent.click(screen.getByRole('button', { name: 'پیش‌نمایش' }));
+    await screen.findByRole('region', { name: 'پیش‌نمایش فاکتور ۱۲۲' });
+
+    mockDetail({ ...DETAIL, currentVersion: 3 });
+    mockPolicy({ allowed: true, invoiceVersion: 3 });
+    rerender(<SalesInvoiceDetailPage />);
+
+    expect(screen.queryByRole('region', { name: /پیش‌نمایش فاکتور/ })).not.toBeInTheDocument();
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:invoice');
+    expect(screen.getByText(/PDF نسخه‌ی جاری \(نسخه ۳\)/)).toBeInTheDocument();
   });
 
   it('خرید مجدد را فقط برای مصرف‌کننده فعال می‌کند و دلیل منع اصلاح سرور را نشان می‌دهد', () => {

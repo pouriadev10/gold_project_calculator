@@ -1,4 +1,5 @@
 import type { z } from 'zod';
+import { fileNameFromContentDisposition } from '@/lib/pdf-file';
 import { useSessionStore } from '@/stores/session-store';
 import { ApiError, NetworkError } from './api-error';
 import { apiErrorSchema, sessionResponseSchema, type SessionResponse } from './contracts';
@@ -295,8 +296,7 @@ export async function apiGetFile(
     timeoutMs,
     {},
   );
-  const disposition = response.headers.get('Content-Disposition');
-  const fileName = disposition?.match(/filename="?([^";]+)"?/iu)?.[1] ?? null;
+  const fileName = fileNameFromContentDisposition(response.headers.get('Content-Disposition'));
   return { content: await response.blob(), fileName };
 }
 
