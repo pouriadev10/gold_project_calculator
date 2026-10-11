@@ -1,8 +1,12 @@
-import { render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import type * as ReactRouter from '@tanstack/react-router';
 import type * as Queries from '@/api/queries';
+import type * as SalesApi from '@/api/sales';
+import type { SessionResponse } from '@/api/contracts';
+import { useSessionStore } from '@/stores/session-store';
 import { ApiError } from '@/api/api-error';
 import { useUnitStore } from '@/stores/unit-store';
 import { SaleReceipt } from './SaleReceipt';
@@ -27,6 +31,12 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
     ),
   };
 });
+
+const getSalesInvoicePdfMock = vi.fn();
+vi.mock('@/api/sales', async (importOriginal) => ({
+  ...(await importOriginal<typeof SalesApi>()),
+  getSalesInvoicePdf: (...args: unknown[]) => getSalesInvoicePdfMock(...args),
+}));
 
 vi.mock('@/api/queries', async (importOriginal) => ({
   ...(await importOriginal<typeof Queries>()),
@@ -249,12 +259,88 @@ describe('SaleReceipt — حالت‌های بارگذاری و خطا', () => {
   });
 });
 
-describe('SaleReceipt — اقدام PDF', () => {
-  it('دکمه‌ی چاپ/PDF نشان داده می‌شود ولی غیرفعال است', () => {
+describe('SaleReceipt — PDF و اشتراک رسید (FE-077/FE-079)', () => {
+  const SESSION: SessionResponse = {
+    accessToken: 'a',
+    refreshToken: 'r',
+    expiresInSeconds: 900,
+    user: { id: 'u1', email: 'owner@example.com', displayName: 'مالک' },
+    tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه', timezone: 'Asia/Tehran' },
+    role: 'OWNER',
+  };
+  let clickSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    useSessionStore.setState({ session: SESSION });
+    getSalesInvoicePdfMock.mockReset();
+    getSalesInvoicePdfMock.mockResolvedValue({ content: new Blob(['%PDF-1.4']), fileName: 'invoice-123.pdf' });
+    vi.stubGlobal('URL', { createObjectURL: vi.fn(() => 'blob:r'), revokeObjectURL: vi.fn() });
+    clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    useSessionStore.setState({ session: null });
+    for (const key of ['share', 'canShare', 'clipboard']) Reflect.deleteProperty(navigator, key);
+  });
+
+  it('replaces the old disabled button with real PDF actions', () => {
+    mockQuery(versionHistory());
+    render(<SaleReceipt outcome={OUTCOME} />);
+    expect(screen.queryByRole('button', { name: /به‌زودی/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'دریافت PDF' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'پیش‌نمایش' })).toBeEnabled();
+  });
+
+  it('desktop fallback: saves the PDF and copies the short text (no URL) when Web Share is missing', async () => {
+    const writeText = vi.fn(async (_text: string) => {});
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
     mockQuery(versionHistory());
     render(<SaleReceipt outcome={OUTCOME} />);
 
-    expect(screen.getByRole('button', { name: /چاپ یا دریافت PDF/ })).toBeDisabled();
+    await userEvent.click(screen.getByRole('button', { name: 'اشتراک' }));
+
+    await waitFor(() => expect(clickSpy).toHaveBeenCalledOnce());
+    expect(getSalesInvoicePdfMock).toHaveBeenCalledWith(INVOICE_ID, expect.any(AbortSignal));
+    const text = writeText.mock.calls[0]![0];
+    expect(text).toContain('رسید فروش زرگری نمونه');
+    expect(text).toContain('فاکتور شماره ۱۲۳');
+    expect(text).not.toMatch(/https?:|www\./u);
+    expect(await screen.findByText('اشتراک در این مرورگر پشتیبانی نمی‌شود؛ PDF ذخیره شد و متن رسید کپی شد.')).toBeInTheDocument();
+  });
+
+  it('text-only Web Share: shares title + text right away, without fetching the PDF or any URL', async () => {
+    const share = vi.fn(async (_data: ShareData) => {});
+    Object.defineProperty(navigator, 'share', { configurable: true, value: share });
+    mockQuery(versionHistory());
+    render(<SaleReceipt outcome={OUTCOME} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'اشتراک' }));
+
+    expect(share).toHaveBeenCalledOnce();
+    const data = share.mock.calls[0]![0];
+    expect(data.url).toBeUndefined();
+    expect(data.files).toBeUndefined();
+    expect(data.text).toContain('فاکتور شماره ۱۲۳');
+    expect(getSalesInvoicePdfMock).not.toHaveBeenCalled();
+  });
+
+  it('file Web Share: sends the PDF together with the short text', async () => {
+    const share = vi.fn(async (_data: ShareData) => {});
+    Object.defineProperty(navigator, 'share', { configurable: true, value: share });
+    Object.defineProperty(navigator, 'canShare', { configurable: true, value: vi.fn(() => true) });
+    mockQuery(versionHistory());
+    render(<SaleReceipt outcome={OUTCOME} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'اشتراک' }));
+
+    await waitFor(() => expect(share).toHaveBeenCalledOnce());
+    const data = share.mock.calls[0]![0];
+    expect(data.files?.[0]?.name).toBe('invoice-123.pdf');
+    expect(data.text).toContain('رسید فروش زرگری نمونه');
+    expect(data.url).toBeUndefined();
   });
 });
 

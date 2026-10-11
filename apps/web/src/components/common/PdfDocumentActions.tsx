@@ -9,13 +9,14 @@ import { canShareFiles, usePdfFile, type PdfAction } from '@/hooks/usePdfFile';
 import { cn } from '@/lib/utils';
 
 /**
- * اقدامات PDF یک سند سرور — FE-077 (فاکتور) و FE-078 (رسید خرید دست‌دوم،
- * صورت‌حساب شخص).
+ * اقدامات PDF یک سند سرور — FE-077 (فاکتور)، FE-078 (رسید خرید دست‌دوم،
+ * صورت‌حساب شخص) و FE-079 (اشتراک رسید).
  *
- * «دریافت PDF» و «پیش‌نمایش» همیشه؛ «اشتراک» فقط وقتی مرورگر بتواند خودِ
- * فایل PDF را با Web Share بفرستد (معمولاً موبایل). روی موبایلی که این را
- * ندارد، دریافت همان مسیر ذخیره‌ی فایل سیستم‌عامل است. هیچ‌وقت URL سند
- * به اشتراک گذاشته نمی‌شود — فقط فایلی که با نشست همین کاربر گرفته شده.
+ * «دریافت PDF» و «پیش‌نمایش» همیشه. «اشتراک» وقتی مرورگر بتواند خودِ فایل
+ * PDF را با Web Share بفرستد، یا وقتی سند یک رسیدِ دارای متن کوتاه است —
+ * آن‌گاه به‌ترتیب: فایل + متن، فقط متن، یا روی دسکتاپ ذخیره‌ی PDF و کپی
+ * متن (با پیام صریح). هیچ‌وقت URL سند به اشتراک گذاشته نمی‌شود — فقط فایلی
+ * که با نشست همین کاربر گرفته شده و متنی که لینک ندارد.
  */
 
 export interface PdfDocumentActionsProps {
@@ -23,6 +24,8 @@ export interface PdfDocumentActionsProps {
   readonly fallbackFileName: string;
   readonly preferredFileName?: string;
   readonly shareTitle?: string;
+  /** متن کوتاه رسید (FE-079)؛ با آن «اشتراک» همیشه دیده می‌شود. */
+  readonly shareText?: string;
   readonly resetKey?: string | number;
   /** عنوان پنل پیش‌نمایش. */
   readonly previewTitle: string;
@@ -56,6 +59,7 @@ export function PdfDocumentActions({
   fallbackFileName,
   preferredFileName,
   shareTitle,
+  shareText,
   resetKey,
   previewTitle,
   description,
@@ -69,9 +73,12 @@ export function PdfDocumentActions({
     fallbackFileName,
     ...(preferredFileName !== undefined ? { preferredFileName } : {}),
     ...(shareTitle !== undefined ? { shareTitle } : {}),
+    ...(shareText !== undefined ? { shareText } : {}),
     ...(resetKey !== undefined ? { resetKey } : {}),
   });
-  const [shareSupported] = useState(canShareFiles);
+  const [fileShareSupported] = useState(canShareFiles);
+  // بدون متن رسید، اشتراک فقط وقتی معنا دارد که فایل قابل اشتراک باشد (صورت‌حساب).
+  const shareSupported = shareText !== undefined || fileShareSupported;
   const busy = pdf.pending !== null;
   const disabled = !available || busy;
   const statusId = `${idPrefix}-pdf-status`;
@@ -115,7 +122,7 @@ export function PdfDocumentActions({
         ) : null}
       </div>
       <p id={statusId} className="text-xs leading-5 text-muted-foreground" aria-live="polite">
-        {!available ? unavailableReason : pdf.pending ? PENDING_TEXT[pdf.pending] : description}
+        {!available ? unavailableReason : pdf.pending ? PENDING_TEXT[pdf.pending] : (pdf.notice ?? description)}
       </p>
       {pdf.error ? <ApiErrorNoticeContent presentation={presentPdfError(pdf.error)} /> : null}
       {pdf.preview ? (

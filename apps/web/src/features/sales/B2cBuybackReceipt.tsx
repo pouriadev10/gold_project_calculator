@@ -6,6 +6,8 @@ import { AmountDisplay, RateDisplay } from '@/components/common/AmountDisplay';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PurchaseReceiptPdf } from '@/features/purchase/PurchaseReceiptPdf';
+import { purchaseReceiptShareText } from '@/lib/receipt-share';
+import { useSessionStore } from '@/stores/session-store';
 
 export function B2cBuybackReceipt({ receipt }: { readonly receipt: B2cBuyback }) {
   const goldRate = BigInt(receipt.goldRatePerGramRial);
@@ -13,6 +15,16 @@ export function B2cBuybackReceipt({ receipt }: { readonly receipt: B2cBuyback })
   const paid = BigInt(receipt.paidRial);
   const payable = BigInt(receipt.payableRial);
   const documentAnchor = `buyback-document-${receipt.secondHandPurchaseId}`;
+  const shopName = useSessionStore((state) => state.session?.tenant.name ?? null);
+  const share = purchaseReceiptShareText({
+    shopName,
+    kindLabel: 'خرید طلای دست‌دوم',
+    purchaseId: receipt.secondHandPurchaseId,
+    amountRial: purchaseAmount,
+    paidRial: paid,
+    payableRial: payable,
+    pureWeightMg: BigInt(receipt.pureWeightMg),
+  });
 
   return (
     <Card id={documentAnchor} aria-labelledby="b2c-buyback-receipt-title">
@@ -67,7 +79,7 @@ export function B2cBuybackReceipt({ receipt }: { readonly receipt: B2cBuyback })
           </div>
         </dl>
 
-        <PurchaseReceiptPdf purchaseId={receipt.secondHandPurchaseId} />
+        <PurchaseReceiptPdf purchaseId={receipt.secondHandPurchaseId} share={share} />
 
         <div className="grid gap-2 sm:grid-cols-2">
           <Button asChild variant="outline">

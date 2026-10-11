@@ -32,6 +32,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { formatJalaliDateTime } from '@/lib/date';
+import { saleReceiptShareText } from '@/lib/receipt-share';
+import { useSessionStore } from '@/stores/session-store';
 import { InvoiceVersionHistory } from './InvoiceVersionHistory';
 
 type InvoiceVersion = SalesInvoiceDetail['versions'][number];
@@ -337,6 +339,21 @@ function LedgerCard({ version }: { version: InvoiceVersion }) {
  * عوض شدن نسخه‌ی جاری پیش‌نمایش قبلی دور ریخته می‌شود تا PDF کهنه نماند.
  */
 function InvoicePdf({ detail }: { detail: SalesInvoiceDetail }) {
+  const shopName = useSessionStore((state) => state.session?.tenant.name ?? null);
+  const version = currentVersion(detail);
+  const share =
+    detail.invoiceNumber !== null && version
+      ? saleReceiptShareText({
+          shopName,
+          invoiceNumber: detail.invoiceNumber,
+          issuedAt: new Date(version.createdAt),
+          customerName: detail.party.displayName,
+          payableRial: BigInt(version.payableRial),
+          paidRial: BigInt(version.paidRial),
+          receivableRial: BigInt(version.receivableRial),
+          pureWeightMg: version.pureWeightMg === null ? null : BigInt(version.pureWeightMg),
+        })
+      : null;
   const fetchFile = useCallback(
     (signal: AbortSignal) => getSalesInvoicePdf(detail.id, signal),
     [detail.id],
@@ -346,7 +363,8 @@ function InvoicePdf({ detail }: { detail: SalesInvoiceDetail }) {
       idPrefix="invoice"
       fetchFile={fetchFile}
       fallbackFileName={`invoice-${detail.invoiceNumber ?? detail.id}`}
-      shareTitle={`فاکتور ${formatCount(detail.invoiceNumber ?? 0)}`}
+      shareTitle={share?.title ?? `فاکتور ${formatCount(detail.invoiceNumber ?? 0)}`}
+      {...(share ? { shareText: share.text } : {})}
       resetKey={`${detail.id}:${detail.currentVersion}`}
       previewTitle={`پیش‌نمایش فاکتور ${formatCount(detail.invoiceNumber ?? 0)}`}
       available={detail.status === 'FINALIZED' && detail.invoiceNumber !== null}

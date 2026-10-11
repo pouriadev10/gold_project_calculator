@@ -1,14 +1,19 @@
+import { useCallback } from 'react';
 import { Link } from '@tanstack/react-router';
-import { AlertTriangle, FileText, Loader2, RotateCcw } from 'lucide-react';
+import { AlertTriangle, Loader2, RotateCcw } from 'lucide-react';
 import { dualFromRial, formatCount, formatGram, gramRate1000, toSafeNumber } from '@gold/core-calc';
 import type { SalesInvoiceVersionHistory } from '@/api/contracts';
 import { useInvoiceVersions } from '@/api/queries';
+import { getSalesInvoicePdf } from '@/api/sales';
 import { AmountDisplay, RateDisplay } from '@/components/common/AmountDisplay';
 import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
+import { PdfDocumentActions } from '@/components/common/PdfDocumentActions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatJalaliDateTime } from '@/lib/date';
+import { saleReceiptShareText } from '@/lib/receipt-share';
+import { useSessionStore } from '@/stores/session-store';
 import type { SaleSubmitOutcome } from './useJewelrySaleSubmit';
 
 /**
@@ -46,11 +51,11 @@ import type { SaleSubmitOutcome } from './useJewelrySaleSubmit';
  *   تفریق `payable − paid` سمت کلاینت (FE-047). روی رسیدی که از فهرست
  *   فاکتورها باز شود این دو ردیف هم به یک فیلد تازه در قرارداد نیاز
  *   دارند.
- * - **چاپ/PDF**: `GET /sales/invoices/:id/pdf` واقعاً وجود دارد
- *   (`InvoiceHistoryController`)، ولی دانلود فایل جریان و تست خودش را
- *   می‌خواهد — تسک هم صریح می‌گوید «اقدام چاپ یا PDF **در آینده**». دکمه
- *   نشان داده می‌شود و غیرفعال است، نه پنهان: کاربر می‌داند این کار
- *   می‌آید.
+ *
+ * **PDF و اشتراک (FE-079):** همان `PdfDocumentActions` فاکتور (FE-077) با
+ * متن کوتاه رسید؛ «اشتراک» فایل PDF و متن را با Web Share می‌فرستد و روی
+ * دسکتاپ PDF را ذخیره و متن را کپی می‌کند. متن از همین اعداد سرور ساخته
+ * می‌شود و هیچ لینکی ندارد.
  */
 
 const ITEM_TYPE_LABEL: Record<'JEWELRY' | 'COIN', string> = { JEWELRY: 'زیورآلات', COIN: 'سکه' };
@@ -86,6 +91,52 @@ function currentVersion(history: SalesInvoiceVersionHistory) {
   return history.versions.reduce<SalesInvoiceVersionHistory['versions'][number] | undefined>(
     (latest, candidate) => (latest === undefined || candidate.version > latest.version ? candidate : latest),
     undefined,
+  );
+}
+
+/**
+ * PDF و اشتراک رسید — FE-077/FE-079. `invoiceNumber` و اعداد همه از پاسخ
+ * سرورند؛ نام مشتری فقط وقتی که با `partyId` همان نسخه بخواند.
+ */
+function SaleReceiptPdf({
+  invoiceId,
+  invoiceNumber,
+  version,
+  customerName,
+  paidRial,
+  receivableRial,
+}: {
+  readonly invoiceId: string;
+  readonly invoiceNumber: number;
+  readonly version: SalesInvoiceVersionHistory['versions'][number];
+  readonly customerName: string | null;
+  readonly paidRial: bigint;
+  readonly receivableRial: bigint;
+}) {
+  const shopName = useSessionStore((state) => state.session?.tenant.name ?? null);
+  const fetchFile = useCallback((signal: AbortSignal) => getSalesInvoicePdf(invoiceId, signal), [invoiceId]);
+  const share = saleReceiptShareText({
+    shopName,
+    invoiceNumber,
+    issuedAt: new Date(version.createdAt),
+    customerName,
+    payableRial: version.payableRial === null ? null : BigInt(version.payableRial),
+    paidRial,
+    receivableRial,
+    pureWeightMg: version.pureWeightMg === null ? null : BigInt(version.pureWeightMg),
+  });
+
+  return (
+    <PdfDocumentActions
+      idPrefix="sale-receipt"
+      fetchFile={fetchFile}
+      fallbackFileName={`invoice-${invoiceNumber}`}
+      shareTitle={share.title}
+      shareText={share.text}
+      resetKey={`${invoiceId}:${version.version}`}
+      previewTitle={`پیش‌نمایش فاکتور ${formatCount(invoiceNumber)}`}
+      description="رسید را به‌صورت PDF بگیرید یا برای مشتری بفرستید؛ متن ارسالی لینک ندارد."
+    />
   );
 }
 
@@ -243,10 +294,14 @@ export function SaleReceipt({ outcome }: { readonly outcome: SaleSubmitOutcome }
         </CardContent>
       </Card>
 
-      <Button type="button" variant="outline" size="action" className="w-full" disabled>
-        <FileText className="size-4" aria-hidden="true" />
-        چاپ یا دریافت PDF (به‌زودی)
-      </Button>
+      <SaleReceiptPdf
+        invoiceId={outcome.sale.invoiceId}
+        invoiceNumber={history.data.invoiceNumber}
+        version={version}
+        customerName={partyMatches ? outcome.party.displayName : null}
+        paidRial={outcome.paidRial}
+        receivableRial={outcome.receivableRial}
+      />
 
       {partyMatches && outcome.party.type === 'CONSUMER' ? (
         <Button asChild type="button" variant="outline" size="action" className="w-full">

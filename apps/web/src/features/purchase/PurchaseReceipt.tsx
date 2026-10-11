@@ -2,9 +2,21 @@ import { dualFromRial, formatGram } from '@gold/core-calc';
 import type { SecondHandGoldPurchase } from '@gold/contracts';
 import { AmountDisplay } from '@/components/common/AmountDisplay';
 import { Card } from '@/components/ui/card';
+import { purchaseReceiptShareText } from '@/lib/receipt-share';
+import { useSessionStore } from '@/stores/session-store';
 import { PurchaseReceiptPdf } from './PurchaseReceiptPdf';
 
 export function PurchaseReceipt({ receipt }: { receipt: SecondHandGoldPurchase }) {
+  const shopName = useSessionStore((state) => state.session?.tenant.name ?? null);
+  const share = purchaseReceiptShareText({
+    shopName,
+    kindLabel: 'خرید طلای دست‌دوم',
+    purchaseId: receipt.secondHandPurchaseId,
+    amountRial: BigInt(receipt.finalAmountRial),
+    paidRial: BigInt(receipt.paidRial),
+    payableRial: BigInt(receipt.payableRial),
+    pureWeightMg: BigInt(receipt.pureWeightMg),
+  });
   const rows = [
     ['مبلغ خرید', receipt.grossPurchaseAmountRial], ['کارمزد', receipt.feeRial],
     ['مبلغ نهایی', receipt.finalAmountRial], ['پرداخت‌شده', receipt.paidRial],
@@ -21,7 +33,7 @@ export function PurchaseReceipt({ receipt }: { receipt: SecondHandGoldPurchase }
           <dt>{label}</dt><dd><AmountDisplay amount={dualFromRial(BigInt(value), BigInt(receipt.goldRatePerGramRial))} /></dd>
         </div>)}
       </dl>
-      <PurchaseReceiptPdf purchaseId={receipt.secondHandPurchaseId} />
+      <PurchaseReceiptPdf purchaseId={receipt.secondHandPurchaseId} share={share} />
     </Card>
   );
 }

@@ -3,13 +3,14 @@ import type { DownloadedFile } from '@/api/client';
 import { assertPdf, safePdfFileName, saveBlob } from '@/lib/pdf-file';
 
 /**
- * دریافت، پیش‌نمایش، ذخیره و اشتراک یک PDF سرور — FE-077 (و FE-078).
+ * دریافت، پیش‌نمایش، ذخیره و اشتراک یک PDF سرور — FE-077، FE-078، FE-079.
  *
  * - هر بار از سرور می‌گیرد، هرگز از کش؛ پس همیشه نسخه‌ی جاری سند است.
  * - امضای `%PDF-` سنجیده می‌شود؛ پاسخ غیر PDF خطاست، نه فایل خراب.
  * - URL پیش‌نمایش هنگام بستن، عوض شدن `resetKey` (مثلاً نسخه‌ی تازه‌ی
  *   فاکتور) و unmount آزاد می‌شود و درخواست در جریان لغو می‌شود — چیزی از
  *   سند یک نشست یا مستأجر در حافظه‌ی صفحه نمی‌ماند.
+ * - اشتراک هرگز URL سند را نمی‌فرستد؛ فقط فایل و/یا متن کوتاه بی‌لینک.
  */
 
 export type PdfAction = 'download' | 'preview' | 'share';
@@ -30,6 +31,11 @@ export interface UsePdfFileOptions {
   readonly preferredFileName?: string;
   /** عنوان برگه‌ی اشتراک سیستم‌عامل. */
   readonly shareTitle?: string;
+  /**
+   * متن کوتاه رسید (FE-079) — همراه فایل، یا به‌تنهایی وقتی مرورگر فقط متن را
+   * به اشتراک می‌گذارد. هرگز URL در آن نیست (`lib/receipt-share.ts`).
+   */
+  readonly shareText?: string;
   /** با تغییرش پیش‌نمایش و خطای قبلی دور ریخته می‌شود. */
   readonly resetKey?: string | number;
 }
@@ -47,8 +53,33 @@ export function canShareFiles(): boolean {
   }
 }
 
+/** Web Share بدون فایل (فقط عنوان و متن). */
+export function canShareText(): boolean {
+  return typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+}
+
+async function copyText(text: string): Promise<boolean> {
+  try {
+    if (typeof navigator === 'undefined' || !navigator.clipboard) return false;
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export const SHARE_NOTICE = {
+  savedOnly: 'اشتراک در این مرورگر پشتیبانی نمی‌شود؛ PDF ذخیره شد.',
+  savedAndCopied: 'اشتراک در این مرورگر پشتیبانی نمی‌شود؛ PDF ذخیره شد و متن رسید کپی شد.',
+  expired: 'آماده‌سازی فایل طول کشید و مرورگر اجازه‌ی اشتراک را پس گرفت؛ PDF ذخیره شد.',
+} as const;
+
 function isShareCancel(error: unknown): boolean {
   return error instanceof DOMException && error.name === 'AbortError';
+}
+
+function isShareNotAllowed(error: unknown): boolean {
+  return error instanceof DOMException && error.name === 'NotAllowedError';
 }
 
 export function usePdfFile({
@@ -56,10 +87,13 @@ export function usePdfFile({
   fallbackFileName,
   preferredFileName,
   shareTitle,
+  shareText,
   resetKey,
 }: UsePdfFileOptions) {
   const [pending, setPending] = useState<PdfAction | null>(null);
   const [error, setError] = useState<unknown>(null);
+  /** پیام اطلاعی (نه خطا) — مثلاً «اشتراک پشتیبانی نشد؛ PDF ذخیره شد». */
+  const [notice, setNotice] = useState<string | null>(null);
   const [preview, setPreview] = useState<PdfPreview | null>(null);
   const controllerRef = useRef<AbortController | null>(null);
   const previewUrlRef = useRef<string | null>(null);
@@ -75,6 +109,7 @@ export function usePdfFile({
     controllerRef.current = null;
     setPending(null);
     setError(null);
+    setNotice(null);
     replacePreview(null);
   }, [resetKey, replacePreview]);
 
@@ -90,6 +125,20 @@ export function usePdfFile({
   const run = useCallback(
     async (action: PdfAction) => {
       if (controllerRef.current) return;
+      setNotice(null);
+
+      // مرورگر فقط متن را به اشتراک می‌گذارد: همان لحظه، درون همان لمس کاربر
+      // و بدون دریافت فایل (اجازه‌ی اشتراک پس از یک دریافت کند منقضی می‌شود).
+      if (action === 'share' && shareText && !canShareFiles() && canShareText()) {
+        setError(null);
+        try {
+          await navigator.share({ title: shareTitle ?? fallbackFileName, text: shareText });
+        } catch (caught: unknown) {
+          if (!isShareCancel(caught)) setError(caught);
+        }
+        return;
+      }
+
       const controller = new AbortController();
       controllerRef.current = controller;
       setPending(action);
@@ -105,18 +154,22 @@ export function usePdfFile({
           const shared = new File([file.content], fileName, { type: 'application/pdf' });
           if (canShareFiles() && navigator.canShare({ files: [shared] })) {
             try {
-              await navigator.share({ files: [shared], title: shareTitle ?? fileName });
+              await navigator.share({
+                files: [shared],
+                title: shareTitle ?? fileName,
+                ...(shareText ? { text: shareText } : {}),
+              });
             } catch (shareError: unknown) {
               // دریافت کند بود و «اجازه‌ی کاربر» مرورگر منقضی شد — فایل را ذخیره کن.
-              if (shareError instanceof DOMException && shareError.name === 'NotAllowedError') {
-                saveBlob(file.content, fileName);
-              } else {
-                throw shareError;
-              }
+              if (!isShareNotAllowed(shareError)) throw shareError;
+              saveBlob(file.content, fileName);
+              setNotice(SHARE_NOTICE.expired);
             }
           } else {
-            // اشتراک فایل پشتیبانی نشد — همان فایل ذخیره می‌شود.
+            // fallback دسکتاپ: فایل ذخیره و متن رسید (اگر هست) در کلیپ‌بورد کپی می‌شود.
             saveBlob(file.content, fileName);
+            const copied = shareText ? await copyText(shareText) : false;
+            setNotice(copied ? SHARE_NOTICE.savedAndCopied : SHARE_NOTICE.savedOnly);
           }
         } else {
           replacePreview({ url: URL.createObjectURL(file.content), fileName });
@@ -130,12 +183,13 @@ export function usePdfFile({
         }
       }
     },
-    [fetchFile, fallbackFileName, preferredFileName, shareTitle, replacePreview],
+    [fetchFile, fallbackFileName, preferredFileName, shareTitle, shareText, replacePreview],
   );
 
   return {
     pending,
     error,
+    notice,
     preview,
     download: useCallback(() => run('download'), [run]),
     openPreview: useCallback(() => run('preview'), [run]),

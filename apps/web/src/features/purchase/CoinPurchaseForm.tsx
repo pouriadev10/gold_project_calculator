@@ -24,6 +24,8 @@ import { CoinPurchaseSummary } from './CoinPurchaseSummary';
 import { PurchaseKindTabs } from './PurchaseKindTabs';
 import { useCoinPurchaseSubmit } from './useCoinPurchaseSubmit';
 import { PurchaseReceiptPdf } from './PurchaseReceiptPdf';
+import { purchaseReceiptShareText } from '@/lib/receipt-share';
+import { useSessionStore } from '@/stores/session-store';
 
 function toCoinType(version: CoinTypeVersion): CoinType {
   const shared = { kind: 'coin' as const, id: version.coinTypeId, label: version.title,
@@ -33,6 +35,7 @@ function toCoinType(version: CoinTypeVersion): CoinType {
 
 export default function CoinPurchaseForm() {
   const isOnline = useOnlineStatus();
+  const shopName = useSessionStore((state) => state.session?.tenant.name ?? null);
   const mazneh = useMazneh();
   const coinTypesQuery = useCoinTypes();
   const balancesQuery = useInventoryBalances('COIN');
@@ -90,7 +93,7 @@ export default function CoinPurchaseForm() {
               {purchase.bubbleRial !== null ? <><dt className="text-muted-foreground">حباب هر سکه</dt><dd><AmountDisplay amount={dualFromRial(BigInt(purchase.bubbleRial), rate1000)} signed size="sm" /></dd></> : null}
             </dl>
           </CardContent>
-          <div className="px-6 pb-6"><PurchaseReceiptPdf purchaseId={purchase.secondHandPurchaseId} /></div></Card>
+          <div className="px-6 pb-6"><PurchaseReceiptPdf purchaseId={purchase.secondHandPurchaseId} share={purchaseReceiptShareText({ shopName, kindLabel: 'خرید سکه', purchaseId: purchase.secondHandPurchaseId, amountRial: BigInt(purchase.purchaseAmountRial), paidRial: BigInt(purchase.paidRial), payableRial: BigInt(purchase.payableRial), coinCount: purchase.count })} /></div></Card>
       </main>
       <div className="fixed inset-x-0 bottom-above-nav z-20 border-t border-border bg-background/95 px-4 py-3 backdrop-blur-sm lg:static lg:border-0 lg:bg-transparent"><Button size="action" onClick={submission.clearReceipt}>خرید سکه جدید</Button></div>
     </div>;

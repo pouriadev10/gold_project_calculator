@@ -104,3 +104,14 @@ describe('PdfDocumentActions — FE-078', () => {
     expect(fetchFile).not.toHaveBeenCalled();
   });
 });
+
+describe('PdfDocumentActions — share text (FE-079)', () => {
+  it('with receipt text, offers share even without Web Share and falls back to saving', async () => {
+    renderActions({ shareText: 'رسید فروش\nفاکتور شماره ۱' });
+
+    await userEvent.click(screen.getByRole('button', { name: 'اشتراک' }));
+
+    await waitFor(() => expect(clickSpy).toHaveBeenCalledOnce());
+    expect(await screen.findByText(/اشتراک در این مرورگر پشتیبانی نمی‌شود؛ PDF ذخیره شد/)).toBeInTheDocument();
+  });
+});
