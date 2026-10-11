@@ -3,7 +3,7 @@ import type { DownloadedFile } from '@/api/client';
 import { assertPdf, safePdfFileName, saveBlob } from '@/lib/pdf-file';
 
 /**
- * دریافت، پیش‌نمایش و ذخیره‌ی یک PDF سرور — FE-077 (و FE-078).
+ * دریافت، پیش‌نمایش، ذخیره و اشتراک یک PDF سرور — FE-077 (و FE-078).
  *
  * - هر بار از سرور می‌گیرد، هرگز از کش؛ پس همیشه نسخه‌ی جاری سند است.
  * - امضای `%PDF-` سنجیده می‌شود؛ پاسخ غیر PDF خطاست، نه فایل خراب.
@@ -12,7 +12,7 @@ import { assertPdf, safePdfFileName, saveBlob } from '@/lib/pdf-file';
  *   سند یک نشست یا مستأجر در حافظه‌ی صفحه نمی‌ماند.
  */
 
-export type PdfAction = 'download' | 'preview';
+export type PdfAction = 'download' | 'preview' | 'share';
 
 export interface PdfPreview {
   readonly url: string;
@@ -23,11 +23,41 @@ export interface UsePdfFileOptions {
   readonly fetchFile: (signal: AbortSignal) => Promise<DownloadedFile>;
   /** نام جایگزین وقتی سرور `Content-Disposition` نفرستد. */
   readonly fallbackFileName: string;
+  /**
+   * نامی که بر نام سرور مقدم است — برای سندهایی که نام سرورشان گویا نیست
+   * (FE-078: رسید خرید و صورت‌حساب هر دو از سرور `invoice-<uuid>.pdf` می‌گیرند).
+   */
+  readonly preferredFileName?: string;
+  /** عنوان برگه‌ی اشتراک سیستم‌عامل. */
+  readonly shareTitle?: string;
   /** با تغییرش پیش‌نمایش و خطای قبلی دور ریخته می‌شود. */
   readonly resetKey?: string | number;
 }
 
-export function usePdfFile({ fetchFile, fallbackFileName, resetKey }: UsePdfFileOptions) {
+/**
+ * آیا مرورگر می‌تواند **فایل** PDF را با Web Share بفرستد؟ فقط فایل به
+ * اشتراک گذاشته می‌شود، هرگز URL خصوصی سند.
+ */
+export function canShareFiles(): boolean {
+  if (typeof navigator === 'undefined' || typeof navigator.canShare !== 'function') return false;
+  try {
+    return navigator.canShare({ files: [new File([''], 'document.pdf', { type: 'application/pdf' })] });
+  } catch {
+    return false;
+  }
+}
+
+function isShareCancel(error: unknown): boolean {
+  return error instanceof DOMException && error.name === 'AbortError';
+}
+
+export function usePdfFile({
+  fetchFile,
+  fallbackFileName,
+  preferredFileName,
+  shareTitle,
+  resetKey,
+}: UsePdfFileOptions) {
   const [pending, setPending] = useState<PdfAction | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [preview, setPreview] = useState<PdfPreview | null>(null);
@@ -68,14 +98,31 @@ export function usePdfFile({ fetchFile, fallbackFileName, resetKey }: UsePdfFile
         const file = await fetchFile(controller.signal);
         await assertPdf(file.content);
         if (controller.signal.aborted) return;
-        const fileName = safePdfFileName(file.fileName, fallbackFileName);
+        const fileName = safePdfFileName(preferredFileName ?? file.fileName, fallbackFileName);
         if (action === 'download') {
           saveBlob(file.content, fileName);
+        } else if (action === 'share') {
+          const shared = new File([file.content], fileName, { type: 'application/pdf' });
+          if (canShareFiles() && navigator.canShare({ files: [shared] })) {
+            try {
+              await navigator.share({ files: [shared], title: shareTitle ?? fileName });
+            } catch (shareError: unknown) {
+              // دریافت کند بود و «اجازه‌ی کاربر» مرورگر منقضی شد — فایل را ذخیره کن.
+              if (shareError instanceof DOMException && shareError.name === 'NotAllowedError') {
+                saveBlob(file.content, fileName);
+              } else {
+                throw shareError;
+              }
+            }
+          } else {
+            // اشتراک فایل پشتیبانی نشد — همان فایل ذخیره می‌شود.
+            saveBlob(file.content, fileName);
+          }
         } else {
           replacePreview({ url: URL.createObjectURL(file.content), fileName });
         }
       } catch (caught: unknown) {
-        if (!controller.signal.aborted) setError(caught);
+        if (!controller.signal.aborted && !isShareCancel(caught)) setError(caught);
       } finally {
         if (controllerRef.current === controller) {
           controllerRef.current = null;
@@ -83,7 +130,7 @@ export function usePdfFile({ fetchFile, fallbackFileName, resetKey }: UsePdfFile
         }
       }
     },
-    [fetchFile, fallbackFileName, replacePreview],
+    [fetchFile, fallbackFileName, preferredFileName, shareTitle, replacePreview],
   );
 
   return {
@@ -92,6 +139,7 @@ export function usePdfFile({ fetchFile, fallbackFileName, resetKey }: UsePdfFile
     preview,
     download: useCallback(() => run('download'), [run]),
     openPreview: useCallback(() => run('preview'), [run]),
+    share: useCallback(() => run('share'), [run]),
     closePreview: useCallback(() => replacePreview(null), [replacePreview]),
     /** ذخیره‌ی همان فایلی که در پیش‌نمایش است، بدون درخواست دوباره. */
     savePreview: useCallback(() => {

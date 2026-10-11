@@ -159,6 +159,12 @@ function recordSalesInvoice(input: {
 const idempotencyCache = new Map<string, unknown>();
 
 /**
+ * خریدهای دست‌دومی که در همین نشست mock ثبت شده‌اند — فقط برای اینکه
+ * `GET /purchase/second-hand/:id/pdf` مثل سرور، سند ناشناخته را ۴۰۴ بدهد.
+ */
+const mockSecondHandPurchaseIds = new Set<string>();
+
+/**
  * تاریخچه‌ی مظنه‌ی MAZNEH — نزولی بر اساس `observedAt` (همان ترتیب
  * `list()` واقعی، `price-quotes.service.ts`). عنصر ۰ = «جاری».
  *
@@ -718,6 +724,7 @@ export const handlers = [
         finalAmountRial: calc.finalAmountRial.toString(), paidRial: body.paidRial,
         payableRial: (calc.finalAmountRial - BigInt(body.paidRial)).toString(),
       };
+      mockSecondHandPurchaseIds.add(result.secondHandPurchaseId);
       idempotencyCache.set(cacheKey, result);
       return HttpResponse.json(result, { status: 201 });
     } catch {
@@ -755,6 +762,7 @@ export const handlers = [
       paidRial: paid.toString(), payableRial: (purchaseAmount - paid).toString(),
       intrinsicValueRial: intrinsic.toString(), bubbleRial: coinBubble?.toString() ?? null,
     };
+    mockSecondHandPurchaseIds.add(result.secondHandPurchaseId);
     const existingBalance = COIN_BALANCE_ROWS.find((row) => row.itemId === body.coinTypeId);
     if (existingBalance) existingBalance.quantity = (BigInt(existingBalance.quantity) + BigInt(body.count)).toString();
     else (COIN_BALANCE_ROWS as { itemType: 'COIN'; itemId: string; quantity: string }[]).push({ itemType: 'COIN', itemId: body.coinTypeId, quantity: body.count.toString() });
@@ -2037,6 +2045,44 @@ export const handlers = [
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="invoice-${found.invoiceNumber}.pdf"`,
+      },
+    });
+  }),
+
+  /**
+   * `GET /purchase/second-hand/:purchaseId/pdf` و `GET /parties/:id/statement/pdf`
+   * — FE-078. مثل سرور واقعی هر دو از invoice exporter مشترک نام
+   * `invoice-<شناسه>.pdf` می‌گیرند (نام گویا را فرانت می‌سازد).
+   */
+  http.get('/api/purchase/second-hand/:purchaseId/pdf', async ({ params }) => {
+    await delay(READ_DELAY_MS);
+    const purchaseId = String(params.purchaseId);
+    if (!mockSecondHandPurchaseIds.has(purchaseId)) {
+      return HttpResponse.json(
+        { error: { code: 'NOT_FOUND', message: 'خرید دست‌دوم پیدا نشد', fields: {}, requestId: crypto.randomUUID() } },
+        { status: 404 },
+      );
+    }
+    return new HttpResponse(new Blob([`%PDF-1.4
+% purchase ${purchaseId}
+%%EOF`], { type: 'application/pdf' }), {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="invoice-${purchaseId}.pdf"`,
+      },
+    });
+  }),
+
+  http.get('/api/parties/:id/statement/pdf', async ({ params }) => {
+    await delay(READ_DELAY_MS);
+    const id = String(params.id);
+    if (!partyList.some((party) => party.id === id)) return partyNotFound();
+    return new HttpResponse(new Blob([`%PDF-1.4
+% statement ${id}
+%%EOF`], { type: 'application/pdf' }), {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="invoice-${id}.pdf"`,
       },
     });
   }),

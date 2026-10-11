@@ -23,6 +23,7 @@ import type { PartySelection } from '@/stores/recent-parties-store';
 import { CoinPurchaseSummary } from './CoinPurchaseSummary';
 import { PurchaseKindTabs } from './PurchaseKindTabs';
 import { useCoinPurchaseSubmit } from './useCoinPurchaseSubmit';
+import { PurchaseReceiptPdf } from './PurchaseReceiptPdf';
 
 function toCoinType(version: CoinTypeVersion): CoinType {
   const shared = { kind: 'coin' as const, id: version.coinTypeId, label: version.title,
@@ -88,7 +89,8 @@ export default function CoinPurchaseForm() {
               <dt className="text-muted-foreground">ارزش ذاتی هر سکه</dt><dd><AmountDisplay amount={dualFromRial(BigInt(purchase.intrinsicValueRial), rate1000)} size="sm" /></dd>
               {purchase.bubbleRial !== null ? <><dt className="text-muted-foreground">حباب هر سکه</dt><dd><AmountDisplay amount={dualFromRial(BigInt(purchase.bubbleRial), rate1000)} signed size="sm" /></dd></> : null}
             </dl>
-          </CardContent></Card>
+          </CardContent>
+          <div className="px-6 pb-6"><PurchaseReceiptPdf purchaseId={purchase.secondHandPurchaseId} /></div></Card>
       </main>
       <div className="fixed inset-x-0 bottom-above-nav z-20 border-t border-border bg-background/95 px-4 py-3 backdrop-blur-sm lg:static lg:border-0 lg:bg-transparent"><Button size="action" onClick={submission.clearReceipt}>خرید سکه جدید</Button></div>
     </div>;

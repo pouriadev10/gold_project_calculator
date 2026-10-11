@@ -3,10 +3,7 @@ import { Link, useParams } from '@tanstack/react-router';
 import {
   AlertTriangle,
   ChevronRight,
-  Download,
-  Eye,
   FilePenLine,
-  Loader2,
   Package,
   RotateCcw,
   Scale,
@@ -24,19 +21,16 @@ import {
 import type { SalesInvoiceDetail } from '@/api/contracts';
 import type { InvoiceAmendmentPreflight } from '@gold/contracts';
 import { useInvoiceAmendmentPolicy, useSalesInvoiceDetail } from '@/api/queries';
-import { presentPdfError } from '@/api/error-presentation';
 import { getSalesInvoicePdf } from '@/api/sales';
 import { AmountDisplay, RateDisplay } from '@/components/common/AmountDisplay';
-import { ApiErrorNoticeContent } from '@/components/common/ApiErrorNotice';
 import { CardSkeleton } from '@/components/common/CardSkeleton';
-import { PdfPreviewPanel } from '@/components/common/PdfPreviewPanel';
+import { PdfDocumentActions } from '@/components/common/PdfDocumentActions';
 import { ErrorState } from '@/components/common/ErrorState';
 import { PageHeader } from '@/components/common/PageHeader';
 import { UnitToggle } from '@/components/common/UnitToggle';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { usePdfFile } from '@/hooks/usePdfFile';
 import { formatJalaliDateTime } from '@/lib/date';
 import { InvoiceVersionHistory } from './InvoiceVersionHistory';
 
@@ -347,65 +341,18 @@ function InvoicePdf({ detail }: { detail: SalesInvoiceDetail }) {
     (signal: AbortSignal) => getSalesInvoicePdf(detail.id, signal),
     [detail.id],
   );
-  const pdf = usePdfFile({
-    fetchFile,
-    fallbackFileName: `invoice-${detail.invoiceNumber ?? detail.id}`,
-    resetKey: `${detail.id}:${detail.currentVersion}`,
-  });
-  const available = detail.status === 'FINALIZED' && detail.invoiceNumber !== null;
-  const busy = pdf.pending !== null;
-
   return (
-    <div className="space-y-2">
-      <div className="grid grid-cols-2 gap-2">
-        <Button
-          type="button"
-          size="action"
-          onClick={() => void pdf.download()}
-          disabled={!available || busy}
-          aria-describedby="invoice-pdf-status"
-        >
-          {pdf.pending === 'download' ? (
-            <Loader2 className="size-5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
-          ) : (
-            <Download className="size-5" aria-hidden="true" />
-          )}
-          دریافت PDF
-        </Button>
-        <Button
-          type="button"
-          size="action"
-          variant="outline"
-          onClick={() => void pdf.openPreview()}
-          disabled={!available || busy}
-          aria-describedby="invoice-pdf-status"
-        >
-          {pdf.pending === 'preview' ? (
-            <Loader2 className="size-5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
-          ) : (
-            <Eye className="size-5" aria-hidden="true" />
-          )}
-          پیش‌نمایش
-        </Button>
-      </div>
-      <p id="invoice-pdf-status" className="text-xs leading-5 text-muted-foreground" aria-live="polite">
-        {!available
-          ? 'PDF فقط برای فاکتور نهایی‌شده‌ی شماره‌دار صادر می‌شود.'
-          : busy
-            ? 'در حال دریافت PDF از سرور…'
-            : `PDF نسخه‌ی جاری (نسخه ${formatCount(detail.currentVersion)}) از snapshot تغییرناپذیر سرور ساخته می‌شود.`}
-      </p>
-      {pdf.error ? <ApiErrorNoticeContent presentation={presentPdfError(pdf.error)} /> : null}
-      {pdf.preview ? (
-        <PdfPreviewPanel
-          url={pdf.preview.url}
-          fileName={pdf.preview.fileName}
-          title={`پیش‌نمایش فاکتور ${formatCount(detail.invoiceNumber ?? 0)}`}
-          onClose={pdf.closePreview}
-          onSave={pdf.savePreview}
-        />
-      ) : null}
-    </div>
+    <PdfDocumentActions
+      idPrefix="invoice"
+      fetchFile={fetchFile}
+      fallbackFileName={`invoice-${detail.invoiceNumber ?? detail.id}`}
+      shareTitle={`فاکتور ${formatCount(detail.invoiceNumber ?? 0)}`}
+      resetKey={`${detail.id}:${detail.currentVersion}`}
+      previewTitle={`پیش‌نمایش فاکتور ${formatCount(detail.invoiceNumber ?? 0)}`}
+      available={detail.status === 'FINALIZED' && detail.invoiceNumber !== null}
+      unavailableReason="PDF فقط برای فاکتور نهایی‌شده‌ی شماره‌دار صادر می‌شود."
+      description={`PDF نسخه‌ی جاری (نسخه ${formatCount(detail.currentVersion)}) از snapshot تغییرناپذیر سرور ساخته می‌شود.`}
+    />
   );
 }
 

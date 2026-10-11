@@ -2,6 +2,7 @@ import { dualFromRial, formatGram } from '@gold/core-calc';
 import type { SecondHandGoldPurchase } from '@gold/contracts';
 import { AmountDisplay } from '@/components/common/AmountDisplay';
 import { Card } from '@/components/ui/card';
+import { PurchaseReceiptPdf } from './PurchaseReceiptPdf';
 
 export function PurchaseReceipt({ receipt }: { receipt: SecondHandGoldPurchase }) {
   const rows = [
@@ -20,6 +21,7 @@ export function PurchaseReceipt({ receipt }: { receipt: SecondHandGoldPurchase }
           <dt>{label}</dt><dd><AmountDisplay amount={dualFromRial(BigInt(value), BigInt(receipt.goldRatePerGramRial))} /></dd>
         </div>)}
       </dl>
+      <PurchaseReceiptPdf purchaseId={receipt.secondHandPurchaseId} />
     </Card>
   );
 }

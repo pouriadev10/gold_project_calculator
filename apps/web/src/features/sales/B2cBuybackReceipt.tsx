@@ -5,6 +5,7 @@ import type { B2cBuyback } from '@gold/contracts';
 import { AmountDisplay, RateDisplay } from '@/components/common/AmountDisplay';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { PurchaseReceiptPdf } from '@/features/purchase/PurchaseReceiptPdf';
 
 export function B2cBuybackReceipt({ receipt }: { readonly receipt: B2cBuyback }) {
   const goldRate = BigInt(receipt.goldRatePerGramRial);
@@ -65,6 +66,8 @@ export function B2cBuybackReceipt({ receipt }: { readonly receipt: B2cBuyback })
             </dd>
           </div>
         </dl>
+
+        <PurchaseReceiptPdf purchaseId={receipt.secondHandPurchaseId} />
 
         <div className="grid gap-2 sm:grid-cols-2">
           <Button asChild variant="outline">

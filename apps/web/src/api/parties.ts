@@ -1,4 +1,4 @@
-import { apiPatch, apiPost } from './client';
+import { apiGetFile, apiPatch, apiPost, type DownloadedFile } from './client';
 import { partySchema, type CreatePartyInput, type Party, type UpdatePartyInput } from './contracts';
 
 /**
@@ -42,4 +42,12 @@ export function deactivateParty(
   signal?: AbortSignal,
 ): Promise<Party> {
   return apiPost(`/parties/${id}/deactivate`, {}, partySchema, idempotencyKey, signal);
+}
+
+/**
+ * PDF صورت‌حساب کامل شخص — `GET /parties/:id/statement/pdf` (FE-078). سرور همه‌ی
+ * ردیف‌های دفتر شخص را بدون صفحه‌بندی و فیلتر می‌گذارد (`getStatementForExport`).
+ */
+export function getPartyStatementPdf(partyId: string, signal?: AbortSignal): Promise<DownloadedFile> {
+  return apiGetFile(`/parties/${partyId}/statement/pdf`, signal);
 }

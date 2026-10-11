@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MAX_PAGE_SIZE } from '@gold/contracts';
 import { dualFromPure, gramRate1000 } from '@gold/core-calc';
@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import type * as ReactRouter from '@tanstack/react-router';
 import type { PartyStatement, PartyStatementQuery, SessionResponse } from '@/api/contracts';
+import type * as PartiesApi from '@/api/parties';
 import type * as Queries from '@/api/queries';
 import { useSessionStore } from '@/stores/session-store';
 import { useUnitStore } from '@/stores/unit-store';
@@ -30,6 +31,12 @@ vi.mock('@/api/queries', async (importOriginal) => ({
   ...(await importOriginal<typeof Queries>()),
   useParty: (...args: unknown[]) => useQueryMocks.useParty(...args),
   usePartyStatement: (...args: unknown[]) => useQueryMocks.usePartyStatement(...args),
+}));
+
+const getPartyStatementPdfMock = vi.fn();
+vi.mock('@/api/parties', async (importOriginal) => ({
+  ...(await importOriginal<typeof PartiesApi>()),
+  getPartyStatementPdf: (...args: unknown[]) => getPartyStatementPdfMock(...args),
 }));
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
@@ -193,9 +200,30 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  cleanup();
   vi.unstubAllGlobals();
   vi.useRealTimers();
   useSessionStore.setState({ session: null });
+});
+
+describe('PartyStatementPage — PDF صورت‌حساب (FE-078)', () => {
+  it('previews the full statement PDF named after the party, and says filters do not apply', async () => {
+    vi.stubGlobal('URL', { createObjectURL: vi.fn(() => 'blob:statement'), revokeObjectURL: vi.fn() });
+    getPartyStatementPdfMock.mockResolvedValue({
+      content: new Blob(['%PDF-1.4 statement']),
+      fileName: `invoice-${PARTY_ID}.pdf`,
+    });
+    render(<PartyStatementPage />);
+
+    const section = screen.getByRole('region', { name: 'PDF صورت‌حساب' });
+    expect(within(section).getByText(/بدون فیلتر و صفحه‌بندی/)).toBeInTheDocument();
+
+    await userEvent.setup().click(within(section).getByRole('button', { name: 'پیش‌نمایش' }));
+
+    const panel = await screen.findByRole('region', { name: 'پیش‌نمایش صورت‌حساب حسین مرادی' });
+    expect(within(panel).getByText('statement-حسین مرادی.pdf')).toBeInTheDocument();
+    expect(getPartyStatementPdfMock).toHaveBeenCalledWith(PARTY_ID, expect.any(AbortSignal));
+  });
 });
 
 describe('PartyStatementPage — FE-070', () => {

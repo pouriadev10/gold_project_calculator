@@ -10,7 +10,7 @@ import {
   type CreateSecondHandGoldPurchaseInput,
   type PreviewB2cBuybackInput,
 } from '@gold/contracts';
-import { apiPost, apiPostReadOnly } from './client';
+import { apiGetFile, apiPost, apiPostReadOnly, type DownloadedFile } from './client';
 
 export function createSecondHandGoldPurchase(
   input: CreateSecondHandGoldPurchaseInput,
@@ -45,4 +45,13 @@ export function createB2cBuyback(
   key: string,
 ): Promise<B2cBuyback> {
   return apiPost(`/sales/invoices/${invoiceId}/b2c-buyback`, input, b2cBuybackSchema, key);
+}
+
+/**
+ * PDF رسید یک خرید دست‌دوم — `GET /purchase/second-hand/:purchaseId/pdf`
+ * (FE-078). برای هر خرید دست‌دوم کار می‌کند: طلا، سکه و خرید مجدد B2C؛ سرور
+ * سند مستأجر دیگر را ۴۰۴ می‌دهد.
+ */
+export function getSecondHandPurchasePdf(purchaseId: string, signal?: AbortSignal): Promise<DownloadedFile> {
+  return apiGetFile(`/purchase/second-hand/${purchaseId}/pdf`, signal);
 }

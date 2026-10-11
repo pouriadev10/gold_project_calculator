@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Link, useParams } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, FilterX, ReceiptText } from 'lucide-react';
 import { MAX_PAGE_SIZE } from '@gold/contracts';
 import { dualFromPure, dualFromRial, formatCount, formatGram, toSafeNumber } from '@gold/core-calc';
+import { getPartyStatementPdf } from '@/api/parties';
 import { useParty, usePartyStatement } from '@/api/queries';
 import type { PartyStatementQuery, PartyStatementSourceType } from '@/api/contracts';
 import { AmountDisplay, RateDisplay } from '@/components/common/AmountDisplay';
@@ -11,6 +12,7 @@ import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorState } from '@/components/common/ErrorState';
 import { JalaliDateRangeFilter } from '@/components/common/JalaliDateRangeFilter';
 import { PageHeader } from '@/components/common/PageHeader';
+import { PdfDocumentActions } from '@/components/common/PdfDocumentActions';
 import { UnitToggle } from '@/components/common/UnitToggle';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -51,8 +53,8 @@ import type { LockedStatementRate, PartyStatementDimension, PartyStatementEntry 
  * snapshot قابل‌استفاده فقط مقدار خام را نشان می‌دهد. سکه هرگز تبدیل نمی‌شود.
  *
  * بازه‌ی تاریخ با فیلتر مشترک شمسی FE-071 انتخاب و با مرز روزِ منطقه‌ی
- * مستأجر به `from`/`to` تبدیل می‌شود. خروجی PDF طبق تسک «در آینده» است و
- * اینجا ساخته نشده.
+ * مستأجر به `from`/`to` تبدیل می‌شود. PDF صورت‌حساب (FE-078) نسخه‌ی کامل
+ * سرور است — همه‌ی رویدادها، بدون فیلتر و صفحه‌بندی.
  */
 
 const PAGE_SIZE = 20;
@@ -359,6 +361,37 @@ function StatementResults({
   );
 }
 
+/**
+ * PDF صورت‌حساب شخص — FE-078، `GET /parties/:id/statement/pdf`. سرور همه‌ی
+ * ردیف‌های دفتر شخص را بدون فیلتر و صفحه‌بندی می‌گذارد (`getStatementForExport`)
+ * تا فایل هرگز ردیفی را بی‌صدا جا نیندازد؛ فیلترهای این صفحه روی آن اثری
+ * ندارند و متن زیر دکمه‌ها همین را صریح می‌گوید. نام سرور (`invoice-<uuid>`)
+ * گویا نیست، پس نام فایل از نام شخص ساخته می‌شود.
+ */
+function StatementPdf({ partyId, displayName }: { partyId: string; displayName: string | null }) {
+  const fetchFile = useCallback(
+    (signal: AbortSignal) => getPartyStatementPdf(partyId, signal),
+    [partyId],
+  );
+  const fileName = `statement-${displayName ?? partyId.slice(0, 8)}`;
+
+  return (
+    <section className="space-y-2" aria-label="PDF صورت‌حساب">
+      <PdfDocumentActions
+        idPrefix="statement"
+        fetchFile={fetchFile}
+        preferredFileName={fileName}
+        fallbackFileName={`statement-${partyId.slice(0, 8)}`}
+        shareTitle={displayName ? `صورت‌حساب ${displayName}` : 'صورت‌حساب شخص'}
+        resetKey={partyId}
+        previewTitle={displayName ? `پیش‌نمایش صورت‌حساب ${displayName}` : 'پیش‌نمایش صورت‌حساب'}
+        description="PDF همه‌ی رویدادهای دفتر این شخص را دارد — بدون فیلتر و صفحه‌بندی؛ فیلترهای این صفحه روی آن اثری ندارند."
+        size="default"
+      />
+    </section>
+  );
+}
+
 export default function PartyStatementPage() {
   const { partyId } = useParams({ from: '/app-shell/parties/$partyId/statement' });
   const party = useParty(partyId);
@@ -414,6 +447,8 @@ export default function PartyStatementPage() {
           <ChevronRight className="size-4" aria-hidden="true" />
           بازگشت به جزئیات شخص
         </Link>
+
+        <StatementPdf partyId={partyId} displayName={party.data?.displayName ?? null} />
 
         {party.isError ? (
           <ErrorState description="دریافت اطلاعات شخص ناموفق بود." onRetry={() => void party.refetch()} />
