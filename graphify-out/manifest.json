@@ -2298,9 +2298,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/client.ts": {
-    "mtime": 1789819534.9202647,
-    "seen": 1789820752.9454415,
-    "ast_hash": "5b3c4923014dc9d1d9eac87f77a115dc",
+    "mtime": 1791724964.8574388,
+    "seen": 1791725429.4918826,
+    "ast_hash": "3bceca974db579dec49f917313d34fd8",
     "semantic_hash": ""
   },
   "apps/web/src/api/contracts-package.test.ts": {
@@ -2322,9 +2322,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/api/error-presentation.ts": {
-    "mtime": 1786965220.035191,
-    "seen": 1789132525.944915,
-    "ast_hash": "73f98bd5bb9f37b0c4c34fece05617aa",
+    "mtime": 1791725041.7412734,
+    "seen": 1791725429.4918897,
+    "ast_hash": "e02331e957546db74f8d4274340a9a09",
     "semantic_hash": ""
   },
   "apps/web/src/api/jewelry-items.ts": {
@@ -5028,9 +5028,9 @@
     "semantic_hash": ""
   },
   "FrontTasks.md": {
-    "mtime": 1791724532.1429248,
-    "seen": 1791724577.6254213,
-    "ast_hash": "821e5b37e9634eb8cebaecde06f26e7c",
+    "mtime": 1791725391.1560597,
+    "seen": 1791725429.4926684,
+    "ast_hash": "ffef36cc918c6e206883ab60e177079a",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
@@ -5388,15 +5388,15 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/sales/SalesInvoiceDetailPage.test.tsx": {
-    "mtime": 1790072947.4336948,
-    "seen": 1790073217.1818929,
-    "ast_hash": "91c9b1b93a37ceefc6bb70b48e47166b",
+    "mtime": 1791725116.2662153,
+    "seen": 1791725429.4922292,
+    "ast_hash": "3ce83d4154ea116ceb32ca6879b62140",
     "semantic_hash": ""
   },
   "apps/web/src/features/sales/SalesInvoiceDetailPage.tsx": {
-    "mtime": 1790072626.91635,
-    "seen": 1790073217.1818936,
-    "ast_hash": "fce74ace6a036e016c8733de0b2f1e05",
+    "mtime": 1791725041.7427783,
+    "seen": 1791725429.4922311,
+    "ast_hash": "9ca11549558030a813ae4cf944a022e8",
     "semantic_hash": ""
   },
   "apps/api/src/modules/sales/invoice-amendment-policy.service.spec.ts": {
@@ -5625,6 +5625,36 @@
     "mtime": 1791723923.3532808,
     "seen": 1791724577.6248527,
     "ast_hash": "89f0f9026a3144c61efc2486ab6e9e9f",
+    "semantic_hash": ""
+  },
+  "apps/web/src/components/common/PdfPreviewPanel.tsx": {
+    "mtime": 1791724994.2048097,
+    "seen": 1791725429.4919446,
+    "ast_hash": "84cffeb47d958a2500b18d4db325156c",
+    "semantic_hash": ""
+  },
+  "apps/web/src/hooks/usePdfFile.test.tsx": {
+    "mtime": 1791725224.854105,
+    "seen": 1791725429.492273,
+    "ast_hash": "2688bfb930747ab10231672a1e57a686",
+    "semantic_hash": ""
+  },
+  "apps/web/src/hooks/usePdfFile.ts": {
+    "mtime": 1791724981.565934,
+    "seen": 1791725429.492275,
+    "ast_hash": "2178d5960890d539f140fda5ddd07365",
+    "semantic_hash": ""
+  },
+  "apps/web/src/lib/pdf-file.test.ts": {
+    "mtime": 1791725358.6755528,
+    "seen": 1791725429.492298,
+    "ast_hash": "c904ea6d20be322308582294d7046fb7",
+    "semantic_hash": ""
+  },
+  "apps/web/src/lib/pdf-file.ts": {
+    "mtime": 1791725224.0710697,
+    "seen": 1791725429.4922993,
+    "ast_hash": "40665355f1b43a6146062eb5262cf700",
     "semantic_hash": ""
   }
 }
