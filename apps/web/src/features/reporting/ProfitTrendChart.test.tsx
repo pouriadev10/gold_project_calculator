@@ -95,7 +95,10 @@ describe('ProfitTrendChart', () => {
     await waitFor(() => expect(renderTrendChart).toHaveBeenCalledTimes(1));
 
     rerender(<ProfitTrendChart series={SERIES} unit="gold" />);
-    expect(handle.update).toHaveBeenCalledWith(expect.objectContaining({ series: expect.any(Array) }));
+    // FE-089: رسم دوباره پس از رنگ بعدی است، نه داخل همان رندر
+    await waitFor(() =>
+      expect(handle.update).toHaveBeenCalledWith(expect.objectContaining({ series: expect.any(Array) })),
+    );
     expect(renderTrendChart).toHaveBeenCalledTimes(1);
   });
 

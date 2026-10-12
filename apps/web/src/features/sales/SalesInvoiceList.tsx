@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Link } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, ReceiptText } from 'lucide-react';
 import { dualFromRial, formatCount } from '@gold/core-calc';
@@ -71,7 +72,10 @@ interface SalesInvoiceListProps {
   readonly onOffsetChange: (offset: number) => void;
 }
 
-export function SalesInvoiceList({ query, onOffsetChange }: SalesInvoiceListProps) {
+/**
+ * FE-089: `memo` — تا هر کلید فیلتر شماره/مشتری (پیش از debounce) کل فهرست فاکتورها را دوباره نسازد. `query` در صفحه با `useMemo` پایدار است.
+ */
+export const SalesInvoiceList = memo(function SalesInvoiceList({ query, onOffsetChange }: SalesInvoiceListProps) {
   const { data, isLoading, isError, refetch } = useSalesInvoices(query);
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
 
@@ -223,4 +227,4 @@ export function SalesInvoiceList({ query, onOffsetChange }: SalesInvoiceListProp
       ) : null}
     </div>
   );
-}
+});

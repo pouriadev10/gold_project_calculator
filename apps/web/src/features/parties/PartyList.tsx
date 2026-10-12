@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Link } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, Pencil, Users } from 'lucide-react';
 import { formatCount, toPersianDigits } from '@gold/core-calc';
@@ -87,7 +88,10 @@ function EditButton({ party, onEdit }: { party: Party; onEdit: (party: Party) =>
   );
 }
 
-export function PartyList({ query, onOffsetChange, onEdit }: PartyListProps) {
+/**
+ * FE-089: `memo` — تا هر کلید جست‌وجو (که پیش از debounce پرس‌وجو را عوض نمی‌کند) کل فهرست را دوباره نسازد. `query` در صفحه با `useMemo` پایدار است.
+ */
+export const PartyList = memo(function PartyList({ query, onOffsetChange, onEdit }: PartyListProps) {
   const { data, isLoading, isError, refetch } = useParties(query);
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
 
@@ -212,4 +216,4 @@ export function PartyList({ query, onOffsetChange, onEdit }: PartyListProps) {
       ) : null}
     </div>
   );
-}
+});

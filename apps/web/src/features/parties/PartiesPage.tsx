@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Plus, Search } from 'lucide-react';
 import type { Party, PartyListQuery, PartyStatus, PartyType } from '@/api/contracts';
 import { PageHeader } from '@/components/common/PageHeader';
@@ -44,13 +44,17 @@ export default function PartiesPage() {
   const [editingParty, setEditingParty] = useState<Party | null>(null);
   const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS).trim();
 
-  const query: PartyListQuery = {
-    ...(debouncedSearch && { search: debouncedSearch }),
-    ...(type && { type }),
-    ...(status && { status }),
-    limit: PAGE_SIZE,
-    offset,
-  };
+  // FE-089: پایدار تا تایپ پیش از debounce فهرست memo‌شده را دوباره رندر نکند
+  const query = useMemo<PartyListQuery>(
+    () => ({
+      ...(debouncedSearch && { search: debouncedSearch }),
+      ...(type && { type }),
+      ...(status && { status }),
+      limit: PAGE_SIZE,
+      offset,
+    }),
+    [debouncedSearch, type, status, offset],
+  );
 
   return (
     <div className="flex min-h-dvh flex-col">

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatGram, formatRial, toSafeNumber } from '@gold/core-calc';
 import { AmountDisplay } from '@/components/common/AmountDisplay';
 import { Skeleton } from '@/components/ui/skeleton';
+import { afterNextPaint } from '@/lib/after-next-paint';
 import { UNIT_LABEL, type MoneyUnit } from '@/stores/unit-store';
 import type { TrendChartHandle, TrendChartModel } from './profit-trend-echarts';
 import type { TrendSeries } from './profit-trend';
@@ -133,12 +134,14 @@ export function ProfitTrendChart({ series, unit }: { series: TrendSeries; unit: 
     };
   }, []);
 
+  // FE-089: رسم دوباره‌ی ECharts روی CPU ×۴ ~۱۵۰ms است؛ اگر همین‌جا اجرا شود جزو INP
+  // ضربه‌ی کلید طلا/ریال می‌شود. کلید و اعداد متنی اول رنگ می‌گیرند، نمودار بلافاصله بعد.
   useEffect(() => {
     if (model === null) {
       setStatus('failed');
-      return;
+      return undefined;
     }
-    handleRef.current?.update(model);
+    return afterNextPaint(() => handleRef.current?.update(model));
   }, [model]);
 
   const failed = status === 'failed';

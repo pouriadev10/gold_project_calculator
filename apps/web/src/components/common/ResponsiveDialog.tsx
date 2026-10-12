@@ -53,22 +53,41 @@ interface ResponsiveDialogProps {
   children?: React.ReactNode;
 }
 
+/**
+ * FE-089 — باز و بسته شدن پس از رنگ بعدی.
+ *
+ * mount محتوای مودال، focus trap و قفل اسکرول Radix/vaul و خواندن استایل انیمیشن
+ * (`Presence`) روی CPU ×۴ حدود ۲۰۰ms کار همگام بود که داخل همان ضربه اجرا می‌شد —
+ * یعنی INP خودِ دکمه‌ای که مودال را باز می‌کرد (ممیزی `audit:inp`). اینجا وضعیت
+ * درخواستی (`open` یا state داخلی) فوراً ثبت می‌شود ولی primitive با
+ * `useDeferredValue` یک رندر بعد می‌رسد: ضربه اول رنگ می‌گیرد و mount در رندر
+ * قابل‌وقفه‌ی بعدی انجام می‌شود. برای کاربر همان یک فریم است؛ برای INP تفاوت
+ * «کل کار مودال» با «فقط state دکمه» است.
+ *
+ * حالت بدون کنترل (`defaultOpen` + Trigger) هم state داخلی دارد تا همین مسیر را برود.
+ */
 function ResponsiveDialog({ open, defaultOpen, onOpenChange, children }: ResponsiveDialogProps) {
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
   const variant: Variant = isDesktop ? 'dialog' : 'sheet';
   const Root = isDesktop ? Dialog : Drawer;
 
-  // با exactOptionalPropertyTypes، پاس‌دادن صریح `undefined` با نبودِ کلید
-  // یکی نیست — پس کلیدهای تعریف‌نشده اصلاً spread نمی‌شوند.
-  const rootProps = {
-    ...(open !== undefined && { open }),
-    ...(defaultOpen !== undefined && { defaultOpen }),
-    ...(onOpenChange !== undefined && { onOpenChange }),
-  };
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(defaultOpen ?? false);
+  const requestedOpen = open ?? uncontrolledOpen;
+  const renderedOpen = React.useDeferredValue(requestedOpen);
+
+  const handleOpenChange = React.useCallback(
+    (next: boolean) => {
+      if (open === undefined) setUncontrolledOpen(next);
+      onOpenChange?.(next);
+    },
+    [open, onOpenChange],
+  );
 
   return (
     <VariantContext.Provider value={variant}>
-      <Root {...rootProps}>{children}</Root>
+      <Root open={renderedOpen} onOpenChange={handleOpenChange}>
+        {children}
+      </Root>
     </VariantContext.Provider>
   );
 }

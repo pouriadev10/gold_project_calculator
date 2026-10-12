@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FilterX, Search } from 'lucide-react';
 import { toLatinDigits } from '@gold/core-calc';
 import type { SalesInvoiceListQuery, SalesInvoiceStatus } from '@/api/contracts';
@@ -41,15 +41,22 @@ export default function SalesInvoicesPage() {
   const debouncedPartySearch = useDebouncedValue(partySearch, SEARCH_DEBOUNCE_MS).trim();
   const normalizedInvoiceNumber = toLatinDigits(debouncedInvoiceNumber).replace(/[^0-9]/gu, '');
   const isoRange = jalaliRangeToIso(dateRange, timeZone);
+  const rangeFrom = isoRange?.from;
+  const rangeTo = isoRange?.to;
 
-  const query: SalesInvoiceListQuery = {
-    limit: PAGE_SIZE,
-    offset,
-    ...(normalizedInvoiceNumber && { invoiceNumber: normalizedInvoiceNumber }),
-    ...(debouncedPartySearch && { partySearch: debouncedPartySearch }),
-    ...(status && { status }),
-    ...isoRange,
-  };
+  // FE-089: پایدار تا تایپ پیش از debounce فهرست memo‌شده را دوباره رندر نکند
+  const query = useMemo<SalesInvoiceListQuery>(
+    () => ({
+      limit: PAGE_SIZE,
+      offset,
+      ...(normalizedInvoiceNumber && { invoiceNumber: normalizedInvoiceNumber }),
+      ...(debouncedPartySearch && { partySearch: debouncedPartySearch }),
+      ...(status && { status }),
+      ...(rangeFrom !== undefined && { from: rangeFrom }),
+      ...(rangeTo !== undefined && { to: rangeTo }),
+    }),
+    [offset, normalizedInvoiceNumber, debouncedPartySearch, status, rangeFrom, rangeTo],
+  );
 
   const hasFilters =
     invoiceNumber !== '' ||

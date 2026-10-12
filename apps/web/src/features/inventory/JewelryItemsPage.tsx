@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Plus, Search } from 'lucide-react';
 import { toSafeNumber } from '@gold/core-calc';
 import { useJewelryItems } from '@/api/queries';
@@ -59,6 +59,9 @@ export default function JewelryItemsPage() {
   };
 
   const { data, isLoading, isError, refetch } = useJewelryItems(query);
+
+  // FE-089: پایدار تا JewelryItemList (memo) با هر کلید جست‌وجو دوباره رندر نشود
+  const retry = useCallback(() => void refetch(), [refetch]);
 
   const displayed: JewelryItemPage | undefined = useMemo(() => {
     if (!data) return undefined;
@@ -132,7 +135,7 @@ export default function JewelryItemsPage() {
           data={displayed}
           isLoading={isLoading}
           isError={isError}
-          onRetry={() => void refetch()}
+          onRetry={retry}
           onOffsetChange={setOffset}
           onEdit={setEditingItem}
         />

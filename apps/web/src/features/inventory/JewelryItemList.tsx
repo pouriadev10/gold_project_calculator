@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { ChevronLeft, ChevronRight, Gem, Pencil } from 'lucide-react';
 import {
   DIGIT_SPECS,
@@ -92,7 +93,10 @@ interface JewelryItemListProps {
   onEdit: (item: JewelryItemVersion) => void;
 }
 
-export function JewelryItemList({
+/**
+ * FE-089: `memo` — تا هر کلید جست‌وجو (پیش از debounce) کل فهرست کالاها را دوباره نسازد. داده و callbackها در صفحه پایدارند.
+ */
+export const JewelryItemList = memo(function JewelryItemList({
   data,
   isLoading,
   isError,
@@ -224,4 +228,4 @@ export function JewelryItemList({
       ) : null}
     </div>
   );
-}
+});

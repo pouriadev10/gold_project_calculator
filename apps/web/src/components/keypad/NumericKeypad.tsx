@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, type ReactNode } from 'react';
+import { memo, useCallback, useEffect, useRef, type ReactNode } from 'react';
 import { Delete } from 'lucide-react';
 import { DIGIT_SPECS, type NumericFieldKind } from '@gold/core-calc';
 import { cn } from '@/lib/utils';
@@ -151,7 +151,14 @@ export interface NumericKeypadProps {
   shortcutsByKind?: Readonly<Record<NumericFieldKind, readonly Shortcut[]>>;
 }
 
-export function NumericKeypad({ shortcutsByKind = SHORTCUTS_BY_KIND }: NumericKeypadProps = {}) {
+/**
+ * FE-089: `memo` — کیپد داخل خودِ فرم‌ها mount می‌شود و هر رقم با `onChange` فرم را دوباره
+ * رندر می‌کرد، پس کل کیپد (۱۹ کلید) هم با هر ضربه دوباره ساخته می‌شد. کیپد هرچه لازم
+ * دارد از store می‌گیرد و prop متغیری ندارد؛ پیش‌نمایش (`KeypadPreview`) خودش مشترک store است.
+ */
+export const NumericKeypad = memo(function NumericKeypad({
+  shortcutsByKind = SHORTCUTS_BY_KIND,
+}: NumericKeypadProps = {}) {
   const isOpen = useKeypadStore((s) => s.isOpen);
   const activeKind = useKeypadStore((s) => s.fields.find((f) => f.id === s.activeId)?.kind ?? null);
   const canGoNext = useKeypadStore(
@@ -372,4 +379,4 @@ export function NumericKeypad({ shortcutsByKind = SHORTCUTS_BY_KIND }: NumericKe
       </div>
     </div>
   );
-}
+});
