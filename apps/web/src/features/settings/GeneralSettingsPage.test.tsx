@@ -8,7 +8,6 @@ import type { GeneralSettings, SessionResponse } from '@/api/contracts';
 import type * as Queries from '@/api/queries';
 import type * as SettingsApi from '@/api/settings';
 import { ApiError } from '@/api/api-error';
-import { NumericKeypad } from '@/components/keypad/NumericKeypad';
 import { useKeypadStore } from '@/components/keypad/keypad-store';
 import { useSessionStore } from '@/stores/session-store';
 import GeneralSettingsPage from './GeneralSettingsPage';
@@ -69,7 +68,6 @@ function renderPage() {
   render(
     <QueryClientProvider client={client}>
       <GeneralSettingsPage />
-      <NumericKeypad />
     </QueryClientProvider>,
   );
   return { invalidate };

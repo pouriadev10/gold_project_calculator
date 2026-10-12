@@ -8,7 +8,6 @@ import type { CoinTypeCatalog, CoinTypeVersion, SessionResponse } from '@/api/co
 import type * as CoinTypesApi from '@/api/coin-types';
 import type * as Queries from '@/api/queries';
 import { ApiError } from '@/api/api-error';
-import { NumericKeypad } from '@/components/keypad/NumericKeypad';
 import { useKeypadStore } from '@/components/keypad/keypad-store';
 import { useSessionStore } from '@/stores/session-store';
 import CoinTypeSettingsPage, { formatCoinWeightUg } from './CoinTypeSettingsPage';
@@ -106,7 +105,6 @@ function renderPage() {
   render(
     <QueryClientProvider client={client}>
       <CoinTypeSettingsPage />
-      <NumericKeypad />
     </QueryClientProvider>,
   );
   return { invalidate };

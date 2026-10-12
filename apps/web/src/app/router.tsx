@@ -322,7 +322,8 @@ const devRoutes = import.meta.env.DEV
     ]
   : [];
 
-const routeTree = rootRoute.addChildren([
+/** صادر برای ممیزی دسترس‌پذیری (FE-084) که مسیرها را با history حافظه‌ای رندر می‌کند. */
+export const routeTree = rootRoute.addChildren([
   loginRoute,
   appShellRoute.addChildren([
     indexRoute,

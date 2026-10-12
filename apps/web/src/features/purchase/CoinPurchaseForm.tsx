@@ -78,7 +78,7 @@ export default function CoinPurchaseForm() {
     const receiptCoin = activeTypes.find((type) => type.coinTypeId === purchase.coinTypeId);
     return <div className="flex min-h-dvh flex-col">
       <PageHeader title="خرید سکه"><UnitToggle /></PageHeader>
-      <main className="flex-1 space-y-4 p-4 pb-action"><PurchaseKindTabs />
+      <div className="flex-1 space-y-4 p-4 pb-action"><PurchaseKindTabs />
         <Card aria-label="رسید خرید سکه"><CardHeader><CardTitle className="text-credit">خرید سکه ثبت شد</CardTitle></CardHeader>
           <CardContent className="space-y-3 text-sm" role="status">
             <p className="text-muted-foreground">موجودی {receiptCoin?.title ?? 'نوع سکه'} افزایش یافت.</p>
@@ -94,14 +94,14 @@ export default function CoinPurchaseForm() {
             </dl>
           </CardContent>
           <div className="px-6 pb-6"><PurchaseReceiptPdf purchaseId={purchase.secondHandPurchaseId} share={purchaseReceiptShareText({ shopName, kindLabel: 'خرید سکه', purchaseId: purchase.secondHandPurchaseId, amountRial: BigInt(purchase.purchaseAmountRial), paidRial: BigInt(purchase.paidRial), payableRial: BigInt(purchase.payableRial), coinCount: purchase.count })} /></div></Card>
-      </main>
+      </div>
       <div className="fixed inset-x-0 bottom-above-nav z-20 border-t border-border bg-background/95 px-4 py-3 backdrop-blur-sm lg:static lg:border-0 lg:bg-transparent"><Button size="action" onClick={submission.clearReceipt}>خرید سکه جدید</Button></div>
     </div>;
   }
 
   return <div className="flex min-h-dvh flex-col">
     <PageHeader title="خرید سکه از مصرف‌کننده"><UnitToggle /></PageHeader>
-    <main className="flex-1 space-y-4 p-4 pb-action"><PurchaseKindTabs />
+    <div className="flex-1 space-y-4 p-4 pb-action"><PurchaseKindTabs />
       <fieldset disabled={locked} className="min-w-0 space-y-4 disabled:opacity-70">
         <PartySelector label="فروشنده" value={party} onChange={setParty} inlineCreateVariant="SELLER" disabled={locked} />
         {nonConsumer ? <p role="alert" className="text-sm text-destructive">خرید از همکار در فاز فعلی فعال نیست؛ فروشنده باید مصرف‌کننده باشد.</p> : null}
@@ -124,7 +124,7 @@ export default function CoinPurchaseForm() {
       {!isOnline ? <p role="alert" className="text-sm text-destructive">برای ثبت خرید به اینترنت متصل شوید.</p> : null}
       {submission.attempt && !submission.isSubmitting ? <p role="status" className="text-sm text-warning">نتیجه درخواست قبلی مشخص نیست؛ همان خرید با همان شناسه دوباره بررسی می‌شود.</p> : null}
       {submission.error ? <ApiErrorNotice error={submission.error} /> : null}
-    </main>
+    </div>
     <div className="fixed inset-x-0 bottom-above-nav z-20 border-t border-border bg-background/95 px-4 py-3 backdrop-blur-sm lg:static lg:border-0 lg:bg-transparent"><Button size="action" disabled={!canSubmit} onClick={() => void submit()} aria-busy={submission.isSubmitting}>{submission.isSubmitting ? 'در حال ثبت…' : submission.attempt ? 'بررسی نتیجه خرید' : 'ثبت خرید سکه'}</Button></div>
     <NumericKeypad />
   </div>;

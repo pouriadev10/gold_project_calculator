@@ -175,10 +175,11 @@ export function PartyFormDialog({ open, onOpenChange, party }: PartyFormDialogPr
               autoComplete="off"
               disabled={isSubmitting}
               aria-invalid={Boolean(errors.displayName)}
+              aria-describedby={errors.displayName ? 'party-form-name-error' : undefined}
               {...register('displayName')}
             />
             {errors.displayName ? (
-              <InlineError message={errors.displayName.message ?? 'نام الزامی است'} />
+              <InlineError id="party-form-name-error" message={errors.displayName.message ?? 'نام الزامی است'} />
             ) : null}
           </div>
 
@@ -193,9 +194,10 @@ export function PartyFormDialog({ open, onOpenChange, party }: PartyFormDialogPr
               autoComplete="off"
               disabled={isSubmitting}
               aria-invalid={Boolean(errors.mobile)}
+              aria-describedby={errors.mobile ? 'party-form-mobile-error' : undefined}
               {...register('mobile')}
             />
-            {errors.mobile ? <InlineError message={errors.mobile.message ?? 'موبایل معتبر نیست'} /> : null}
+            {errors.mobile ? <InlineError id="party-form-mobile-error" message={errors.mobile.message ?? 'موبایل معتبر نیست'} /> : null}
           </div>
 
           <div>
@@ -209,10 +211,11 @@ export function PartyFormDialog({ open, onOpenChange, party }: PartyFormDialogPr
               autoComplete="off"
               disabled={isSubmitting}
               aria-invalid={Boolean(errors.nationalId)}
+              aria-describedby={errors.nationalId ? 'party-form-national-id-error' : undefined}
               {...register('nationalId')}
             />
             {errors.nationalId ? (
-              <InlineError message={errors.nationalId.message ?? 'کد ملی معتبر نیست'} />
+              <InlineError id="party-form-national-id-error" message={errors.nationalId.message ?? 'کد ملی معتبر نیست'} />
             ) : null}
           </div>
 
@@ -225,9 +228,10 @@ export function PartyFormDialog({ open, onOpenChange, party }: PartyFormDialogPr
               rows={3}
               disabled={isSubmitting}
               aria-invalid={Boolean(errors.notes)}
+              aria-describedby={errors.notes ? 'party-form-notes-error' : undefined}
               {...register('notes')}
             />
-            {errors.notes ? <InlineError message={errors.notes.message ?? 'یادداشت معتبر نیست'} /> : null}
+            {errors.notes ? <InlineError id="party-form-notes-error" message={errors.notes.message ?? 'یادداشت معتبر نیست'} /> : null}
           </div>
 
           {submitError ? <ApiErrorNotice error={submitError} /> : null}

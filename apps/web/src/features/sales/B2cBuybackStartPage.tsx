@@ -103,7 +103,7 @@ export default function B2cBuybackStartPage() {
         <UnitToggle />
       </PageHeader>
 
-      <main className="flex-1 space-y-4 p-4 pb-action">
+      <div className="flex-1 space-y-4 p-4 pb-action">
         {submission.receipt ? (
           <B2cBuybackReceipt receipt={submission.receipt} />
         ) : (
@@ -306,7 +306,7 @@ export default function B2cBuybackStartPage() {
             {submission.error ? <ApiErrorNotice error={submission.error} /> : null}
           </>
         )}
-      </main>
+      </div>
 
       {!submission.receipt ? (
         <div className="fixed inset-x-0 bottom-above-nav z-20 border-t border-border bg-background px-4 py-3 lg:static lg:border-0 lg:px-4 lg:pb-4">

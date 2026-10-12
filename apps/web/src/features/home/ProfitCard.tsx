@@ -109,12 +109,16 @@ function BreakdownRow({
   amount: ProfitReport['operational'];
 }) {
   return (
+    // FE-084: هر ردیف یک جفت dt/dd معتبر است (برچسب و توضیح = dt، مبلغ = dd)؛
+    // پیش‌تر dt/dd دو لایه div پایین‌تر از dl بودند و صفحه‌خوان رابطه را نمی‌فهمید.
     <div className="flex items-center justify-between gap-3">
-      <div>
-        <dt className="text-sm">{label}</dt>
-        <dd className="text-[0.6875rem] text-muted-foreground">{hint}</dd>
-      </div>
-      <AmountDisplay amount={amount} signed size="sm" />
+      <dt>
+        <span className="block text-sm">{label}</span>
+        <span className="block text-[0.6875rem] text-muted-foreground">{hint}</span>
+      </dt>
+      <dd>
+        <AmountDisplay amount={amount} signed size="sm" />
+      </dd>
     </div>
   );
 }

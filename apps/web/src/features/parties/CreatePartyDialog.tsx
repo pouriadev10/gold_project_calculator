@@ -159,10 +159,11 @@ export function CreatePartyDialog({
               autoComplete="off"
               disabled={isSubmitting}
               aria-invalid={Boolean(errors.displayName)}
+              aria-describedby={errors.displayName ? 'party-name-error' : undefined}
               {...register('displayName')}
             />
             {errors.displayName ? (
-              <InlineError message={errors.displayName.message ?? 'نام الزامی است'} />
+              <InlineError id="party-name-error" message={errors.displayName.message ?? 'نام الزامی است'} />
             ) : null}
           </div>
 
@@ -177,9 +178,10 @@ export function CreatePartyDialog({
               autoComplete="off"
               disabled={isSubmitting}
               aria-invalid={Boolean(errors.mobile)}
+              aria-describedby={errors.mobile ? 'party-mobile-error' : undefined}
               {...register('mobile')}
             />
-            {errors.mobile ? <InlineError message={errors.mobile.message ?? 'موبایل معتبر نیست'} /> : null}
+            {errors.mobile ? <InlineError id="party-mobile-error" message={errors.mobile.message ?? 'موبایل معتبر نیست'} /> : null}
           </div>
 
           {isSeller ? (
@@ -194,14 +196,14 @@ export function CreatePartyDialog({
                 autoComplete="off"
                 disabled={isSubmitting}
                 aria-invalid={Boolean(errors.nationalId)}
-                aria-describedby="party-national-id-hint"
+                aria-describedby={errors.nationalId ? 'party-national-id-hint party-national-id-error' : 'party-national-id-hint'}
                 {...register('nationalId')}
               />
               <p id="party-national-id-hint" className="mt-1 text-xs text-muted-foreground">
                 پس از ثبت، مقدار کامل در این جریان دوباره نمایش داده نمی‌شود.
               </p>
               {errors.nationalId ? (
-                <InlineError message={errors.nationalId.message ?? 'کد ملی معتبر نیست'} />
+                <InlineError id="party-national-id-error" message={errors.nationalId.message ?? 'کد ملی معتبر نیست'} />
               ) : null}
             </div>
           ) : null}

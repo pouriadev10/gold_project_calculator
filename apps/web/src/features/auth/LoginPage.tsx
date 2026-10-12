@@ -68,7 +68,8 @@ export function LoginPage() {
   });
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center p-4">
+    // FE-084: ورود بیرون از پوسته‌ی برنامه است و `<main>` پوسته را ندارد؛ landmark خودش را می‌دهد.
+    <main className="flex min-h-dvh flex-col items-center justify-center p-4">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
           <h1 className="text-xl font-bold">ورود به حساب طلا</h1>
@@ -100,9 +101,10 @@ export function LoginPage() {
               inputMode="email"
               disabled={isSubmitting}
               aria-invalid={Boolean(errors.email)}
+              aria-describedby={errors.email ? 'login-email-error' : undefined}
               {...register('email')}
             />
-            {errors.email ? <InlineError message={errors.email.message ?? 'ایمیل معتبر نیست'} /> : null}
+            {errors.email ? <InlineError id="login-email-error" message={errors.email.message ?? 'ایمیل معتبر نیست'} /> : null}
           </div>
 
           <div>
@@ -116,6 +118,7 @@ export function LoginPage() {
                 autoComplete="current-password"
                 disabled={isSubmitting}
                 aria-invalid={Boolean(errors.password)}
+                aria-describedby={errors.password ? 'login-password-error' : undefined}
                 className="pe-11"
                 {...register('password')}
               />
@@ -135,7 +138,7 @@ export function LoginPage() {
               </button>
             </div>
             {errors.password ? (
-              <InlineError message={errors.password.message ?? 'رمز عبور الزامی است'} />
+              <InlineError id="login-password-error" message={errors.password.message ?? 'رمز عبور الزامی است'} />
             ) : null}
           </div>
 
@@ -150,10 +153,11 @@ export function LoginPage() {
               autoCapitalize="off"
               disabled={isSubmitting}
               aria-invalid={Boolean(errors.tenantSlug)}
+              aria-describedby={errors.tenantSlug ? 'login-tenant-error' : undefined}
               {...register('tenantSlug')}
             />
             {errors.tenantSlug ? (
-              <InlineError message={errors.tenantSlug.message ?? 'شناسه‌ی فروشگاه الزامی است'} />
+              <InlineError id="login-tenant-error" message={errors.tenantSlug.message ?? 'شناسه‌ی فروشگاه الزامی است'} />
             ) : null}
           </div>
 
@@ -165,6 +169,6 @@ export function LoginPage() {
           </Button>
         </form>
       </div>
-    </div>
+    </main>
   );
 }

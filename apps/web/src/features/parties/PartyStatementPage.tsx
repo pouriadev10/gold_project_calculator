@@ -438,7 +438,7 @@ export default function PartyStatementPage() {
         <UnitToggle className="shrink-0" />
       </PageHeader>
 
-      <main className="flex-1 space-y-4 p-4 pb-6">
+      <div className="flex-1 space-y-4 p-4 pb-6">
         <Link
           to="/parties/$partyId"
           params={{ partyId }}
@@ -527,7 +527,7 @@ export default function PartyStatementPage() {
         {isoRange !== null ? (
           <StatementResults partyId={partyId} query={query} onOffsetChange={setOffset} />
         ) : null}
-      </main>
+      </div>
     </div>
   );
 }

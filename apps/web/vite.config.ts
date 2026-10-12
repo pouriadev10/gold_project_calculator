@@ -106,5 +106,11 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
+    // تست‌های تعاملی کیپد به‌تنهایی ۱٫۵ تا ۲ ثانیه‌اند؛ از FE-084 ممیزی axe کل برنامه را
+    // موازی با آن‌ها رندر می‌کند و زیر بار CPU سقف پیش‌فرض ۵ ثانیه بی‌دلیل می‌شکست.
+    testTimeout: 15_000,
+    // Vitest به‌طور پیش‌فرض محتوای CSS را خالی برمی‌گرداند؛ تست کنتراست توکن‌ها
+    // (FE-084، `styles/contrast.test.ts`) متن خام `globals.css` را با `?raw` می‌خواند.
+    css: { include: [/globals\.css/] },
   },
 });

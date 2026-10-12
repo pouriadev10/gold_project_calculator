@@ -11,6 +11,7 @@ import {
   type NumericFieldKind,
 } from '@gold/core-calc';
 import { cn } from '@/lib/utils';
+import { KEYPAD_ROOT_ATTRIBUTE } from './keypad-root';
 import { useKeypadStore } from './keypad-store';
 
 /**
@@ -115,6 +116,22 @@ export function NumericField({
   const currentValue = useMemo(() => digitsToBigInt(raw, spec), [raw, spec]);
 
   const isInitialMount = useRef(true);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  /*
+   * FE-084: «فیلد بعدی/قبلی» کیپد فقط فیلد فعال استور را عوض می‌کند؛ فوکوس واقعی
+   * هم باید دنبالش بیاید تا صفحه‌خوان و کاربر کیبورد همان فیلدی را ببینند که
+   * کیپد در آن می‌نویسد. فقط وقتی فوکوس روی فیلد عددی دیگر یا خودِ کیپد است —
+   * هرگز از جای دیگری فوکوس دزدیده نمی‌شود.
+   */
+  useEffect(() => {
+    const input = inputRef.current;
+    if (!isActive || !input || document.activeElement === input) return;
+    const current = document.activeElement;
+    if (current instanceof HTMLElement && (current.matches('input[data-kind]') || current.closest(`[${KEYPAD_ROOT_ATTRIBUTE}]`))) {
+      input.focus();
+    }
+  }, [isActive]);
 
   /** اطلاع تغییر به فرم */
   useEffect(() => {
@@ -148,6 +165,7 @@ export function NumericField({
         )}
       >
         <input
+          ref={inputRef}
           id={id}
           // این دو با هم، کیبورد سیستم‌عامل را کنار می‌گذارند
           inputMode="none"

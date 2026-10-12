@@ -573,7 +573,7 @@ export default function SalesInvoiceAmendPage() {
       <PageHeader title="اصلاح فاکتور">
         <UnitToggle />
       </PageHeader>
-      <main className="flex-1 space-y-4 p-4 pb-action">
+      <div className="flex-1 space-y-4 p-4 pb-action">
         <Link
           to="/sales/invoices/$invoiceId"
           params={{ invoiceId }}
@@ -617,7 +617,7 @@ export default function SalesInvoiceAmendPage() {
             onCompleted={(result) => setCompleted({ detail: detail.data!, before, result })}
           />
         ) : null}
-      </main>
+      </div>
     </div>
   );
 }

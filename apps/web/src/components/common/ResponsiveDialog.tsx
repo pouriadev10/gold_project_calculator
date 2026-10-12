@@ -139,6 +139,21 @@ function ignoreKeypadOutsideInteraction(event: { detail: { originalEvent: Event 
 }
 
 /**
+ * FE-084: `vaul` (از ۱.۰) فوکوس خودکار هنگام باز شدن را پیش‌فرض خاموش می‌کند تا
+ * کیبورد سیستم روی موبایل ناخواسته بالا نیاید — ولی نتیجه این بود که فوکوس روی
+ * دکمه‌ی پشت Bottom Sheet مودال می‌ماند و کاربر صفحه‌خوان/کیبورد داخل گفت‌وگو
+ * نبود. اینجا فوکوس به خودِ ظرف sheet (`tabIndex=-1` از FocusScope رادیکس) می‌رود:
+ * داخل مودال، بدون باز کردن کیبورد. اگر محتوا خودش فیلدی را فوکوس کرده، دست نمی‌خورد.
+ */
+function focusSheetContainer(event: Event) {
+  event.preventDefault();
+  const container = event.target;
+  if (container instanceof HTMLElement && !container.contains(document.activeElement)) {
+    container.focus({ preventScroll: true });
+  }
+}
+
+/**
  * بدنه‌ی محتوا. اسکرول داخلی مستقل از صفحه‌ی پس‌زمینه است: خودِ
  * Radix/vaul صفحه‌ی پشت را قفل می‌کند، این wrapper فقط مطمئن می‌شود
  * محتوای بلند به‌جای هل‌دادن کل مودال بیرون از دید، در همان کادر اسکرول
@@ -158,6 +173,7 @@ const ResponsiveDialogContent = React.forwardRef<HTMLDivElement, ResponsiveDialo
         <DrawerContent
           className="mt-0 h-dvh max-h-dvh rounded-t-xl border-none p-0"
           onInteractOutside={ignoreKeypadOutsideInteraction}
+          onOpenAutoFocus={focusSheetContainer}
         >
           <div ref={ref} className={cn('min-h-0 flex-1 overflow-y-auto p-4 pb-safe', className)}>
             {children}

@@ -15,6 +15,7 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { CountInput } from '@/components/keypad/CountInput';
 import { KaratInput } from '@/components/keypad/KaratInput';
 import { MoneyInput } from '@/components/keypad/MoneyInput';
+import { NumericKeypad } from '@/components/keypad/NumericKeypad';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select } from '@/components/ui/select';
@@ -210,7 +211,7 @@ export default function GeneralSettingsPage() {
   return (
     <div className="flex min-h-dvh flex-col">
       <PageHeader title="تنظیمات عمومی" />
-      <main className="flex-1 space-y-4 p-4 pb-6">
+      <div className="flex-1 space-y-4 p-4 pb-6">
         <Link
           to="/settings"
           className="inline-flex min-h-touch cursor-pointer items-center gap-1 rounded-md px-2 text-sm text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -240,7 +241,9 @@ export default function GeneralSettingsPage() {
             ))}
           </div>
         ) : null}
-      </main>
+      </div>
+      {/* FE-084: بدون این، فیلدهای عددی صفحه نه با لمس و نه با کیبورد قابل ویرایش بودند. */}
+      <NumericKeypad />
     </div>
   );
 }

@@ -76,7 +76,7 @@ export default function SalesInvoicesPage() {
         <UnitToggle />
       </PageHeader>
 
-      <main className="flex-1 space-y-4 p-4 pb-6">
+      <div className="flex-1 space-y-4 p-4 pb-6">
         <section className="space-y-3" aria-labelledby="invoice-filters-title">
           <div className="flex items-center justify-between gap-3">
             <h2 id="invoice-filters-title" className="text-sm font-semibold">
@@ -163,7 +163,7 @@ export default function SalesInvoicesPage() {
         </section>
 
         {isoRange !== null ? <SalesInvoiceList query={query} onOffsetChange={setOffset} /> : null}
-      </main>
+      </div>
     </div>
   );
 }

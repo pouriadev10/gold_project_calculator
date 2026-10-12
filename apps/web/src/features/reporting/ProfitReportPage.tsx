@@ -149,7 +149,7 @@ export default function ProfitReportPage() {
         <UnitToggle className="shrink-0" />
       </PageHeader>
 
-      <main className="flex-1 space-y-4 p-4 pb-6">
+      <div className="flex-1 space-y-4 p-4 pb-6">
         <section className="space-y-2" aria-label="بازه گزارش">
           <JalaliDateRangeFilter idPrefix="profit-date" value={range} timeZone={timeZone} onChange={setRange} />
         </section>
@@ -160,7 +160,7 @@ export default function ProfitReportPage() {
             <ProfitTrend range={range} timeZone={timeZone} />
           </>
         ) : null}
-      </main>
+      </div>
     </div>
   );
 }

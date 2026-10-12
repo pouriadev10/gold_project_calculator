@@ -71,6 +71,21 @@ describe('LoginPage — فیلدها و اعتبارسنجی', () => {
     expect(loginMock).not.toHaveBeenCalled();
   });
 
+  it('هر خطا به ورودی خودش وصل است تا صفحه‌خوان با برگشت به فیلد آن را بخواند (FE-084)', async () => {
+    const user = userEvent.setup();
+    render(<LoginPage />);
+
+    // پیش از خطا، هیچ توضیحی آویزان نیست.
+    expect(screen.getByLabelText('ایمیل')).not.toHaveAttribute('aria-describedby');
+
+    await user.click(screen.getByRole('button', { name: 'ورود' }));
+
+    expect(await screen.findByLabelText('ایمیل')).toHaveAccessibleDescription('ایمیل معتبر نیست');
+    expect(screen.getByLabelText('رمز عبور')).toHaveAccessibleDescription('رمز عبور الزامی است');
+    expect(screen.getByLabelText('شناسه‌ی فروشگاه')).toHaveAccessibleDescription('شناسه‌ی مستأجر الزامی است');
+    expect(screen.getByLabelText('ایمیل')).toHaveAttribute('aria-invalid', 'true');
+  });
+
   it('فیلدهای ایمیل و رمز autoComplete مناسب برای مدیر رمز دارند', () => {
     render(<LoginPage />);
     expect(screen.getByLabelText('ایمیل')).toHaveAttribute('autoComplete', 'username');

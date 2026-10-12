@@ -523,7 +523,7 @@ export default function SalesInvoiceDetailPage() {
         <UnitToggle />
       </PageHeader>
 
-      <main className="flex-1 space-y-4 p-4 pb-6">
+      <div className="flex-1 space-y-4 p-4 pb-6">
         <Link
           to="/sales/invoices"
           className="inline-flex min-h-touch cursor-pointer items-center gap-1 rounded-md px-2 text-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -548,7 +548,7 @@ export default function SalesInvoiceDetailPage() {
         ) : null}
 
         {detail.data ? <SalesInvoiceDetailView detail={detail.data} /> : null}
-      </main>
+      </div>
     </div>
   );
 }

@@ -373,7 +373,7 @@ export function PartyBalanceReportPage({ direction }: { direction: PartyReportDi
         <UnitToggle className="shrink-0" />
       </PageHeader>
 
-      <main className="flex-1 space-y-4 p-4 pb-6">
+      <div className="flex-1 space-y-4 p-4 pb-6">
         <p className="text-sm text-muted-foreground">{copy.meaning}</p>
 
         <section className="space-y-3" aria-label="جست‌وجو و مرتب‌سازی">
@@ -420,7 +420,7 @@ export function PartyBalanceReportPage({ direction }: { direction: PartyReportDi
         </section>
 
         {renderResults()}
-      </main>
+      </div>
     </div>
   );
 }

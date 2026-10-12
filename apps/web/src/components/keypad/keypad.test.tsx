@@ -381,3 +381,107 @@ describe('احترام به prefers-reduced-motion — لرزش لمسی', () =>
     expect(vibrate).toHaveBeenCalledWith(10);
   });
 });
+
+describe('دسترسی کیبورد — FE-084', () => {
+  function FormWithButton() {
+    return (
+      <>
+        <NumericField kind="weight" label="وزن" />
+        <NumericField kind="karat" label="عیار" />
+        <button type="button">ثبت</button>
+        <NumericKeypad />
+      </>
+    );
+  }
+
+  it('Tab بومی فوکوس واقعی را جابه‌جا می‌کند و روی آخرین فیلد کاربر گیر نمی‌افتد', async () => {
+    const user = userEvent.setup();
+    render(<FormWithButton />);
+
+    await user.click(screen.getByLabelText('وزن'));
+    await user.keyboard('12');
+    await user.tab();
+
+    // فیلد عددی بعدی فوکوس واقعی می‌گیرد و کیپد برای همان باز می‌شود.
+    expect(screen.getByLabelText('عیار')).toHaveFocus();
+    expect(useKeypadStore.getState().isOpen).toBe(true);
+    expect(useKeypadStore.getState().activeId).toBe(screen.getByLabelText('عیار').id);
+    expect(screen.getByLabelText('وزن')).toHaveAttribute('data-value', '12000');
+
+    await user.keyboard('750');
+    await user.tab();
+
+    // از آخرین فیلد به دکمه‌ی بعدی صفحه می‌رود و کیپد بسته می‌شود.
+    expect(screen.getByRole('button', { name: 'ثبت' })).toHaveFocus();
+    expect(useKeypadStore.getState().isOpen).toBe(false);
+    expect(screen.getByLabelText('عیار')).toHaveAttribute('data-value', '750');
+  });
+
+  it('Shift+Tab هم برمی‌گردد', async () => {
+    const user = userEvent.setup();
+    render(<FormWithButton />);
+
+    await user.click(screen.getByLabelText('عیار'));
+    await user.tab({ shift: true });
+
+    expect(screen.getByLabelText('وزن')).toHaveFocus();
+    expect(useKeypadStore.getState().activeId).toBe(screen.getByLabelText('وزن').id);
+  });
+
+  it('«فیلد بعدی» کیپد فوکوس واقعی را هم به فیلد بعدی می‌برد', async () => {
+    const user = userEvent.setup();
+    render(<Form />);
+
+    await user.click(screen.getByLabelText('وزن'));
+    await tap(user, 'فیلد بعدی');
+
+    expect(screen.getByLabelText('عیار')).toHaveFocus();
+  });
+
+  it('کلید کیپد با Enter و Space از کیبورد هم عمل می‌کند', async () => {
+    const user = userEvent.setup();
+    render(<Form />);
+
+    await user.click(screen.getByLabelText('عیار'));
+    screen.getByRole('button', { name: 'رقم ۷' }).focus();
+    await user.keyboard('{Enter}');
+    screen.getByRole('button', { name: 'رقم ۵' }).focus();
+    await user.keyboard(' ');
+
+    expect(screen.getByLabelText('عیار')).toHaveAttribute('data-value', '75');
+  });
+
+  it('ضربه‌ی لمسی یک‌بار ثبت می‌شود، نه دوبار (pointerup + click)', async () => {
+    const user = userEvent.setup();
+    render(<Form />);
+
+    await user.click(screen.getByLabelText('عیار'));
+    await tap(user, 'رقم ۷');
+
+    expect(screen.getByLabelText('عیار')).toHaveAttribute('data-value', '7');
+  });
+});
+
+describe('کلید فیزیکی فقط مال فیلد عددی است — FE-084', () => {
+  it('وقتی فوکوس روی یک فیلد متنی است، رقم‌ها به فیلد عددی باز دزدیده نمی‌شوند', async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <NumericField kind="karat" label="عیار" />
+        <label>
+          عنوان
+          <input type="text" />
+        </label>
+        <NumericKeypad />
+      </>,
+    );
+
+    await user.click(screen.getByLabelText('عیار'));
+    await user.keyboard('7');
+    await user.click(screen.getByLabelText('عنوان'));
+    await user.keyboard('A12');
+
+    expect(screen.getByLabelText('عنوان')).toHaveValue('A12');
+    expect(screen.getByLabelText('عیار')).toHaveAttribute('data-value', '7');
+  });
+});

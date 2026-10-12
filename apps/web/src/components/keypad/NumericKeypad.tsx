@@ -3,6 +3,7 @@ import { Delete } from 'lucide-react';
 import { DIGIT_SPECS, type NumericFieldKind } from '@gold/core-calc';
 import { cn } from '@/lib/utils';
 import { KeypadPreview } from './KeypadPreview';
+import { KEYPAD_ROOT_ATTRIBUTE, isKeypadTarget } from './keypad-root';
 import { useKeypadStore } from './keypad-store';
 import { SHORTCUTS_BY_KIND, type Shortcut } from './shortcuts';
 
@@ -26,20 +27,7 @@ import { SHORTCUTS_BY_KIND, type Shortcut } from './shortcuts';
  *    کلیدها با `Tab` قابل دسترس می‌ماندند و صفحه‌خوان آن‌ها را می‌خواند.
  */
 
-/**
- * کیپد بیرون از هر Dialog/Drawer رندر می‌شود (یک نمونه‌ی سراسری، نه داخل
- * پورتال گفت‌وگو). Radix/vaul با `modal` پیش‌فرض هر کلیک بیرون از محتوای
- * خودشان را «بیرون» حساب می‌کنند و گفت‌وگو را می‌بندند — یعنی بدون این
- * استثنا، ضربه‌زدن روی خودِ کیپد گفت‌وگو را می‌بست (و state فرم را با
- * `resetForm` پاک می‌کرد). `ResponsiveDialog` با همین سلکتور، ضربه‌های
- * داخل کیپد را از تشخیص «بیرون» معاف می‌کند.
- */
-export const KEYPAD_ROOT_ATTRIBUTE = 'data-numeric-keypad-root';
-
-/** آیا هدف رویداد داخل خودِ کیپد است؟ برای `onInteractOutside` روی Dialog/Drawer. */
-export function isKeypadTarget(target: EventTarget | null): boolean {
-  return target instanceof Element && target.closest(`[${KEYPAD_ROOT_ATTRIBUTE}]`) !== null;
-}
+export { KEYPAD_ROOT_ATTRIBUTE, isKeypadTarget } from './keypad-root';
 
 const DIGIT_ROWS = ['۷۸۹', '۴۵۶', '۱۲۳'] as const;
 
@@ -127,6 +115,11 @@ function KeypadKey({
       onPointerUp={handleUp}
       onPointerLeave={clearTimer}
       onPointerCancel={clearTimer}
+      // FE-084: Enter/Space روی کلید فوکوس‌شده فقط رویداد click می‌سازد (بدون pointer).
+      // `detail === 0` یعنی click از کیبورد آمده؛ ضربه‌ی لمسی/موس قبلاً با pointerup اجرا شده.
+      onClick={(event) => {
+        if (event.detail === 0 && !disabled) onPress();
+      }}
       onContextMenu={(event) => event.preventDefault()}
       className={cn(
         // ۴۸px — بالاتر از کف ۴۴px پروژه، چون پرضربه‌ترین عناصر برنامه‌اند
@@ -187,6 +180,19 @@ export function NumericKeypad({ shortcutsByKind = SHORTCUTS_BY_KIND }: NumericKe
     if (!isOpen) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
+      /*
+       * FE-084: کلید فیزیکی فقط وقتی مال کیپد است که فوکوس روی یک فیلد عددی، روی
+       * خودِ کیپد یا هیچ‌جا (body) باشد. وگرنه — مثلاً تایپ عنوان در یک فیلد متنی
+       * در حالی که کیپد هنوز باز است — رقم‌ها نباید دزدیده شوند. روی کلیدهای خودِ
+       * کیپد هم Enter/Space فعال‌سازی بومی دکمه است، نه «تمام».
+       */
+      const target = event.target;
+      if (target instanceof HTMLElement && target !== document.body) {
+        const onKeypad = isKeypadTarget(target);
+        if (!onKeypad && !target.matches('input[data-kind]')) return;
+        if (onKeypad && (event.key === 'Enter' || event.key === ' ')) return;
+      }
+
       const latin = PERSIAN_TO_LATIN[event.key] ?? event.key;
 
       if (latin.length === 1 && latin >= '0' && latin <= '9') {
@@ -213,9 +219,13 @@ export function NumericKeypad({ shortcutsByKind = SHORTCUTS_BY_KIND }: NumericKe
           close();
           break;
         case 'Tab':
-          event.preventDefault();
-          if (event.shiftKey) movePrev();
-          else moveNext();
+          /*
+           * FE-084: Tab بومی مرورگر کار خودش را می‌کند و کیپد فقط بسته می‌شود.
+           * پیش‌تر Tab بلعیده می‌شد و فقط فیلد فعالِ کیپد عوض می‌شد — فوکوس واقعی
+           * DOM جابه‌جا نمی‌شد و روی آخرین فیلد کاربر کیبورد گیر می‌افتاد (WCAG 2.1.2).
+           * اگر مقصد Tab خودش فیلد عددی باشد، `onFocus` آن کیپد را دوباره باز می‌کند.
+           */
+          close();
           break;
         default:
           break;
@@ -224,7 +234,7 @@ export function NumericKeypad({ shortcutsByKind = SHORTCUTS_BY_KIND }: NumericKe
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isOpen, allowsDecimal, pressDigit, pressSeparator, pressBackspace, close, moveNext, movePrev]);
+  }, [isOpen, allowsDecimal, pressDigit, pressSeparator, pressBackspace, close]);
 
   const applyShortcut = useCallback(
     (shortcut: Shortcut) => {
