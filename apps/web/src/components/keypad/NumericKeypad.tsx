@@ -3,7 +3,7 @@ import { Delete } from 'lucide-react';
 import { DIGIT_SPECS, type NumericFieldKind } from '@gold/core-calc';
 import { cn } from '@/lib/utils';
 import { KeypadPreview } from './KeypadPreview';
-import { KEYPAD_ROOT_ATTRIBUTE, isKeypadTarget } from './keypad-root';
+import { KEYPAD_ROOT_ATTRIBUTE, isKeypadTarget, releaseKeypadSpace } from './keypad-root';
 import { useKeypadStore } from './keypad-store';
 import { SHORTCUTS_BY_KIND, type Shortcut } from './shortcuts';
 
@@ -236,6 +236,25 @@ export function NumericKeypad({ shortcutsByKind = SHORTCUTS_BY_KIND }: NumericKe
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [isOpen, allowsDecimal, pressDigit, pressSeparator, pressBackspace, close]);
 
+  /*
+   * FE-085: تا کیپد باز است، ته صفحه به اندازه‌ی ارتفاع کیپد جای اسکرول دارد تا
+   * حتی آخرین فیلد صفحه بتواند بالای کیپد بیاید (`NumericField` آن را جابه‌جا می‌کند).
+   */
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!isOpen) {
+      releaseKeypadSpace();
+      return;
+    }
+    const height = rootRef.current?.offsetHeight ?? 0;
+    if (height === 0) return;
+    const previous = document.body.style.paddingBottom;
+    document.body.style.paddingBottom = `${height}px`;
+    return () => {
+      document.body.style.paddingBottom = previous;
+    };
+  }, [isOpen]);
+
   const applyShortcut = useCallback(
     (shortcut: Shortcut) => {
       if (shortcut.type === 'set') setValue(shortcut.value);
@@ -246,6 +265,7 @@ export function NumericKeypad({ shortcutsByKind = SHORTCUTS_BY_KIND }: NumericKe
 
   return (
     <div
+      ref={rootRef}
       role="group"
       aria-label="صفحه‌کلید عددی"
       aria-hidden={!isOpen}

@@ -156,3 +156,25 @@ describe('MaznehBar — اقدام ورود دستی (نقش‌محور، FE-028
     expect(screen.queryByRole('link', { name: /ثبت دستی/ })).not.toBeInTheDocument();
   });
 });
+
+describe('MaznehBar — حالت embedded (FE-085)', () => {
+  beforeEach(() => {
+    useManznehMock.mockReturnValue({ data: SNAPSHOT, isLoading: false, isError: false, isEmpty: false, refetch: vi.fn() });
+  });
+
+  it('بالای صفحه‌ی خانه چسبنده است و عنوان صفحه (h1) را دارد', () => {
+    const { container } = render(<MaznehBar isOnline />);
+    expect(screen.getByRole('heading', { level: 1, name: 'مظنه بازار' })).toBeInTheDocument();
+    expect(container.firstElementChild).toHaveClass('sticky', 'z-30');
+  });
+
+  it('وسط فرم نه چسبنده است نه z-index دارد، پس روی نوار ثابت اقدام اصلی نمی‌افتد؛ عنوانش h2 است', () => {
+    const { container } = render(<MaznehBar isOnline embedded />);
+    const root = container.firstElementChild;
+    expect(root).not.toHaveClass('sticky');
+    expect(root?.className).not.toMatch(/\bz-\d/u);
+    expect(screen.queryByRole('heading', { level: 1 })).toBeNull();
+    expect(screen.getByRole('heading', { level: 2, name: 'مظنه بازار' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'مظنه بازار' })).toBeInTheDocument();
+  });
+});

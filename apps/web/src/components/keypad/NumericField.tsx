@@ -11,7 +11,7 @@ import {
   type NumericFieldKind,
 } from '@gold/core-calc';
 import { cn } from '@/lib/utils';
-import { KEYPAD_ROOT_ATTRIBUTE } from './keypad-root';
+import { KEYPAD_ROOT_ATTRIBUTE, reserveKeypadSpace } from './keypad-root';
 import { useKeypadStore } from './keypad-store';
 
 /**
@@ -77,6 +77,36 @@ function displayValue(kind: NumericFieldKind, raw: string, value: bigint): strin
   }
 }
 
+/** فاصله‌ی فیلد فعال تا لبه‌ی بالای کیپد. */
+const KEYPAD_FIELD_GAP_PX = 16;
+
+/** آیا انگشت/اشاره‌گر الان پایین است — فاز capture، پیش از هر handler دیگری. */
+let pointerIsDown = false;
+if (typeof window !== 'undefined') {
+  window.addEventListener('pointerdown', () => (pointerIsDown = true), true);
+  window.addEventListener('pointerup', () => (pointerIsDown = false), true);
+  window.addEventListener('pointercancel', () => (pointerIsDown = false), true);
+}
+
+/**
+ * نزدیک‌ترین والد قابل‌اسکرول عمودی (مثلاً بدنه‌ی Bottom Sheet) یا خودِ صفحه را
+ * `delta` پایین می‌برد. اگر ظرف تا ته اسکرول شده و جا ندارد (آخرین فیلد یک
+ * sheet)، تا بسته شدن کیپد به ته‌اش به اندازه‌ی کیپد جا اضافه می‌شود؛ صفحه این
+ * جا را از `NumericKeypad` روی body می‌گیرد.
+ */
+function scrollAncestorBy(element: HTMLElement, delta: number, keypadHeight: number): void {
+  for (let parent = element.parentElement; parent && parent !== document.body; parent = parent.parentElement) {
+    const { overflowY } = getComputedStyle(parent);
+    if (/(auto|scroll)/u.test(overflowY) && parent.scrollHeight > parent.clientHeight) {
+      const room = parent.scrollHeight - parent.clientHeight - parent.scrollTop;
+      if (room < delta) reserveKeypadSpace(parent, keypadHeight);
+      parent.scrollBy({ top: delta });
+      return;
+    }
+  }
+  window.scrollBy({ top: delta });
+}
+
 export function NumericField({
   kind,
   label,
@@ -133,6 +163,41 @@ export function NumericField({
     }
   }, [isActive]);
 
+  /*
+   * FE-085: کیپد نیمه‌ی پایین صفحه‌ی موبایل را می‌پوشاند (روی ۳۶۰×۸۰۰ از y≈۴۰۶).
+   * فیلدی که پایین‌تر از آن لمس شود باید بالای کیپد بیاید، وگرنه کاربر عددی را
+   * که تایپ می‌کند نمی‌بیند. جای نهایی کیپد از `offsetTop` خوانده می‌شود که
+   * transform انیمیشن ورود را نادیده می‌گیرد. بدون چیدمان (jsdom) کاری نمی‌کند.
+   */
+  useEffect(() => {
+    if (!isActive) return;
+    let frame = 0;
+    const bringAboveKeypad = () => {
+      frame = requestAnimationFrame(() => {
+        const box = inputRef.current?.parentElement;
+        const keypad = document.querySelector<HTMLElement>(`[${KEYPAD_ROOT_ATTRIBUTE}]`);
+        if (!box || !keypad || keypad.offsetHeight === 0) return;
+        const overlap = box.getBoundingClientRect().bottom + KEYPAD_FIELD_GAP_PX - keypad.offsetTop;
+        if (overlap > 0) scrollAncestorBy(box, overlap, keypad.offsetHeight);
+      });
+    };
+    /*
+     * تا انگشت روی صفحه است اسکرول نکن: اگر محتوا وسط ضربه جابه‌جا شود، بلند شدن
+     * انگشت روی فیلد دیگری می‌افتد و همان فیلد (یا هیچ‌چیز) فوکوس می‌گیرد.
+     */
+    if (!pointerIsDown) {
+      bringAboveKeypad();
+      return () => cancelAnimationFrame(frame);
+    }
+    window.addEventListener('pointerup', bringAboveKeypad, { once: true });
+    window.addEventListener('pointercancel', bringAboveKeypad, { once: true });
+    return () => {
+      window.removeEventListener('pointerup', bringAboveKeypad);
+      window.removeEventListener('pointercancel', bringAboveKeypad);
+      cancelAnimationFrame(frame);
+    };
+  }, [isActive]);
+
   /** اطلاع تغییر به فرم */
   useEffect(() => {
     if (isInitialMount.current) {
@@ -182,7 +247,13 @@ export function NumericField({
           data-value={currentValue.toString()}
           data-kind={kind}
           onFocus={() => !disabled && focusField(id)}
-          onPointerDown={() => !disabled && focusField(id)}
+          onPointerDown={() => {
+            if (disabled) return;
+            focusField(id);
+            // FE-085: داخل Bottom Sheet فوکوس DOM با لمس جابه‌جا نمی‌شد و روی ظرف sheet
+            // می‌ماند؛ فیلد لمس‌شده خودش فوکوس می‌گیرد (اسکرول را effect بالا انجام می‌دهد).
+            inputRef.current?.focus({ preventScroll: true });
+          }}
           // `readOnly` جلوی درج پیش‌فرض مرورگر را می‌گیرد، ولی خودِ رویداد
           // paste همچنان شلیک می‌شود — همان راهی که چسباندن مقدار فارسی
           // (FE-018) را بدون باز کردن کیبورد سیستم ممکن می‌کند.

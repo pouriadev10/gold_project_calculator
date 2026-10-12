@@ -22,17 +22,30 @@ import { useMazneh } from './useMazneh';
  * شکست دریافت مظنه فقط خودِ این ویجت را تحت تأثیر قرار می‌دهد — بقیه‌ی
  * صفحه (مانده، سود، دکمه‌های فروش/خرید) کاملاً مستقل و قابل‌استفاده
  * می‌ماند؛ قاعده‌ی «قطع فید معامله را متوقف نکند».
+ *
+ * `embedded` (FE-085): وقتی وسط یک فرم یا مرحله‌ی جادوگر می‌نشیند، نه چسبنده
+ * است نه z-index دارد و عنوانش `h2` است. نسخه‌ی چسبنده‌ی `z-30` وسط فرم خرید
+ * سکه روی نوار ثابت «ثبت خرید» می‌افتاد و اقدام اصلی را روی موبایل پنهان می‌کرد،
+ * و `h1` دومش عنوان صفحه را تکرار می‌کرد.
  */
 
 const SOURCE_LABEL = { MANUAL: 'دستی', FEED: 'فید' } as const;
 
-export function MaznehBar({ isOnline }: { isOnline: boolean }) {
+export function MaznehBar({ isOnline, embedded = false }: { isOnline: boolean; embedded?: boolean }) {
   const { data, isLoading, isError, isEmpty, refetch } = useMazneh();
+  const Root = embedded ? 'section' : 'header';
+  const Heading = embedded ? 'h2' : 'h1';
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur-sm">
+    <Root
+      aria-label={embedded ? 'مظنه بازار' : undefined}
+      className={cn(
+        'border-b border-border bg-card/95',
+        embedded ? 'rounded-lg border' : 'sticky top-0 z-30 backdrop-blur-sm',
+      )}
+    >
       <div className="flex items-center justify-between gap-2 px-4 pt-3">
-        <h1 className="text-sm font-bold text-foreground">مظنه بازار</h1>
+        <Heading className="text-sm font-bold text-foreground">مظنه بازار</Heading>
         <div className="flex items-center gap-3">
           <span
             className={cn(
@@ -91,7 +104,7 @@ export function MaznehBar({ isOnline }: { isOnline: boolean }) {
           </>
         ) : null}
       </div>
-    </header>
+    </Root>
   );
 }
 

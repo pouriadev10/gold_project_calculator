@@ -12,3 +12,24 @@ export const KEYPAD_ROOT_ATTRIBUTE = 'data-numeric-keypad-root';
 export function isKeypadTarget(target: EventTarget | null): boolean {
   return target instanceof Element && target.closest(`[${KEYPAD_ROOT_ATTRIBUTE}]`) !== null;
 }
+
+/**
+ * FE-085: ظرف اسکرولی (مثلاً بدنه‌ی Bottom Sheet) که برای بالا آوردن فیلد فعال
+ * جای کافی نداشت، تا وقتی کیپد باز است این ویژگی و فاصله‌ی پایین اضافه می‌گیرد.
+ */
+const KEYPAD_SPACE_ATTRIBUTE = 'data-keypad-space';
+
+/** به ته `element` به اندازه‌ی `height` جای اسکرول اضافه می‌کند (یک‌بار). */
+export function reserveKeypadSpace(element: HTMLElement, height: number): void {
+  if (element.hasAttribute(KEYPAD_SPACE_ATTRIBUTE)) return;
+  element.setAttribute(KEYPAD_SPACE_ATTRIBUTE, element.style.paddingBottom);
+  element.style.paddingBottom = `calc(${getComputedStyle(element).paddingBottom} + ${height}px)`;
+}
+
+/** همه‌ی جاهای رزروشده را به حالت قبل برمی‌گرداند — با بسته شدن کیپد. */
+export function releaseKeypadSpace(): void {
+  for (const element of document.querySelectorAll<HTMLElement>(`[${KEYPAD_SPACE_ATTRIBUTE}]`)) {
+    element.style.paddingBottom = element.getAttribute(KEYPAD_SPACE_ATTRIBUTE) ?? '';
+    element.removeAttribute(KEYPAD_SPACE_ATTRIBUTE);
+  }
+}

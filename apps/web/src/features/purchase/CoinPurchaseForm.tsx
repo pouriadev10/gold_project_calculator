@@ -112,7 +112,7 @@ export default function CoinPurchaseForm() {
           <CountInput label="تعداد" value={count} onChange={setCount} {...(invalidCount ? { error: invalidCount } : {})} />
           <MoneyInput label="نرخ خرید هر سکه" value={purchaseUnitPriceRial} onChange={setPurchaseUnitPriceRial} hint="این نرخ مستقل از نرخ فروش است و فقط برای همین خرید ثبت می‌شود." />
         </CardContent></Card>
-        <MaznehBar isOnline={isOnline} />
+        <MaznehBar isOnline={isOnline} embedded />
         {coin ? <CoinPurchaseSummary coin={coin} countBefore={currentCount} countPurchased={countNumber} purchaseUnitPriceRial={purchaseUnitPriceRial} rate1000={mazneh.data?.gram1000} /> : null}
         <Card><CardHeader><CardTitle className="text-sm">پرداخت یا مانده</CardTitle></CardHeader><CardContent className="space-y-3">
           {amountRial > 0n && mazneh.data ? <div className="flex items-center justify-between gap-3"><span className="text-sm text-muted-foreground">مبلغ کل خرید</span><AmountDisplay amount={dualFromRial(amountRial, mazneh.data.gram1000)} /></div> : null}

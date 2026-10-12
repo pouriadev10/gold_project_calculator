@@ -119,7 +119,7 @@ export default function SaleWizardPage() {
       <SaleStepper current={step} />
 
       <div className="flex-1 space-y-4 p-4 pb-32">
-        {step === 'QUOTE' ? <MaznehBar isOnline={isOnline} /> : null}
+        {step === 'QUOTE' ? <MaznehBar isOnline={isOnline} embedded /> : null}
         {step === 'PARTY' ? <PartySelector label="مشتری" value={party} onChange={setParty} /> : null}
         {step === 'ITEMS' ? <JewelryItemSelector items={items} onChange={setItems} /> : null}
         {step === 'PAYMENT' ? (

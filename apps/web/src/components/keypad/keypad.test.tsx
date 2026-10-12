@@ -485,3 +485,16 @@ describe('کلید فیزیکی فقط مال فیلد عددی است — FE-08
     expect(screen.getByLabelText('عیار')).toHaveAttribute('data-value', '7');
   });
 });
+
+describe('لمس فیلد — FE-085', () => {
+  it('فیلد لمس‌شده فوکوس واقعی DOM هم می‌گیرد، نه فقط فیلد فعال کیپد', () => {
+    render(<Form />);
+    const karat = screen.getByLabelText('عیار');
+
+    fireEvent.pointerDown(karat);
+
+    expect(karat).toHaveFocus();
+    expect(useKeypadStore.getState().activeId).toBe(karat.id);
+    expect(useKeypadStore.getState().isOpen).toBe(true);
+  });
+});

@@ -186,7 +186,7 @@ export default function PurchaseWizardPage() {
           />
         ) : null}
 
-        {step === 'QUOTE' ? <MaznehBar isOnline={isOnline} /> : null}
+        {step === 'QUOTE' ? <MaznehBar isOnline={isOnline} embedded /> : null}
 
         {step === 'AMOUNT' ? (
           <SecondHandWeighingForm
