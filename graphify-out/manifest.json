@@ -2256,9 +2256,9 @@
     "semantic_hash": ""
   },
   "apps/web/package.json": {
-    "mtime": 1791805951.1179347,
-    "seen": 1791808816.4770405,
-    "ast_hash": "6de798f2c8aeb90054d66b3b1eb6594f",
+    "mtime": 1791811178.0215302,
+    "seen": 1791811913.00248,
+    "ast_hash": "8ca2e77ffb61965c0cf7fd082ffc2446",
     "semantic_hash": ""
   },
   "apps/web/postcss.config.js": {
@@ -2418,9 +2418,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/app/router.tsx": {
-    "mtime": 1791744397.9351957,
-    "seen": 1791805447.1914413,
-    "ast_hash": "8e33ee372c05838de5b2d52db3065e22",
+    "mtime": 1791810948.1734247,
+    "seen": 1791811913.0025146,
+    "ast_hash": "87e3736598481efd649b3f234edfa169",
     "semantic_hash": ""
   },
   "apps/web/src/components/common/AmountDisplay.test.tsx": {
@@ -2628,9 +2628,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/keypad/NumericField.tsx": {
-    "mtime": 1791808234.6087165,
-    "seen": 1791808816.477118,
-    "ast_hash": "50e5006e5f642fd000980b39246b658e",
+    "mtime": 1791811571.1622188,
+    "seen": 1791811913.0025544,
+    "ast_hash": "6137ab3e4e4265c6453d39ccb84ba5d4",
     "semantic_hash": ""
   },
   "apps/web/src/components/keypad/NumericKeypad.tsx": {
@@ -3246,15 +3246,15 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/sales/CoinSaleForm.test.tsx": {
-    "mtime": 1787500800.2150953,
-    "seen": 1789132525.9450293,
-    "ast_hash": "9ec9f09124703845d529e54b1f77c2a3",
+    "mtime": 1791810432.062121,
+    "seen": 1791811913.0027637,
+    "ast_hash": "630540ff37320b92ad58f7e505fe0a5d",
     "semantic_hash": ""
   },
   "apps/web/src/features/sales/CoinSaleForm.tsx": {
-    "mtime": 1789817234.6997738,
-    "seen": 1789817893.3411934,
-    "ast_hash": "8d9101feb8e25433c28e5767a0a223d5",
+    "mtime": 1791810377.473699,
+    "seen": 1791811913.002765,
+    "ast_hash": "20d9798501eb45f549104f59c5d90e94",
     "semantic_hash": ""
   },
   "apps/web/src/features/sales/JewelryItemSelector.test.tsx": {
@@ -3318,15 +3318,15 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/sales/SaleWizardPage.test.tsx": {
-    "mtime": 1787427975.0382888,
-    "seen": 1789132525.9450378,
-    "ast_hash": "a45f377312be5e4dd4e1a08e32e4b600",
+    "mtime": 1791810432.063666,
+    "seen": 1791811913.002781,
+    "ast_hash": "0e1c145089fbe7da9b8ca757fc328675",
     "semantic_hash": ""
   },
   "apps/web/src/features/sales/SaleWizardPage.tsx": {
-    "mtime": 1791807376.7065587,
-    "seen": 1791808816.4773054,
-    "ast_hash": "839a6854abe40ad1d3e8db2803765b52",
+    "mtime": 1791810377.459074,
+    "seen": 1791811913.0027819,
+    "ast_hash": "d12d968efc14746c34b197a150bdf1bc",
     "semantic_hash": ""
   },
   "apps/web/src/features/sales/sale-line-pricing.test.ts": {
@@ -3666,21 +3666,21 @@
     "semantic_hash": ""
   },
   "apps/web/tsconfig.json": {
-    "mtime": 1785500611.487997,
-    "seen": 1789132525.9450798,
-    "ast_hash": "7832592bfb9a58b2e1ed0e67a074573d",
+    "mtime": 1791810776.7805111,
+    "seen": 1791811913.0028753,
+    "ast_hash": "13dbd182c84df54b09c3c63ef8740bcb",
     "semantic_hash": ""
   },
   "apps/web/vite.config.ts": {
-    "mtime": 1791805063.5994954,
-    "seen": 1791805447.191752,
-    "ast_hash": "f18bd452dc90dbf8b025ea6fcc3b03bf",
+    "mtime": 1791810776.7805111,
+    "seen": 1791811913.0028775,
+    "ast_hash": "eb1f8a71384069205ff15ac25b18068d",
     "semantic_hash": ""
   },
   "eslint.config.js": {
-    "mtime": 1791735359.4375637,
-    "seen": 1791735564.9848042,
-    "ast_hash": "1ba987caa078b77b7828d1b3072b9a47",
+    "mtime": 1791811178.0210035,
+    "seen": 1791811913.0028787,
+    "ast_hash": "87628e543141810d3fb3ef00ddd03360",
     "semantic_hash": ""
   },
   "package.json": {
@@ -4218,9 +4218,9 @@
     "semantic_hash": ""
   },
   "scripts/check-bundle-size.mjs": {
-    "mtime": 1785500611.6291919,
-    "seen": 1789132525.9451592,
-    "ast_hash": "8247caea6587879b4b5980def73f6627",
+    "mtime": 1791811095.8025205,
+    "seen": 1791811913.0029716,
+    "ast_hash": "8ea41ce1536632f1aae9ade119e01cf7",
     "semantic_hash": ""
   },
   "tsconfig.base.json": {
@@ -5004,9 +5004,9 @@
     "semantic_hash": ""
   },
   ".github/workflows/ci.yml": {
-    "mtime": 1785500611.61278,
-    "seen": 1789132525.9452543,
-    "ast_hash": "c18e4447f6483d4f24c0aac0f83cc4fc",
+    "mtime": 1791811178.0226195,
+    "seen": 1791811913.0031085,
+    "ast_hash": "18b15955c3cf9c311b977ab6a018718f",
     "semantic_hash": ""
   },
   "AGENTS.md": {
@@ -5028,9 +5028,9 @@
     "semantic_hash": ""
   },
   "FrontTasks.md": {
-    "mtime": 1791808764.8155763,
-    "seen": 1791808816.4776356,
-    "ast_hash": "28af182ba9f5224e53134d6606cac654",
+    "mtime": 1791811867.3422756,
+    "seen": 1791811913.0031128,
+    "ast_hash": "9df93a79cb3ba52e12dfec3892c432ba",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
@@ -5118,9 +5118,9 @@
     "semantic_hash": ""
   },
   "pnpm-workspace.yaml": {
-    "mtime": 1785920904.052163,
-    "seen": 1789132525.9452682,
-    "ast_hash": "dbb0b166fbc538ef96fb8083b3a5f803",
+    "mtime": 1791810987.8513136,
+    "seen": 1791811913.0031328,
+    "ast_hash": "adbe6d614563e133557144f490da9290",
     "semantic_hash": ""
   },
   "apps/web/public/icons/icon-192.png": {
@@ -5844,9 +5844,9 @@
     "semantic_hash": ""
   },
   "apps/web/scripts/mobile-audit.mjs": {
-    "mtime": 1791808165.7400424,
-    "seen": 1791808816.4770463,
-    "ast_hash": "9ad9f66ca81e1cad052448c739caa873",
+    "mtime": 1791811458.4010367,
+    "seen": 1791811913.0024846,
+    "ast_hash": "144ac598b9884d8752a3e9164c1c4a3f",
     "semantic_hash": ""
   },
   "apps/web/src/components/keypad/keypad-root.test.ts": {
@@ -5859,6 +5859,36 @@
     "mtime": 1791808744.4948328,
     "seen": 1791808816.4776545,
     "ast_hash": "cace4ab40a0484a5106ebcf87f2b95ae",
+    "semantic_hash": ""
+  },
+  "apps/web/src/app/bundle-report-plugin.test.ts": {
+    "mtime": 1791811339.7308311,
+    "seen": 1791811913.0025105,
+    "ast_hash": "2451f15913e51348a2ce18729b406352",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/sales/SaleKindTabs.test.tsx": {
+    "mtime": 1791810432.099824,
+    "seen": 1791811913.0027697,
+    "ast_hash": "841305c234d5dad700e3b2e67963c17f",
+    "semantic_hash": ""
+  },
+  "apps/web/src/features/sales/SaleKindTabs.tsx": {
+    "mtime": 1791810377.3454525,
+    "seen": 1791811913.0027707,
+    "ast_hash": "facab09604fffcc0048ed8a7b8545506",
+    "semantic_hash": ""
+  },
+  "apps/web/vite-plugins/bundle-report.ts": {
+    "mtime": 1791810901.12352,
+    "seen": 1791811913.0028765,
+    "ast_hash": "9f86ca2428ee0bfd956720adf5035cd6",
+    "semantic_hash": ""
+  },
+  "docs/android-device-test.md": {
+    "mtime": 1791810646.1970136,
+    "seen": 1791811913.0031276,
+    "ast_hash": "158f25005c1181762e4a032bb8261f11",
     "semantic_hash": ""
   }
 }
