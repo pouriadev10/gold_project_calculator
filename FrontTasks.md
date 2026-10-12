@@ -2669,7 +2669,7 @@ docs/android-device-test.md
 >
 > اعتبارسنجی: `pnpm build` (با دروازه)، `pnpm typecheck`، `pnpm test` (۹۸۶ وب — شامل تست طبقه‌بندی ماژول‌ها — ۱۷۰ API، ۱۹۲ قرارداد، ۱۷۶ core-calc)، بررسی وابستگی دوری، lint فایل‌های تغییرکرده، و ممیزی headless ۳۶۰px (سه اجرای پشت‌سرهم سبز، ورود تنبل و رسم نمودار ECharts در مرورگر). ممیزی اصلاحی جداگانه (`fix(keypad)`) را هم آشکار کرد.
 ---
-## [ ] FE-088 — بهینه‌سازی LCP
+## [x] FE-088 — بهینه‌سازی LCP
 ### هدف
 LCP روی 3G شبیه‌سازی‌شده زیر ۲.۵ ثانیه.
 ### کارها
@@ -2682,6 +2682,10 @@ LCP روی 3G شبیه‌سازی‌شده زیر ۲.۵ ثانیه.
 ### محدودیت‌ها
 * مهاجرت به SSR بدون تصمیم معماری جداگانه انجام نشود.
 * قابلیت‌های اصلی قربانی عدد مصنوعی نشوند.
+
+> تکمیل FE-088: ممیزی تازه‌ی `pnpm --filter @gold/web audit:lcp` (Lighthouse روی بیلد production + API ساختگی MSW، ۳۶۰px، میانه‌ی ۳ اجرا، به‌علاوه‌ی سنجش throttling اعمال‌شده). **LCP پیش → پس:** داشبورد ۲٫۶۰ → **۲٫۲۵ث** ✅، ورود ۲٫۷۹ → **۲٫۱۱ث** ✅، لینک عمیق `/sales/new` ۳٫۷۱ → ۲٫۹۸ث (گزارشی). **font:** `@font-face` حذف، `lib/app-font.ts` (بار اول: پس از داده‌ی صفحه‌ی اول، اعمال از ناوبری بعدی؛ بعد: از کش)؛ پوسته با فونت سیستم. **render-blocking:** CSS با `media=print`+`preload` (`vite-plugins/non-blocking-css.ts`) و `stylesheetsReady` پیش از رندر؛ `registerSW.js` همگام حذف و ثبت SW پس از بالا آمدن (`lib/startup.ts`). **route chunk:** `vite-plugins/route-preload.ts` چانک مسیر آدرس بازشده را از HTML preload می‌کند؛ `experimentalMinChunkSize` (۴۱ → ۲۲ درخواست برای `/sales/new`). **skeleton:** `loadInitialRoute` پوسته را تا آمدن صفحه نگه می‌دارد؛ `PageSkeleton` جای اسپینر گذار مسیر. **startup:** Toaster تنبل (۱۴۳٫۴ → ۱۳۳٫۳KB gzip)، `staticData.startupQueries` مظنه/داشبورد را هم‌زمان با چانک می‌خواهد. SSR انجام نشد. جزئیات و 3G واقعی در `PERFORMANCE.md`.
+>
+> اعتبارسنجی: `pnpm typecheck`، `pnpm test` وب (۱۰۲۱)، lint فایل‌های تغییرکرده، `check:circular`، `pnpm build` با دروازه، ممیزی headless ۳۶۰px سبز. مطابق درخواست کاربر پیش‌نمایش مرورگر اجرا نشد (فقط ممیزی‌های headless خودکار).
 ---
 ## [ ] FE-089 — بهینه‌سازی INP
 ### هدف

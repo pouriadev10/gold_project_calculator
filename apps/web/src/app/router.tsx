@@ -8,8 +8,8 @@ import {
 } from '@tanstack/react-router';
 import { uuidSchema } from '@gold/contracts';
 import { AppNav } from '@/components/common/AppNav';
-import { FullPageLoading } from '@/components/common/FullPageLoading';
 import { NotFoundPage } from '@/components/common/NotFoundPage';
+import { PageSkeleton } from '@/components/common/PageSkeleton';
 import { requireAuth, requireRole } from '@/app/route-guards';
 import { HomePage } from '@/features/home/HomePage';
 import { useSessionGuard } from '@/hooks/useSessionGuard';
@@ -60,6 +60,15 @@ const appShellRoute = createRoute({
   component: AppShell,
 });
 
+/**
+ * صفحه‌هایی که اولین رنگشان به مظنه وابسته است (نوار مظنه، قیمت‌گذاری) — FE-088.
+ * `prefetchInitialRouteData` در باز کردن سرد، مظنه را هم‌زمان با چانک مسیر می‌خواهد.
+ */
+const NEEDS_MAZNEH = { startupQueries: ['mazneh'] } as const;
+
+/** خانه: نوار مظنه + کارت‌های داشبورد (عنصر LCP خانه از همین پاسخ است). */
+const HOME_STARTUP = { startupQueries: ['mazneh', 'dashboard'] } as const;
+
 // ---- مسیر بدون پوسته ----
 
 /**
@@ -82,6 +91,7 @@ const loginRoute = createRoute({
 const indexRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/',
+  staticData: HOME_STARTUP,
   beforeLoad: () => {
     throw redirect({ to: '/dashboard' });
   },
@@ -90,12 +100,14 @@ const indexRoute = createRoute({
 const dashboardRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/dashboard',
+  staticData: HOME_STARTUP,
   component: HomePage,
 });
 
 const pricingRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/pricing',
+  staticData: NEEDS_MAZNEH,
   // بدون beforeLoad نقش‌محور — خواندن مظنه برای هر نقشی باز است؛ فقط فرم
   // ثبت دستی داخل خودِ صفحه پنهان می‌شود (`PricingPage.tsx`, FE-030).
   component: lazyRouteComponent(() => import('@/features/pricing/PricingPage')),
@@ -138,6 +150,7 @@ const partyStatementRoute = createRoute({
 const partySettlementsNewRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/parties/$partyId/settlements/new',
+  staticData: NEEDS_MAZNEH,
   params: {
     parse: (raw: { partyId: string }) => ({ partyId: uuidSchema.parse(raw.partyId) }),
     stringify: (parsed: { partyId: string }) => ({ partyId: parsed.partyId }),
@@ -162,6 +175,7 @@ const inventoryJewelryRoute = createRoute({
 const inventoryCoinsRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/inventory/coins',
+  staticData: NEEDS_MAZNEH,
   // بدون beforeLoad نقش‌محور — همان استدلال inventoryJewelryRoute، خواندن موجودی محدود به نقش نیست
   component: lazyRouteComponent(() => import('@/features/inventory/CoinInventoryPage')),
 });
@@ -178,6 +192,7 @@ const inventoryOpeningBalanceRoute = createRoute({
 const salesNewRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/sales/new',
+  staticData: NEEDS_MAZNEH,
   // بدون beforeLoad نقش‌محور — شروع فروش برای هر نقشی باز است
   component: lazyRouteComponent(() => import('@/features/sales/SaleWizardPage')),
 });
@@ -185,6 +200,7 @@ const salesNewRoute = createRoute({
 const salesCoinsNewRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/sales/coins/new',
+  staticData: NEEDS_MAZNEH,
   // بدون beforeLoad نقش‌محور — همان استدلال salesNewRoute، شروع فروش برای هر نقشی باز است
   component: lazyRouteComponent(() => import('@/features/sales/CoinSaleForm')),
 });
@@ -218,6 +234,7 @@ const salesInvoiceAmendRoute = createRoute({
 const b2cBuybackStartRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/sales/invoices/$invoiceId/b2c-buyback',
+  staticData: NEEDS_MAZNEH,
   params: {
     parse: (raw: { invoiceId: string }) => ({ invoiceId: uuidSchema.parse(raw.invoiceId) }),
     stringify: (parsed: { invoiceId: string }) => ({ invoiceId: parsed.invoiceId }),
@@ -228,6 +245,7 @@ const b2cBuybackStartRoute = createRoute({
 const purchaseSecondHandRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/purchase/second-hand',
+  staticData: NEEDS_MAZNEH,
   // بدون beforeLoad نقش‌محور — @Roles('OWNER','MANAGER','CASHIER') روی POST
   // /purchase/second-hand/gold هر سه نقش را می‌پذیرد (second-hand-gold-purchases.controller.ts، BE-050)
   component: lazyRouteComponent(() => import('@/features/purchase/PurchaseWizardPage')),
@@ -236,6 +254,7 @@ const purchaseSecondHandRoute = createRoute({
 const purchaseSecondHandCoinsRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/purchase/second-hand/coins',
+  staticData: NEEDS_MAZNEH,
   component: lazyRouteComponent(() => import('@/features/purchase/CoinPurchaseForm')),
 });
 
@@ -362,7 +381,8 @@ export const router = createRouter({
   // chunk تنبل هر مسیر ممکن است روی شبکه‌ی ضعیف کمی طول بکشد؛ بدون این
   // در آن فاصله صفحه سفید می‌ماند — قاعده‌ی «هیچ صفحه‌ای هنگام loading
   // سفید نماند».
-  defaultPendingComponent: FullPageLoading,
+  // FE-088: اسکلت صفحه، نه اسپینر — همان شکلی که پوسته‌ی inline هنگام باز شدن سرد نشان می‌دهد.
+  defaultPendingComponent: PageSkeleton,
 });
 
 declare module '@tanstack/react-router' {

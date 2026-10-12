@@ -5,6 +5,10 @@ import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { bundleReport } from './vite-plugins/bundle-report';
+import { nonBlockingCss } from './vite-plugins/non-blocking-css';
+import { routePreload } from './vite-plugins/route-preload';
+
+const SRC = fileURLToPath(new URL('./src', import.meta.url));
 
 /**
  * `mockServiceWorker.js` را از خروجی production حذف می‌کند.
@@ -39,8 +43,19 @@ export default defineConfig({
     stripMockWorker(),
     // FE-087: ترکیب بسته (اولیه/تنبل، سهم هر بسته، نسخه‌ی تکراری) → build/bundle-report.json
     bundleReport(),
+    // FE-088: CSS اصلی رنگ‌آمیزی پوسته را نگه نمی‌دارد؛ main.tsx پیش از رندر منتظرش می‌ماند
+    nonBlockingCss(),
+    // FE-088: چانک مسیرِ آدرس بازشده هم‌زمان با بسته‌ی اصلی دانلود می‌شود، نه پس از اجرای آن
+    routePreload({
+      routerFile: join(SRC, 'app/router.tsx'),
+      // همان SESSION_STORAGE_KEY در stores/session-store.ts (تست route-preload برابری را می‌پاید)
+      sessionStorageKey: 'gold-ui-session',
+      resolveSpecifier: (specifier) => specifier.replace(/^@\//u, `${SRC}/`),
+    }),
     VitePWA({
       registerType: 'autoUpdate',
+      // FE-088: بدون `registerSW.js` همگام در <head>؛ main.tsx پس از داده‌ی صفحه‌ی اول ثبت می‌کند
+      injectRegister: false,
       includeAssets: ['fonts/vazirmatn-fa.woff2', 'icons/*.png', 'icons/*.svg'],
       manifest: {
         name: 'حساب طلا',
@@ -81,7 +96,7 @@ export default defineConfig({
 
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@': SRC,
     },
   },
 
@@ -90,6 +105,18 @@ export default defineConfig({
     target: 'es2022',
     cssCodeSplit: true,
     reportCompressedSize: true,
+    rollupOptions: {
+      output: {
+        /*
+         * FE-088: چانک‌های ریز مشترک (یک آیکون، یک هوک ۵۰۰ بایتی) با چانکی که همیشه همراهشان
+         * بار می‌شود ادغام می‌شوند. باز کردن سرد `/sales/new` ۴۱ درخواست جدا می‌خواست؛ روی
+         * HTTP/1.1 (۶ اتصال) و RTT بالای 3G هر موج درخواست یک رفت‌وبرگشت است. حالا ۲۲ تا،
+         * بسته‌ی اولیه عملاً بی‌تغییر (+۰٫۳KB) و مجموع چانک‌های تنبل کوچک‌تر (سربار کمتر).
+         * Rollup فقط چانک‌های بی‌اثر جانبی را ادغام می‌کند، پس ترتیب اجرا عوض نمی‌شود.
+         */
+        experimentalMinChunkSize: 10_000,
+      },
+    },
     /*
      * عمداً بدون `manualChunks`.
      *

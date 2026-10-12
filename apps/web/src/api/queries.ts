@@ -1,4 +1,4 @@
-import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, queryOptions, useQueries, useQuery } from '@tanstack/react-query';
 import { invoiceAmendmentPreflightSchema, salesInvoiceAmendmentHistorySchema } from '@gold/contracts';
 import { apiGet } from './client';
 import {
@@ -55,13 +55,17 @@ const MINUTE = 60_000;
  * پاسخ `null` است اگر هیچ مظنه‌ای هنوز برای این مستأجر ثبت نشده — حالت
  * «خالی»، نه خطا. `nullable()` همین را در قرارداد صریح می‌کند.
  */
-export function useLatestPriceQuote(quoteType: PriceQuoteType = 'MAZNEH') {
-  return useQuery({
+export function latestPriceQuoteOptions(quoteType: PriceQuoteType = 'MAZNEH') {
+  return queryOptions({
     queryKey: queryKeys.pricing.latestQuote(quoteType),
     queryFn: ({ signal }) =>
       apiGet(`/pricing/quotes/latest?quoteType=${quoteType}`, priceQuoteSchema.nullable(), signal),
     staleTime: MINUTE,
   });
+}
+
+export function useLatestPriceQuote(quoteType: PriceQuoteType = 'MAZNEH') {
+  return useQuery(latestPriceQuoteOptions(quoteType));
 }
 
 /**
@@ -441,13 +445,17 @@ export function useJewelryItemAt(id: string | null, at: string | null) {
  * تعداد سکه) که این تسک استفاده می‌کند مستقل از این پارامتر همیشه خام
  * است، پس هیچ منطق واحدی سمت کلاینت لازم ندارد.
  */
-export function useDashboard(displayUnit: ReportingDisplayUnit = 'GOLD') {
-  return useQuery({
+export function dashboardQueryOptions(displayUnit: ReportingDisplayUnit = 'GOLD') {
+  return queryOptions({
     queryKey: queryKeys.dashboard.byUnit(displayUnit),
     queryFn: ({ signal }) =>
       apiGet(`/reporting/dashboard?displayUnit=${displayUnit}`, dashboardSchema, signal),
     staleTime: MINUTE,
   });
+}
+
+export function useDashboard(displayUnit: ReportingDisplayUnit = 'GOLD') {
+  return useQuery(dashboardQueryOptions(displayUnit));
 }
 
 /**
