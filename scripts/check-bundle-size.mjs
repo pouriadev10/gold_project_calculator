@@ -34,7 +34,16 @@ const DETAILS = process.argv.includes('--details');
 const TOP_GROUPS = 12;
 
 /** بودجه‌ی بخش ۶ CLAUDE.md — زیر ۲۰۰KB فشرده. */
-const BUDGET_KB = Number(process.env.BUNDLE_BUDGET_KB ?? 200);
+const MAX_BUDGET_KB = 200;
+/** `BUNDLE_BUDGET_KB` فقط می‌تواند بودجه را سخت‌تر کند، هرگز شل‌تر. */
+const requestedBudget = Number(process.env.BUNDLE_BUDGET_KB ?? MAX_BUDGET_KB);
+if (!(requestedBudget > 0) || requestedBudget > MAX_BUDGET_KB) {
+  console.error(
+    `✖ BUNDLE_BUDGET_KB=${process.env.BUNDLE_BUDGET_KB} نامعتبر است: فقط عدد مثبت تا ${MAX_BUDGET_KB} مجاز است. بودجه جابه‌جا نمی‌شود.`,
+  );
+  process.exit(1);
+}
+const BUDGET_KB = requestedBudget;
 
 const indexPath = join(DIST, 'index.html');
 if (!existsSync(indexPath)) {

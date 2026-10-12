@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PriceQuote } from '@/api/contracts';
-import { QuoteHistoryList } from './QuoteHistoryList';
+import { QuoteHistoryList, paginate } from './QuoteHistoryList';
 
 /**
  * FE-031 — تاریخچه‌ی مظنه.
@@ -173,5 +173,35 @@ describe('QuoteHistoryList — pagination (سمت کلاینت، بدون صفح
     expect(screen.getByText('صفحه ۲ از ۲')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /بعدی/ })).toBeDisabled();
     expect(screen.getAllByRole('row')).toHaveLength(6); // ۵ ردیف باقی‌مانده + ۱ ردیف هدر
+  });
+});
+
+describe('QuoteHistoryList — صفحه‌بندی بدون react-table (FE-087)', () => {
+  it('paginate آرایه را به صفحه‌های ثابت می‌شکند و خالی صفحه‌ای ندارد', () => {
+    expect(paginate([], 10)).toEqual([]);
+    expect(paginate([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]]);
+    expect(paginate([1, 2], 10)).toEqual([[1, 2]]);
+  });
+
+  it('با رسیدن داده‌ی تازه به صفحه‌ی اول برمی‌گردد', async () => {
+    usePriceQuoteHistoryMock.mockReturnValue({
+      data: manyQuotes(25),
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+    const { rerender } = render(<QuoteHistoryList />);
+    await userEvent.click(screen.getByRole('button', { name: /بعدی/ }));
+    await userEvent.click(screen.getByRole('button', { name: /بعدی/ }));
+    expect(screen.getByText('صفحه ۳ از ۳')).toBeInTheDocument();
+
+    usePriceQuoteHistoryMock.mockReturnValue({
+      data: manyQuotes(26),
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+    rerender(<QuoteHistoryList />);
+    expect(screen.getByText('صفحه ۱ از ۳')).toBeInTheDocument();
   });
 });

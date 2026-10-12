@@ -117,6 +117,32 @@ const WHOLE_LIBRARY_IMPORTS = [
   },
   { name: 'lodash', message: 'lodash کامل ممنوع است — تابع بومی یا lodash-es/<تابع>.' },
   { name: 'moment', message: 'moment سنگین و غیرقابل tree-shake است — از lib/date و date-fns-jalali استفاده کن.' },
+  {
+    name: 'echarts-for-react',
+    message: 'echarts-for-react کل ECharts را می‌کشد و با StrictMode ناسازگار است — API مستقیم echarts/core (FE-076).',
+  },
+  {
+    name: 'lucide-react',
+    importNames: ['icons'],
+    message: '`icons` کل مجموعه‌ی آیکون را وارد بسته می‌کند — هر آیکون را نام‌دار import کن.',
+  },
+];
+
+/**
+ * ECharts باید در چانک تنبل نمودار بماند: `echarts/*` و `zrender` فقط در
+ * `profit-trend-echarts.ts`، و آن ماژول هم فقط با `import()` پویا — import ایستایش
+ * (جز `import type`) ECharts را به چانک صفحه می‌کشید.
+ */
+const CHART_STAYS_LAZY_PATTERNS = [
+  {
+    group: ['echarts/*', 'zrender', 'zrender/*'],
+    message: 'ECharts فقط در features/reporting/profit-trend-echarts.ts (چانک تنبل) import می‌شود.',
+  },
+  {
+    group: ['**/profit-trend-echarts'],
+    allowTypeImports: true,
+    message: 'ماژول نمودار فقط با import() پویا بارگذاری می‌شود؛ import type مجاز است.',
+  },
 ];
 
 /** `import * as Icons from 'lucide-react'` همه‌ی آیکون‌ها را می‌آورد؛ فقط import نام‌دار. */
@@ -218,7 +244,10 @@ export default tseslint.config(
         ...noRawHex,
         ...noWholeIconSet,
       ],
-      'no-restricted-imports': ['error', { patterns: NO_API_IMPORT_PATTERNS, paths: WHOLE_LIBRARY_IMPORTS }],
+      'no-restricted-imports': [
+        'error',
+        { patterns: [...NO_API_IMPORT_PATTERNS, ...CHART_STAYS_LAZY_PATTERNS], paths: WHOLE_LIBRARY_IMPORTS },
+      ],
       // FE-006: هر درخواست شبکه باید از apiGet/apiPost عبور کند تا Idempotency-Key،
       // timeout و اعتبارسنجی zod هیچ‌جا فراموش نشوند.
       'no-restricted-globals': [
@@ -232,9 +261,18 @@ export default tseslint.config(
     },
   },
 
-  // صفحه‌ی دودِ فقط-توسعه کل ECharts را عمداً بارگذاری می‌کند و در بیلد production نیست.
+  // تنها خانه‌ی ECharts — خودش با import() پویا از ProfitTrendChart بارگذاری می‌شود.
   {
-    files: ['apps/web/src/features/dev/**/*.{ts,tsx}'],
+    files: ['apps/web/src/features/reporting/profit-trend-echarts.ts'],
+    rules: {
+      'no-restricted-imports': ['error', { patterns: NO_API_IMPORT_PATTERNS, paths: WHOLE_LIBRARY_IMPORTS }],
+    },
+  },
+
+  // صفحه‌ی دودِ فقط-توسعه کل ECharts را عمداً بارگذاری می‌کند و در بیلد production نیست؛
+  // تست‌ها هم در Node اجرا می‌شوند و هرگز به بسته نمی‌رسند.
+  {
+    files: ['apps/web/src/features/dev/**/*.{ts,tsx}', 'apps/web/**/*.test.{ts,tsx}'],
     rules: {
       'no-restricted-imports': ['error', { patterns: NO_API_IMPORT_PATTERNS }],
     },

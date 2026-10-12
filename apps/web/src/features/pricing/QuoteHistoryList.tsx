@@ -1,9 +1,8 @@
 import { ChevronLeft, ChevronRight, History } from 'lucide-react';
-import { flexRender, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
-import type { ColumnDef } from '@tanstack/react-table';
+import { useState } from 'react';
 import { formatCount } from '@gold/core-calc';
 import { usePriceQuoteHistory } from '@/api/queries';
-import type { PriceQuote, PriceQuoteSource } from '@/api/contracts';
+import type { PriceQuoteSource } from '@/api/contracts';
 import { RateDisplay } from '@/components/common/AmountDisplay';
 import { CardSkeleton } from '@/components/common/CardSkeleton';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -19,14 +18,16 @@ import { formatJalaliDateTime } from '@/lib/date';
  * تاریخچه‌ی مظنه — FE-031.
  *
  * زیر ۶۴۰px کارت، از ۶۴۰px به بالا جدول (بخش ۶ CLAUDE.md: «زیر ۶۴۰px
- * جدول وجود ندارد»). هر دو نما از همان صفحه‌ی جاریِ یک `useReactTable`
- * می‌خوانند — یک منبع حقیقت برای pagination، نه دو منطق موازی که ممکن
- * است از هم جدا بیفتند.
+ * جدول وجود ندارد»). هر دو نما از همان صفحه‌ی جاری (`paginate`) می‌خوانند —
+ * یک منبع حقیقت برای pagination، نه دو منطق موازی که ممکن است از هم جدا بیفتند.
  *
  * بک‌اند صفحه‌بندی سرور-محور ندارد (`priceQuoteQuerySchema` فقط
  * `quoteType` اختیاری دارد؛ `list()` در `price-quotes.service.ts` کل
- * فهرست tenant را برمی‌گرداند). `getPaginationRowModel` همان آرایه‌ی
- * کامل را سمت کلاینت صفحه می‌کند.
+ * فهرست tenant را برمی‌گرداند). همان آرایه‌ی کامل سمت کلاینت صفحه می‌شود.
+ *
+ * FE-087: قبلاً `@tanstack/react-table` این کار را می‌کرد — ۱۴٫۶KB gzip در
+ * چانک صفحه‌ی مظنه برای سه ستون ثابت و برش ده‌تایی. حالا برش ساده است و
+ * مثل قبل با رسیدن داده‌ی تازه (مثلاً پس از ثبت مظنه) به صفحه‌ی اول برمی‌گردد.
  */
 
 // باید با tailwind.config.ts → theme.screens.sm هم‌راستا بماند (همان ثابت ResponsiveDialog.tsx)
@@ -41,38 +42,20 @@ const PAGE_SIZE = 10;
  */
 const SOURCE_LABEL: Record<PriceQuoteSource, string> = { MANUAL: 'دستی', FEED: 'فید' };
 
-// `useReactTable` نوع `data` را `TData[]` می‌خواهد، نه `readonly TData[]` — تغییرناپذیری‌اش با عدم mutate تضمین می‌شود، نه با نوع.
-const EMPTY_QUOTES: PriceQuote[] = [];
-
-const columns: ColumnDef<PriceQuote>[] = [
-  {
-    accessorKey: 'observedAt',
-    header: 'زمان',
-    cell: ({ getValue }) => formatJalaliDateTime(new Date(getValue<string>())),
-  },
-  {
-    accessorKey: 'amountRial',
-    header: 'مبلغ',
-    cell: ({ getValue }) => <RateDisplay value={getValue<bigint>()} size="sm" />,
-  },
-  {
-    accessorKey: 'source',
-    header: 'منبع',
-    cell: ({ getValue }) => SOURCE_LABEL[getValue<PriceQuoteSource>()],
-  },
-];
+/** آرایه را به صفحه‌های `size`تایی می‌شکند. خالی → هیچ صفحه‌ای. */
+export function paginate<T>(items: readonly T[], size: number): T[][] {
+  const pages: T[][] = [];
+  for (let start = 0; start < items.length; start += size) {
+    pages.push(items.slice(start, start + size));
+  }
+  return pages;
+}
 
 export function QuoteHistoryList() {
   const { data, isLoading, isError, refetch } = usePriceQuoteHistory('MAZNEH');
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
-
-  const table = useReactTable({
-    data: data ?? EMPTY_QUOTES,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    initialState: { pagination: { pageSize: PAGE_SIZE } },
-  });
+  // شماره‌ی صفحه به همان آرایه‌ای گره خورده که رویش انتخاب شد؛ داده‌ی تازه = صفحه‌ی اول.
+  const [page, setPage] = useState<{ source: unknown; index: number }>({ source: undefined, index: 0 });
 
   if (isLoading) {
     return <CardSkeleton lines={4} />;
@@ -94,9 +77,11 @@ export function QuoteHistoryList() {
     );
   }
 
-  const rows = table.getRowModel().rows;
-  const pageCount = table.getPageCount();
-  const pageIndex = table.getState().pagination.pageIndex;
+  const pages = paginate(data, PAGE_SIZE);
+  const pageCount = pages.length;
+  const pageIndex = page.source === data ? Math.min(page.index, pageCount - 1) : 0;
+  const quotes = pages[pageIndex] ?? [];
+  const goToPage = (index: number) => setPage({ source: data, index });
 
   return (
     <div className="space-y-3">
@@ -104,24 +89,20 @@ export function QuoteHistoryList() {
         <div className="overflow-hidden rounded-lg border border-border">
           <Table>
             <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
+              <TableRow>
+                <TableHead>زمان</TableHead>
+                <TableHead>مبلغ</TableHead>
+                <TableHead>منبع</TableHead>
+              </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
+              {quotes.map((quote) => (
+                <TableRow key={quote.id}>
+                  <TableCell>{formatJalaliDateTime(new Date(quote.observedAt))}</TableCell>
+                  <TableCell>
+                    <RateDisplay value={quote.amountRial} size="sm" />
+                  </TableCell>
+                  <TableCell>{SOURCE_LABEL[quote.source]}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -129,22 +110,19 @@ export function QuoteHistoryList() {
         </div>
       ) : (
         <div className="space-y-2">
-          {rows.map((row) => {
-            const quote = row.original;
-            return (
-              <Card key={quote.id}>
-                <CardContent className="flex items-center justify-between gap-3 pt-6">
-                  <div className="space-y-1">
-                    <RateDisplay value={quote.amountRial} size="sm" />
-                    <p className="text-xs text-muted-foreground">
-                      {formatJalaliDateTime(new Date(quote.observedAt))}
-                    </p>
-                  </div>
-                  <Badge variant="secondary">{SOURCE_LABEL[quote.source]}</Badge>
-                </CardContent>
-              </Card>
-            );
-          })}
+          {quotes.map((quote) => (
+            <Card key={quote.id}>
+              <CardContent className="flex items-center justify-between gap-3 pt-6">
+                <div className="space-y-1">
+                  <RateDisplay value={quote.amountRial} size="sm" />
+                  <p className="text-xs text-muted-foreground">
+                    {formatJalaliDateTime(new Date(quote.observedAt))}
+                  </p>
+                </div>
+                <Badge variant="secondary">{SOURCE_LABEL[quote.source]}</Badge>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
 
@@ -154,8 +132,8 @@ export function QuoteHistoryList() {
             type="button"
             variant="outline"
             size="sm"
-            disabled={!table.getCanPreviousPage()}
-            onClick={() => table.previousPage()}
+            disabled={pageIndex === 0}
+            onClick={() => goToPage(pageIndex - 1)}
           >
             <ChevronRight className="size-4" aria-hidden="true" />
             قبلی
@@ -167,8 +145,8 @@ export function QuoteHistoryList() {
             type="button"
             variant="outline"
             size="sm"
-            disabled={!table.getCanNextPage()}
-            onClick={() => table.nextPage()}
+            disabled={pageIndex >= pageCount - 1}
+            onClick={() => goToPage(pageIndex + 1)}
           >
             <ChevronLeft className="size-4" aria-hidden="true" />
             بعدی

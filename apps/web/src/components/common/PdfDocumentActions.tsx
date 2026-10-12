@@ -1,9 +1,8 @@
-import { useState } from 'react';
+import { Suspense, lazy, useState } from 'react';
 import { Download, Eye, Loader2, Share2 } from 'lucide-react';
 import type { DownloadedFile } from '@/api/client';
 import { presentPdfError } from '@/api/error-presentation';
 import { ApiErrorNoticeContent } from '@/components/common/ApiErrorNotice';
-import { PdfPreviewPanel } from '@/components/common/PdfPreviewPanel';
 import { Button } from '@/components/ui/button';
 import { canShareFiles, usePdfFile, type PdfAction } from '@/hooks/usePdfFile';
 import { cn } from '@/lib/utils';
@@ -18,6 +17,14 @@ import { cn } from '@/lib/utils';
  * متن (با پیام صریح). هیچ‌وقت URL سند به اشتراک گذاشته نمی‌شود — فقط فایلی
  * که با نشست همین کاربر گرفته شده و متنی که لینک ندارد.
  */
+
+/**
+ * FE-087 — پیش‌نمایش PDF تنبل است: فقط وقتی کاربر «پیش‌نمایش» را می‌زند و
+ * فایل رسیده بارگذاری می‌شود، نه همراه هر صفحه‌ای که اقدامات PDF دارد.
+ */
+const PdfPreviewPanel = lazy(() =>
+  import('@/components/common/PdfPreviewPanel').then((m) => ({ default: m.PdfPreviewPanel })),
+);
 
 export interface PdfDocumentActionsProps {
   readonly fetchFile: (signal: AbortSignal) => Promise<DownloadedFile>;
@@ -126,13 +133,22 @@ export function PdfDocumentActions({
       </p>
       {pdf.error ? <ApiErrorNoticeContent presentation={presentPdfError(pdf.error)} /> : null}
       {pdf.preview ? (
-        <PdfPreviewPanel
-          url={pdf.preview.url}
-          fileName={pdf.preview.fileName}
-          title={previewTitle}
-          onClose={pdf.closePreview}
-          onSave={pdf.savePreview}
-        />
+        <Suspense
+          fallback={
+            <p className="flex min-h-11 items-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="size-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+              در حال آماده‌سازی پیش‌نمایش…
+            </p>
+          }
+        >
+          <PdfPreviewPanel
+            url={pdf.preview.url}
+            fileName={pdf.preview.fileName}
+            title={previewTitle}
+            onClose={pdf.closePreview}
+            onSave={pdf.savePreview}
+          />
+        </Suspense>
       ) : null}
     </div>
   );
