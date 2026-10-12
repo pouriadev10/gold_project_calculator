@@ -15,6 +15,7 @@
     "audit:mobile": "node scripts/mobile-audit.mjs",
     "audit:lcp": "node scripts/lcp-audit.mjs",
     "audit:inp": "node scripts/inp-audit.mjs",
+    "audit:pwa": "node scripts/pwa-audit.mjs",
     "analyze": "node ../../scripts/check-bundle-size.mjs --details",
     "check:circular": "madge --circular --extensions ts,tsx --ts-config tsconfig.json src"
   },

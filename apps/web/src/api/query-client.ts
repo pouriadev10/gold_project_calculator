@@ -68,6 +68,13 @@ export function createQueryClient(): QueryClient {
          * `useIdempotentSubmit` را با همان کلید صدا می‌زند.
          */
         retry: false,
+        /*
+         * FE-090: پیش‌فرض TanStack (`'online'`) mutation آفلاین را «مکث» می‌کند و با برگشت
+         * اتصال خودکار می‌فرستد — یعنی همان صف آفلاینی که فاز ۱ ممنوع کرده (معامله‌ای که
+         * کاربر فکر می‌کند ثبت نشد، ساعتی بعد بی‌صدا ثبت شود). `'always'`: همان لحظه اجرا
+         * و اگر آفلاین است همان لحظه شکست (`OfflineError` در client.ts).
+         */
+        networkMode: 'always',
       },
     },
   });

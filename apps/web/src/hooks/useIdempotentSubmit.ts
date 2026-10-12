@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { newIdempotencyKey } from '@/api/client';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
 /**
  * کلید Idempotency پایدار برای یک عملیات نوشتنی.
@@ -32,6 +33,10 @@ export function useIdempotencyKey(): { readonly key: string; readonly reset: () 
  * تلاش همان `key` را حمل می‌کنند؛ سرور (یا cache ساختگی MSW) دومی را به
  * جای نتیجه‌ی اولی برمی‌گرداند، نه اینکه سند دوم بسازد. قفل سرعت را
  * بهتر می‌کند، کلید درستی را تضمین می‌کند.
+ *
+ * FE-090: `offline` برای غیرفعال کردن دکمه‌ی ثبت است. خودِ ارسال آفلاین را
+ * `client.ts` با `OfflineError` رد می‌کند (هیچ صفی ساخته نمی‌شود)، پس حتی فرمی که
+ * دکمه‌اش را غیرفعال نکرده هم چیزی آفلاین ثبت یا برای بعد نگه نمی‌دارد.
  */
 export function useIdempotentSubmit<TPayload, TResult>(
   action: (key: string, payload: TPayload) => Promise<TResult>,
@@ -40,8 +45,10 @@ export function useIdempotentSubmit<TPayload, TResult>(
   readonly isSubmitting: boolean;
   readonly key: string;
   readonly reset: () => void;
+  readonly offline: boolean;
 } {
   const { key, reset } = useIdempotencyKey();
+  const offline = !useOnlineStatus();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const inFlight = useRef(false);
 
@@ -61,5 +68,5 @@ export function useIdempotentSubmit<TPayload, TResult>(
     [action, key],
   );
 
-  return { submit, isSubmitting, key, reset };
+  return { submit, isSubmitting, key, reset, offline };
 }

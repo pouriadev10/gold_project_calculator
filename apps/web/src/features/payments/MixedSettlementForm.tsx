@@ -8,6 +8,7 @@ import { useCoinTypes, usePartyBalances } from '@/api/queries';
 import { queryKeys } from '@/api/query-keys';
 import { AmountDisplay } from '@/components/common/AmountDisplay';
 import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
+import { OFFLINE_SUBMIT_MESSAGE } from '@/components/common/OfflineSubmitHint';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select } from '@/components/ui/select';
@@ -155,7 +156,7 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
     if (needsQuote && lockedQuote === null && mazneh.data) setLockedQuote(mazneh.data);
   }, [needsQuote, mazneh.data, lockedQuote]);
 
-  const { submit: runSubmit, isSubmitting, reset: resetKey } = useIdempotentSubmit(
+  const { submit: runSubmit, isSubmitting, reset: resetKey, offline } = useIdempotentSubmit(
     (key: string, input: CreateMixedSettlementInput) => createMixedSettlement(partyId, input, key),
   );
 
@@ -171,8 +172,9 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
 
   const errors = lines.map((line) => lineError(line, availableCreditRial));
   const hasQuoteGap = needsQuote && lockedQuote === null;
-  const reason: string | null =
-    lines.length === 0
+  const reason: string | null = offline
+    ? OFFLINE_SUBMIT_MESSAGE
+    : lines.length === 0
       ? 'حداقل یک ردیف اضافه کنید.'
       : errors.some((e) => e !== null)
         ? 'یک یا چند ردیف ناقص یا نامعتبر است.'

@@ -1,6 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { afterContentPaint, registerServiceWorker, whenStartupQueriesSettle } from './startup';
+import { afterContentPaint, whenStartupQueriesSettle } from './startup';
 
 /** FE-088 — زمان‌بندی کارهای پس از بالا آمدن. */
 
@@ -120,20 +120,5 @@ describe('afterContentPaint', () => {
     expect(done).toBe(false);
     await vi.advanceTimersByTimeAsync(1);
     expect(done).toBe(true);
-  });
-});
-
-describe('registerServiceWorker', () => {
-  it('sw.js را زیر base ثبت می‌کند و شکست ثبت را بی‌صدا می‌بلعد', async () => {
-    const register = vi.fn().mockRejectedValue(new Error('insecure context'));
-    vi.stubGlobal('navigator', { serviceWorker: { register } });
-    registerServiceWorker('/');
-    expect(register).toHaveBeenCalledWith('/sw.js', { scope: '/' });
-    await Promise.resolve();
-  });
-
-  it('مرورگر بی‌سرویس‌ورکر خطا نمی‌دهد', () => {
-    vi.stubGlobal('navigator', {});
-    expect(() => registerServiceWorker('/')).not.toThrow();
   });
 });

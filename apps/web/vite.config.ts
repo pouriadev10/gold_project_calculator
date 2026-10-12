@@ -53,11 +53,15 @@ export default defineConfig({
       resolveSpecifier: (specifier) => specifier.replace(/^@\//u, `${SRC}/`),
     }),
     VitePWA({
-      registerType: 'autoUpdate',
+      // FE-090: نسخه‌ی تازه منتظر اجازه‌ی کاربر می‌ماند (SKIP_WAITING از `lib/pwa-update.ts`)؛
+      // `autoUpdate` می‌توانست وسط ثبت یک فروش کنترل را عوض کند.
+      registerType: 'prompt',
       // FE-088: بدون `registerSW.js` همگام در <head>؛ main.tsx پس از داده‌ی صفحه‌ی اول ثبت می‌کند
       injectRegister: false,
       includeAssets: ['fonts/vazirmatn-fa.woff2', 'icons/*.png', 'icons/*.svg'],
       manifest: {
+        // شناسه‌ی پایدار برنامه‌ی نصب‌شده — مستقل از start_url، تا تغییر آن نصب تازه نسازد
+        id: '/',
         name: 'حساب طلا',
         short_name: 'حساب طلا',
         description: 'حسابداری طلا و سکه — واحد پایه طلاست، نه ریال',
@@ -86,6 +90,12 @@ export default defineConfig({
         globIgnores: ['**/mockServiceWorker.js'],
         cleanupOutdatedCaches: true,
         navigateFallback: '/index.html',
+        /*
+         * FE-090 — آفلاین فقط پوسته: ناوبری آفلاین همان index.html پیش‌کش‌شده را می‌گیرد،
+         * ولی `/api` هرگز (نه fallback، نه runtimeCaching): داده‌ی مالی کهنه از کش نشان داده
+         * نمی‌شود و نوشتن آفلاین در صف نمی‌رود.
+         */
+        navigateFallbackDenylist: [/^\/api\//],
       },
       devOptions: {
         // در توسعه سرویس‌ورکر خاموش است تا رفتار HMR گیج‌کننده نشود

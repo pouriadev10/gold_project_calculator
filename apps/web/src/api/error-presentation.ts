@@ -1,5 +1,5 @@
 import { InvalidPdfError } from '@/lib/pdf-file';
-import { ApiError, NetworkError } from './api-error';
+import { ApiError, NetworkError, OfflineError } from './api-error';
 
 /**
  * متن‌های خطای API برای نمایش در رابط کاربر.
@@ -63,6 +63,15 @@ function presentation(
  * صفحه نگه دارد تا خطای ثبت عملیات مالی تا اقدام بعدی کاربر ناپدید نشود.
  */
 export function presentApiError(error: unknown): ApiErrorPresentation {
+  // FE-090: پیش از NetworkError — زیرکلاس آن است ولی پیامش باید صریح بگوید چیزی نگه داشته نشد
+  if (error instanceof OfflineError) {
+    return presentation(
+      'network',
+      'اتصال اینترنت قطع است',
+      'در حالت آفلاین هیچ معامله یا عملیات مالی ثبت نمی‌شود و چیزی برای ارسال بعدی نگه داشته نمی‌شود. پس از وصل شدن، دوباره ثبت کنید.',
+    );
+  }
+
   if (error instanceof NetworkError) {
     return presentation(
       'network',

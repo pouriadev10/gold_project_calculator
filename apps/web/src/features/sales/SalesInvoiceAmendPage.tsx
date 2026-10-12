@@ -33,6 +33,7 @@ import { ErrorState } from '@/components/common/ErrorState';
 import { PageHeader } from '@/components/common/PageHeader';
 import { PartySelector } from '@/components/common/PartySelector';
 import { UnitToggle } from '@/components/common/UnitToggle';
+import { OfflineSubmitHint } from '@/components/common/OfflineSubmitHint';
 import { CountInput } from '@/components/keypad/CountInput';
 import { MoneyInput } from '@/components/keypad/MoneyInput';
 import { NumericKeypad } from '@/components/keypad/NumericKeypad';
@@ -534,11 +535,12 @@ function AmendmentForm({
         type="button"
         size="action"
         className="w-full"
-        disabled={!submitAllowed || submission.isSubmitting || !item}
+        disabled={!submitAllowed || submission.isSubmitting || !item || submission.offline}
         onClick={() => void submit()}
       >
         {submission.isSubmitting ? 'در حال ثبت نسخهٔ جدید…' : 'ثبت اصلاح فاکتور'}
       </Button>
+      <OfflineSubmitHint offline={submission.offline} />
       <NumericKeypad />
     </div>
   );

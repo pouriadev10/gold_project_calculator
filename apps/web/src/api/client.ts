@@ -1,7 +1,7 @@
 import type { z } from 'zod';
 import { fileNameFromContentDisposition } from '@/lib/pdf-file';
 import { useSessionStore } from '@/stores/session-store';
-import { ApiError, NetworkError } from './api-error';
+import { ApiError, NetworkError, OfflineError, isBrowserOffline } from './api-error';
 import { apiErrorSchema, sessionResponseSchema, type SessionResponse } from './contracts';
 
 export { ApiError, NetworkError };
@@ -184,6 +184,10 @@ async function requestResponse(
   timeoutMs: number,
   options: RequestOptions,
 ): Promise<Response> {
+  // FE-090: نوشتن آفلاین هرگز فرستاده یا برای بعد نگه داشته نمی‌شود — فوراً با پیام صریح رد می‌شود.
+  const method = (init.method ?? 'GET').toUpperCase();
+  if (method !== 'GET' && method !== 'HEAD' && isBrowserOffline()) throw new OfflineError();
+
   const timeoutSignal = AbortSignal.timeout(timeoutMs);
   const signal = combineSignals([callerSignal, timeoutSignal]);
 

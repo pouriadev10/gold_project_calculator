@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-router';
 import { uuidSchema } from '@gold/contracts';
 import { AppNav } from '@/components/common/AppNav';
+import { AppStatusBanners } from '@/components/common/AppStatusBanners';
 import { NotFoundPage } from '@/components/common/NotFoundPage';
 import { PageSkeleton } from '@/components/common/PageSkeleton';
 import { requireAuth, requireRole } from '@/app/route-guards';
@@ -22,8 +23,18 @@ import { OPENING_BALANCE_ROLES, PROFIT_REPORT_ROLES } from '@/lib/permissions';
  * را ببینند (مثل ورود، پیش از احراز هویت) مستقیماً زیر همین می‌آیند؛
  * بقیه زیر `appShellRoute` (پوسته‌ی ناوبری + main) تو در تو می‌شوند.
  */
+function RootLayout() {
+  // FE-090: نوار آفلاین و اعلان نسخه‌ی تازه روی همه‌ی صفحه‌ها، حتی ورود
+  return (
+    <>
+      <AppStatusBanners />
+      <Outlet />
+    </>
+  );
+}
+
 const rootRoute = createRootRoute({
-  component: Outlet,
+  component: RootLayout,
   notFoundComponent: NotFoundPage,
 });
 

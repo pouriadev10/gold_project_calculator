@@ -21,6 +21,7 @@ import { AmountDisplay } from '@/components/common/AmountDisplay';
 import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
 import { CardSkeleton } from '@/components/common/CardSkeleton';
 import { ErrorState } from '@/components/common/ErrorState';
+import { OFFLINE_SUBMIT_MESSAGE } from '@/components/common/OfflineSubmitHint';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select } from '@/components/ui/select';
@@ -83,7 +84,7 @@ export function CoinSettlementForm({ partyId, onSuccess }: CoinSettlementFormPro
   const [error, setError] = useState<unknown>(null);
   const [result, setResult] = useState<CoinSettlement | null>(null);
 
-  const { submit: runSubmit, isSubmitting, reset: resetKey } = useIdempotentSubmit(
+  const { submit: runSubmit, isSubmitting, reset: resetKey, offline } = useIdempotentSubmit(
     (key: string, input: CreateCoinSettlementInput) => createCoinSettlement(partyId, input, key),
   );
 
@@ -107,8 +108,9 @@ export function CoinSettlementForm({ partyId, onSuccess }: CoinSettlementFormPro
     selectedType && count > 0n ? (count * BigInt(selectedType.grossWeightUg)) / 1000n : undefined;
   const receivableRial = balancesQuery.data ? BigInt(balancesQuery.data.rawBalances.rial) : undefined;
 
-  const reason: string | null =
-    coinTypeId === null || coin === undefined
+  const reason: string | null = offline
+    ? OFFLINE_SUBMIT_MESSAGE
+    : coinTypeId === null || coin === undefined
       ? 'نوع سکه انتخاب نشده است.'
       : mazneh.data === null || mazneh.data === undefined
         ? 'مظنه هنوز دریافت نشده — چند لحظه صبر کنید.'

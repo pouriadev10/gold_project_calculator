@@ -5,6 +5,7 @@ import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
 import { PageHeader } from '@/components/common/PageHeader';
 import { EmptyState } from '@/components/common/EmptyState';
 import { UnitToggle } from '@/components/common/UnitToggle';
+import { OfflineSubmitHint } from '@/components/common/OfflineSubmitHint';
 import { Button } from '@/components/ui/button';
 import { NumericKeypad } from '@/components/keypad/NumericKeypad';
 import { useMazneh } from '@/features/home/useMazneh';
@@ -73,7 +74,7 @@ export default function SaleWizardPage() {
   const setParty = useSaleDraftStore((s) => s.setParty);
   const setItems = useSaleDraftStore((s) => s.setItems);
 
-  const { preparation, isSubmitting, error, outcome, submit, startNewSale } = useJewelrySaleSubmit();
+  const { preparation, isSubmitting, offline, error, outcome, submit, startNewSale } = useJewelrySaleSubmit();
 
   /*
    * حین ارسال هم مسدود می‌ماند حتی اگر پیش‌نویس «پیشرفت» نداشته باشد —
@@ -157,6 +158,11 @@ export default function SaleWizardPage() {
 
       {/* اقدام اصلی پایین صفحه — منطقه‌ی شست، همیشه بدون اسکرول دیده می‌شود */}
       <div className="fixed inset-x-0 bottom-above-nav z-20 border-t border-border bg-background/95 px-4 py-3 backdrop-blur-sm lg:static lg:border-0 lg:bg-transparent">
+        {isLastStep ? (
+          <div className="pb-2">
+            <OfflineSubmitHint offline={offline} />
+          </div>
+        ) : null}
         <div className="grid grid-cols-2 gap-3">
           <Button
             type="button"
@@ -171,7 +177,7 @@ export default function SaleWizardPage() {
             <Button
               type="button"
               size="action"
-              disabled={!preparation.ok || isSubmitting}
+              disabled={!preparation.ok || isSubmitting || offline}
               onClick={() => void submit()}
             >
               {isSubmitting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}

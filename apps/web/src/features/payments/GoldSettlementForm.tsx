@@ -16,6 +16,7 @@ import { usePartyBalances } from '@/api/queries';
 import { queryKeys } from '@/api/query-keys';
 import { AmountDisplay } from '@/components/common/AmountDisplay';
 import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
+import { OFFLINE_SUBMIT_MESSAGE } from '@/components/common/OfflineSubmitHint';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { KaratInput } from '@/components/keypad/KaratInput';
@@ -70,7 +71,7 @@ export function GoldSettlementForm({ partyId, onSuccess }: GoldSettlementFormPro
     if (lockedQuote === null && mazneh.data) setLockedQuote(mazneh.data);
   }, [mazneh.data, lockedQuote]);
 
-  const { submit: runSubmit, isSubmitting, reset: resetKey } = useIdempotentSubmit(
+  const { submit: runSubmit, isSubmitting, reset: resetKey, offline } = useIdempotentSubmit(
     (key: string, input: CreateGoldSettlementInput) => createGoldSettlement(partyId, input, key),
   );
 
@@ -81,8 +82,9 @@ export function GoldSettlementForm({ partyId, onSuccess }: GoldSettlementFormPro
       : undefined;
   const receivableRial = balancesQuery.data ? BigInt(balancesQuery.data.rawBalances.rial) : undefined;
 
-  const reason: string | null =
-    grossWeightMg <= 0n
+  const reason: string | null = offline
+    ? OFFLINE_SUBMIT_MESSAGE
+    : grossWeightMg <= 0n
       ? 'وزن باید بزرگ‌تر از صفر باشد.'
       : !karatValid
         ? 'عیار باید عددی بین ۱ و ۱۰۰۰ باشد.'

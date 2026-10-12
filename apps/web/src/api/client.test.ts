@@ -2,7 +2,7 @@ import { toSafeNumber } from '@gold/core-calc';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { useSessionStore } from '@/stores/session-store';
-import { ApiError, NetworkError } from './api-error';
+import { ApiError, NetworkError, OfflineError } from './api-error';
 import {
   apiGet,
   apiGetFile,
@@ -473,5 +473,34 @@ describe('دانلود فایل احراز هویت‌شده', () => {
     expect((spy.mock.calls[0]?.[1]?.headers as Record<string, string>)['Accept']).toBe(
       'application/pdf',
     );
+  });
+});
+
+describe('آفلاین — FE-090', () => {
+  function goOffline() {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('نوشتن آفلاین اصلاً فرستاده نمی‌شود و OfflineError می‌دهد — هیچ صفی ساخته نمی‌شود', async () => {
+    goOffline();
+    const spy = mockFetch({ body: { value: 'x' } });
+    await expect(apiPost('/sales/invoices', { a: 1 }, okSchema)).rejects.toBeInstanceOf(OfflineError);
+    await expect(apiPostReadOnly('/sales/pricing/preview', { a: 1 }, okSchema)).rejects.toBeInstanceOf(OfflineError);
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('OfflineError همان NetworkError است تا هر جای قبلیِ خطای شبکه آن را بشناسد', () => {
+    expect(new OfflineError()).toBeInstanceOf(NetworkError);
+  });
+
+  it('خواندن آفلاین همچنان امتحان می‌شود (پاسخ را fetch یا سرویس‌ورکر معلوم می‌کند)', async () => {
+    goOffline();
+    const spy = mockFetch({ body: { value: 'x' } });
+    await expect(apiGet('/parties', okSchema)).resolves.toEqual({ value: 'x' });
+    expect(spy).toHaveBeenCalledTimes(1);
   });
 });

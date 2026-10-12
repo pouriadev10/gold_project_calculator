@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ApiError, NetworkError } from './api-error';
+import { ApiError, NetworkError, OfflineError } from './api-error';
 import { presentApiError } from './error-presentation';
 
 describe('presentApiError', () => {
@@ -32,8 +32,18 @@ describe('presentApiError', () => {
     [new ApiError(401, 'UNAUTHORIZED', 'raw'), 'session-expired'],
     [new ApiError(403, 'FORBIDDEN', 'raw'), 'forbidden'],
     [new NetworkError(), 'network'],
+    [new OfflineError(), 'network'],
     [new Error('unexpected'), 'unknown'],
   ] as const)('خطای اصلی %s را به حالت %s نگاشت می‌کند', (error, kind) => {
     expect(presentApiError(error).kind).toBe(kind);
+  });
+});
+
+describe('FE-090 — آفلاین', () => {
+  it('پیام آفلاین صریح می‌گوید چیزی ثبت یا برای بعد نگه داشته نشد', () => {
+    const result = presentApiError(new OfflineError());
+    expect(result.title).toBe('اتصال اینترنت قطع است');
+    expect(result.message).toContain('هیچ معامله یا عملیات مالی ثبت نمی‌شود');
+    expect(result.message).toContain('چیزی برای ارسال بعدی نگه داشته نمی‌شود');
   });
 });

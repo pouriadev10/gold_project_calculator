@@ -7,8 +7,10 @@ import { loadInitialRoute, prefetchInitialRouteData } from '@/app/initial-route'
 import { router } from '@/app/router';
 import { DeferredToaster } from '@/components/common/DeferredToaster';
 import { applyAppFontNow, applyAppFontOnNextPage, isAppFontLikelyCached } from '@/lib/app-font';
-import { afterStartup, registerServiceWorker } from '@/lib/startup';
+import { registerServiceWorker } from '@/lib/pwa-update';
+import { afterStartup } from '@/lib/startup';
 import { stylesheetsReady } from '@/lib/styles-ready';
+import { useAppUpdateStore } from '@/stores/app-update-store';
 import { useSessionStore } from '@/stores/session-store';
 import '@/styles/globals.css';
 
@@ -61,7 +63,8 @@ async function bootstrap(): Promise<void> {
   // فونت (بار اول؛ اعمال از ناوبری بعدی) و سرویس‌ورکر با precache حدود ۱٫۵MB.
   await startup;
   if (!fontCached) void applyAppFontOnNextPage((onNextPage) => router.subscribe('onResolved', onNextPage));
-  if (import.meta.env.PROD) registerServiceWorker(import.meta.env.BASE_URL);
+  // FE-090: نسخه‌ی تازه منتظر اجازه‌ی کاربر می‌ماند (`AppUpdateBanner`)، نه بارگذاری خودکار وسط فرم.
+  if (import.meta.env.PROD) registerServiceWorker(import.meta.env.BASE_URL, useAppUpdateStore.getState().setWaiting);
 }
 
 void bootstrap();

@@ -7,6 +7,7 @@ import { createManualPriceQuote } from '@/api/pricing';
 import { queryKeys } from '@/api/query-keys';
 import { RateDisplay } from '@/components/common/AmountDisplay';
 import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
+import { OfflineSubmitHint } from '@/components/common/OfflineSubmitHint';
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -45,7 +46,7 @@ export function ManualQuoteForm() {
   const [lastRegistered, setLastRegistered] = useState<PriceQuote | null>(null);
   const queryClient = useQueryClient();
 
-  const { submit, isSubmitting, reset } = useIdempotentSubmit((key: string, value: bigint) =>
+  const { submit, isSubmitting, reset, offline } = useIdempotentSubmit((key: string, value: bigint) =>
     createManualPriceQuote(value, key),
   );
 
@@ -106,9 +107,10 @@ export function ManualQuoteForm() {
         </CardContent>
       </Card>
 
-      <Button type="button" size="action" disabled={!isValid} onClick={() => setConfirmOpen(true)}>
+      <Button type="button" size="action" disabled={!isValid || offline} onClick={() => setConfirmOpen(true)}>
         ثبت مظنه
       </Button>
+      <OfflineSubmitHint offline={offline} />
 
       <ResponsiveDialog
         open={confirmOpen}
@@ -138,7 +140,7 @@ export function ManualQuoteForm() {
             >
               انصراف
             </Button>
-            <Button type="button" disabled={isSubmitting} onClick={() => void handleConfirm()}>
+            <Button type="button" disabled={isSubmitting || offline} onClick={() => void handleConfirm()}>
               {isSubmitting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
               تأیید و ثبت
             </Button>

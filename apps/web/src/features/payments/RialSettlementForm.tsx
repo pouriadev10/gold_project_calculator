@@ -7,6 +7,7 @@ import { usePartyBalances } from '@/api/queries';
 import { queryKeys } from '@/api/query-keys';
 import { AmountDisplay } from '@/components/common/AmountDisplay';
 import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
+import { OFFLINE_SUBMIT_MESSAGE } from '@/components/common/OfflineSubmitHint';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MoneyInput } from '@/components/keypad/MoneyInput';
@@ -59,7 +60,7 @@ export function RialSettlementForm({ partyId, onSuccess }: RialSettlementFormPro
   const [error, setError] = useState<unknown>(null);
   const [result, setResult] = useState<RialSettlement | null>(null);
 
-  const { submit: runSubmit, isSubmitting, reset: resetKey } = useIdempotentSubmit(
+  const { submit: runSubmit, isSubmitting, reset: resetKey, offline } = useIdempotentSubmit(
     (key: string, input: CreateRialSettlementInput) => createRialSettlement(partyId, input, key),
   );
 
@@ -68,7 +69,7 @@ export function RialSettlementForm({ partyId, onSuccess }: RialSettlementFormPro
   const fullAmount = receivableRial !== undefined && receivableRial > 0n ? receivableRial : undefined;
   const rate1000 = mazneh.data?.gram1000;
 
-  const reason = amountRial <= 0n ? 'مبلغ باید بزرگ‌تر از صفر باشد.' : null;
+  const reason = offline ? OFFLINE_SUBMIT_MESSAGE : amountRial <= 0n ? 'مبلغ باید بزرگ‌تر از صفر باشد.' : null;
 
   function resetForm() {
     setAmountRial(0n);

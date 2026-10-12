@@ -35,3 +35,22 @@ export class NetworkError extends Error {
     this.name = 'NetworkError';
   }
 }
+
+/**
+ * مرورگر آفلاین است و درخواست نوشتنی اصلاً فرستاده نشد — FE-090.
+ *
+ * فاز ۱ ثبت آفلاین ندارد: هیچ عملیاتی در صف نمی‌رود تا بعداً خودکار ارسال شود و هیچ
+ * سندی (و هیچ شماره‌ی فاکتوری) سمت کلاینت ساخته نمی‌شود. زیرکلاس `NetworkError` است
+ * تا هر کدی که خطای شبکه را می‌شناسد، این را هم بشناسد.
+ */
+export class OfflineError extends NetworkError {
+  constructor() {
+    super('اتصال اینترنت قطع است؛ در حالت آفلاین هیچ عملیاتی ثبت نمی‌شود');
+    this.name = 'OfflineError';
+  }
+}
+
+/** `navigator.onLine === false` قطعی است؛ `true` فقط یعنی «شاید» — آن حالت را خود fetch معلوم می‌کند. */
+export function isBrowserOffline(): boolean {
+  return typeof navigator !== 'undefined' && navigator.onLine === false;
+}

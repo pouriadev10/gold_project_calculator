@@ -84,7 +84,7 @@ export function QuoteSourceCard() {
   const canRefresh = useHasRole(PRICE_FEED_REFRESH_ROLES);
   const [result, setResult] = useState<PriceFeedRefreshResult | null>(null);
   const [error, setError] = useState<unknown>(null);
-  const { submit, isSubmitting, reset } = useIdempotentSubmit((key: string) => refreshPriceFeed(key));
+  const { submit, isSubmitting, reset, offline } = useIdempotentSubmit((key: string) => refreshPriceFeed(key));
 
   async function refresh(): Promise<void> {
     setError(null);
@@ -144,7 +144,7 @@ export function QuoteSourceCard() {
               variant="outline"
               className="w-full"
               onClick={() => void refresh()}
-              disabled={isSubmitting || !data.providerConfigured}
+              disabled={isSubmitting || !data.providerConfigured || offline}
             >
               {isSubmitting ? (
                 <Loader2 className="size-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />

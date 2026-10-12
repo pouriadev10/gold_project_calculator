@@ -36,6 +36,11 @@ describe('createQueryClient', () => {
     expect(client.getDefaultOptions().mutations?.retry).toBe(false);
   });
 
+  it('FE-090: mutation آفلاین مکث و بعداً خودکار ارسال نمی‌شود (networkMode always)', () => {
+    const client = createQueryClient();
+    expect(client.getDefaultOptions().mutations?.networkMode).toBe('always');
+  });
+
   it('queries تا سقف مشخص و فقط روی خطای قابل‌جبران retry می‌شوند', () => {
     const client = createQueryClient();
     const retry = client.getDefaultOptions().queries?.retry;

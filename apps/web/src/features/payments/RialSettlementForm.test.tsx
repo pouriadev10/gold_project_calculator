@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { toPersianDigits } from '@gold/core-calc';
 import type * as Queries from '@/api/queries';
 import type { PartyBalances, PriceQuote } from '@/api/contracts';
@@ -141,5 +141,35 @@ describe('RialSettlementForm — پرداخت ریالی (FE-051)', () => {
     usePartyBalancesMock.mockReturnValue({ data: balances('0'), isLoading: false, isError: false });
     renderForm();
     expect(screen.getByRole('button', { name: 'پرداخت کامل' })).toBeDisabled();
+  });
+});
+
+describe('RialSettlementForm — آفلاین (FE-090)', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('قطع اینترنت ثبت را غیرفعال می‌کند و دلیلش را می‌گوید؛ با وصل شدن دوباره فعال است', async () => {
+    const onLine = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
+    const user = userEvent.setup();
+    renderForm();
+    await user.click(screen.getByRole('button', { name: 'پرداخت کامل' }));
+    const submit = screen.getByRole('button', { name: 'ثبت پرداخت' });
+    expect(submit).toBeEnabled();
+
+    onLine.mockReturnValue(false);
+    act(() => {
+      window.dispatchEvent(new Event('offline'));
+    });
+    expect(submit).toBeDisabled();
+    expect(screen.getByText('اتصال اینترنت قطع است؛ ثبت تا وصل شدن غیرفعال است.')).toBeInTheDocument();
+    await user.click(submit);
+    expect(createRialSettlementMock).not.toHaveBeenCalled();
+
+    onLine.mockReturnValue(true);
+    act(() => {
+      window.dispatchEvent(new Event('online'));
+    });
+    expect(submit).toBeEnabled();
   });
 });

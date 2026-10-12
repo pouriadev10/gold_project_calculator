@@ -10,6 +10,7 @@ import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
 import { CardSkeleton } from '@/components/common/CardSkeleton';
 import { ErrorState } from '@/components/common/ErrorState';
 import { PageHeader } from '@/components/common/PageHeader';
+import { OfflineSubmitHint } from '@/components/common/OfflineSubmitHint';
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -90,7 +91,7 @@ export default function OpeningBalanceFormPage() {
   const [submitError, setSubmitError] = useState<unknown>(null);
   const [lastRegistered, setLastRegistered] = useState<OpeningBalance | null>(null);
 
-  const { submit, isSubmitting, reset } = useIdempotentSubmit((key: string, input: CreateOpeningBalanceInput) =>
+  const { submit, isSubmitting, reset, offline } = useIdempotentSubmit((key: string, input: CreateOpeningBalanceInput) =>
     createOpeningBalance(input, key),
   );
 
@@ -208,11 +209,12 @@ export default function OpeningBalanceFormPage() {
         <Button
           type="button"
           size="action"
-          disabled={!canSubmit || isSubmitting}
+          disabled={!canSubmit || isSubmitting || offline}
           onClick={() => setConfirmOpen(true)}
         >
           مرور و ثبت موجودی افتتاحیه
         </Button>
+        <OfflineSubmitHint offline={offline} />
       </div>
 
       <ResponsiveDialog

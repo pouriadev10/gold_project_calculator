@@ -68,6 +68,8 @@ export interface JewelrySaleSubmit {
   /** آماده‌بودن ثبت، یا دلیل مسدودبودنش — برای `disabled` دکمه و پیام کنارش. */
   readonly preparation: SaleSubmitPreparation;
   readonly isSubmitting: boolean;
+  /** FE-090: مرورگر آفلاین است — دکمه‌ی ثبت غیرفعال می‌شود (ثبت آفلاین وجود ندارد). */
+  readonly offline: boolean;
   readonly error: unknown;
   readonly outcome: SaleSubmitOutcome | null;
   readonly submit: () => Promise<void>;
@@ -96,6 +98,7 @@ export function useJewelrySaleSubmit(): JewelrySaleSubmit {
     submit: runSubmit,
     isSubmitting,
     reset: resetKey,
+    offline,
   } = useIdempotentSubmit(post);
 
   /*
@@ -159,5 +162,5 @@ export function useJewelrySaleSubmit(): JewelrySaleSubmit {
     resetDraft();
   }, [resetDraft]);
 
-  return { preparation, isSubmitting, error, outcome, submit, startNewSale };
+  return { preparation, isSubmitting, offline, error, outcome, submit, startNewSale };
 }

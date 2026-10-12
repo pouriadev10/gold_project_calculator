@@ -22,6 +22,7 @@ import { ErrorState } from '@/components/common/ErrorState';
 import { PageHeader } from '@/components/common/PageHeader';
 import { PartySelector } from '@/components/common/PartySelector';
 import { UnitToggle } from '@/components/common/UnitToggle';
+import { OFFLINE_SUBMIT_MESSAGE } from '@/components/common/OfflineSubmitHint';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select } from '@/components/ui/select';
@@ -70,6 +71,7 @@ import { SaleKindTabs } from './SaleKindTabs';
  */
 
 type SubmitBlockReason =
+  | 'OFFLINE'
   | 'NO_PARTY'
   | 'NO_COIN_TYPE'
   | 'NO_QUOTE'
@@ -78,6 +80,7 @@ type SubmitBlockReason =
   | 'PAID_EXCEEDS_PAYABLE';
 
 const BLOCK_MESSAGE: Record<SubmitBlockReason, string> = {
+  OFFLINE: OFFLINE_SUBMIT_MESSAGE,
   NO_PARTY: 'مشتری انتخاب نشده است.',
   NO_COIN_TYPE: 'نوع سکه انتخاب نشده است.',
   NO_QUOTE: 'مظنه هنوز دریافت نشده — چند لحظه صبر کنید.',
@@ -122,7 +125,7 @@ export default function CoinSaleForm() {
   const [error, setError] = useState<unknown>(null);
   const [result, setResult] = useState<CoinSaleResult | null>(null);
 
-  const { submit: runSubmit, isSubmitting, reset: resetKey } = useIdempotentSubmit(
+  const { submit: runSubmit, isSubmitting, reset: resetKey, offline } = useIdempotentSubmit(
     (key: string, input: CreateCoinSaleInput) => createCoinSale(input, key),
   );
 
@@ -138,6 +141,7 @@ export default function CoinSaleForm() {
   const currentCount = currentBalance ? toSafeNumber(BigInt(currentBalance.quantity)) : 0;
 
   function blockReason(): SubmitBlockReason | null {
+    if (offline) return 'OFFLINE';
     if (party === null) return 'NO_PARTY';
     if (coinTypeId === null || coin === undefined) return 'NO_COIN_TYPE';
     if (mazneh.data === null || mazneh.data === undefined) return 'NO_QUOTE';

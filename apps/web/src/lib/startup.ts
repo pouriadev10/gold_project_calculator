@@ -99,16 +99,3 @@ export async function afterStartup(client: QueryClient): Promise<void> {
   await afterContentPaint(performance.now());
   await whenIdle();
 }
-
-/**
- * ثبت سرویس‌ورکر — همان کاری که `registerSW.js`ِ vite-plugin-pwa می‌کرد، منهای دو
- * هزینه‌اش: آن فایل یک `<script>` همگام در `<head>` بود (درخواست مسدودکننده‌ی تجزیه‌ی
- * HTML) و ثبت را به رویداد `load` می‌بست که روی 3G درست وسط دریافت داده‌ی صفحه‌ی اول
- * است. اعلان به‌روزرسانی و رفتار PWA کامل کار FE-090 است.
- */
-export function registerServiceWorker(base: string): void {
-  if (!('serviceWorker' in navigator)) return;
-  navigator.serviceWorker.register(`${base}sw.js`, { scope: base }).catch(() => {
-    // بدون سرویس‌ورکر برنامه همچنان کار می‌کند؛ فقط بازدید بعدی از کش نمی‌آید
-  });
-}
