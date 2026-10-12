@@ -80,6 +80,9 @@ function displayValue(kind: NumericFieldKind, raw: string, value: bigint): strin
 /** فاصله‌ی فیلد فعال تا لبه‌ی بالای کیپد. */
 const KEYPAD_FIELD_GAP_PX = 16;
 
+/** سقف انتظار برای click سنتزیِ یک ضربه، پیش از جابه‌جا کردن فیلد (یک قید زمانی UI، نه عدد صنفی). */
+const TAP_SETTLE_MS = 300;
+
 /** آیا انگشت/اشاره‌گر الان پایین است — فاز capture، پیش از هر handler دیگری. */
 let pointerIsDown = false;
 if (typeof window !== 'undefined') {
@@ -182,18 +185,37 @@ export function NumericField({
       });
     };
     /*
-     * تا انگشت روی صفحه است اسکرول نکن: اگر محتوا وسط ضربه جابه‌جا شود، بلند شدن
-     * انگشت روی فیلد دیگری می‌افتد و همان فیلد (یا هیچ‌چیز) فوکوس می‌گیرد.
+     * تا ضربه تمام نشده اسکرول نکن: اگر محتوا وسط ضربه جابه‌جا شود، mousedown/click
+     * سنتزی مرورگر — که کمی **پس از** pointerup می‌رسد — روی فیلد دیگری (یا فضای خالی)
+     * می‌افتد و همان فوکوس می‌گیرد. پس پس از pointerup منتظر click همان ضربه می‌مانیم،
+     * با سقف کوتاه برای ضربه‌ای که click ندارد (مثلاً نگه‌داشتن).
      */
     if (!pointerIsDown) {
       bringAboveKeypad();
       return () => cancelAnimationFrame(frame);
     }
-    window.addEventListener('pointerup', bringAboveKeypad, { once: true });
-    window.addEventListener('pointercancel', bringAboveKeypad, { once: true });
+    let settleTimer: ReturnType<typeof setTimeout> | undefined;
+    const settle = () => {
+      window.removeEventListener('click', onTapClick, true);
+      clearTimeout(settleTimer);
+      bringAboveKeypad();
+    };
+    function onTapClick() {
+      clearTimeout(settleTimer);
+      // پس از پایان کامل click (و فوکوس پیش‌فرضش)، نه وسط آن
+      settleTimer = setTimeout(settle, 0);
+    }
+    const onPointerUp = () => {
+      window.addEventListener('click', onTapClick, { capture: true, once: true });
+      settleTimer = setTimeout(settle, TAP_SETTLE_MS);
+    };
+    window.addEventListener('pointerup', onPointerUp, { once: true });
+    window.addEventListener('pointercancel', settle, { once: true });
     return () => {
-      window.removeEventListener('pointerup', bringAboveKeypad);
-      window.removeEventListener('pointercancel', bringAboveKeypad);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('pointercancel', settle);
+      window.removeEventListener('click', onTapClick, true);
+      clearTimeout(settleTimer);
       cancelAnimationFrame(frame);
     };
   }, [isActive]);
