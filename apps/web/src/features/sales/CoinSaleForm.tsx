@@ -33,6 +33,7 @@ import { useIdempotentSubmit } from '@/hooks/useIdempotentSubmit';
 import { toast } from '@/stores/toast-store';
 import type { PartySelection } from '@/stores/recent-parties-store';
 import { CoinPositionSummary } from './CoinPositionSummary';
+import { SaleKindTabs } from './SaleKindTabs';
 
 /**
  * فرم فروش سکه — FE-048.
@@ -245,6 +246,7 @@ export default function CoinSaleForm() {
       </PageHeader>
 
       <div className="flex-1 space-y-4 p-4 pb-action">
+        <SaleKindTabs />
         <PartySelector label="مشتری" value={party} onChange={setParty} />
 
         <Card>

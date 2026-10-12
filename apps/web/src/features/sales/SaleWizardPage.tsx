@@ -17,6 +17,7 @@ import { SalePaymentInput } from './SalePaymentInput';
 import { SaleReceipt } from './SaleReceipt';
 import { SaleSummary } from './SaleSummary';
 import { useJewelrySaleSubmit } from './useJewelrySaleSubmit';
+import { SaleKindTabs } from './SaleKindTabs';
 
 /**
  * صفحه‌ی شروع فروش — shell جریان فروش سریع (FE-041).
@@ -119,6 +120,8 @@ export default function SaleWizardPage() {
       <SaleStepper current={step} />
 
       <div className="flex-1 space-y-4 p-4 pb-32">
+        {/* انتخاب نوع فروش فقط پیش از شروع؛ وسط جادوگر، پیش‌نویس را رها نمی‌کند. */}
+        {step === 'QUOTE' ? <SaleKindTabs /> : null}
         {step === 'QUOTE' ? <MaznehBar isOnline={isOnline} embedded /> : null}
         {step === 'PARTY' ? <PartySelector label="مشتری" value={party} onChange={setParty} /> : null}
         {step === 'ITEMS' ? <JewelryItemSelector items={items} onChange={setItems} /> : null}

@@ -3,6 +3,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { toPersianDigits } from '@gold/core-calc';
+import type { ReactNode } from 'react';
+import type * as Router from '@tanstack/react-router';
 import type * as Queries from '@/api/queries';
 import type { CoinTypeVersion, InventoryBalance, Party, PriceQuote } from '@/api/contracts';
 import CoinSaleForm from './CoinSaleForm';
@@ -17,6 +19,22 @@ import CoinSaleForm from './CoinSaleForm';
  */
 
 const createCoinSaleMock = vi.fn();
+// `SaleKindTabs` لینک دارد؛ این تست بدون RouterProvider رندر می‌کند.
+vi.mock('@tanstack/react-router', async (importOriginal) => ({
+  ...(await importOriginal<typeof Router>()),
+  Link: ({
+    children,
+    activeProps: _activeProps,
+    activeOptions: _activeOptions,
+    ...props
+  }: {
+    children: ReactNode;
+    activeProps?: unknown;
+    activeOptions?: unknown;
+    to: string;
+  }) => <a href={props.to}>{children}</a>,
+}));
+
 vi.mock('@/api/sales', () => ({
   createCoinSale: (...args: unknown[]) => createCoinSaleMock(...args),
 }));
