@@ -2651,7 +2651,7 @@ docs/android-device-test.md
 > وضعیت FE-086 — **پروتکل آماده، تیک نخورده:** اجرای تست دستگاه واقعی کار کاربر است. [`docs/android-device-test.md`](docs/android-device-test.md) پروتکل کامل است: آماده‌سازی با `adb reverse tcp:5173 tcp:5173` تا گوشی اپ را روی `localhost` ببیند (روی `http://192.168…` نه service worker ساختگی ثبت می‌شود نه Web Share کار می‌کند)، INP از Live metrics در `chrome://inspect`، جدول‌های پرشدنی برای هر نه سناریو (به‌اضافه‌ی سه زیرسناریوی اشتراک PDF که تأیید FE-079 هم هست)، اندازه‌گیری‌ها، رفتار کیبورد و Bottom Sheet، و فهرست مشکلات. با پر شدن جدول‌ها FE-086 و FE-079 با هم تیک می‌خورند. **یافته‌ی آماده‌سازی:** صفحه‌ی فروش سکه هیچ ورودی‌ای از رابط کاربری نداشت — با تأیید کاربر جدا اصلاح شد (`fix(sales)`، تب‌های «زیورآلات/سکه»).
 ---
 # Milestone 21 — Performance و PWA
-## [ ] FE-087 — کنترل Bundle Budget
+## [x] FE-087 — کنترل Bundle Budget
 ### هدف
 حفظ bundle اولیه زیر ۲۰۰KB فشرده.
 ### کارها
@@ -2664,6 +2664,10 @@ docs/android-device-test.md
 ### تمام است وقتی
 * گزارش اندازه در CI ثبت شود.
 * عبور از بودجه build را fail کند.
+
+> تکمیل FE-087: **bundle analyzer:** افزونه‌ی بی‌وابستگی `apps/web/vite-plugins/bundle-report.ts` از اندازه‌ی رندرشده‌ی هر ماژول در Rollup، `apps/web/build/bundle-report.json` می‌سازد: هر چانک (gzip/خام، اولیه یا تنبل)، سهم هر بسته‌ی npm و هر بخش کد خودمان در بسته‌ی اولیه، و بسته‌های چندنسخه‌ای (نسخه از `package.json` واقعی، چون pnpm نام پوشه‌های بلند را hash می‌کند). `pnpm --filter @gold/web analyze` ترکیب همه‌ی چانک‌ها را چاپ می‌کند (قبلاً همان دروازه‌ی اندازه بود). **route splitting:** ورود، «بیشتر» و ۴۰۳ هم تنبل شدند؛ react-hook-form (~۹۰KB خام) از بسته‌ی اولیه بیرون رفت — **۱۵۵٫۳ → ۱۴۱٫۳KB gzip** (اندازه‌گیری روی خروجی نهایی: ۱۴۳٫۴KB، ۷۲٪ بودجه). خانه برای اولین رنگ همچنان ایستاست. **lazy chart / PDF preview:** تأیید شد — ECharts فقط در چانک تنبل `profit-trend-echarts` و پنل پیش‌نمایش PDF فقط در چانک `PdfDocumentActions` است، نه در بسته‌ی اولیه. **dependency تکراری:** `tslib` با دو نسخه در خروجی بود (echarts/zrender آن را روی 2.3.0 قفل کرده‌اند)؛ `overrides` در `pnpm-workspace.yaml` همه را روی 2.8.1 آورد (نصب offline از store محلی) و اجرای واقعی نمودار در مرورگر با ممیزی headless تأیید شد. **import کل کتابخانه:** قاعده‌ی ESLint تازه — import ریشه‌ی `echarts`، `lodash`، `moment` و `import * as` از `lucide-react` خطاست (صفحه‌ی دودِ فقط-توسعه مستثنا). **CI و fail:** بیلد وب حالا خودِ دروازه را اجرا می‌کند (`vite build && check-bundle-size`)، پس بسته‌ی اولیه بالای ۲۰۰KB یا هر بسته‌ی چندنسخه‌ای `pnpm build` را می‌شکند (هر دو با آزمون دستی تأیید شد: بودجه‌ی ساختگی ۱۰۰KB و tslib تکراری تزریقی → خروج ۱). خلاصه‌ی markdown اندازه و سهم‌ها در Job summary همان اجرای GitHub Actions (`GITHUB_STEP_SUMMARY`) نوشته و `bundle-report.json`/`bundle-size.md` به‌عنوان artifact بارگذاری می‌شوند. **یافته‌ی باقی‌مانده:** zod (~۱۳۷KB خام) بزرگ‌ترین سهم بسته‌ی اولیه است — اعتبارسنجی پاسخ API همه‌جا به آن تکیه دارد؛ کوچک کردنش تغییر معماری است و ثبت شد.
+>
+> اعتبارسنجی: `pnpm build` (با دروازه)، `pnpm typecheck`، `pnpm test` (۹۸۶ وب — شامل تست طبقه‌بندی ماژول‌ها — ۱۷۰ API، ۱۹۲ قرارداد، ۱۷۶ core-calc)، بررسی وابستگی دوری، lint فایل‌های تغییرکرده، و ممیزی headless ۳۶۰px (سه اجرای پشت‌سرهم سبز، ورود تنبل و رسم نمودار ECharts در مرورگر). ممیزی اصلاحی جداگانه (`fix(keypad)`) را هم آشکار کرد.
 ---
 ## [ ] FE-088 — بهینه‌سازی LCP
 ### هدف

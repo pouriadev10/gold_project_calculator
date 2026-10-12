@@ -11,10 +11,7 @@ import { AppNav } from '@/components/common/AppNav';
 import { FullPageLoading } from '@/components/common/FullPageLoading';
 import { NotFoundPage } from '@/components/common/NotFoundPage';
 import { requireAuth, requireRole } from '@/app/route-guards';
-import { ForbiddenPage } from '@/features/auth/ForbiddenPage';
-import { LoginPage } from '@/features/auth/LoginPage';
 import { HomePage } from '@/features/home/HomePage';
-import { SettingsPage } from '@/features/settings/SettingsPage';
 import { useSessionGuard } from '@/hooks/useSessionGuard';
 import { useTheme } from '@/hooks/useTheme';
 import { useUnit } from '@/hooks/useUnit';
@@ -75,7 +72,9 @@ const loginRoute = createRoute({
   path: '/login',
   validateSearch: (search: Record<string, unknown>): { reason?: 'expired' } =>
     search['reason'] === 'expired' ? { reason: 'expired' } : {},
-  component: LoginPage,
+  // FE-087: تنبل — react-hook-form (~۹۰KB خام) فقط برای ورود لازم است و کاربرِ واردشده،
+  // که بیشترِ باز کردن‌های برنامه است، نباید آن را پیش از اولین رنگ داشبورد دانلود کند.
+  component: lazyRouteComponent(() => import('@/features/auth/LoginPage'), 'LoginPage'),
 });
 
 // ---- مسیرهای زیر پوسته‌ی برنامه ----
@@ -272,7 +271,7 @@ const reportingProfitRoute = createRoute({
 const settingsRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/settings',
-  component: SettingsPage,
+  component: lazyRouteComponent(() => import('@/features/settings/SettingsPage'), 'SettingsPage'),
 });
 
 /** تنظیمات عمومی نسخه‌دار مستأجر — FE-080. خواندن برای همه؛ ویرایش داخل صفحه فقط OWNER/MANAGER. */
@@ -292,7 +291,7 @@ const coinTypeSettingsRoute = createRoute({
 const forbiddenRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/forbidden',
-  component: ForbiddenPage,
+  component: lazyRouteComponent(() => import('@/features/auth/ForbiddenPage'), 'ForbiddenPage'),
 });
 
 /**

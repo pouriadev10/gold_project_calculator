@@ -103,6 +103,30 @@ const NO_API_IMPORT_PATTERNS = [
   },
 ];
 
+/**
+ * ۶ — import کل یک کتابخانه‌ی بزرگ (FE-087). tree-shaking این‌ها را نمی‌بُرد، پس هر
+ * import ریشه کل کتابخانه را به چانک می‌آورد. ECharts فقط از راه `echarts/core` و
+ * قطعه‌های لازم (`echarts/charts`، `echarts/components`، `echarts/renderers`) — نمونه:
+ * `features/reporting/profit-trend-echarts.ts`.
+ */
+const WHOLE_LIBRARY_IMPORTS = [
+  {
+    name: 'echarts',
+    message:
+      'import ریشه‌ی echarts کل کتابخانه را می‌آورد — از echarts/core و فقط قطعه‌های لازم استفاده کن (مثل profit-trend-echarts.ts).',
+  },
+  { name: 'lodash', message: 'lodash کامل ممنوع است — تابع بومی یا lodash-es/<تابع>.' },
+  { name: 'moment', message: 'moment سنگین و غیرقابل tree-shake است — از lib/date و date-fns-jalali استفاده کن.' },
+];
+
+/** `import * as Icons from 'lucide-react'` همه‌ی آیکون‌ها را می‌آورد؛ فقط import نام‌دار. */
+const noWholeIconSet = [
+  {
+    selector: "ImportDeclaration[source.value='lucide-react'] > ImportNamespaceSpecifier",
+    message: "import * از lucide-react همه‌ی آیکون‌ها را به بسته می‌آورد — آیکون‌ها را نام‌دار import کن.",
+  },
+];
+
 export default tseslint.config(
   {
     ignores: [
@@ -192,7 +216,9 @@ export default tseslint.config(
         ...noFloatMath,
         ...noDirectionalClasses,
         ...noRawHex,
+        ...noWholeIconSet,
       ],
+      'no-restricted-imports': ['error', { patterns: NO_API_IMPORT_PATTERNS, paths: WHOLE_LIBRARY_IMPORTS }],
       // FE-006: هر درخواست شبکه باید از apiGet/apiPost عبور کند تا Idempotency-Key،
       // timeout و اعتبارسنجی zod هیچ‌جا فراموش نشوند.
       'no-restricted-globals': [
@@ -203,6 +229,14 @@ export default tseslint.config(
           message: 'fetch مستقیم ممنوع است — از apiGet/apiPost در @/api/client استفاده کن.',
         },
       ],
+    },
+  },
+
+  // صفحه‌ی دودِ فقط-توسعه کل ECharts را عمداً بارگذاری می‌کند و در بیلد production نیست.
+  {
+    files: ['apps/web/src/features/dev/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', { patterns: NO_API_IMPORT_PATTERNS }],
     },
   },
 

@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { bundleReport } from './vite-plugins/bundle-report';
 
 /**
  * `mockServiceWorker.js` را از خروجی production حذف می‌کند.
@@ -36,6 +37,8 @@ export default defineConfig({
   plugins: [
     react(),
     stripMockWorker(),
+    // FE-087: ترکیب بسته (اولیه/تنبل، سهم هر بسته، نسخه‌ی تکراری) → build/bundle-report.json
+    bundleReport(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['fonts/vazirmatn-fa.woff2', 'icons/*.png', 'icons/*.svg'],

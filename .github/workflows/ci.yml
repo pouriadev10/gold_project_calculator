@@ -32,11 +32,20 @@ jobs:
       - name: تست‌ها + پوشش ۱۰۰٪ core-calc
         run: pnpm test
 
+      # بیلد وب دروازه‌ی بودجه را خودش اجرا می‌کند (FE-087): بسته‌ی اولیه بالای ۲۰۰KB
+      # فشرده یا هر بسته با دو نسخه، بیلد را می‌شکند. خلاصه‌ی اندازه در صفحه‌ی همین
+      # اجرا (Job summary) نوشته می‌شود.
       - run: pnpm build
 
-      # بودجه‌ی بسته: زیر ۲۰۰KB فشرده. به کروم نیاز ندارد، پس همیشه اجرا می‌شود.
-      - name: بودجه‌ی بسته‌ی اولیه
-        run: pnpm size
+      - name: بارگذاری گزارش اندازه‌ی بسته
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-report
+          path: |
+            apps/web/build/bundle-report.json
+            apps/web/build/bundle-size.md
+          if-no-files-found: ignore
 
       # دروازه‌ی کارایی: LCP < 2.5s روی 3G شبیه‌سازی‌شده، TBT < 200ms
       - name: Lighthouse CI

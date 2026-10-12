@@ -9,3 +9,8 @@ allowBuilds:
   msw: true
   # swc باینری بومی را برای تبدیل دکوراتورهای NestJS در تست‌ها لینک می‌کند
   '@swc/core': true
+overrides:
+  # FE-087: echarts و zrender نسخه‌ی tslib را دقیقاً روی 2.3.0 قفل کرده‌اند و Radix (از راه
+  # react-remove-scroll) ‎^2 می‌خواهد؛ نتیجه دو نسخه‌ی tslib در خروجی بود. tslib 2.x سازگار
+  # به عقب است، پس همان یک نسخه‌ی تازه‌تر برای همه کافی است.
+  'tslib@2.3.0': 2.8.1

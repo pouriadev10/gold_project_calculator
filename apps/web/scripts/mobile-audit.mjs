@@ -261,6 +261,26 @@ const SHEET_CHECK = `(async () => {
   };
 })()`;
 
+/** ماژول تنبل نمودار را import و یک نمونه رسم می‌کند؛ `true` یعنی canvas ساخته شد. */
+const CHART_RUNTIME_CHECK = `(async () => {
+  const module = await import('/src/features/reporting/profit-trend-echarts.ts');
+  const host = document.createElement('div');
+  host.style.cssText = 'width:300px;height:200px;position:fixed;top:0;left:0';
+  document.body.append(host);
+  const handle = module.renderTrendChart(host, {
+    labels: ['۱', '۲'],
+    series: [{ name: 'سود', kind: 'bar', color: 'gray', values: [1, 2], formatted: ['۱', '۲'] }],
+    axisLabel: (value) => String(value),
+    animation: false,
+    textColor: 'black',
+    gridColor: 'silver',
+  });
+  const drawn = host.querySelector('canvas') !== null;
+  handle.dispose();
+  host.remove();
+  return drawn;
+})()`;
+
 /* ── سناریوها ───────────────────────────────────────────────────── */
 
 /**
@@ -296,7 +316,9 @@ const PAGES = [
   { name: 'invoice-list', path: '/sales/invoices', ready: 'صفحه', action: null },
   { name: 'invoice', path: `/sales/invoices/${INVOICE_ID}`, ready: 'اقلام', action: 'دریافت PDF' },
   { name: 'report-debtors', path: '/reporting/debtors', ready: 'حسین مرادی', action: null },
-  { name: 'report-profit', path: '/reporting/profit', ready: 'سود', action: null },
+  // نمودار روند سود چانک تنبل ECharts است. داده‌ی mock این ماه سودی ندارد، پس خودِ
+  // ماژول نمودار با یک نمونه رسم می‌شود تا اجرای واقعی ECharts در مرورگر سنجیده شود.
+  { name: 'report-profit', path: '/reporting/profit', ready: 'سود', action: null, chartRuntime: true },
 ];
 
 function findBrowser() {
@@ -436,6 +458,7 @@ async function run() {
       const entry = { name: page.name };
       try {
         await navigate(cdp, origin, page.path, page.ready);
+        if (page.chartRuntime) entry.chartRendered = await cdp.eval(CHART_RUNTIME_CHECK);
         for (const step of page.steps ?? []) {
           await tapControl(cdp, findControl(step), step);
           await sleep(500);
@@ -510,6 +533,7 @@ async function run() {
     }
     if (entry.keypad?.opened && entry.keypad.smallestKey < 44) problems.push(`کوچک‌ترین کلید کیپد ${entry.keypad.smallestKey}px`);
     if (entry.sheet && !entry.sheet.open) problems.push('Bottom Sheet باز نشد');
+    if (entry.chartRendered === false) problems.push('ماژول نمودار ECharts رسم نکرد');
     if (entry.sheet?.open && !(entry.sheet.isSheet && entry.sheet.fullWidth && entry.sheet.onScreen)) {
       problems.push(`Bottom Sheet نادرست (sheet=${entry.sheet.isSheet}، تمام‌عرض=${entry.sheet.fullWidth}، بالا=${entry.sheet.top}px)`);
     }
