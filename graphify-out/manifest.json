@@ -2256,9 +2256,9 @@
     "semantic_hash": ""
   },
   "apps/web/package.json": {
-    "mtime": 1791744387.5407116,
-    "seen": 1791805447.1913984,
-    "ast_hash": "a1cd58505b52af4686f06e632c00c671",
+    "mtime": 1791805951.1179347,
+    "seen": 1791808816.4770405,
+    "ast_hash": "6de798f2c8aeb90054d66b3b1eb6594f",
     "semantic_hash": ""
   },
   "apps/web/postcss.config.js": {
@@ -2628,15 +2628,15 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/keypad/NumericField.tsx": {
-    "mtime": 1791744956.9738371,
-    "seen": 1791805447.191492,
-    "ast_hash": "61e3821d941bb64e2b871f2aa9b443d5",
+    "mtime": 1791808234.6087165,
+    "seen": 1791808816.477118,
+    "ast_hash": "50e5006e5f642fd000980b39246b658e",
     "semantic_hash": ""
   },
   "apps/web/src/components/keypad/NumericKeypad.tsx": {
-    "mtime": 1791745106.6661932,
-    "seen": 1791805447.1914928,
-    "ast_hash": "9891d8953dc63fae4d4bf2d2adf74738",
+    "mtime": 1791807942.496833,
+    "seen": 1791808816.4771187,
+    "ast_hash": "413a27bb9909e96378874091f08ab3ec",
     "semantic_hash": ""
   },
   "apps/web/src/components/keypad/PercentInput.test.tsx": {
@@ -2670,9 +2670,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/keypad/keypad.test.tsx": {
-    "mtime": 1791745106.7057786,
-    "seen": 1791805447.1915,
-    "ast_hash": "de7efdd885623703138c39fab3fe4ffb",
+    "mtime": 1791808426.96361,
+    "seen": 1791808816.4771268,
+    "ast_hash": "f7ad6cdb54326c077277117feacacbc9",
     "semantic_hash": ""
   },
   "apps/web/src/components/keypad/shortcuts.ts": {
@@ -2802,15 +2802,15 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/home/MaznehBar.test.tsx": {
-    "mtime": 1791641872.4145803,
-    "seen": 1791642619.452189,
-    "ast_hash": "3bc0285677237fa0238fffbbf2679df1",
+    "mtime": 1791808426.8626132,
+    "seen": 1791808816.4771507,
+    "ast_hash": "22ad6bad0e465996153b773bd9787604",
     "semantic_hash": ""
   },
   "apps/web/src/features/home/MaznehBar.tsx": {
-    "mtime": 1786965220.0549836,
-    "seen": 1789132525.944976,
-    "ast_hash": "0e0fd92175eaa6a247c3e251d773f8c5",
+    "mtime": 1791807376.6779935,
+    "seen": 1791808816.4771516,
+    "ast_hash": "a61374a2f062e99ce44e5dcc1b399816",
     "semantic_hash": ""
   },
   "apps/web/src/features/home/ProfitCard.tsx": {
@@ -3114,9 +3114,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/purchase/CoinPurchaseForm.tsx": {
-    "mtime": 1791744854.6839325,
-    "seen": 1791805447.191594,
-    "ast_hash": "ac2d5b5bd9ed45eb28f6e81e5c1b66fe",
+    "mtime": 1791807376.6790004,
+    "seen": 1791808816.477211,
+    "ast_hash": "19c8f198989604d59007f953c1a6c28a",
     "semantic_hash": ""
   },
   "apps/web/src/features/purchase/CoinPurchaseSummary.tsx": {
@@ -3150,9 +3150,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/purchase/PurchaseWizardPage.tsx": {
-    "mtime": 1788950276.6682115,
-    "seen": 1789132525.945017,
-    "ast_hash": "cb05e859eed94931f9c10bf175e3d8a6",
+    "mtime": 1791807376.6931891,
+    "seen": 1791808816.4772189,
+    "ast_hash": "bef9dce09de1a1f31d78efb0b3a8e40f",
     "semantic_hash": ""
   },
   "apps/web/src/features/purchase/SecondHandWeighingForm.test.tsx": {
@@ -3324,9 +3324,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/sales/SaleWizardPage.tsx": {
-    "mtime": 1787427424.5870092,
-    "seen": 1789132525.9450386,
-    "ast_hash": "fc4817143c7ebedcbf412713bb66b4ab",
+    "mtime": 1791807376.7065587,
+    "seen": 1791808816.4773054,
+    "ast_hash": "839a6854abe40ad1d3e8db2803765b52",
     "semantic_hash": ""
   },
   "apps/web/src/features/sales/sale-line-pricing.test.ts": {
@@ -5028,9 +5028,9 @@
     "semantic_hash": ""
   },
   "FrontTasks.md": {
-    "mtime": 1791805397.0216835,
-    "seen": 1791805447.1919847,
-    "ast_hash": "80bb1ff6c732bb51a54ca3ac7decbdba",
+    "mtime": 1791808764.8155763,
+    "seen": 1791808816.4776356,
+    "ast_hash": "28af182ba9f5224e53134d6606cac654",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
@@ -5826,9 +5826,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/keypad/keypad-root.ts": {
-    "mtime": 1791744956.6593823,
-    "seen": 1791805447.1914978,
-    "ast_hash": "fc84d432c675e9ce431cd04aaaae8935",
+    "mtime": 1791807942.4958231,
+    "seen": 1791808816.477125,
+    "ast_hash": "73b2437987a4295cf0fd89b161a3c46e",
     "semantic_hash": ""
   },
   "apps/web/src/styles/contrast.test.ts": {
@@ -5841,6 +5841,24 @@
     "mtime": 1791805377.803874,
     "seen": 1791805447.1919966,
     "ast_hash": "b87653ade6e9a50928973db66371c4d0",
+    "semantic_hash": ""
+  },
+  "apps/web/scripts/mobile-audit.mjs": {
+    "mtime": 1791808165.7400424,
+    "seen": 1791808816.4770463,
+    "ast_hash": "9ad9f66ca81e1cad052448c739caa873",
+    "semantic_hash": ""
+  },
+  "apps/web/src/components/keypad/keypad-root.test.ts": {
+    "mtime": 1791808464.7578726,
+    "seen": 1791808816.4771235,
+    "ast_hash": "545a209e6afea5b564c86fbe13d28812",
+    "semantic_hash": ""
+  },
+  "docs/mobile-audit.md": {
+    "mtime": 1791808744.4948328,
+    "seen": 1791808816.4776545,
+    "ast_hash": "cace4ab40a0484a5106ebcf87f2b95ae",
     "semantic_hash": ""
   }
 }
