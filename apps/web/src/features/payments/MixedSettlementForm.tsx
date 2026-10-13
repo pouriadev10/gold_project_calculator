@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { X } from 'lucide-react';
-import { bullionPrice, coinPositionValue, dualFromRial, formatRial, grossMg, karat as toKarat, rial, toSafeNumber } from '@gold/core-calc';
+import { bullionPrice, coinPositionValue, dualFromRial, formatCount, formatRial, grossMg, karat as toKarat, rial, toSafeNumber } from '@gold/core-calc';
 import type { CreateMixedSettlementInput, MixedSettlement } from '@/api/contracts';
 import { createMixedSettlement } from '@/api/settlements';
 import { useCoinTypes, usePartyBalances } from '@/api/queries';
@@ -281,20 +281,20 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <Button type="button" variant="outline" size="sm" onClick={() => addLine('RIAL')}>
+          <Button type="button" variant="outline" size="sm" disabled={isSubmitting} onClick={() => addLine('RIAL')}>
             + ریال
           </Button>
-          <Button type="button" variant="outline" size="sm" onClick={() => addLine('GOLD')}>
+          <Button type="button" variant="outline" size="sm" disabled={isSubmitting} onClick={() => addLine('GOLD')}>
             + طلا
           </Button>
-          <Button type="button" variant="outline" size="sm" onClick={() => addLine('COIN')}>
+          <Button type="button" variant="outline" size="sm" disabled={isSubmitting} onClick={() => addLine('COIN')}>
             + سکه
           </Button>
           <Button
             type="button"
             variant="outline"
             size="sm"
-            disabled={availableCreditRial <= 0n}
+            disabled={availableCreditRial <= 0n || isSubmitting}
             onClick={() => addLine('CREDIT')}
           >
             + مانده اعتباری
@@ -306,13 +306,25 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
         ) : (
           <div className="space-y-3">
             {lines.map((line, index) => (
-              <div key={line.id} className="space-y-2 rounded-lg border border-border p-3">
+              /*
+               * FE-092: هر ردیف یک گروه با نام یکتاست («ردیف ۲: ریال») تا دو فیلد «مبلغ» برای
+               * صفحه‌خوان از هم جدا باشند، و خطای ردیف به همان گروه وصل است. حین ثبت کل ردیف
+               * قفل است: درخواست در جریان با همین کلید idempotency است و تلاش دوباره نباید
+               * مقدار دیگری بفرستد.
+               */
+              <fieldset
+                key={line.id}
+                disabled={isSubmitting}
+                aria-label={`ردیف ${formatCount(index + 1)}: ${LINE_LABEL[line.type]}`}
+                aria-describedby={errors[index] !== null ? `${line.id}-error` : undefined}
+                className="min-w-0 space-y-2 rounded-lg border border-border p-3"
+              >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-muted-foreground">{LINE_LABEL[line.type]}</span>
                   <button
                     type="button"
-                    aria-label={`حذف ردیف ${LINE_LABEL[line.type]}`}
-                    className="cursor-pointer text-muted-foreground hover:text-destructive"
+                    aria-label={`حذف ردیف ${formatCount(index + 1)}: ${LINE_LABEL[line.type]}`}
+                    className="-me-2 grid size-touch cursor-pointer place-items-center rounded-sm text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                     onClick={() => removeLine(line.id)}
                   >
                     <X className="size-4" aria-hidden="true" />
@@ -322,6 +334,7 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
                 {line.type === 'RIAL' || line.type === 'CREDIT' ? (
                   <MoneyInput
                     label="مبلغ"
+                    disabled={isSubmitting}
                     value={line.amountRial}
                     onChange={(value) => updateLine(line.id, { amountRial: value })}
                   />
@@ -331,11 +344,12 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
                   <>
                     <WeightInput
                       label="وزن"
+                      disabled={isSubmitting}
                       value={line.grossWeightMg}
                       onChange={(value) => updateLine(line.id, { grossWeightMg: value })}
                       karat={line.karat}
                     />
-                    <KaratInput label="عیار" value={line.karat} onChange={(value) => updateLine(line.id, { karat: value })} />
+                    <KaratInput label="عیار" disabled={isSubmitting} value={line.karat} onChange={(value) => updateLine(line.id, { karat: value })} />
                   </>
                 ) : null}
 
@@ -358,9 +372,10 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
                         ))}
                       </Select>
                     </div>
-                    <CountInput label="تعداد" value={line.count} onChange={(value) => updateLine(line.id, { count: value })} />
+                    <CountInput label="تعداد" disabled={isSubmitting} value={line.count} onChange={(value) => updateLine(line.id, { count: value })} />
                     <MoneyInput
                       label="نرخ بازار"
+                      disabled={isSubmitting}
                       value={line.marketUnitPriceRial}
                       onChange={(value) => updateLine(line.id, { marketUnitPriceRial: value })}
                     />
@@ -386,8 +401,12 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
                   </div>
                 ) : null}
 
-                {errors[index] !== null ? <p className="text-xs text-destructive">{errors[index]}</p> : null}
-              </div>
+                {errors[index] !== null ? (
+                  <p id={`${line.id}-error`} className="text-xs text-destructive">
+                    {errors[index]}
+                  </p>
+                ) : null}
+              </fieldset>
             ))}
           </div>
         )}

@@ -4,7 +4,7 @@ import { DIGIT_SPECS, type NumericFieldKind } from '@gold/core-calc';
 import { cn } from '@/lib/utils';
 import { KeypadPreview } from './KeypadPreview';
 import { KEYPAD_ROOT_ATTRIBUTE, isKeypadTarget, releaseKeypadSpace } from './keypad-root';
-import { useKeypadStore } from './keypad-store';
+import { neighbourField, useKeypadStore } from './keypad-store';
 import { SHORTCUTS_BY_KIND, type Shortcut } from './shortcuts';
 
 /**
@@ -161,10 +161,9 @@ export const NumericKeypad = memo(function NumericKeypad({
 }: NumericKeypadProps = {}) {
   const isOpen = useKeypadStore((s) => s.isOpen);
   const activeKind = useKeypadStore((s) => s.fields.find((f) => f.id === s.activeId)?.kind ?? null);
-  const canGoNext = useKeypadStore(
-    (s) => s.activeId !== null && s.fields.findIndex((f) => f.id === s.activeId) < s.fields.length - 1,
-  );
-  const canGoPrev = useKeypadStore((s) => s.fields.findIndex((f) => f.id === s.activeId) > 0);
+  // FE-092: فقط فیلدهای فعال — فیلد disabled مقصد «بعدی/قبلی» نیست
+  const canGoNext = useKeypadStore((s) => neighbourField(s.fields, s.activeId, 1) !== undefined);
+  const canGoPrev = useKeypadStore((s) => neighbourField(s.fields, s.activeId, -1) !== undefined);
 
   const pressDigit = useKeypadStore((s) => s.pressDigit);
   const pressSeparator = useKeypadStore((s) => s.pressSeparator);

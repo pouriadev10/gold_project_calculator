@@ -205,9 +205,66 @@ describe('pasteDigits — چسباندن متن', () => {
     expect(pasteDigits('12,500,000', RIAL)).toBe('12500000');
   });
 
-  it('همان قاعده‌ی کلمپ ظرفیت تایپ روی این مسیر هم اعمال می‌شود', () => {
-    expect(pasteDigits('12345678901234', KARAT)).toBe(type('1234', KARAT)); // ظرفیت عیار ۴ رقم
-    expect(pasteDigits('1.234567', WEIGHT)).toBe('1.234'); // ظرفیت اعشار وزن ۳ رقم
+  it('FE-092: عددی که فیلد دقیقاً نگه نمی‌دارد رد می‌شود — نه بریده، نه گرد، نه چسبیده', () => {
+    expect(pasteDigits('12345678901234', KARAT)).toBe(''); // ظرفیت عیار ۴ رقم
+    expect(pasteDigits('1.234567', WEIGHT)).toBe(''); // ظرفیت اعشار وزن ۳ رقم
+    expect(pasteDigits('1234567.5', WEIGHT)).toBe(''); // ظرفیت صحیح وزن ۶ رقم
+    expect(pasteDigits('12500.75', RIAL)).toBe(''); // قبلاً «1250075» — ارقام به هم می‌چسبیدند
+    expect(pasteDigits('۱۲۵۰۰٫۷۵', RIAL)).toBe('');
+    expect(pasteDigits('2.5', DIGIT_SPECS.count)).toBe(''); // قبلاً ۲۵ سکه
+    expect(pasteDigits('750.5', KARAT)).toBe(''); // قبلاً ۷۵۰۵
+    expect(pasteDigits('123456789012345678901234567890', RIAL)).toBe(''); // قبلاً ۱۵ رقم اول
+  });
+
+  it('FE-092: علامت منفی رد می‌شود — فیلدهای ورودی منفی ندارند و علامت بی‌صدا حذف نمی‌شود', () => {
+    expect(pasteDigits('-500', RIAL)).toBe('');
+    expect(pasteDigits('\u2212۵۰۰', RIAL)).toBe('');
+    expect(pasteDigits('۵۰۰-', RIAL)).toBe('');
+  });
+
+  it('FE-092: بیش از یک جداکننده‌ی اعشار مبهم است و رد می‌شود', () => {
+    expect(pasteDigits('12.500.000', RIAL)).toBe('');
+    expect(pasteDigits('1.2.3', WEIGHT)).toBe('');
+  });
+
+  it('FE-092: صفرهای انتهای اعشار عدد را عوض نمی‌کنند و پذیرفته‌اند', () => {
+    expect(pasteDigits('12500.00', RIAL)).toBe('12500');
+    expect(pasteDigits('۱۲۵٬۰۰۰٫۰ ریال', RIAL)).toBe('125000');
+    expect(pasteDigits('1.2340', WEIGHT)).toBe('1.234');
+    expect(pasteDigits('750.000', KARAT)).toBe('750');
+    expect(pasteDigits('7.50', PERCENT)).toBe('7.50');
+  });
+
+  it('FE-092: «/» هم مثل کیبورد کیپد جداکننده‌ی اعشار است (۲/۵ گرم)', () => {
+    expect(pasteDigits('۲/۵', WEIGHT)).toBe('2.5');
+    expect(digitsToBigInt(pasteDigits('۲/۵', WEIGHT), WEIGHT)).toBe(2_500n);
+  });
+
+  it('FE-092: شکل بافر همان شکل تایپ است (صفر پیشوند، «۰٫»)', () => {
+    expect(pasteDigits('.5', WEIGHT)).toBe(type('.5', WEIGHT));
+    expect(pasteDigits('0.5', WEIGHT)).toBe(type('0.5', WEIGHT));
+    expect(pasteDigits('000', RIAL)).toBe(type('000', RIAL));
+    expect(pasteDigits('12.', WEIGHT)).toBe(type('12.', WEIGHT));
+  });
+
+  it('FE-092: هر عدد داخل ظرفیت دقیقاً همان مقدار را می‌دهد؛ هر عدد بیرون از آن هیچ', () => {
+    fc.assert(
+      fc.property(
+        fc.stringMatching(/^[0-9]{1,8}$/u),
+        fc.stringMatching(/^[0-9]{0,5}$/u),
+        (integer, fraction) => {
+          const text = fraction ? `${integer}.${fraction}` : integer;
+          const significantInteger = integer.replace(/^0+/u, '');
+          const significantFraction = fraction.replace(/0+$/u, '');
+          const fits = significantInteger.length <= WEIGHT.maxIntegerDigits && significantFraction.length <= WEIGHT.decimals;
+          const buffer = pasteDigits(text, WEIGHT);
+          if (!fits) return buffer === '';
+          const expectedMg = BigInt(`${integer}${(fraction + '000').slice(0, 3)}`);
+          return digitsToBigInt(buffer, WEIGHT) === expectedMg;
+        },
+      ),
+      { numRuns: 500 },
+    );
   });
 
   it('صفر پیشوند همان رفتار تایپ را دارد', () => {

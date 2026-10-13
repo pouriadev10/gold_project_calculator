@@ -1,11 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { toPersianDigits } from '@gold/core-calc';
 import type * as Queries from '@/api/queries';
 import type { CoinTypeVersion, PartyBalances, PriceQuote } from '@/api/contracts';
 import { NumericKeypad } from '@/components/keypad/NumericKeypad';
+import { useKeypadStore } from '@/components/keypad/keypad-store';
 import { MixedSettlementForm } from './MixedSettlementForm';
 
 /**
@@ -108,10 +109,10 @@ describe('MixedSettlementForm — تسویه‌ی ترکیبی (FE-054)', () => 
     renderForm();
 
     await user.click(screen.getByRole('button', { name: '+ ریال' }));
-    expect(screen.getByRole('button', { name: 'حذف ردیف ریال' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'حذف ردیف ۱: ریال' })).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'حذف ردیف ریال' }));
-    expect(screen.queryByRole('button', { name: 'حذف ردیف ریال' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'حذف ردیف ۱: ریال' }));
+    expect(screen.queryByRole('button', { name: 'حذف ردیف ۱: ریال' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'ثبت تسویه‌ی ترکیبی' })).toBeDisabled();
   });
 
@@ -198,5 +199,119 @@ describe('MixedSettlementForm — تسویه‌ی ترکیبی (FE-054)', () => 
     expect(createMixedSettlementMock).toHaveBeenCalledTimes(1);
     resolveSettlement({ settlementId: 's1', ledgerTransactionId: 'l1', totalSettledRial: 1_000_000n, lines: [{ type: 'RIAL', settledRial: 1_000_000n }] });
     await waitFor(() => expect(screen.getByText('تسویه‌ی ترکیبی ثبت شد')).toBeInTheDocument());
+  });
+});
+
+/**
+ * FE-092 — «SettlementLine»: هر ردیف تسویه‌ی ترکیبی با معیارهای فرم مالی (عدم precision loss،
+ * keyboard، خطا، disabled، paste). readonly همان رفتار فیلدهای عددی است
+ * (`components/keypad/financial-form-components.test.tsx`).
+ */
+describe('MixedSettlementForm — ردیف تسویه (FE-092)', () => {
+  beforeEach(() => {
+    useKeypadStore.setState({ isOpen: false, fields: [], activeId: null, buffers: {} });
+  });
+
+  const line = (index: number, type: string) =>
+    screen.getByRole('group', { name: `ردیف ${toPersianDigits(String(index))}: ${type}` });
+
+  it('عدم precision loss: بیشینه‌ی ظرفیت ریال و وزن، عیناً همان رشته در درخواست می‌رود', async () => {
+    createMixedSettlementMock.mockResolvedValue({
+      settlementId: 's1',
+      ledgerTransactionId: 'l1',
+      totalSettledRial: 1n,
+      lines: [{ type: 'RIAL', settledRial: 1n }],
+    });
+    usePartyBalancesMock.mockReturnValue({ data: balances('999999999999999999'), isLoading: false, isError: false });
+    const user = userEvent.setup();
+    renderForm();
+
+    await user.click(screen.getByRole('button', { name: '+ ریال' }));
+    await user.click(within(line(1, 'ریال')).getByLabelText('مبلغ'));
+    await typeDigits(user, '999999999999999');
+    await user.click(screen.getByRole('button', { name: '+ طلا' }));
+    await user.click(within(line(2, 'طلا')).getByLabelText('وزن'));
+    await typeDigits(user, '999999');
+    await user.click(screen.getByRole('button', { name: 'جداکننده اعشار' }));
+    await typeDigits(user, '999');
+    await user.click(within(line(2, 'طلا')).getByLabelText('عیار'));
+    await typeDigits(user, '750');
+
+    await user.click(screen.getByRole('button', { name: 'ثبت تسویه‌ی ترکیبی' }));
+    await waitFor(() => expect(createMixedSettlementMock).toHaveBeenCalledTimes(1));
+    const input = createMixedSettlementMock.mock.calls[0]![1] as { lines: Array<Record<string, unknown>> };
+    expect(input.lines[0]).toEqual({ type: 'RIAL', amountRial: '999999999999999' });
+    expect(input.lines[1]).toMatchObject({ type: 'GOLD', grossWeightMg: '999999999', karat: 750 });
+  });
+
+  it('keyboard: حذف ردیف با Enter کار می‌کند و دکمه‌اش هدف لمسی کامل دارد', async () => {
+    const user = userEvent.setup();
+    renderForm();
+    await user.click(screen.getByRole('button', { name: '+ ریال' }));
+    const remove = screen.getByRole('button', { name: 'حذف ردیف ۱: ریال' });
+    expect(remove.className).toContain('size-touch');
+    remove.focus();
+    await user.keyboard('{Enter}');
+    expect(screen.queryByRole('group', { name: 'ردیف ۱: ریال' })).not.toBeInTheDocument();
+  });
+
+  it('خطا: هر ردیف گروهی با نام یکتاست و خطای ردیف به همان گروه وصل است', async () => {
+    const user = userEvent.setup();
+    renderForm();
+    await user.click(screen.getByRole('button', { name: '+ ریال' }));
+    await user.click(screen.getByRole('button', { name: '+ ریال' }));
+    // دو فیلد «مبلغ» با نام ردیفشان از هم جدا می‌شوند
+    expect(within(line(1, 'ریال')).getByLabelText('مبلغ')).not.toBe(within(line(2, 'ریال')).getByLabelText('مبلغ'));
+    const group = line(2, 'ریال');
+    const errorId = group.getAttribute('aria-describedby');
+    expect(errorId).not.toBeNull();
+    expect(document.getElementById(errorId!)).toHaveTextContent('مبلغ باید بزرگ‌تر از صفر باشد.');
+
+    await user.click(within(group).getByLabelText('مبلغ'));
+    await typeDigits(user, '5');
+    expect(line(2, 'ریال')).not.toHaveAttribute('aria-describedby');
+  });
+
+  it('disabled: حین ثبت، ردیف‌ها و افزودن ردیف قفل‌اند و هیچ ضربه‌ای مقدار ارسالی را عوض نمی‌کند', async () => {
+    let resolveSettlement: (value: unknown) => void = () => {};
+    createMixedSettlementMock.mockReturnValue(
+      new Promise((resolve) => {
+        resolveSettlement = resolve;
+      }),
+    );
+    const user = userEvent.setup();
+    renderForm();
+    await user.click(screen.getByRole('button', { name: '+ ریال' }));
+    const amount = within(line(1, 'ریال')).getByLabelText('مبلغ');
+    await user.click(amount);
+    await typeDigits(user, '1000');
+
+    await user.click(screen.getByRole('button', { name: 'ثبت تسویه‌ی ترکیبی' }));
+    expect(line(1, 'ریال')).toBeDisabled();
+    expect(amount).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'حذف ردیف ۱: ریال' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '+ ریال' })).toBeDisabled();
+    expect(useKeypadStore.getState().isOpen).toBe(false);
+
+    fireEvent.keyDown(window, { key: '9' });
+    act(() => useKeypadStore.getState().pressDigit('9'));
+    expect(amount).toHaveAttribute('data-value', '1000');
+
+    resolveSettlement({ settlementId: 's1', ledgerTransactionId: 'l1', totalSettledRial: 1_000n, lines: [{ type: 'RIAL', settledRial: 1_000n }] });
+    await waitFor(() => expect(screen.getByText('تسویه‌ی ترکیبی ثبت شد')).toBeInTheDocument());
+  });
+
+  it('paste: مبلغ اعشاری در ردیف ریال رد می‌شود و ثبت نمی‌شود', async () => {
+    const user = userEvent.setup();
+    renderForm();
+    await user.click(screen.getByRole('button', { name: '+ ریال' }));
+    const amount = within(line(1, 'ریال')).getByLabelText('مبلغ');
+    fireEvent.focus(amount);
+    fireEvent.paste(amount, { clipboardData: { getData: () => '12500.75' } });
+    expect(amount).toHaveAttribute('data-value', '0');
+    expect(screen.getByRole('button', { name: 'ثبت تسویه‌ی ترکیبی' })).toBeDisabled();
+
+    fireEvent.paste(amount, { clipboardData: { getData: () => '۱۲٬۵۰۰ ریال' } });
+    expect(amount).toHaveAttribute('data-value', '12500');
   });
 });

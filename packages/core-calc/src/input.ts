@@ -149,26 +149,60 @@ export function bigIntToDigits(value: bigint, spec: DigitSpec): string {
 const ARABIC_DECIMAL_SEPARATOR = '٫';
 
 /**
- * متن چسبانده‌شده (paste) را رقم‌به‌رقم از یک بافر خالی از همان مسیر
- * `pushDigit`/`pushSeparator` عبور می‌دهد — یعنی همان قواعد کلمپ ظرفیت و
- * صفر پیشوند که تایپ روی کیپد دارد، بدون تکرار منطق در جای دیگر. جای‌گزین
- * می‌کند، نه اضافه — چسباندن یعنی «مقدار تازه»، نه ادامه‌ی بافر قبلی.
+ * نویسه‌هایی که در متن چسبانده‌شده جداکننده‌ی اعشارند — همان‌هایی که کیبورد فیزیکی
+ * کیپد هم اعشار می‌گیرد (`.` و `/` که فارسی‌نویس‌ها «۲/۵» می‌نویسند) به‌علاوه‌ی `٫`.
+ */
+const PASTE_DECIMAL_MARKS = new Set([DECIMAL_MARK, ARABIC_DECIMAL_SEPARATOR, '/']);
+
+/** علامت منفی — خط تیره یا منفی تایپوگرافیک. فیلدهای ورودی مقدار منفی ندارند. */
+const MINUS_SIGNS = new Set(['-', '\u2212']);
+
+/**
+ * متن چسبانده‌شده (paste) → بافر — **فقط اگر فیلد دقیقاً همان عدد را نگه دارد** (FE-092).
  *
- * هر نویسه‌ی غیرعددی (جداساز هزارگان، فاصله، واحد پول/وزن، ...) نادیده
- * گرفته می‌شود؛ خروجی همیشه یک بافر معتبر و کلمپ‌شده است، هرگز نیمه‌خراب.
+ * چسباندن یعنی «مقدار تازه»، نه ادامه‌ی بافر قبلی. جداساز هزارگان (`,` `٬`)، فاصله و متن
+ * واحد («ریال»، «گرم») نادیده گرفته می‌شوند. ولی هر چیزی که عدد را عوض می‌کند، به‌جای حدس
+ * زدن، کل چسباندن را رد می‌کند و بافر خالی برمی‌گرداند — همان رفتار متن غیرعددی:
+ *
+ * - اعشار ناصفر روی فیلد بی‌اعشار: «۱۲۵۰۰٫۷۵» ریال قبلاً ۱٬۲۵۰٬۰۷۵ می‌شد (ارقام به هم می‌چسبیدند)؛
+ * - ارقام اعشار بیش از ظرفیت (وزن «۱٫۲۳۴۵۶» گرم قبلاً بی‌صدا ۱٫۲۳۴ می‌شد)؛
+ * - ارقام صحیح بیش از ظرفیت (۳۰ رقم قبلاً به ۱۵ رقم اول بریده می‌شد)؛
+ * - علامت منفی («-۵۰۰» قبلاً ۵۰۰ می‌شد)؛
+ * - بیش از یک جداکننده‌ی اعشار («۱۲.۵۰۰.۰۰۰» — هزارگان یا اعشار؟ مبهم).
+ *
+ * صفرهای اضافه‌ی انتهای اعشار عدد را عوض نمی‌کنند و پذیرفته‌اند («۱۲۵۰۰٫۰۰» ریال، «۱٫۲۳۴۰» گرم).
+ * بافر نهایی از همان مسیر `pushDigit`/`pushSeparator` تایپ ساخته می‌شود، پس شکلش (صفر پیشوند،
+ * «۰٫») عیناً شکل تایپ همان عدد است.
  */
 export function pasteDigits(text: string, spec: DigitSpec): string {
   const latin = toLatinDigits(text);
-  let buffer = '';
+  let integer = '';
+  let fraction = '';
+  let marks = 0;
 
   for (const ch of latin) {
     if (DIGITS.has(ch)) {
-      buffer = pushDigit(buffer, ch, spec);
-    } else if (ch === DECIMAL_MARK || ch === ARABIC_DECIMAL_SEPARATOR) {
-      buffer = pushSeparator(buffer, spec);
+      if (marks === 0) integer += ch;
+      else fraction += ch;
+    } else if (PASTE_DECIMAL_MARKS.has(ch)) {
+      marks += 1;
+    } else if (MINUS_SIGNS.has(ch)) {
+      return '';
     }
   }
 
+  if (marks > 1) return '';
+  const significantInteger = integer.replace(/^0+/u, '');
+  const significantFraction = fraction.replace(/0+$/u, '');
+  if (significantInteger.length > spec.maxIntegerDigits) return '';
+  if (significantFraction.length > spec.decimals) return '';
+
+  let buffer = '';
+  for (const digit of significantInteger || (integer ? '0' : '')) buffer = pushDigit(buffer, digit, spec);
+  if (marks === 1 && spec.decimals > 0) {
+    buffer = pushSeparator(buffer, spec);
+    for (const digit of fraction.slice(0, spec.decimals)) buffer = pushDigit(buffer, digit, spec);
+  }
   return buffer;
 }
 

@@ -129,6 +129,7 @@ export function NumericField({
   const setBuffer = useKeypadStore((s) => s.setBuffer);
   const focusField = useKeypadStore((s) => s.focusField);
   const pasteText = useKeypadStore((s) => s.pasteText);
+  const setFieldDisabled = useKeypadStore((s) => s.setFieldDisabled);
 
   const raw = useKeypadStore((s) => s.buffers[id] ?? '');
   const isActive = useKeypadStore((s) => s.activeId === id && s.isOpen);
@@ -137,6 +138,11 @@ export function NumericField({
     registerField({ id, kind, label });
     return () => unregisterField(id);
   }, [id, kind, label, registerField, unregisterField]);
+
+  // FE-092: کیپدِ باز روی فیلدی که غیرفعال شد (مثلاً حین ثبت) بسته می‌شود و دیگر رویش نمی‌نویسد
+  useEffect(() => {
+    setFieldDisabled(id, disabled === true);
+  }, [id, kind, label, disabled, setFieldDisabled]);
 
   /** مقدار اولیه‌ی کنترل‌شده از بیرون */
   useEffect(() => {
@@ -295,6 +301,13 @@ export function NumericField({
               event.preventDefault();
               setBuffer(id, '');
               focusField(id);
+            }}
+            // FE-092: Enter/Space روی دکمه‌ی فوکوس‌شده فقط click می‌سازد (بدون pointer)؛
+            // `detail === 0` یعنی click از کیبورد آمده — ضربه‌ی لمسی بالا انجام شده است.
+            onClick={(event) => {
+              if (event.detail !== 0) return;
+              setBuffer(id, '');
+              inputRef.current?.focus();
             }}
             className="grid size-touch shrink-0 cursor-pointer place-items-center rounded-sm text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
           >

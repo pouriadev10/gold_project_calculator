@@ -27,6 +27,8 @@ export interface KeypadFieldDef {
   readonly id: string;
   readonly kind: NumericFieldKind;
   readonly label: string;
+  /** FE-092: فیلد غیرفعال (مثلاً حین ثبت) هیچ ورودی‌ای نمی‌پذیرد و «بعدی/قبلی» از رویش می‌گذرد. */
+  readonly disabled?: boolean;
 }
 
 interface KeypadState {
@@ -39,6 +41,8 @@ interface KeypadState {
 
   registerField: (field: KeypadFieldDef) => void;
   unregisterField: (id: string) => void;
+  /** FE-092: غیرفعال شدن فیلد فعال، کیپد را می‌بندد تا ضربه‌ی بعدی مقدارش را عوض نکند. */
+  setFieldDisabled: (id: string, disabled: boolean) => void;
 
   open: (id: string) => void;
   close: () => void;
@@ -66,10 +70,32 @@ function specOf(state: KeypadState, id: string | null) {
   return field ? DIGIT_SPECS[field.kind] : null;
 }
 
-/** ویرایش بافر فیلد فعال با یک تابع خالص. */
+function isEnabled(field: KeypadFieldDef | undefined): field is KeypadFieldDef {
+  return field !== undefined && field.disabled !== true;
+}
+
+/** نزدیک‌ترین فیلد فعال (غیر disabled) در جهت `step` از فیلد فعال کنونی. */
+export function neighbourField(
+  fields: readonly KeypadFieldDef[],
+  activeId: string | null,
+  step: 1 | -1,
+): KeypadFieldDef | undefined {
+  const index = fields.findIndex((f) => f.id === activeId);
+  if (index === -1) return undefined;
+  for (let i = index + step; i >= 0 && i < fields.length; i += step) {
+    if (isEnabled(fields[i])) return fields[i];
+  }
+  return undefined;
+}
+
+/**
+ * ویرایش بافر فیلد فعال با یک تابع خالص. فیلد غیرفعال هرگز ویرایش نمی‌شود — حتی اگر کیپد
+ * پیش از غیرفعال شدنش رویش باز مانده باشد (FE-092).
+ */
 function editActive(state: KeypadState, edit: (raw: string) => string): Partial<KeypadState> {
   const { activeId } = state;
   if (!activeId) return {};
+  if (!isEnabled(state.fields.find((f) => f.id === activeId))) return {};
   return { buffers: { ...state.buffers, [activeId]: edit(state.buffers[activeId] ?? '') } };
 }
 
@@ -92,22 +118,30 @@ export const useKeypadStore = create<KeypadState>()((set) => ({
       activeId: state.activeId === id ? null : state.activeId,
     })),
 
-  open: (id) => set({ isOpen: true, activeId: id }),
+  setFieldDisabled: (id, disabled) =>
+    set((state) => {
+      const field = state.fields.find((f) => f.id === id);
+      if (!field || (field.disabled === true) === disabled) return state;
+      const fields = state.fields.map((f) => (f.id === id ? { ...f, disabled } : f));
+      return disabled && state.activeId === id ? { fields, activeId: null, isOpen: false } : { fields };
+    }),
+
+  open: (id) =>
+    set((state) => (state.fields.some((f) => f.id === id && f.disabled === true) ? state : { isOpen: true, activeId: id })),
   close: () => set({ isOpen: false }),
-  focusField: (id) => set({ activeId: id, isOpen: true }),
+  focusField: (id) =>
+    set((state) => (state.fields.some((f) => f.id === id && f.disabled === true) ? state : { activeId: id, isOpen: true })),
 
   moveNext: () =>
     set((state) => {
-      const index = state.fields.findIndex((f) => f.id === state.activeId);
-      const next = state.fields[index + 1];
-      // روی آخرین فیلد، «بعدی» بی‌اثر است — کاربر باید «تمام» بزند
+      // روی آخرین فیلد فعال، «بعدی» بی‌اثر است — کاربر باید «تمام» بزند
+      const next = neighbourField(state.fields, state.activeId, 1);
       return next ? { activeId: next.id } : {};
     }),
 
   movePrev: () =>
     set((state) => {
-      const index = state.fields.findIndex((f) => f.id === state.activeId);
-      const prev = index > 0 ? state.fields[index - 1] : undefined;
+      const prev = neighbourField(state.fields, state.activeId, -1);
       return prev ? { activeId: prev.id } : {};
     }),
 
