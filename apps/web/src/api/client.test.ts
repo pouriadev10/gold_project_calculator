@@ -171,12 +171,16 @@ describe('Idempotency-Key', () => {
     expect(sentHeaders(spy)['Idempotency-Key']).toBeUndefined();
   });
 
-  it('POST فقط‌خواندنی، کلید idempotency نمی‌فرستد', async () => {
+  it('POST فقط‌خواندنی کلید تازه‌ی هر فراخوان را می‌فرستد — middleware سرور بدون آن ۴۰۰ می‌دهد', async () => {
     const spy = mockFetch({ body: { value: 'ok' } });
 
     await apiPostReadOnly('/pricing/preview', { a: 1 }, okSchema);
+    await apiPostReadOnly('/pricing/preview', { a: 1 }, okSchema);
 
-    expect(sentHeaders(spy)['Idempotency-Key']).toBeUndefined();
+    const first = sentHeaders(spy)['Idempotency-Key'];
+    expect(first).toMatch(/^[0-9a-f-]{36}$/u);
+    // دو preview دو درخواست مستقل‌اند، نه تکرار یک عملیات.
+    expect(sentHeaders(spy, 1)['Idempotency-Key']).not.toBe(first);
     expect(spy.mock.calls[0]?.[1]).toMatchObject({
       method: 'POST',
       body: JSON.stringify({ a: 1 }),
@@ -195,7 +199,8 @@ describe('Idempotency-Key', () => {
       value: 'ok',
     });
     expect(spy).toHaveBeenCalledTimes(3);
-    expect(sentHeaders(spy, 2)['Idempotency-Key']).toBeUndefined();
+    // تکرار پس از تمدید همان درخواست است، پس همان کلید.
+    expect(sentHeaders(spy, 2)['Idempotency-Key']).toBe(sentHeaders(spy, 0)['Idempotency-Key']);
   });
 });
 

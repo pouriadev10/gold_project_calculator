@@ -2763,7 +2763,7 @@ INP زیر ۲۰۰ms.
 >
 > اعتبارسنجی: `pnpm typecheck`، `pnpm test` (۱۱۲۹ وب — ۴۲ تازه — ۱۷۰ API، ۱۹۲ قرارداد، ۱۸۲ core-calc)، پوشش `input.ts` ۱۰۰٪، lint، `check:circular`، `pnpm build` با دروازه‌ی اندازه (۱۳۵٫۰KB) و `audit:mobile` (۱۵/۱۵) سبز.
 ---
-## [ ] FE-093 — Mock Server قراردادمحور
+## [x] FE-093 — Mock Server قراردادمحور
 ### هدف
 امکان توسعه فرانت پیش از تکمیل endpointها.
 ### کارها
@@ -2778,6 +2778,12 @@ INP زیر ۲۰۰ms.
 * mock shape مستقل و ساختگی نباشد.
 * با تغییر contract تست fail شود.
 * mock مالی به production bundle وارد نشود.
+
+> تکمیل FE-093: دروازه‌ی قرارداد `mocks/handlers/contract-gate.ts` اولین handler ِ MSW است — سناریوی فعال، `Idempotency-Key` روی هر نوشتن غیرعمومی (آینه‌ی `TenantContextMiddleware`) و بدنه با همان schema ِ `packages/contracts` که `ZodValidationPipe` کنترلر اجرا می‌کند (`WRITE_ROUTES`، ۲۶ مسیر). `mocks/handlers/errors.ts`: `mockError(code, message, fields)` تنها سازنده‌ی خطاست، بدنه را با `apiErrorSchema` parse می‌کند و وضعیت را از کد می‌گیرد؛ کدها فقط همان‌هایی که `api-exception.filter.ts` می‌فرستد. همه‌ی پاسخ‌های خطای قبلی به آن منتقل شد — ۹ پاسخ `{ message }` ِ خرید دست‌دوم (کلاینت «خطای ناشناخته» نشان می‌داد)، ۱۷ `IDEMPOTENCY_KEY_REQUIRED` و ۳ وضعیت ۴۲۲ که سرور هرگز نمی‌فرستد. سناریوها: `success`/`validation` (fields از اجرای واقعی schema ِ مسیر روی بدنه‌ی خالی)/`conflict`/`forbidden`/`network`، قابل محدود شدن به یک مسیر؛ در توسعه `?mockScenario=` یا `__goldMocks` در کنسول. mockهای جاافتاده‌ی `amend`، `b2c-buyback` و `b2c-buyback/preview` با `core-calc` (`calculateB2cBuybackDifference`) اضافه شد؛ سیاست اصلاح از تنظیم نسخه‌دار پنجره‌ی اصلاح می‌آید. ناسازگاری‌های mock با سرور اصلاح شد: ورود کلید نمی‌خواهد، عیار حذف‌شده‌ی خرید دست‌دوم = تنظیم مستأجر، گزارش سود با `profitReportQuerySchema`.
+> باگ واقعی پیدا‌شده: `apiPostReadOnly` (پیش‌نمایش خرید مجدد B2C) کلید نمی‌فرستاد ولی middleware سرور روی هر POST غیرعمومی آن را الزامی می‌داند → در production ۴۰۰. اکنون کلید تازه‌ی هر فراخوان فرستاده می‌شود. شکاف‌های سمت سرور برای پیگیری BE: خطاهای دامنه‌ی `CoinSalePaidRialExceedsPayable`، `MixedSettlementInsufficientCredit` و همه‌ی خطاهای اصلاح فاکتور در کنترلر نگاشت نمی‌شوند و ۵۰۰ می‌دهند (mock آن‌ها را ۴۰۰/۴۰۴ می‌دهد).
+> نگهبان‌ها: `mocks/contract-conformance.test.tsx` (۱۷ تست) همه‌ی ۵۶ handler مسیر را با کلاینت و هوک‌های واقعی صدا می‌زند و handler بی‌مصرف را رد می‌کند؛ مسیرها و کدهای خطا را با متن کنترلرها و filter سرور مقایسه می‌کند (۷ مسیر بی‌معادل سرور صریحاً در `PENDING_BACKEND_ROUTES`). آزمون جهش: افزودن فیلد الزامی به `partySchema` ← ۳ تست قرمز. ESLint `MOCKS_STAY_DEV_ONLY_PATTERNS` import ایستای `@/mocks`/`msw` را در کد برنامه رد می‌کند و `scripts/check-no-mocks.mjs` (آخر `pnpm build`) خروجی را برای همه‌ی UUIDهای fixture، رمز دمو و msw می‌گردد (آزمون منفی: UUID تزریق‌شده ← exit 1).
+>
+> اعتبارسنجی: `pnpm typecheck`، `pnpm test` (۱۱۴۶ وب — ۱۷ تازه)، lint، `check:circular`، `pnpm build` با دروازه‌ی اندازه و نگهبان mock، سناریوها در مرورگر واقعی روی `vite` توسعه (۴۰۳/TypeError/بازگشت/۴۰۰ بی‌کلید)، `audit:pwa` (۱۲/۱۲)، `audit:inp` (بدترین ۱۳۶ms)، `audit:lcp` (زیر ۲۵۰۰ms).
 ---
 ## [ ] FE-094 — تست Integration فروش
 ### سناریو

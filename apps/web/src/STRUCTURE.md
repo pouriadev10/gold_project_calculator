@@ -32,7 +32,7 @@ apps/web/
     │   └── settings/             تنظیمات کاربر
     ├── hooks/                   هوک‌های عمومی مستقل از Feature (useTheme)
     ├── lib/                     توابع کمکی بدون state (utils, theme, date)
-    ├── mocks/                   MSW — handlers + fixtures ساختگی
+    ├── mocks/                   MSW قراردادمحور (FE-093) — دروازه‌ی قرارداد، سناریوها، handlers + fixtures
     ├── stores/                  Zustand — فقط تنظیمات UI (unit, theme)
     ├── styles/                  globals.css — نقطه‌ی ورود Tailwind
     ├── test/                    setup مشترک vitest
@@ -120,3 +120,17 @@ madge فعلاً مرز `features/x` در برابر `features/y` را به‌ص
 یک alias با مسیر کامل (`@/features/home/HomePage`) هم به‌اندازه‌ی کافی
 گویا است و نگهداری‌اش ساده‌تر از هماهنگ‌نگه‌داشتن چند alias در دو ابزار
 (tsc و vite) است.
+
+## Mock Server قراردادمحور (FE-093)
+
+`src/mocks` فقط در توسعه (`import()` پویای `main.tsx` زیر `import.meta.env.DEV`) و تست‌ها اجرا می‌شود.
+
+| لایه | فایل | کار |
+|---|---|---|
+| دروازه‌ی قرارداد | `handlers/contract-gate.ts` | اولین handler: سناریوی فعال، `Idempotency-Key` روی هر نوشتن غیرعمومی، و بدنه با همان schema ِ `packages/contracts` که `ZodValidationPipe` سرور اجرا می‌کند |
+| خطا | `handlers/errors.ts` | `mockError(code, message, fields)` — تنها سازنده‌ی پاسخ خطا؛ بدنه با `apiErrorSchema` parse و وضعیت از کد مشتق می‌شود؛ فقط کدهایی که `api-exception.filter.ts` سرور می‌فرستد |
+| مسیرها | `handlers/index.ts` | پاسخ موفق هر endpoint، محاسبه‌شده با `core-calc` |
+
+**سناریوها:** `success` (پیش‌فرض) · `validation` · `conflict` · `forbidden` · `network`. در توسعه با `?mockScenario=conflict` یا در کنسول `__goldMocks.setScenario('network', '/api/parties')`؛ `__goldMocks.reset()` برمی‌گرداند. در تست: `setMockScenario(...)` / `resetMockScenario()`.
+
+**نگهبان‌ها:** `mocks/contract-conformance.test.tsx` هر handler را با کلاینت واقعی صدا می‌زند (تغییر قرارداد ← `SCHEMA_MISMATCH` ← تست قرمز) و فهرست مسیرها و کدهای خطا را با متن کنترلرها و filter سرور مقایسه می‌کند؛ مسیر بدون معادل سرور باید صریحاً در `PENDING_BACKEND_ROUTES` بیاید. ESLint import ایستای `@/mocks`/`msw` را در کد برنامه رد می‌کند و `scripts/check-no-mocks.mjs` (آخر `pnpm build`) خروجی production را برای fixture و msw می‌گردد.

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build && node ../../scripts/check-bundle-size.mjs",
+    "build": "tsc --noEmit && vite build && node ../../scripts/check-bundle-size.mjs && node scripts/check-no-mocks.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",

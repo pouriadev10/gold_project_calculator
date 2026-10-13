@@ -336,10 +336,13 @@ export function apiPost<S extends z.ZodTypeAny>(
 
 /**
  * POST فقط‌خواندنی — برای endpointهایی که بدنه‌ی ورودی دارند، اما هیچ
- * سند یا اثر مالی ایجاد نمی‌کنند (مانند پیش‌نمایش قیمت‌گذاری).
+ * سند یا اثر مالی ایجاد نمی‌کنند (مانند پیش‌نمایش خرید مجدد B2C).
  *
- * `Idempotency-Key` مخصوص نوشتن است؛ فرستادن آن برای یک preview این تصور
- * غلط را می‌سازد که درخواست، عملیات مالی قابل‌تکرار است.
+ * کلید هر فراخوان **تازه** است و فراخوان نمی‌تواند کلیدی بدهد: preview عملیات
+ * قابل‌تکرار نیست و سرور آن را ذخیره نمی‌کند. اما `TenantContextMiddleware`
+ * سرور روی **هر** POST غیرعمومی هدر را الزامی می‌داند و بدون آن ۴۰۰ می‌دهد —
+ * FE-093 این را با دروازه‌ی قراردادی MSW آشکار کرد؛ پیش از آن preview فقط
+ * در تست‌های واحدِ بدون سرور سبز بود.
  */
 export function apiPostReadOnly<S extends z.ZodTypeAny>(
   path: string,
@@ -353,7 +356,7 @@ export function apiPostReadOnly<S extends z.ZodTypeAny>(
     schema,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Idempotency-Key': newIdempotencyKey() },
       body: JSON.stringify(body),
     },
     signal,

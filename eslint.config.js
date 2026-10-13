@@ -145,6 +145,19 @@ const CHART_STAYS_LAZY_PATTERNS = [
   },
 ];
 
+/**
+ * ۷ — mock مالی فقط توسعه و تست (FE-093). تنها راه رسیدن کد برنامه به `src/mocks` یک
+ * `import()` پویا زیر `import.meta.env.DEV` در `main.tsx` است (این قاعده import پویا را
+ * نمی‌گیرد). import ایستا — حتی یک fixture — داده‌ی ساختگی را به باندل production می‌برد؛
+ * `scripts/check-no-mocks.mjs` همین را پس از بیلد روی خروجی واقعی هم بررسی می‌کند.
+ */
+const MOCKS_STAY_DEV_ONLY_PATTERNS = [
+  {
+    group: ['@/mocks', '@/mocks/*', '**/mocks/*', 'msw', 'msw/*'],
+    message: 'mock و msw فقط در تست‌ها و import() پویای DEV در main.tsx — نه در کد برنامه.',
+  },
+];
+
 /** `import * as Icons from 'lucide-react'` همه‌ی آیکون‌ها را می‌آورد؛ فقط import نام‌دار. */
 const noWholeIconSet = [
   {
@@ -246,7 +259,10 @@ export default tseslint.config(
       ],
       'no-restricted-imports': [
         'error',
-        { patterns: [...NO_API_IMPORT_PATTERNS, ...CHART_STAYS_LAZY_PATTERNS], paths: WHOLE_LIBRARY_IMPORTS },
+        {
+          patterns: [...NO_API_IMPORT_PATTERNS, ...CHART_STAYS_LAZY_PATTERNS, ...MOCKS_STAY_DEV_ONLY_PATTERNS],
+          paths: WHOLE_LIBRARY_IMPORTS,
+        },
       ],
       // FE-006: هر درخواست شبکه باید از apiGet/apiPost عبور کند تا Idempotency-Key،
       // timeout و اعتبارسنجی zod هیچ‌جا فراموش نشوند.
@@ -265,7 +281,21 @@ export default tseslint.config(
   {
     files: ['apps/web/src/features/reporting/profit-trend-echarts.ts'],
     rules: {
-      'no-restricted-imports': ['error', { patterns: NO_API_IMPORT_PATTERNS, paths: WHOLE_LIBRARY_IMPORTS }],
+      'no-restricted-imports': [
+        'error',
+        { patterns: [...NO_API_IMPORT_PATTERNS, ...MOCKS_STAY_DEV_ONLY_PATTERNS], paths: WHOLE_LIBRARY_IMPORTS },
+      ],
+    },
+  },
+
+  // خود mockها msw و fixtureهایشان را import می‌کنند؛ فقط از راه import() پویای DEV به برنامه می‌رسند.
+  {
+    files: ['apps/web/src/mocks/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        { patterns: [...NO_API_IMPORT_PATTERNS, ...CHART_STAYS_LAZY_PATTERNS], paths: WHOLE_LIBRARY_IMPORTS },
+      ],
     },
   },
 

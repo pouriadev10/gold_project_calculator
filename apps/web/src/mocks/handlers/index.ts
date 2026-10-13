@@ -1,5 +1,6 @@
 import {
   bubble,
+  calculateB2cBuybackDifference,
   calculateSecondHandGoldPurchase,
   DEFAULT_ROUNDING_UNIT,
   RATE_DIVISOR,
@@ -16,12 +17,16 @@ import {
 } from '@gold/core-calc';
 import type { CoinType } from '@gold/core-calc';
 import {
+  amendSalesInvoiceSchema,
+  createB2cBuybackSchema,
+  previewB2cBuybackSchema,
   createSecondHandCoinPurchaseSchema,
   createSecondHandGoldPurchaseSchema,
   createCoinTypeSchema,
   createCoinTypeVersionSchema,
   DEFAULT_PAGE_SIZE,
   MAX_PAGE_SIZE,
+  profitReportQuerySchema,
   updateGeneralSettingSchema,
 } from '@gold/contracts';
 import type { CoinTypeHistory, CoinTypeVersion, SalesInvoiceAmendmentHistory } from '@gold/contracts';
@@ -61,6 +66,8 @@ import {
   salesInvoiceRecords,
   salesInvoiceVersionRecords,
 } from './fixtures';
+import { contractGate } from './contract-gate';
+import { mockError, mockMissingIdempotencyKey, mockValidationError } from './errors';
 
 /**
  * پاسخ‌دهنده‌های ساختگی.
@@ -107,6 +114,20 @@ let partyList: Party[] = [...partyRecords];
  */
 let jewelryItemList: JewelryItemVersion[] = [...jewelryItemVersionRecords];
 let jewelryItemVersionCounter = jewelryItemVersionRecords.length;
+
+/**
+ * نسخه‌ی کالاهای فروخته‌شده — فروش آن‌ها را از `jewelryItemList` بیرون می‌برد، اما اصلاح فاکتور
+ * و خرید مجدد B2C (FE-093) هنوز همان نسخه را برای بازسازی قیمت تاریخی لازم دارند.
+ */
+const soldJewelryItems = new Map<string, JewelryItemVersion>();
+
+function findJewelryVersion(jewelryItemId: string): JewelryItemVersion | undefined {
+  return (
+    jewelryItemList.find((item) => item.jewelryItemId === jewelryItemId) ??
+    soldJewelryItems.get(jewelryItemId) ??
+    jewelryItemVersionRecords.find((item) => item.jewelryItemId === jewelryItemId)
+  );
+}
 
 let invoiceCounter = 122;
 
@@ -213,24 +234,6 @@ function mockCoinTypeVersion(
     : { ...shared, mintType: spec.mintType, isCentralBankMinted: false };
 }
 
-function idempotencyRequired() {
-  return HttpResponse.json(
-    { error: { code: 'IDEMPOTENCY_KEY_REQUIRED', message: 'هدر Idempotency-Key اجباری است', fields: {}, requestId: crypto.randomUUID() } },
-    { status: 400 },
-  );
-}
-
-function coinTypeValidationError(issues: ReadonlyArray<{ path: PropertyKey[]; message: string }>) {
-  const fields: Record<string, string[]> = {};
-  for (const issue of issues) {
-    const field = String(issue.path[0] ?? 'body');
-    (fields[field] ??= []).push(issue.message);
-  }
-  return HttpResponse.json(
-    { error: { code: 'VALIDATION_ERROR', message: 'مشخصات نوع سکه نامعتبر است', fields, requestId: crypto.randomUUID() } },
-    { status: 400 },
-  );
-}
 
 /**
  * تاریخچه‌ی مظنه‌ی MAZNEH — نزولی بر اساس `observedAt` (همان ترتیب
@@ -320,24 +323,11 @@ function issueSession(key: string, email: keyof typeof DEMO_USERS) {
 }
 
 function unauthorized(message: string) {
-  return HttpResponse.json(
-    { error: { code: 'UNAUTHORIZED', message, fields: {}, requestId: crypto.randomUUID() } },
-    { status: 401 },
-  );
+  return mockError('UNAUTHORIZED', message);
 }
 
 function partyNotFound() {
-  return HttpResponse.json(
-    {
-      error: {
-        code: 'NOT_FOUND',
-        message: 'شخص مورد نظر پیدا نشد',
-        fields: {},
-        requestId: crypto.randomUUID(),
-      },
-    },
-    { status: 404 },
-  );
+  return mockError('NOT_FOUND', 'شخص مورد نظر پیدا نشد');
 }
 
 /**
@@ -353,17 +343,7 @@ await delay(WRITE_DELAY_MS);
 
 const key = request.headers.get('Idempotency-Key');
 if (!key) {
-  return HttpResponse.json(
-    {
-      error: {
-        code: 'IDEMPOTENCY_KEY_REQUIRED',
-        message: 'هدر Idempotency-Key اجباری است',
-        fields: {},
-        requestId: crypto.randomUUID(),
-      },
-    },
-    { status: 400 },
-  );
+  return mockMissingIdempotencyKey();
 }
 
 // همان کلید = همان عملیات. فاکتور دوم ساخته نمی‌شود.
@@ -381,17 +361,7 @@ const body = (await request.json()) as {
 const version = jewelryItemList.find((item) => item.jewelryItemId === body.jewelryItemId);
 const quote = maznehQuoteHistory.find((q) => q.id === body.quoteId);
 if (!version || !quote) {
-  return HttpResponse.json(
-    {
-      error: {
-        code: 'NOT_FOUND',
-        message: !version ? 'کالای انتخاب‌شده پیدا نشد' : 'مظنه‌ی انتخاب‌شده پیدا نشد',
-        fields: {},
-        requestId: crypto.randomUUID(),
-      },
-    },
-    { status: 404 },
-  );
+  return mockError('NOT_FOUND', !version ? 'کالای انتخاب‌شده پیدا نشد' : 'مظنه‌ی انتخاب‌شده پیدا نشد');
 }
 
 const calc = priceJewelryFromVersion(version, BigInt(quote.amountRial));
@@ -525,6 +495,7 @@ recordSalesInvoice({
 });
 
 // فروش یک قطعه‌ی فیزیکی است — همان کالا دیگر در انبار نیست
+soldJewelryItems.set(body.jewelryItemId, version);
 jewelryItemList = jewelryItemList.filter((item) => item.jewelryItemId !== body.jewelryItemId);
 
 idempotencyCache.set(key, result);
@@ -552,17 +523,7 @@ async function registerCoinSale(request: Request) {
 
   const key = request.headers.get('Idempotency-Key');
   if (!key) {
-    return HttpResponse.json(
-      {
-        error: {
-          code: 'IDEMPOTENCY_KEY_REQUIRED',
-          message: 'هدر Idempotency-Key اجباری است',
-          fields: {},
-          requestId: crypto.randomUUID(),
-        },
-      },
-      { status: 400 },
-    );
+    return mockMissingIdempotencyKey();
   }
 
   const cached = idempotencyCache.get(key);
@@ -581,17 +542,7 @@ async function registerCoinSale(request: Request) {
   const fixture = COIN_TYPE_VERSIONS.find((c) => c.coinTypeId === body.coinTypeId);
   const quote = maznehQuoteHistory.find((q) => q.id === body.quoteId);
   if (!fixture || !quote) {
-    return HttpResponse.json(
-      {
-        error: {
-          code: 'NOT_FOUND',
-          message: !fixture ? 'نوع سکه‌ی انتخاب‌شده پیدا نشد' : 'مظنه‌ی انتخاب‌شده پیدا نشد',
-          fields: {},
-          requestId: crypto.randomUUID(),
-        },
-      },
-      { status: 404 },
-    );
+    return mockError('NOT_FOUND', !fixture ? 'نوع سکه‌ی انتخاب‌شده پیدا نشد' : 'مظنه‌ی انتخاب‌شده پیدا نشد');
   }
 
   const coin = toCoinType(fixture);
@@ -604,17 +555,7 @@ async function registerCoinSale(request: Request) {
 
   // آینه‌ی CoinSalePaidRialExceedsPayableError واقعی — برخلاف نسیه‌ی زیورآلات، اینجا رد می‌شود نه پذیرفته
   if (paidRial > payableRial) {
-    return HttpResponse.json(
-      {
-        error: {
-          code: 'COIN_SALE_PAID_RIAL_EXCEEDS_PAYABLE',
-          message: 'مبلغ پرداختی نمی‌تواند از مبلغ قابل‌پرداخت بیشتر باشد',
-          fields: {},
-          requestId: crypto.randomUUID(),
-        },
-      },
-      { status: 422 },
-    );
+    return mockError('BAD_REQUEST', 'مبلغ پرداختی نمی‌تواند از مبلغ قابل‌پرداخت بیشتر باشد');
   }
   const receivableRial = payableRial - paidRial;
 
@@ -761,30 +702,137 @@ async function registerCoinSale(request: Request) {
   return HttpResponse.json(result, { status: 201 });
 }
 
+/** عیار پیش‌فرض خرید از مصرف‌کننده — رکورد تنظیمات نسخه‌دار، نه عدد هاردکد (قاعده‌ی ۲-۶). */
+function secondHandDefaultKarat(): number {
+  return Number.parseInt(mockGeneralSettings.get('purchase.second_hand_default_karat')?.value ?? '', 10);
+}
+
+/** محاسبه‌ی خرید دست‌دوم — مشترک خرید مستقیم و خرید مجدد B2C، مثل `SecondHandGoldPurchasesService`. */
+function secondHandGoldCalculation(
+  body: { grossWeightMg: string; stoneWeightMg: string; otherDeductionWeightMg: string; purchaseKarat?: number | undefined },
+  maznehRial: bigint,
+  feeRial: bigint,
+) {
+  return calculateSecondHandGoldPurchase({
+    grossWeightMg: BigInt(body.grossWeightMg),
+    deductions: { stone: grossMg(BigInt(body.stoneWeightMg)), other: grossMg(BigInt(body.otherDeductionWeightMg)) },
+    purchaseKarat: karat(body.purchaseKarat ?? secondHandDefaultKarat()),
+    maznehRial,
+    feeRial,
+    roundingUnitRial: DEFAULT_ROUNDING_UNIT,
+    rateDivisor: RATE_DIVISOR,
+  });
+}
+
+/** فروش اولیه‌ی یک خرید مجدد B2C — آینه‌ی `loadOriginalJewelrySaleInTransaction` سرور. */
+function originalJewelrySale(invoiceId: string):
+  | { readonly ok: false; readonly response: Response }
+  | {
+      readonly ok: true;
+      readonly detail: SalesInvoiceDetail;
+      readonly quote: NonNullable<SalesInvoiceDetail['quoteSnapshot']>;
+      readonly purchaseAmountRial: bigint;
+      readonly calculation: ReturnType<typeof priceJewelryFromVersion>;
+    } {
+  const detail = salesInvoiceDetails.get(invoiceId);
+  if (!detail) return { ok: false, response: mockError('NOT_FOUND', 'فاکتور مورد نظر پیدا نشد') };
+  const current = detail.versions.find((version) => version.version === detail.currentVersion);
+  if (detail.status !== 'FINALIZED' || detail.quoteSnapshot === null || current === undefined) {
+    return { ok: false, response: mockError('BAD_REQUEST', 'فقط فاکتور نهایی‌شده قابل خرید مجدد است') };
+  }
+  if (detail.party.type !== 'CONSUMER' || detail.party.status !== 'ACTIVE') {
+    return { ok: false, response: mockError('BAD_REQUEST', 'خرید مجدد فقط برای مصرف‌کننده‌ی فعال ممکن است') };
+  }
+  const [item, ...rest] = current.items;
+  const jewelry = item?.itemType === 'JEWELRY' && rest.length === 0 ? findJewelryVersion(item.itemId) : undefined;
+  if (jewelry === undefined) {
+    return { ok: false, response: mockError('BAD_REQUEST', 'این فاکتور یک قطعه‌ی زیورآلات قابل خرید مجدد ندارد') };
+  }
+  return {
+    ok: true,
+    detail,
+    quote: detail.quoteSnapshot,
+    // مبلغ اولیه همان snapshot ِ قفل‌شده‌ی فاکتور است (قاعده‌ی ۲-۸)، نه بازمحاسبه با امروز.
+    purchaseAmountRial: BigInt(current.payableRial),
+    calculation: priceJewelryFromVersion(jewelry, BigInt(detail.quoteSnapshot.amountRial)),
+  };
+}
+
+/** مقایسه‌ی فروش اولیه با خرید امروز — همان `calculateB2cBuybackDifference` ِ core-calc. */
+function b2cBuybackComparison(
+  original: Extract<ReturnType<typeof originalJewelrySale>, { ok: true }>,
+  body: { grossWeightMg: string; stoneWeightMg: string; otherDeductionWeightMg: string; purchaseKarat?: number | undefined },
+  quote: { amountRial: string },
+) {
+  const today = secondHandGoldCalculation(body, BigInt(quote.amountRial), 0n);
+  const difference = calculateB2cBuybackDifference({
+    originalPurchaseAmountRial: rial(original.purchaseAmountRial),
+    originalGoldValueRial: original.calculation.goldValueRial,
+    originalWageRial: original.calculation.wageRial,
+    originalPureWeightMg: original.calculation.pureWeightMg,
+    todayGrossPurchaseAmountRial: today.grossPurchaseAmountRial,
+    todayPurchaseAmountRial: today.finalAmountRial,
+    todayGoldRatePerGramRial: today.goldRatePerGramRial,
+  });
+  return {
+    today,
+    breakdown: {
+      originalPurchaseAmountRial: original.purchaseAmountRial.toString(),
+      todayPurchaseAmountRial: today.finalAmountRial.toString(),
+      differenceRial: difference.differenceRial.toString(),
+      wageBurnedRial: difference.wageBurnedRial.toString(),
+      karatDifferenceRial: difference.karatDifferenceRial.toString(),
+      marketPriceDifferenceRial: difference.marketPriceDifferenceRial.toString(),
+      otherCalculationDifferenceRial: difference.otherCalculationDifferenceRial.toString(),
+    },
+  };
+}
+
+/**
+ * سیاست اصلاح — همان تنظیم نسخه‌دار `sales.invoice_correction_window_minutes`. فاکتورهای
+ * fixture قدیمی‌اند و خارج پنجره؛ فاکتوری که در همین نشست ثبت شود تا پایان پنجره اصلاح‌پذیر است.
+ */
+function amendmentPolicyFor(detail: SalesInvoiceDetail) {
+  const windowMinutes = BigInt(mockGeneralSettings.get('sales.invoice_correction_window_minutes')?.value ?? '0');
+  const elapsedMs = BigInt(Date.now()) - BigInt(new Date(detail.occurredAt).getTime());
+  const restrictions: Array<'INVOICE_NOT_FINALIZED' | 'OUTSIDE_CORRECTION_WINDOW'> = [];
+  if (detail.status !== 'FINALIZED') restrictions.push('INVOICE_NOT_FINALIZED');
+  else if (elapsedMs > windowMinutes * 60_000n) restrictions.push('OUTSIDE_CORRECTION_WINDOW');
+  return {
+    invoiceId: detail.id,
+    invoiceVersion: detail.currentVersion,
+    evaluatedAt: new Date().toISOString(),
+    allowed: restrictions.length === 0,
+    requiresManagerAuthorization: restrictions.includes('OUTSIDE_CORRECTION_WINDOW'),
+    restrictions,
+  };
+}
+
 export const handlers = [
+  // FE-093: سناریو، Idempotency-Key و schema ِ بدنه پیش از هر مسیر — مثل middleware و pipe سرور.
+  contractGate,
   http.post('/api/purchase/second-hand/gold', async ({ request }) => {
     await delay(WRITE_DELAY_MS);
     const key = request.headers.get('Idempotency-Key');
+    if (!key) return mockMissingIdempotencyKey();
     const parsed = createSecondHandGoldPurchaseSchema.safeParse(await request.json());
-    if (!key || !parsed.success) return HttpResponse.json({ message: 'ورودی خرید معتبر نیست' }, { status: 400 });
+    if (!parsed.success) return mockValidationError(parsed.error);
     const cacheKey = `purchase:${key}`;
     const cached = idempotencyCache.get(cacheKey);
     if (cached) return HttpResponse.json(cached, { status: 201 });
     const body = parsed.data;
     const party = partyList.find((p) => p.id === body.partyId);
     const quote = maznehQuoteHistory.find((q) => q.id === body.quoteId);
-    if (!quote || party?.type !== 'CONSUMER' || party.status !== 'ACTIVE') {
-      return HttpResponse.json({ message: 'فروشنده یا مظنه معتبر نیست' }, { status: 400 });
+    // نگاشت `second-hand-gold-purchases.controller.ts`: شخص ناموجود ← ۴۰۴؛ غیرمصرف‌کننده/مظنه ← ۴۰۰.
+    if (party === undefined) return mockError('NOT_FOUND', 'فروشنده پیدا نشد');
+    if (party.type !== 'CONSUMER' || party.status !== 'ACTIVE') {
+      return mockError('BAD_REQUEST', 'خرید دست‌دوم فقط از مصرف‌کننده‌ی فعال ممکن است');
     }
+    if (!quote) return mockError('BAD_REQUEST', 'مظنه‌ی انتخاب‌شده پیدا نشد');
     try {
-      if (body.purchaseKarat === undefined) return HttpResponse.json({ message: 'عیار خرید لازم است' }, { status: 400 });
-      const calc = calculateSecondHandGoldPurchase({
-        grossWeightMg: BigInt(body.grossWeightMg),
-        deductions: { stone: grossMg(BigInt(body.stoneWeightMg)), other: grossMg(BigInt(body.otherDeductionWeightMg)) },
-        purchaseKarat: karat(body.purchaseKarat), maznehRial: BigInt(quote.amountRial), feeRial: BigInt(body.feeRial),
-        roundingUnitRial: DEFAULT_ROUNDING_UNIT, rateDivisor: RATE_DIVISOR,
-      });
-      if (BigInt(body.paidRial) > calc.finalAmountRial) return HttpResponse.json({ message: 'پرداخت بیشتر از مبلغ خرید است' }, { status: 400 });
+      // عیار حذف‌شده = تنظیم نسخه‌دار مستأجر، همان کاری که سرور می‌کند — نه خطا.
+      const calc = secondHandGoldCalculation(body, BigInt(quote.amountRial), BigInt(body.feeRial));
+      if (BigInt(body.paidRial) > calc.finalAmountRial) return mockError('BAD_REQUEST', 'پرداخت بیشتر از مبلغ خرید است');
       const result = {
         secondHandPurchaseId: crypto.randomUUID(), ledgerTransactionId: crypto.randomUUID(), inventoryMovementId: crypto.randomUUID(),
         pureWeightMg: calc.pureWeightMg.toString(), goldRatePerGramRial: calc.goldRatePerGramRial.toString(),
@@ -796,15 +844,16 @@ export const handlers = [
       idempotencyCache.set(cacheKey, result);
       return HttpResponse.json(result, { status: 201 });
     } catch {
-      return HttpResponse.json({ message: 'محاسبه خرید نامعتبر است' }, { status: 400 });
+      return mockError('BAD_REQUEST', 'محاسبه خرید نامعتبر است');
     }
   }),
 
   http.post('/api/purchase/second-hand/coins', async ({ request }) => {
     await delay(WRITE_DELAY_MS);
     const key = request.headers.get('Idempotency-Key');
+    if (!key) return mockMissingIdempotencyKey();
     const parsed = createSecondHandCoinPurchaseSchema.safeParse(await request.json());
-    if (!key || !parsed.success) return HttpResponse.json({ message: 'ورودی خرید سکه معتبر نیست' }, { status: 400 });
+    if (!parsed.success) return mockValidationError(parsed.error);
     const cacheKey = `coin-purchase:${key}`;
     const cached = idempotencyCache.get(cacheKey);
     if (cached) return HttpResponse.json(cached, { status: 201 });
@@ -812,13 +861,17 @@ export const handlers = [
     const party = partyList.find((candidate) => candidate.id === body.partyId);
     const fixture = COIN_TYPE_VERSIONS.find((candidate) => candidate.coinTypeId === body.coinTypeId && candidate.active);
     const quote = maznehQuoteHistory.find((candidate) => candidate.id === body.quoteId);
-    if (!fixture || !quote || party?.type !== 'CONSUMER' || party.status !== 'ACTIVE') {
-      return HttpResponse.json({ message: 'فروشنده، نوع سکه یا مظنه معتبر نیست' }, { status: 400 });
+    // نگاشت `second-hand-coin-purchases.controller.ts`: شخص/نوع سکه ناموجود ← ۴۰۴؛ بقیه ← ۴۰۰.
+    if (party === undefined) return mockError('NOT_FOUND', 'فروشنده پیدا نشد');
+    if (fixture === undefined) return mockError('NOT_FOUND', 'نوع سکه پیدا نشد');
+    if (party.type !== 'CONSUMER' || party.status !== 'ACTIVE') {
+      return mockError('BAD_REQUEST', 'خرید دست‌دوم فقط از مصرف‌کننده‌ی فعال ممکن است');
     }
+    if (!quote) return mockError('BAD_REQUEST', 'مظنه‌ی انتخاب‌شده پیدا نشد');
     const unitPrice = rial(BigInt(body.purchaseUnitPriceRial));
     const purchaseAmount = coinPositionValue(body.count, unitPrice);
     const paid = BigInt(body.paidRial);
-    if (paid > purchaseAmount) return HttpResponse.json({ message: 'پرداخت نمی‌تواند بیشتر از مبلغ خرید باشد' }, { status: 422 });
+    if (paid > purchaseAmount) return mockError('BAD_REQUEST', 'پرداخت نمی‌تواند بیشتر از مبلغ خرید باشد');
     const coin = toCoinType(fixture);
     const rate1000 = gramRate1000(BigInt(quote.amountRial));
     const intrinsic = intrinsicValue(coin, rate1000);
@@ -840,24 +893,8 @@ export const handlers = [
   http.post('/api/auth/login', async ({ request }) => {
     await delay(WRITE_DELAY_MS);
 
-    const key = request.headers.get('Idempotency-Key');
-    if (!key) {
-      return HttpResponse.json(
-        {
-          error: {
-            code: 'IDEMPOTENCY_KEY_REQUIRED',
-            message: 'هدر Idempotency-Key اجباری است',
-            fields: {},
-            requestId: crypto.randomUUID(),
-          },
-        },
-        { status: 400 },
-      );
-    }
-
-    const cached = idempotencyCache.get(key);
-    if (cached) return HttpResponse.json(cached);
-
+    // `/auth` مسیر عمومی سرور است: نه کلید می‌خواهد نه پاسخ را برای کلید نگه می‌دارد —
+    // هر ورود موفق نشست تازه‌ای است (`AuthController.login`).
     const body = (await request.json()) as { email: string; password: string; tenantSlug: string };
     const demoUser = Object.hasOwn(DEMO_USERS, body.email)
       ? (body.email as keyof typeof DEMO_USERS)
@@ -868,9 +905,7 @@ export const handlers = [
       return unauthorized('ایمیل یا رمز عبور نادرست است');
     }
 
-    const result = issueSession(key, demoUser);
-    idempotencyCache.set(key, result);
-    return HttpResponse.json(result);
+    return HttpResponse.json(issueSession(crypto.randomUUID(), demoUser));
   }),
 
   http.post('/api/auth/refresh', async ({ request }) => {
@@ -946,17 +981,7 @@ export const handlers = [
 
     const key = request.headers.get('Idempotency-Key');
     if (!key) {
-      return HttpResponse.json(
-        {
-          error: {
-            code: 'IDEMPOTENCY_KEY_REQUIRED',
-            message: 'هدر Idempotency-Key اجباری است',
-            fields: {},
-            requestId: crypto.randomUUID(),
-          },
-        },
-        { status: 400 },
-      );
+      return mockMissingIdempotencyKey();
     }
 
     const cached = idempotencyCache.get(key);
@@ -1005,10 +1030,7 @@ export const handlers = [
     await delay(WRITE_DELAY_MS);
     const key = request.headers.get('Idempotency-Key');
     if (!key) {
-      return HttpResponse.json(
-        { error: { code: 'IDEMPOTENCY_KEY_REQUIRED', message: 'هدر Idempotency-Key اجباری است', fields: {}, requestId: crypto.randomUUID() } },
-        { status: 400 },
-      );
+      return mockMissingIdempotencyKey();
     }
     const cached = idempotencyCache.get(key);
     if (cached) return HttpResponse.json(cached);
@@ -1056,17 +1078,7 @@ export const handlers = [
 
     const key = request.headers.get('Idempotency-Key');
     if (!key) {
-      return HttpResponse.json(
-        {
-          error: {
-            code: 'IDEMPOTENCY_KEY_REQUIRED',
-            message: 'هدر Idempotency-Key اجباری است',
-            fields: {},
-            requestId: crypto.randomUUID(),
-          },
-        },
-        { status: 400 },
-      );
+      return mockMissingIdempotencyKey();
     }
 
     const cached = idempotencyCache.get(key);
@@ -1103,17 +1115,7 @@ export const handlers = [
 
     const key = request.headers.get('Idempotency-Key');
     if (!key) {
-      return HttpResponse.json(
-        {
-          error: {
-            code: 'IDEMPOTENCY_KEY_REQUIRED',
-            message: 'هدر Idempotency-Key اجباری است',
-            fields: {},
-            requestId: crypto.randomUUID(),
-          },
-        },
-        { status: 400 },
-      );
+      return mockMissingIdempotencyKey();
     }
 
     const cached = idempotencyCache.get(key);
@@ -1122,17 +1124,7 @@ export const handlers = [
     const id = params['id'] as string;
     const existing = partyList.find((p) => p.id === id);
     if (!existing) {
-      return HttpResponse.json(
-        {
-          error: {
-            code: 'NOT_FOUND',
-            message: 'شخص مورد نظر پیدا نشد',
-            fields: {},
-            requestId: crypto.randomUUID(),
-          },
-        },
-        { status: 404 },
-      );
+      return mockError('NOT_FOUND', 'شخص مورد نظر پیدا نشد');
     }
 
     const body = (await request.json()) as {
@@ -1191,17 +1183,7 @@ export const handlers = [
     if (referenceQuoteId) {
       const quote = maznehQuoteHistory.find((q) => q.id === referenceQuoteId);
       if (!quote) {
-        return HttpResponse.json(
-          {
-            error: {
-              code: 'NOT_FOUND',
-              message: 'مظنه‌ی مرجع پیدا نشد',
-              fields: {},
-              requestId: crypto.randomUUID(),
-            },
-          },
-          { status: 404 },
-        );
+        return mockError('NOT_FOUND', 'مظنه‌ی مرجع پیدا نشد');
       }
       return HttpResponse.json(
         partyBalancesFor({ id, mg: partyMgById[id] ?? 0 }, quote),
@@ -1254,17 +1236,7 @@ export const handlers = [
       const searchParams = new URL(request.url).searchParams;
       const quote = maznehQuoteHistory.find((q) => q.id === searchParams.get('referenceQuoteId'));
       if (!quote) {
-        return HttpResponse.json(
-          {
-            error: {
-              code: 'NOT_FOUND',
-              message: 'مظنه‌ی مرجع پیدا نشد',
-              fields: {},
-              requestId: crypto.randomUUID(),
-            },
-          },
-          { status: 404 },
-        );
+        return mockError('NOT_FOUND', 'مظنه‌ی مرجع پیدا نشد');
       }
       return HttpResponse.json(
         partyBalanceReportFor(path === 'debtors' ? 'DEBTOR' : 'CREDITOR', partyList, quote, {
@@ -1284,17 +1256,7 @@ export const handlers = [
 
     const key = request.headers.get('Idempotency-Key');
     if (!key) {
-      return HttpResponse.json(
-        {
-          error: {
-            code: 'IDEMPOTENCY_KEY_REQUIRED',
-            message: 'هدر Idempotency-Key اجباری است',
-            fields: {},
-            requestId: crypto.randomUUID(),
-          },
-        },
-        { status: 400 },
-      );
+      return mockMissingIdempotencyKey();
     }
 
     const cached = idempotencyCache.get(key);
@@ -1323,17 +1285,7 @@ export const handlers = [
 
     const key = request.headers.get('Idempotency-Key');
     if (!key) {
-      return HttpResponse.json(
-        {
-          error: {
-            code: 'IDEMPOTENCY_KEY_REQUIRED',
-            message: 'هدر Idempotency-Key اجباری است',
-            fields: {},
-            requestId: crypto.randomUUID(),
-          },
-        },
-        { status: 400 },
-      );
+      return mockMissingIdempotencyKey();
     }
 
     const cached = idempotencyCache.get(key);
@@ -1371,17 +1323,7 @@ export const handlers = [
 
     const key = request.headers.get('Idempotency-Key');
     if (!key) {
-      return HttpResponse.json(
-        {
-          error: {
-            code: 'IDEMPOTENCY_KEY_REQUIRED',
-            message: 'هدر Idempotency-Key اجباری است',
-            fields: {},
-            requestId: crypto.randomUUID(),
-          },
-        },
-        { status: 400 },
-      );
+      return mockMissingIdempotencyKey();
     }
 
     const cached = idempotencyCache.get(key);
@@ -1399,17 +1341,7 @@ export const handlers = [
     };
     const quote = maznehQuoteHistory.find((q) => q.id === body.quoteId);
     if (!quote) {
-      return HttpResponse.json(
-        {
-          error: {
-            code: 'NOT_FOUND',
-            message: 'مظنه‌ی انتخاب‌شده پیدا نشد',
-            fields: {},
-            requestId: crypto.randomUUID(),
-          },
-        },
-        { status: 404 },
-      );
+      return mockError('NOT_FOUND', 'مظنه‌ی انتخاب‌شده پیدا نشد');
     }
 
     const rate1000 = gramRate1000(BigInt(quote.amountRial));
@@ -1444,17 +1376,7 @@ export const handlers = [
 
     const key = request.headers.get('Idempotency-Key');
     if (!key) {
-      return HttpResponse.json(
-        {
-          error: {
-            code: 'IDEMPOTENCY_KEY_REQUIRED',
-            message: 'هدر Idempotency-Key اجباری است',
-            fields: {},
-            requestId: crypto.randomUUID(),
-          },
-        },
-        { status: 400 },
-      );
+      return mockMissingIdempotencyKey();
     }
 
     const cached = idempotencyCache.get(key);
@@ -1475,17 +1397,7 @@ export const handlers = [
     const fixture = COIN_TYPE_VERSIONS.find((c) => c.coinTypeId === body.coinTypeId);
     const quote = maznehQuoteHistory.find((q) => q.id === body.quoteId);
     if (!fixture || !quote) {
-      return HttpResponse.json(
-        {
-          error: {
-            code: 'NOT_FOUND',
-            message: !fixture ? 'نوع سکه‌ی انتخاب‌شده پیدا نشد' : 'مظنه‌ی انتخاب‌شده پیدا نشد',
-            fields: {},
-            requestId: crypto.randomUUID(),
-          },
-        },
-        { status: 404 },
-      );
+      return mockError('NOT_FOUND', !fixture ? 'نوع سکه‌ی انتخاب‌شده پیدا نشد' : 'مظنه‌ی انتخاب‌شده پیدا نشد');
     }
 
     const coin = toCoinType(fixture);
@@ -1538,17 +1450,7 @@ export const handlers = [
 
     const key = request.headers.get('Idempotency-Key');
     if (!key) {
-      return HttpResponse.json(
-        {
-          error: {
-            code: 'IDEMPOTENCY_KEY_REQUIRED',
-            message: 'هدر Idempotency-Key اجباری است',
-            fields: {},
-            requestId: crypto.randomUUID(),
-          },
-        },
-        { status: 400 },
-      );
+      return mockMissingIdempotencyKey();
     }
 
     const cached = idempotencyCache.get(key);
@@ -1588,17 +1490,7 @@ export const handlers = [
       if (line.type === 'GOLD') {
         const quote = maznehQuoteHistory.find((q) => q.id === line.quoteId);
         if (!quote) {
-          return HttpResponse.json(
-            {
-              error: {
-                code: 'NOT_FOUND',
-                message: 'مظنه‌ی انتخاب‌شده پیدا نشد',
-                fields: {},
-                requestId: crypto.randomUUID(),
-              },
-            },
-            { status: 404 },
-          );
+          return mockError('NOT_FOUND', 'مظنه‌ی انتخاب‌شده پیدا نشد');
         }
         const rate1000 = gramRate1000(BigInt(quote.amountRial));
         const pureWeightMg = toPureMg(grossMg(BigInt(line.grossWeightMg)), karat(line.karat));
@@ -1617,17 +1509,7 @@ export const handlers = [
       const fixture = COIN_TYPE_VERSIONS.find((c) => c.coinTypeId === line.coinTypeId);
       const quote = maznehQuoteHistory.find((q) => q.id === line.quoteId);
       if (!fixture || !quote) {
-        return HttpResponse.json(
-          {
-            error: {
-              code: 'NOT_FOUND',
-              message: !fixture ? 'نوع سکه‌ی انتخاب‌شده پیدا نشد' : 'مظنه‌ی انتخاب‌شده پیدا نشد',
-              fields: {},
-              requestId: crypto.randomUUID(),
-            },
-          },
-          { status: 404 },
-        );
+        return mockError('NOT_FOUND', !fixture ? 'نوع سکه‌ی انتخاب‌شده پیدا نشد' : 'مظنه‌ی انتخاب‌شده پیدا نشد');
       }
       const coin = toCoinType(fixture);
       const rate1000 = gramRate1000(BigInt(quote.amountRial));
@@ -1652,17 +1534,7 @@ export const handlers = [
     const currentBalance = PARTY_RIAL_BALANCE[partyId] ?? 0n;
     const availableCreditRial = currentBalance < 0n ? -currentBalance : 0n;
     if (creditAppliedRial > availableCreditRial) {
-      return HttpResponse.json(
-        {
-          error: {
-            code: 'MIXED_SETTLEMENT_INSUFFICIENT_CREDIT',
-            message: 'مانده‌ی اعتباری شخص برای این ردیف کافی نیست',
-            fields: {},
-            requestId: crypto.randomUUID(),
-          },
-        },
-        { status: 422 },
-      );
+      return mockError('BAD_REQUEST', 'مانده‌ی اعتباری شخص برای این ردیف کافی نیست');
     }
 
     // گذر دوم — همه معتبرند، حالا موجودی/مانده جابه‌جا می‌شود
@@ -1746,17 +1618,7 @@ export const handlers = [
     const id = params['id'] as string;
     const found = jewelryItemList.find((i) => i.jewelryItemId === id || i.id === id);
     if (!found) {
-      return HttpResponse.json(
-        {
-          error: {
-            code: 'NOT_FOUND',
-            message: 'کالا پیدا نشد',
-            fields: {},
-            requestId: crypto.randomUUID(),
-          },
-        },
-        { status: 404 },
-      );
+      return mockError('NOT_FOUND', 'کالا پیدا نشد');
     }
     return HttpResponse.json(found);
   }),
@@ -1767,17 +1629,7 @@ export const handlers = [
 
     const key = request.headers.get('Idempotency-Key');
     if (!key) {
-      return HttpResponse.json(
-        {
-          error: {
-            code: 'IDEMPOTENCY_KEY_REQUIRED',
-            message: 'هدر Idempotency-Key اجباری است',
-            fields: {},
-            requestId: crypto.randomUUID(),
-          },
-        },
-        { status: 400 },
-      );
+      return mockMissingIdempotencyKey();
     }
 
     const cached = idempotencyCache.get(key);
@@ -1829,17 +1681,7 @@ export const handlers = [
 
     const key = request.headers.get('Idempotency-Key');
     if (!key) {
-      return HttpResponse.json(
-        {
-          error: {
-            code: 'IDEMPOTENCY_KEY_REQUIRED',
-            message: 'هدر Idempotency-Key اجباری است',
-            fields: {},
-            requestId: crypto.randomUUID(),
-          },
-        },
-        { status: 400 },
-      );
+      return mockMissingIdempotencyKey();
     }
 
     const cached = idempotencyCache.get(key);
@@ -1848,17 +1690,7 @@ export const handlers = [
     const id = params['id'] as string;
     const existing = jewelryItemList.find((i) => i.jewelryItemId === id || i.id === id);
     if (!existing) {
-      return HttpResponse.json(
-        {
-          error: {
-            code: 'NOT_FOUND',
-            message: 'کالا پیدا نشد',
-            fields: {},
-            requestId: crypto.randomUUID(),
-          },
-        },
-        { status: 404 },
-      );
+      return mockError('NOT_FOUND', 'کالا پیدا نشد');
     }
 
     const body = (await request.json()) as {
@@ -1909,17 +1741,14 @@ export const handlers = [
   http.post('/api/inventory/coin-types', async ({ request }) => {
     await delay(WRITE_DELAY_MS);
     const idempotencyKey = request.headers.get('Idempotency-Key');
-    if (!idempotencyKey) return idempotencyRequired();
+    if (!idempotencyKey) return mockMissingIdempotencyKey();
     const cached = idempotencyCache.get(idempotencyKey);
     if (cached) return HttpResponse.json(cached, { status: 201 });
 
     const parsed = createCoinTypeSchema.safeParse(await request.json());
-    if (!parsed.success) return coinTypeValidationError(parsed.error.issues);
+    if (!parsed.success) return mockValidationError(parsed.error);
     if (mockCoinTypeHistory.some((type) => type.code === parsed.data.code)) {
-      return HttpResponse.json(
-        { error: { code: 'CONFLICT', message: `کد «${parsed.data.code}» قبلاً ثبت شده است`, fields: {}, requestId: crypto.randomUUID() } },
-        { status: 409 },
-      );
+      return mockError('CONFLICT', `کد «${parsed.data.code}» قبلاً ثبت شده است`);
     }
     const coinTypeId = crypto.randomUUID();
     const created = mockCoinTypeVersion(coinTypeId, parsed.data.code, 1, parsed.data);
@@ -1931,19 +1760,16 @@ export const handlers = [
   http.post('/api/inventory/coin-types/:coinTypeId/versions', async ({ request, params }) => {
     await delay(WRITE_DELAY_MS);
     const idempotencyKey = request.headers.get('Idempotency-Key');
-    if (!idempotencyKey) return idempotencyRequired();
+    if (!idempotencyKey) return mockMissingIdempotencyKey();
     const cached = idempotencyCache.get(idempotencyKey);
     if (cached) return HttpResponse.json(cached, { status: 201 });
 
     const type = mockCoinTypeHistory.find((candidate) => candidate.coinTypeId === params.coinTypeId);
     if (!type) {
-      return HttpResponse.json(
-        { error: { code: 'NOT_FOUND', message: 'نوع سکه پیدا نشد', fields: {}, requestId: crypto.randomUUID() } },
-        { status: 404 },
-      );
+      return mockError('NOT_FOUND', 'نوع سکه پیدا نشد');
     }
     const parsed = createCoinTypeVersionSchema.safeParse(await request.json());
-    if (!parsed.success) return coinTypeValidationError(parsed.error.issues);
+    if (!parsed.success) return mockValidationError(parsed.error);
 
     const previous = type.versions[0]!;
     const created = mockCoinTypeVersion(type.coinTypeId, type.code, previous.version + 1, parsed.data);
@@ -1976,17 +1802,7 @@ export const handlers = [
 
     const key = request.headers.get('Idempotency-Key');
     if (!key) {
-      return HttpResponse.json(
-        {
-          error: {
-            code: 'IDEMPOTENCY_KEY_REQUIRED',
-            message: 'هدر Idempotency-Key اجباری است',
-            fields: {},
-            requestId: crypto.randomUUID(),
-          },
-        },
-        { status: 400 },
-      );
+      return mockMissingIdempotencyKey();
     }
 
     const cached = idempotencyCache.get(key);
@@ -2021,27 +1837,14 @@ export const handlers = [
     await delay(WRITE_DELAY_MS);
     const idempotencyKey = request.headers.get('Idempotency-Key');
     if (!idempotencyKey) {
-      return HttpResponse.json(
-        { error: { code: 'IDEMPOTENCY_KEY_REQUIRED', message: 'هدر Idempotency-Key اجباری است', fields: {}, requestId: crypto.randomUUID() } },
-        { status: 400 },
-      );
+      return mockMissingIdempotencyKey();
     }
     const cached = idempotencyCache.get(idempotencyKey);
     if (cached) return HttpResponse.json(cached, { status: 201 });
 
     const parsed = updateGeneralSettingSchema.safeParse(await request.json());
     if (!parsed.success) {
-      return HttpResponse.json(
-        {
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: 'مقدار تنظیم نامعتبر است',
-            fields: { value: parsed.error.issues.map((issue) => issue.message) },
-            requestId: crypto.randomUUID(),
-          },
-        },
-        { status: 400 },
-      );
+      return mockValidationError(parsed.error);
     }
     const previous = mockGeneralSettings.get(parsed.data.key);
     const next = {
@@ -2059,23 +1862,10 @@ export const handlers = [
   /** `GET /reporting/profit` — قرارداد نهایی BE-060 (`profitReportSchema`، FE-075). */
   http.get('/api/reporting/profit', async ({ request }) => {
     await delay(READ_DELAY_MS);
-    const searchParams = new URL(request.url).searchParams;
-    const from = searchParams.get('from');
-    const to = searchParams.get('to');
-    if (from !== null && to !== null && new Date(from).getTime() >= new Date(to).getTime()) {
-      return HttpResponse.json(
-        {
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: '"from" must be before "to"',
-            fields: { to: ['"from" must be before "to"'] },
-            requestId: crypto.randomUUID(),
-          },
-        },
-        { status: 400 },
-      );
-    }
-    return HttpResponse.json(ledgerProfitReportFor(from, to));
+    // همان schema ِ query که `ZodValidationPipe` سرور اجرا می‌کند — نه بازنویسی دستی قاعده‌ی بازه.
+    const query = profitReportQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
+    if (!query.success) return mockValidationError(query.error);
+    return HttpResponse.json(ledgerProfitReportFor(query.data.from ?? null, query.data.to ?? null));
   }),
 
   /** `GET /reporting/dashboard` — قرارداد نهایی BE-062ایش (FE-040). */
@@ -2194,17 +1984,7 @@ export const handlers = [
     await delay(READ_DELAY_MS);
     const found = salesInvoiceDetails.get(String(params.invoiceId));
     if (!found) {
-      return HttpResponse.json(
-        {
-          error: {
-            code: 'NOT_FOUND',
-            message: 'فاکتور مورد نظر پیدا نشد',
-            fields: {},
-            requestId: crypto.randomUUID(),
-          },
-        },
-        { status: 404 },
-      );
+      return mockError('NOT_FOUND', 'فاکتور مورد نظر پیدا نشد');
     }
     return HttpResponse.json(found);
   }),
@@ -2214,27 +1994,9 @@ export const handlers = [
     await delay(READ_DELAY_MS);
     const found = salesInvoiceDetails.get(String(params.invoiceId));
     if (!found) {
-      return HttpResponse.json(
-        {
-          error: {
-            code: 'NOT_FOUND',
-            message: 'فاکتور مورد نظر پیدا نشد',
-            fields: {},
-            requestId: crypto.randomUUID(),
-          },
-        },
-        { status: 404 },
-      );
+      return mockError('NOT_FOUND', 'فاکتور مورد نظر پیدا نشد');
     }
-    return HttpResponse.json({
-      invoiceId: found.id,
-      invoiceVersion: found.currentVersion,
-      evaluatedAt: new Date().toISOString(),
-      allowed: false,
-      requiresManagerAuthorization: found.status === 'FINALIZED',
-      restrictions:
-        found.status === 'FINALIZED' ? ['OUTSIDE_CORRECTION_WINDOW'] : ['INVOICE_NOT_FINALIZED'],
-    });
+    return HttpResponse.json(amendmentPolicyFor(found));
   }),
 
   /** دانلود آزمایشی همان endpoint واقعی PDF با نام فایل شماره فاکتور. */
@@ -2242,17 +2004,7 @@ export const handlers = [
     await delay(READ_DELAY_MS);
     const found = salesInvoiceDetails.get(String(params.invoiceId));
     if (!found || found.invoiceNumber === null || found.status !== 'FINALIZED') {
-      return HttpResponse.json(
-        {
-          error: {
-            code: 'NOT_FOUND',
-            message: 'نسخه PDF این فاکتور در دسترس نیست',
-            fields: {},
-            requestId: crypto.randomUUID(),
-          },
-        },
-        { status: 404 },
-      );
+      return mockError('NOT_FOUND', 'نسخه PDF این فاکتور در دسترس نیست');
     }
     const content = new Blob(
       [`%PDF-1.4\n% Gold Accounting invoice ${found.invoiceNumber}\n%%EOF`],
@@ -2275,10 +2027,7 @@ export const handlers = [
     await delay(READ_DELAY_MS);
     const purchaseId = String(params.purchaseId);
     if (!mockSecondHandPurchaseIds.has(purchaseId)) {
-      return HttpResponse.json(
-        { error: { code: 'NOT_FOUND', message: 'خرید دست‌دوم پیدا نشد', fields: {}, requestId: crypto.randomUUID() } },
-        { status: 404 },
-      );
+      return mockError('NOT_FOUND', 'خرید دست‌دوم پیدا نشد');
     }
     return new HttpResponse(new Blob([`%PDF-1.4
 % purchase ${purchaseId}
@@ -2316,17 +2065,7 @@ export const handlers = [
 
     const found = salesInvoiceVersions.get(String(params.invoiceId));
     if (!found) {
-      return HttpResponse.json(
-        {
-          error: {
-            code: 'NOT_FOUND',
-            message: 'فاکتور مورد نظر پیدا نشد',
-            fields: {},
-            requestId: crypto.randomUUID(),
-          },
-        },
-        { status: 404 },
-      );
+      return mockError('NOT_FOUND', 'فاکتور مورد نظر پیدا نشد');
     }
     return HttpResponse.json(found);
   }),
@@ -2335,10 +2074,7 @@ export const handlers = [
     await delay(READ_DELAY_MS);
     const found = salesInvoiceVersions.get(String(params.invoiceId));
     if (!found) {
-      return HttpResponse.json(
-        { error: { code: 'NOT_FOUND', message: 'فاکتور مورد نظر پیدا نشد', fields: {}, requestId: crypto.randomUUID() } },
-        { status: 404 },
-      );
+      return mockError('NOT_FOUND', 'فاکتور مورد نظر پیدا نشد');
     }
     const amendments: SalesInvoiceAmendmentHistory['amendments'] = found.versions.flatMap((version, index) => {
       const before = found.versions[index - 1];
@@ -2367,5 +2103,183 @@ export const handlers = [
       }];
     });
     return HttpResponse.json({ invoiceId: found.invoiceId, invoiceNumber: found.invoiceNumber, amendments } satisfies SalesInvoiceAmendmentHistory);
+  }),
+
+  /**
+   * `POST /sales/invoices/:invoiceId/b2c-buyback/preview` — BE (`b2c-buybacks.controller.ts`)، FE-093.
+   * مقایسه‌ی بی‌اثر: هیچ سند، پرداخت یا حرکت موجودی ثبت نمی‌شود.
+   */
+  http.post('/api/sales/invoices/:invoiceId/b2c-buyback/preview', async ({ request, params }) => {
+    await delay(READ_DELAY_MS);
+    const body = previewB2cBuybackSchema.parse(await request.json());
+    const original = originalJewelrySale(String(params.invoiceId));
+    if (!original.ok) return original.response;
+    const quote = maznehQuoteHistory.find((candidate) => candidate.id === body.quoteId);
+    if (!quote) return mockError('BAD_REQUEST', 'مظنه‌ی انتخاب‌شده پیدا نشد');
+    try {
+      const { today, breakdown } = b2cBuybackComparison(original, body, quote);
+      return HttpResponse.json({
+        sourceInvoiceId: original.detail.id,
+        original: {
+          effectiveAt: original.detail.occurredAt,
+          quoteAmountRial: original.quote.amountRial,
+          quoteObservedAt: original.quote.observedAt,
+          goldRatePerGramRial: original.calculation.goldRatePerGramRial.toString(),
+          purchaseAmountRial: original.purchaseAmountRial.toString(),
+        },
+        today: {
+          effectiveAt: body.effectiveAt,
+          quoteAmountRial: quote.amountRial,
+          quoteObservedAt: quote.observedAt,
+          goldRatePerGramRial: today.goldRatePerGramRial.toString(),
+          purchaseAmountRial: today.finalAmountRial.toString(),
+        },
+        breakdown,
+      });
+    } catch {
+      return mockError('BAD_REQUEST', 'محاسبه خرید نامعتبر است');
+    }
+  }),
+
+  /** `POST /sales/invoices/:invoiceId/b2c-buyback` — خرید دست‌دوم تازه که فاکتور فقط مرجع آن است. */
+  http.post('/api/sales/invoices/:invoiceId/b2c-buyback', async ({ request, params }) => {
+    await delay(WRITE_DELAY_MS);
+    const cacheKey = `b2c-buyback:${request.headers.get('Idempotency-Key') ?? ''}`;
+    const cached = idempotencyCache.get(cacheKey);
+    if (cached) return HttpResponse.json(cached, { status: 201 });
+    const body = createB2cBuybackSchema.parse(await request.json());
+    const original = originalJewelrySale(String(params.invoiceId));
+    if (!original.ok) return original.response;
+    const quote = maznehQuoteHistory.find((candidate) => candidate.id === body.quoteId);
+    if (!quote) return mockError('BAD_REQUEST', 'مظنه‌ی انتخاب‌شده پیدا نشد');
+    try {
+      const { today, breakdown } = b2cBuybackComparison(original, body, quote);
+      const paid = BigInt(body.paidRial);
+      if (paid > today.finalAmountRial) return mockError('BAD_REQUEST', 'پرداخت بیشتر از مبلغ خرید است');
+      const result = {
+        secondHandPurchaseId: crypto.randomUUID(),
+        ledgerTransactionId: crypto.randomUUID(),
+        inventoryMovementId: crypto.randomUUID(),
+        sourceInvoiceId: original.detail.id,
+        pureWeightMg: today.pureWeightMg.toString(),
+        goldRatePerGramRial: today.goldRatePerGramRial.toString(),
+        paidRial: paid.toString(),
+        payableRial: (today.finalAmountRial - paid).toString(),
+        breakdown,
+      };
+      mockSecondHandPurchaseIds.add(result.secondHandPurchaseId);
+      idempotencyCache.set(cacheKey, result);
+      return HttpResponse.json(result, { status: 201 });
+    } catch {
+      return mockError('BAD_REQUEST', 'محاسبه خرید نامعتبر است');
+    }
+  }),
+
+  /**
+   * `POST /sales/invoices/:invoiceId/amend` — نسخه‌ی تازه، نه ویرایش (قاعده‌ی ۲-۷). قیمت با
+   * مظنه‌ی قفل‌شده‌ی خود فاکتور بازمحاسبه می‌شود؛ هیچ عددی از کلاینت جز واقعیت‌های منبع پذیرفته نمی‌شود.
+   */
+  http.post('/api/sales/invoices/:invoiceId/amend', async ({ request, params }) => {
+    await delay(WRITE_DELAY_MS);
+    const cacheKey = `amend:${request.headers.get('Idempotency-Key') ?? ''}`;
+    const cached = idempotencyCache.get(cacheKey);
+    if (cached) return HttpResponse.json(cached, { status: 201 });
+    const body = amendSalesInvoiceSchema.parse(await request.json());
+    const detail = salesInvoiceDetails.get(String(params.invoiceId));
+    const history = salesInvoiceVersions.get(String(params.invoiceId));
+    if (!detail || !history) return mockError('NOT_FOUND', 'فاکتور مورد نظر پیدا نشد');
+    const policy = amendmentPolicyFor(detail);
+    if (!policy.allowed || detail.quoteSnapshot === null || detail.invoiceNumber === null) {
+      return mockError('BAD_REQUEST', 'این فاکتور در وضعیت فعلی قابل اصلاح نیست');
+    }
+    const party = partyList.find((candidate) => candidate.id === body.partyId);
+    if (!party) return mockError('NOT_FOUND', 'شخص مورد نظر پیدا نشد');
+
+    let line: { itemId: string; title: string; quantity: string; pureWeightMg: string | null; karat: number; payableRial: bigint };
+    if (body.item.itemType === 'JEWELRY') {
+      const jewelry = findJewelryVersion(body.item.jewelryItemId);
+      if (!jewelry) return mockError('NOT_FOUND', 'کالای انتخاب‌شده پیدا نشد');
+      const calc = priceJewelryFromVersion(jewelry, BigInt(detail.quoteSnapshot.amountRial));
+      line = { itemId: jewelry.jewelryItemId, title: jewelry.title, quantity: '1', pureWeightMg: calc.pureWeightMg.toString(), karat: jewelry.karat, payableRial: calc.payableRial };
+    } else {
+      const coinItem = body.item;
+      const fixture = COIN_TYPE_VERSIONS.find((candidate) => candidate.coinTypeId === coinItem.coinTypeId);
+      if (!fixture) return mockError('NOT_FOUND', 'نوع سکه پیدا نشد');
+      line = { itemId: fixture.coinTypeId, title: fixture.title, quantity: String(coinItem.count), pureWeightMg: null, karat: fixture.karat, payableRial: coinPositionValue(coinItem.count, rial(BigInt(coinItem.marketUnitPriceRial))) };
+    }
+    const paid = BigInt(body.item.paidRial);
+    if (paid > line.payableRial) return mockError('BAD_REQUEST', 'مبلغ پرداختی نمی‌تواند از مبلغ قابل‌پرداخت بیشتر باشد');
+    const receivable = line.payableRial - paid;
+    const version = detail.currentVersion + 1;
+    const createdAt = new Date().toISOString();
+    const actor = { id: 'c1000000-0000-4000-8000-000000000002', displayName: 'مدیر فروشگاه' };
+    const item = { itemType: body.item.itemType, itemId: line.itemId, quantity: line.quantity, pureWeightMg: line.pureWeightMg, karat: line.karat };
+
+    salesInvoiceDetails.set(detail.id, {
+      ...detail,
+      currentVersion: version,
+      party: { id: party.id, displayName: party.displayName, type: party.type, status: party.status },
+      versions: [
+        ...detail.versions,
+        {
+          version,
+          reason: body.reason,
+          reasonDetail: body.reasonDetail ?? null,
+          actor,
+          createdAt,
+          payableRial: line.payableRial.toString(),
+          paidRial: paid.toString(),
+          receivableRial: receivable.toString(),
+          pureWeightMg: line.pureWeightMg,
+          items: [{ ...item, title: line.title, payableRial: line.payableRial.toString() }],
+          settingsSnapshot: detail.versions[detail.versions.length - 1]!.settingsSnapshot,
+          ledgerSummary: { transactionCount: 1, entryCount: receivable === 0n ? 4 : 5, balanced: true },
+        },
+      ],
+    });
+    salesInvoiceVersions.set(detail.id, {
+      ...history,
+      versions: [
+        ...history.versions,
+        {
+          version,
+          reason: body.reason,
+          reasonDetail: body.reasonDetail ?? null,
+          partyId: party.id,
+          actor,
+          createdAt,
+          payableRial: line.payableRial.toString(),
+          pureWeightMg: line.pureWeightMg,
+          karat: line.karat,
+          items: [item],
+          totalsSnapshot: {
+            payableRial: line.payableRial.toString(),
+            paidRial: paid.toString(),
+            receivableRial: receivable.toString(),
+            pureWeightMg: line.pureWeightMg,
+          },
+          settingsSnapshot: history.versions[history.versions.length - 1]!.settingsSnapshot,
+          ledgerEffects: [],
+          inventoryEffects: [],
+        },
+      ],
+    });
+    salesInvoiceList = salesInvoiceList.map((row) =>
+      row.id === detail.id
+        ? { ...row, currentVersion: version, payableRial: line.payableRial.toString(), party: { id: party.id, displayName: party.displayName } }
+        : row,
+    );
+
+    const result = {
+      invoiceId: detail.id,
+      invoiceNumber: detail.invoiceNumber,
+      version,
+      payableRial: line.payableRial.toString(),
+      receivableRial: receivable.toString(),
+      ledgerTransactionId: crypto.randomUUID(),
+      inventoryMovementIds: [crypto.randomUUID(), crypto.randomUUID()],
+    };
+    idempotencyCache.set(cacheKey, result);
+    return HttpResponse.json(result, { status: 201 });
   }),
 ];
