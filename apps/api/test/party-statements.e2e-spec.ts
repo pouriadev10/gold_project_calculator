@@ -495,7 +495,9 @@ describe('party statements (BE-057)', () => {
     for (const response of [salesPdf, purchasePdf, statementPdf]) {
       expect(response.statusCode).toBe(200);
       expect(response.headers['content-type']).toContain('application/pdf');
-      expect(response.headers['content-disposition']).toContain('attachment;');
+      // FE-098: بدون Content-Disposition (فیلترهای امنیتی وب پاسخ را خالی می‌کنند)؛ نام در X-File-Name
+      expect(response.headers['content-disposition']).toBeUndefined();
+      expect(response.headers['x-file-name']).toMatch(/\.pdf$/u);
       expect(Buffer.from(response.body, 'binary').subarray(0, 5).toString('ascii')).toBe('%PDF-');
       expect(Buffer.from(response.body, 'binary').toString('ascii')).toContain('/ToUnicode');
     }

@@ -15,6 +15,7 @@ describe('fileNameFromContentDisposition', () => {
       'invoice-S-1405-00001.pdf',
     );
     expect(fileNameFromContentDisposition('attachment; filename=invoice-12.pdf')).toBe('invoice-12.pdf');
+    expect(fileNameFromContentDisposition('inline; filename="invoice-S-1405-00001.pdf"')).toBe('invoice-S-1405-00001.pdf');
     expect(
       fileNameFromContentDisposition(
         `attachment; filename="fallback.pdf"; filename*=UTF-8''${encodeURIComponent('فاکتور-۱۲.pdf')}`,

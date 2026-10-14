@@ -17,7 +17,22 @@ export class InvalidPdfError extends Error {
 const PDF_MAGIC = [0x25, 0x50, 0x44, 0x46, 0x2d]; // "%PDF-"
 
 /**
- * نام فایل از هدر `Content-Disposition`. شکل RFC 5987 (`filename*=UTF-8''…`)
+ * نام فایل از هدر `X-File-Name` سرور (FE-098) — `encodeURIComponent` ِ نام، پس نام فارسی هم سالم
+ * می‌رسد. سرور عمداً `Content-Disposition` نمی‌فرستد: نرم‌افزارهای امنیتی وب (مثل ESET) هر پاسخ
+ * دارای آن را برای `fetch` به ۲۰۴ ِ خالی تبدیل می‌کنند. کدگذاری خراب ← `null`، نه حدس.
+ */
+export function fileNameFromHeader(header: string | null | undefined): string | null {
+  if (!header) return null;
+  try {
+    const name = decodeURIComponent(header).trim();
+    return name === '' ? null : name;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * نام فایل از هدر `Content-Disposition` (سرورهای قدیمی‌تر/دیگر). شکل RFC 5987 (`filename*=UTF-8''…`)
  * بر `filename=` مقدم است، چون فقط آن نام غیرلاتین را درست می‌رساند.
  */
 export function fileNameFromContentDisposition(header: string | null | undefined): string | null {

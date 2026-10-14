@@ -337,6 +337,17 @@ function partyNotFound() {
  * حسابداری و دو فیلد پرداخت است، نه قیمت‌گذاری، شماره‌گذاری یا اثر
  * موجودی — دو نسخه‌ی جدا یعنی دو جای مستقل برای واگرا شدن.
  */
+/**
+ * اثر سند روی مانده‌ی ریالی شخص — FE-098. مثبت = طلب فروشگاه از شخص (بدهکار)، منفی = بدهی
+ * فروشگاه به شخص (بستانکار)؛ همان جهت `rawBalances.rial` ِ سرور. پیش‌تر فقط تسویه‌ها مانده را
+ * جابه‌جا می‌کردند و فروش نسیه، خرید دست‌دوم، خرید مجدد و اصلاح فاکتور در «مانده» و «بدهکاران»
+ * توسعه دیده نمی‌شدند، در حالی که سرور واقعی همه را در دفتر کل ثبت می‌کند.
+ */
+function postPartyRial(partyId: string, deltaRial: bigint): void {
+  if (deltaRial === 0n) return;
+  PARTY_RIAL_BALANCE[partyId] = (PARTY_RIAL_BALANCE[partyId] ?? 0n) + deltaRial;
+}
+
 async function registerJewelrySale(request: Request, mode: 'CASH' | 'CREDIT') {
 
 await delay(WRITE_DELAY_MS);
@@ -370,6 +381,7 @@ invoiceCounter += 1;
 const paidRial = mode === 'CASH' ? calc.payableRial : BigInt(body.paidRial ?? '0');
 // مانده هرگز منفی نمی‌شود — قرارداد `nonNegativeBigIntStringSchema` است
 const receivableRial = calc.payableRial > paidRial ? calc.payableRial - paidRial : 0n;
+postPartyRial(body.partyId, receivableRial);
 const result = {
   invoiceId: crypto.randomUUID(),
   // شماره‌ی بدون شکاف — سرور واقعی با جدول شمارنده و SELECT ... FOR UPDATE
@@ -558,6 +570,7 @@ async function registerCoinSale(request: Request) {
     return mockError('BAD_REQUEST', 'مبلغ پرداختی نمی‌تواند از مبلغ قابل‌پرداخت بیشتر باشد');
   }
   const receivableRial = payableRial - paidRial;
+  postPartyRial(body.partyId, receivableRial);
 
   invoiceCounter += 1;
   const result = {
@@ -841,6 +854,7 @@ export const handlers = [
         payableRial: (calc.finalAmountRial - BigInt(body.paidRial)).toString(),
       };
       mockSecondHandPurchaseIds.add(result.secondHandPurchaseId);
+      postPartyRial(body.partyId, -BigInt(result.payableRial));
       idempotencyCache.set(cacheKey, result);
       return HttpResponse.json(result, { status: 201 });
     } catch {
@@ -884,6 +898,7 @@ export const handlers = [
       intrinsicValueRial: intrinsic.toString(), bubbleRial: coinBubble?.toString() ?? null,
     };
     mockSecondHandPurchaseIds.add(result.secondHandPurchaseId);
+    postPartyRial(body.partyId, -(purchaseAmount - paid));
     const existingBalance = COIN_BALANCE_ROWS.find((row) => row.itemId === body.coinTypeId);
     if (existingBalance) existingBalance.quantity = (BigInt(existingBalance.quantity) + BigInt(body.count)).toString();
     else (COIN_BALANCE_ROWS as { itemType: 'COIN'; itemId: string; quantity: string }[]).push({ itemType: 'COIN', itemId: body.coinTypeId, quantity: body.count.toString() });
@@ -2013,7 +2028,8 @@ export const handlers = [
     return new HttpResponse(content, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="invoice-${found.invoiceNumber}.pdf"`,
+        // FE-098: بدون Content-Disposition — مثل سرور (`pdf-response.ts`)
+        'X-File-Name': encodeURIComponent(`invoice-${found.invoiceNumber}.pdf`),
       },
     });
   }),
@@ -2034,7 +2050,7 @@ export const handlers = [
 %%EOF`], { type: 'application/pdf' }), {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="invoice-${purchaseId}.pdf"`,
+        'X-File-Name': encodeURIComponent(`invoice-${purchaseId}.pdf`),
       },
     });
   }),
@@ -2048,7 +2064,7 @@ export const handlers = [
 %%EOF`], { type: 'application/pdf' }), {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="invoice-${id}.pdf"`,
+        'X-File-Name': encodeURIComponent(`invoice-${id}.pdf`),
       },
     });
   }),
@@ -2168,6 +2184,7 @@ export const handlers = [
         breakdown,
       };
       mockSecondHandPurchaseIds.add(result.secondHandPurchaseId);
+      postPartyRial(original.detail.party.id, -(today.finalAmountRial - paid));
       idempotencyCache.set(cacheKey, result);
       return HttpResponse.json(result, { status: 201 });
     } catch {
@@ -2211,6 +2228,9 @@ export const handlers = [
     if (paid > line.payableRial) return mockError('BAD_REQUEST', 'مبلغ پرداختی نمی‌تواند از مبلغ قابل‌پرداخت بیشتر باشد');
     const receivable = line.payableRial - paid;
     const version = detail.currentVersion + 1;
+    // نسخه‌ی تازه جایگزین اثر نسخه‌ی قبلی می‌شود: طلب قبلی از شخص قبلی برمی‌گردد، طلب تازه روی شخص تازه می‌نشیند
+    postPartyRial(detail.party.id, -BigInt(detail.versions[detail.versions.length - 1]!.receivableRial));
+    postPartyRial(party.id, receivable);
     const createdAt = new Date().toISOString();
     const actor = { id: 'c1000000-0000-4000-8000-000000000002', displayName: 'مدیر فروشگاه' };
     const item = { itemType: body.item.itemType, itemId: line.itemId, quantity: line.quantity, pureWeightMg: line.pureWeightMg, karat: line.karat };

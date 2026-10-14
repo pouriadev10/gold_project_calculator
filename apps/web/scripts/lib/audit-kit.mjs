@@ -117,7 +117,8 @@ function send(req, res, status, headers, body) {
  *   تغییر پاسخ API پیش از ارسال (مثلاً صفحه‌های کامل در ممیزی INP).
  *
  * خروجی، جز `origin` و `session` (نشست واقعی از handler ورود): `requests` (هر درخواست
- * رسیده، حتی در قطعی: روش، مسیر و `outage`)، `setOutage(true)` (قطع کامل: هر اتصال بی‌پاسخ بسته می‌شود — مثل
+ * رسیده، حتی در قطعی: روش، مسیر و `outage`؛ برای API همچنین `query`، `status` و برای نوشتن‌ها
+ * `idempotencyKey`، بدنه‌ی درخواست و پاسخ — FE-098 تکرار درخواست مالی را با آن‌ها می‌سنجد)، `setOutage(true)` (قطع کامل: هر اتصال بی‌پاسخ بسته می‌شود — مثل
  * سرور یا شبکه‌ی در دسترس نیست) و `bumpServiceWorker()` (بایت‌های `sw.js` عوض می‌شود؛
  * مرورگر آن را نسخه‌ی تازه می‌بیند).
  */
@@ -134,7 +135,8 @@ export async function startProdServer({ dist, mocks, transformApi }) {
   const server = createHttpServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host}`);
     // حتی در قطعی ثبت می‌شود — تا ممیزی ببیند برنامه آفلاین اصلاً تلاشی کرده یا نه
-    requests.push({ method: req.method, path: url.pathname, at: Date.now(), outage });
+    const record = { method: req.method, path: url.pathname, at: Date.now(), outage };
+    requests.push(record);
     if (outage) {
       req.socket.destroy();
       return;
@@ -144,6 +146,8 @@ export async function startProdServer({ dist, mocks, transformApi }) {
         const body = req.method === 'GET' || req.method === 'HEAD' ? undefined : await readBody(req);
         const headers = Object.fromEntries(Object.entries(req.headers).filter(([, v]) => typeof v === 'string'));
         const response = await callApi(req.method, url.href, headers, body);
+        record.query = url.search;
+        record.status = response?.status ?? 404;
         if (!response) {
           send(req, res, 404, { 'content-type': MIME['.json'], compressible: true }, Buffer.from('{"code":"NOT_FOUND"}'));
           return;
@@ -151,6 +155,11 @@ export async function startProdServer({ dist, mocks, transformApi }) {
         let out = Buffer.from(await response.arrayBuffer());
         const outHeaders = Object.fromEntries(response.headers.entries());
         delete outHeaders['content-length'];
+        if (req.method !== 'GET' && req.method !== 'HEAD') {
+          record.idempotencyKey = headers['idempotency-key'] ?? null;
+          record.body = body?.toString('utf8') ?? '';
+          record.response = out.toString('utf8');
+        }
         if (transformApi) {
           out = await transformApi({ url, method: req.method, ok: response.ok, body: out, callApi, headers });
         }

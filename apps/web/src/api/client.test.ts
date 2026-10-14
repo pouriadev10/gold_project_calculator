@@ -479,6 +479,25 @@ describe('دانلود فایل احراز هویت‌شده', () => {
       'application/pdf',
     );
   });
+
+  it('FE-098: نام را از X-File-Name می‌خواند (سرور Content-Disposition نمی‌فرستد) و بر آن مقدم است', async () => {
+    const name = 'صورت‌حساب سارا.pdf';
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        new Response(new Blob(['%PDF-'], { type: 'application/pdf' }), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/pdf',
+            'X-File-Name': encodeURIComponent(name),
+            'Content-Disposition': 'attachment; filename="old.pdf"',
+          },
+        }),
+      ),
+    );
+
+    expect((await apiGetFile('/parties/id/statement/pdf')).fileName).toBe(name);
+  });
 });
 
 describe('آفلاین — FE-090', () => {

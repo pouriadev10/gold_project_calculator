@@ -1,3 +1,4 @@
+import type { StreamableFile } from '@nestjs/common';
 import {
   Body,
   ConflictException,
@@ -9,11 +10,11 @@ import {
   Inject,
   NotFoundException,
   Param,
+  Res,
   Patch,
   Post,
   Query,
   Req,
-  StreamableFile,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
@@ -26,6 +27,7 @@ import {
   uuidSchema,
 } from '@gold/contracts';
 import { ZodValidationPipe } from '../../shared/validation';
+import { pdfResponse, type HeaderWriter } from '../../platform/files/pdf-response';
 import { CurrentAuth } from '../../platform/auth/current-user.decorator';
 import { JwtAuthGuard } from '../../platform/auth/jwt-auth.guard';
 import { RolesGuard } from '../../platform/auth/roles.guard';
@@ -183,13 +185,11 @@ export class PartiesController {
   @Get(':id/statement/pdf')
   async getStatementPdf(
     @Param('id', new ZodValidationPipe(uuidSchema)) id: string,
+    @Res({ passthrough: true }) reply: HeaderWriter,
   ): Promise<StreamableFile> {
     try {
       const exported = await this.statementPdf.export(this.context.getTenantId(), id);
-      return new StreamableFile(exported.content, {
-        type: exported.contentType,
-        disposition: `attachment; filename="${exported.fileName}"`,
-      });
+      return pdfResponse(reply, exported);
     } catch (error) {
       if (error instanceof PartyNotFoundError) throw new NotFoundException(error.message);
       throw error;

@@ -17,7 +17,9 @@
 ```text
 apps/web/
 ├── scripts/
-│   └── e2e-not-ready.mjs        جاگیر test:e2e تا FE-098 (FE-002)
+│   ├── e2e-pilot.mjs            test:e2e — مسیر پایلوت ۱۷ مرحله‌ای در Chrome روی ۳۶۰px و دسکتاپ (FE-098)
+│   ├── lib/audit-kit.mjs        سرور production + API ساختگی و DevTools Protocol، مشترک ممیزی‌ها و E2E
+│   └── *-audit.mjs              ممیزی‌های موبایل/LCP/INP/PWA (FE-085…FE-090)
 └── src/
     ├── api/                     لایه‌ی HTTP: client, contracts (zod), queries (TanStack Query)
     ├── app/

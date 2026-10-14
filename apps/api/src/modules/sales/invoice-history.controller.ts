@@ -1,10 +1,11 @@
+import type { StreamableFile } from '@nestjs/common';
 import {
   Controller,
   Get,
   Inject,
   NotFoundException,
   Param,
-  StreamableFile,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { uuidSchema } from '@gold/contracts';
@@ -13,6 +14,7 @@ import { Roles } from '../../platform/auth/roles.decorator';
 import { RolesGuard } from '../../platform/auth/roles.guard';
 import { RequestContextService } from '../../platform/request-context/request-context.service';
 import { ZodValidationPipe } from '../../shared/validation';
+import { pdfResponse, type HeaderWriter } from '../../platform/files/pdf-response';
 import { SalesInvoiceNotFoundError } from './sales-invoices.errors';
 import { InvoiceHistoryService } from './invoice-history.service';
 import { SalesInvoicePdfService } from './sales-invoice-pdf.service';
@@ -32,13 +34,11 @@ export class InvoiceHistoryController {
   @Get(':invoiceId/pdf')
   async getPdf(
     @Param('invoiceId', new ZodValidationPipe(uuidSchema)) invoiceId: string,
+    @Res({ passthrough: true }) reply: HeaderWriter,
   ): Promise<StreamableFile> {
     try {
       const exported = await this.pdf.export(this.context.getTenantId(), invoiceId);
-      return new StreamableFile(exported.content, {
-        type: exported.contentType,
-        disposition: `attachment; filename="${exported.fileName}"`,
-      });
+      return pdfResponse(reply, exported);
     } catch (error) {
       if (error instanceof SalesInvoiceNotFoundError) throw new NotFoundException(error.message);
       throw error;

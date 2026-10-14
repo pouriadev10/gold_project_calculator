@@ -11,7 +11,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "node scripts/e2e-not-ready.mjs",
+    "test:e2e": "node scripts/e2e-pilot.mjs",
     "audit:mobile": "node scripts/mobile-audit.mjs",
     "audit:lcp": "node scripts/lcp-audit.mjs",
     "audit:inp": "node scripts/inp-audit.mjs",
