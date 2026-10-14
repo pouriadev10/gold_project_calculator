@@ -1,10 +1,12 @@
 import { useBlocker } from '@tanstack/react-router';
 import { Info } from 'lucide-react';
-import { dualFromRial, toSafeNumber } from '@gold/core-calc';
+import { dualFromRial, toPersianDigits, toSafeNumber } from '@gold/core-calc';
+import { useGeneralSettings } from '@/api/queries';
 import { AmountDisplay } from '@/components/common/AmountDisplay';
 import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
 import { MoneyInput } from '@/components/keypad/MoneyInput';
 import { PageHeader } from '@/components/common/PageHeader';
+import { RetryPanel } from '@/components/common/RetryPanel';
 import { UnitToggle } from '@/components/common/UnitToggle';
 import { Button } from '@/components/ui/button';
 import { NumericKeypad } from '@/components/keypad/NumericKeypad';
@@ -20,7 +22,7 @@ import {
 import { PurchaseStepper } from './PurchaseStepper';
 import { PurchaseKindTabs } from './PurchaseKindTabs';
 import { SecondHandWeighingForm } from './SecondHandWeighingForm';
-import { calculateSecondHandWeighing } from './purchase-pricing';
+import { calculateSecondHandWeighing, tenantDefaultPurchaseKarat, tenantRoundingUnitRial } from './purchase-pricing';
 import { SellerDetailsStep } from './SellerDetailsStep';
 import { PurchaseReceipt } from './PurchaseReceipt';
 import { usePurchaseSubmit } from './usePurchaseSubmit';
@@ -34,7 +36,9 @@ import { usePurchaseSubmit } from './usePurchaseSubmit';
  * ۱. **فروشنده**: `PartySelector` با قفل برای همکاران (`CONSUMER` فقط).
  * ۲. **وزن‌کشی**: ورودی وزن ناخالص کل با `WeightInput`.
  * ۳. **کسورات**: ورودی وزن نگین و سایر متعلقات با پیش‌نمایش وزن خالص پیش از عیار.
- * ۴. **عیار**: انتخاب عیار خرید با پیش‌نمایش نرخ هر گرم عیار مربوطه.
+ * ۴. **عیار**: انتخاب عیار خرید با پیش‌نمایش نرخ هر گرم عیار مربوطه. مقدار اولیه عیار پیش‌فرض
+ *    نسخه‌دار مستأجر است (`GET /settings/general`، FE-095) و فیلد تا رسیدن آن mount نمی‌شود —
+ *    mount با مقدار موقت و بعد جایگزینی، همان مسابقه‌ی seed ِ `NumericField` است.
  * ۵. **مظنه**: بررسی مظنه زنده با `MaznehBar`.
  * ۶. **مبلغ**: ورودی کارمزد اختیاری و پیش‌نمایش کامل مبالغ قبل و بعد از کارمزد و طلای خالص.
  * ۷. **پرداخت**: ثبت پرداخت و تسویه (FE-059).
@@ -54,7 +58,13 @@ export default function PurchaseWizardPage() {
   const feeRial = usePurchaseDraftStore((s) => s.feeRial);
   const paidRial = usePurchaseDraftStore((s) => s.paidRial);
   const setPaidRial = usePurchaseDraftStore((s) => s.setPaidRial);
-  const submission = usePurchaseSubmit(mazneh.data?.quoteId, isOnline);
+  const generalSettings = useGeneralSettings();
+  const tenantKarat = tenantDefaultPurchaseKarat(generalSettings.data);
+  /** عیار مؤثر: انتخاب کاربر، وگرنه پیش‌فرض نسخه‌دار مستأجر؛ `undefined` تا رسیدن تنظیمات. */
+  const effectiveKarat = purchaseKarat ?? tenantKarat;
+  /** واحد گرد کردن نسخه‌دار مستأجر — همان که سرور مبلغ را با آن گرد می‌کند (FE-095). */
+  const roundingUnitRial = tenantRoundingUnitRial(generalSettings.data);
+  const submission = usePurchaseSubmit(mazneh.data?.quoteId, isOnline, tenantKarat);
   const locked = submission.isSubmitting || submission.attempt !== null;
 
   const next = usePurchaseDraftStore((s) => s.next);
@@ -86,10 +96,11 @@ export default function PurchaseWizardPage() {
       grossWeightMg,
       stoneWeightMg,
       otherDeductionWeightMg,
-      purchaseKarat,
+      purchaseKarat: effectiveKarat ?? 0,
       feeRial,
     },
     maznehRial,
+    roundingUnitRial,
   );
   const paid = BigInt(paidRial || '0');
   const canSubmit = isOnline && !submission.isSubmitting && (submission.attempt !== null || (
@@ -105,7 +116,7 @@ export default function PurchaseWizardPage() {
   } else if (step === 'DEDUCTIONS') {
     canGoNext = grossWeightBigInt > 0n && totalDeductionsBigInt < grossWeightBigInt;
   } else if (step === 'KARAT') {
-    canGoNext = purchaseKarat >= 1 && purchaseKarat <= 1000;
+    canGoNext = effectiveKarat !== undefined && effectiveKarat >= 1 && effectiveKarat <= 1000;
   } else if (step === 'QUOTE') {
     canGoNext = Boolean(mazneh.data && maznehRial > 0n);
   } else if (step === 'AMOUNT') {
@@ -143,11 +154,12 @@ export default function PurchaseWizardPage() {
             onStoneWeightChange={(v) => setStoneWeightMg(v.toString())}
             otherDeductionWeightMg={otherDeductionWeightBigInt}
             onOtherDeductionWeightChange={(v) => setOtherDeductionWeightMg(v.toString())}
-            karat={BigInt(purchaseKarat)}
+            karat={BigInt(effectiveKarat ?? 0)}
             onKaratChange={(v) => setPurchaseKarat(toSafeNumber(v))}
             feeRial={feeBigInt}
             onFeeChange={(v) => setFeeRial(v.toString())}
             maznehRial={maznehRial}
+            roundingUnitRial={roundingUnitRial}
             mode="WEIGHING"
           />
         ) : null}
@@ -160,30 +172,52 @@ export default function PurchaseWizardPage() {
             onStoneWeightChange={(v) => setStoneWeightMg(v.toString())}
             otherDeductionWeightMg={otherDeductionWeightBigInt}
             onOtherDeductionWeightChange={(v) => setOtherDeductionWeightMg(v.toString())}
-            karat={BigInt(purchaseKarat)}
+            karat={BigInt(effectiveKarat ?? 0)}
             onKaratChange={(v) => setPurchaseKarat(toSafeNumber(v))}
             feeRial={feeBigInt}
             onFeeChange={(v) => setFeeRial(v.toString())}
             maznehRial={maznehRial}
+            roundingUnitRial={roundingUnitRial}
             mode="DEDUCTIONS"
           />
         ) : null}
 
         {step === 'KARAT' ? (
-          <SecondHandWeighingForm
-            grossWeightMg={grossWeightBigInt}
-            onGrossWeightChange={(v) => setGrossWeightMg(v.toString())}
-            stoneWeightMg={stoneWeightBigInt}
-            onStoneWeightChange={(v) => setStoneWeightMg(v.toString())}
-            otherDeductionWeightMg={otherDeductionWeightBigInt}
-            onOtherDeductionWeightChange={(v) => setOtherDeductionWeightMg(v.toString())}
-            karat={BigInt(purchaseKarat)}
-            onKaratChange={(v) => setPurchaseKarat(toSafeNumber(v))}
-            feeRial={feeBigInt}
-            onFeeChange={(v) => setFeeRial(v.toString())}
-            maznehRial={maznehRial}
-            mode="KARAT"
-          />
+          effectiveKarat === undefined ? (
+            generalSettings.isError ? (
+              <RetryPanel
+                message="عیار پیش‌فرض خرید این فروشگاه دریافت نشد."
+                onRetry={() => void generalSettings.refetch()}
+              />
+            ) : (
+              <p className="py-6 text-center text-sm text-muted-foreground" role="status">
+                در حال دریافت عیار پیش‌فرض خرید فروشگاه…
+              </p>
+            )
+          ) : (
+            <>
+              <SecondHandWeighingForm
+                grossWeightMg={grossWeightBigInt}
+                onGrossWeightChange={(v) => setGrossWeightMg(v.toString())}
+                stoneWeightMg={stoneWeightBigInt}
+                onStoneWeightChange={(v) => setStoneWeightMg(v.toString())}
+                otherDeductionWeightMg={otherDeductionWeightBigInt}
+                onOtherDeductionWeightChange={(v) => setOtherDeductionWeightMg(v.toString())}
+                karat={BigInt(effectiveKarat)}
+                onKaratChange={(v) => setPurchaseKarat(toSafeNumber(v))}
+                feeRial={feeBigInt}
+                onFeeChange={(v) => setFeeRial(v.toString())}
+                maznehRial={maznehRial}
+                roundingUnitRial={roundingUnitRial}
+                mode="KARAT"
+              />
+              {tenantKarat !== undefined ? (
+                <p className="text-xs text-muted-foreground">
+                  عیار پیش‌فرض خرید این فروشگاه: {toPersianDigits(String(tenantKarat))} (از تنظیمات عمومی)
+                </p>
+              ) : null}
+            </>
+          )
         ) : null}
 
         {step === 'QUOTE' ? <MaznehBar isOnline={isOnline} embedded /> : null}
@@ -196,11 +230,12 @@ export default function PurchaseWizardPage() {
             onStoneWeightChange={(v) => setStoneWeightMg(v.toString())}
             otherDeductionWeightMg={otherDeductionWeightBigInt}
             onOtherDeductionWeightChange={(v) => setOtherDeductionWeightMg(v.toString())}
-            karat={BigInt(purchaseKarat)}
+            karat={BigInt(effectiveKarat ?? 0)}
             onKaratChange={(v) => setPurchaseKarat(toSafeNumber(v))}
             feeRial={feeBigInt}
             onFeeChange={(v) => setFeeRial(v.toString())}
             maznehRial={maznehRial}
+            roundingUnitRial={roundingUnitRial}
             mode="AMOUNT"
           />
         ) : null}

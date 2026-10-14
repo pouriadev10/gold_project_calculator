@@ -19,7 +19,7 @@ const fetchMock = vi.fn<typeof fetch>();
 function setup() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const invalidate = vi.spyOn(client, 'invalidateQueries');
-  const hook = renderHook(() => usePurchaseSubmit(quoteId, true), {
+  const hook = renderHook(() => usePurchaseSubmit(quoteId, true, 750), {
     wrapper: ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>,
   });
   return { ...hook, invalidate };
@@ -45,7 +45,8 @@ describe('purchase submission through API client', () => {
     const [url, init] = fetchMock.mock.calls[0]!;
     expect(url).toBe('/api/purchase/second-hand/gold');
     expect(new Headers(init?.headers).get('Idempotency-Key')).toBeTruthy();
-    expect(JSON.parse(String(init?.body))).toMatchObject({ grossWeightMg: '1000', paidRial: '5000000', quoteId });
+    // عیار دست‌نخورده = پیش‌فرض نسخه‌دار مستأجر که به هوک داده شد (FE-095)
+    expect(JSON.parse(String(init?.body))).toMatchObject({ grossWeightMg: '1000', paidRial: '5000000', quoteId, purchaseKarat: 750 });
     await act(async () => { resolve(new Response(JSON.stringify(result), { status: 201 })); await pending; });
     expect(hook.result.current.receipt).toEqual(result);
     expect(usePurchaseDraftStore.getState().seller).toBeNull();

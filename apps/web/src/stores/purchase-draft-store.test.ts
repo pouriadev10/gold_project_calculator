@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
-  DEFAULT_PURCHASE_KARAT,
   hasPurchaseDraftProgress,
   NAVIGABLE_PURCHASE_STEPS,
   PURCHASE_DRAFT_STORAGE_KEY,
@@ -112,7 +111,8 @@ describe('usePurchaseDraftStore — مقادیر و ماندگاری', () => {
     expect(usePurchaseDraftStore.getState().grossWeightMg).toBe('0');
     expect(usePurchaseDraftStore.getState().stoneWeightMg).toBe('0');
     expect(usePurchaseDraftStore.getState().otherDeductionWeightMg).toBe('0');
-    expect(usePurchaseDraftStore.getState().purchaseKarat).toBe(DEFAULT_PURCHASE_KARAT);
+    // عیار هاردکد نمی‌شود — null یعنی «پیش‌فرض نسخه‌دار مستأجر» (FE-095)
+    expect(usePurchaseDraftStore.getState().purchaseKarat).toBeNull();
     expect(usePurchaseDraftStore.getState().feeRial).toBe('0');
   });
 

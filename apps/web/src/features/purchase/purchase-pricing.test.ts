@@ -10,9 +10,11 @@ describe('calculateSecondHandWeighing — FE-057', () => {
     feeRial: '25000',
   };
   const maznehRial = 100_000_000n;
+  /** واحد گرد کردن نسخه‌دار مستأجر — دیگر پیش‌فرض کد ندارد (FE-095). */
+  const roundingUnitRial = 1_000n;
 
   it('محاسبات وزن‌کشی و پیش‌نمایش مبالغ را مطابق با هسته محاسبات انجام می‌دهد', () => {
-    const result = calculateSecondHandWeighing(baseInput, maznehRial);
+    const result = calculateSecondHandWeighing(baseInput, maznehRial, roundingUnitRial);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
@@ -26,7 +28,7 @@ describe('calculateSecondHandWeighing — FE-057', () => {
   });
 
   it('در صورت صفر یا منفی بودن وزن ناخالص خطا می‌دهد', () => {
-    const result = calculateSecondHandWeighing({ ...baseInput, grossWeightMg: '0' }, maznehRial);
+    const result = calculateSecondHandWeighing({ ...baseInput, grossWeightMg: '0' }, maznehRial, roundingUnitRial);
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error).toContain('بیشتر از صفر');
@@ -37,6 +39,7 @@ describe('calculateSecondHandWeighing — FE-057', () => {
     const result = calculateSecondHandWeighing(
       { ...baseInput, stoneWeightMg: '1000' },
       maznehRial,
+      roundingUnitRial,
     );
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -48,6 +51,7 @@ describe('calculateSecondHandWeighing — FE-057', () => {
     const result = calculateSecondHandWeighing(
       { ...baseInput, feeRial: '30000000' },
       maznehRial,
+      roundingUnitRial,
     );
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -59,6 +63,7 @@ describe('calculateSecondHandWeighing — FE-057', () => {
     const result750 = calculateSecondHandWeighing(
       { ...baseInput, purchaseKarat: 750, feeRial: '0' },
       maznehRial,
+      roundingUnitRial,
     );
     expect(result750.ok).toBe(true);
     if (!result750.ok) return;
@@ -66,5 +71,15 @@ describe('calculateSecondHandWeighing — FE-057', () => {
     // ۹۰۰ میلی‌گرم با عیار ۷۵۰ => ۶۷۵ میلی‌گرم خالص
     expect(result750.calc.pureWeightMg).toBe(675n);
     expect(result750.calc.purchaseKaratRatePerGramRial).toBe(23_085_080n);
+  });
+  it('بدون واحد گرد کردن مستأجر پیش‌نمایشی نمی‌سازد — عدد ثابت کد جایگزینش نمی‌شود (FE-095)', () => {
+    const result = calculateSecondHandWeighing(baseInput, maznehRial, undefined);
+    expect(result).toEqual({ ok: false, error: 'تنظیم گرد کردن مبلغ فروشگاه هنوز دریافت نشده است' });
+  });
+
+  it('مبلغ نهایی با واحد گرد کردن خودِ مستأجر گرد می‌شود', () => {
+    const result = calculateSecondHandWeighing(baseInput, maznehRial, 10_000n);
+    expect(result.ok && result.calc.finalAmountRial % 10_000n).toBe(0n);
+    expect(result.ok && result.calc.finalAmountRial).not.toBe(20_475_000n);
   });
 });

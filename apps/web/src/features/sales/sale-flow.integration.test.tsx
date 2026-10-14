@@ -1,9 +1,6 @@
-import { QueryClientProvider } from '@tanstack/react-query';
-import { RouterProvider, createMemoryHistory, createRouter } from '@tanstack/react-router';
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { HttpResponse, http, type JsonBodyType } from 'msw';
-import { setupServer } from 'msw/node';
+import { HttpResponse, http } from 'msw';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import {
   calculateJewelrySale,
@@ -26,38 +23,32 @@ import {
   type SalesInvoiceVersionHistory,
   type SessionResponse,
 } from '@/api/contracts';
-import { createQueryClient } from '@/api/query-client';
-import { formatJalaliDateTime } from '@/lib/date';
-import { routeTree } from '@/app/router';
-import { Toaster } from '@/components/common/Toaster';
 import { useKeypadStore } from '@/components/keypad/keypad-store';
-import { handlers } from '@/mocks/handlers';
+import { formatJalaliDateTime } from '@/lib/date';
 import { contractGate } from '@/mocks/handlers/contract-gate';
 import { mockError } from '@/mocks/handlers/errors';
 import { jewelryItemVersionRecords, MAZNEH_RIAL, partyRecords } from '@/mocks/handlers/fixtures';
 import { useSaleDraftStore } from '@/stores/sale-draft-store';
 import { useSessionStore } from '@/stores/session-store';
 import { useUnitStore } from '@/stores/unit-store';
+import { createIntegrationServer, IdempotencyLedger, rawAmount, renderRoute, UUID } from '@/test/integration';
 
 /**
  * تست Integration فروش زیورآلات — FE-094.
  *
  * هیچ hook یا ماژولی mock نمی‌شود: درخت مسیر واقعی (`routeTree`)، store واقعی پیش‌نویس، هوک‌های
  * واقعی TanStack Query و کلاینت واقعی `src/api` تا لایه‌ی `fetch`؛ مرز تنها جایی است که MSW
- * (`msw/node`) جای سرور می‌نشیند. خواندنی‌ها (مظنه، اشخاص، کالا، موجودی) همان handlerهای
- * توسعه‌اند. ثبت فروش و نسخه‌های فاکتور را این فایل خودش جواب می‌دهد — یک «سرور» کوچک با همان
- * قاعده‌ی Idempotency ِ سرور واقعی (`apps/api/src/platform/idempotency/request-hash.ts`): همان
- * کلید با همان بدنه پاسخ ذخیره‌شده را تکرار می‌کند، همان کلید با بدنه‌ی دیگر ۴۰۹ می‌گیرد.
+ * (`msw/node`، زیرساخت `@/test/integration`) جای سرور می‌نشیند. خواندنی‌ها (مظنه، اشخاص، کالا،
+ * موجودی) همان handlerهای توسعه‌اند. ثبت فروش و نسخه‌های فاکتور را این فایل خودش جواب می‌دهد —
+ * یک «سرور» کوچک با همان قاعده‌ی Idempotency ِ سرور واقعی (`IdempotencyLedger`): همان کلید با
+ * همان بدنه پاسخ ذخیره‌شده را تکرار می‌کند، همان کلید با بدنه‌ی دیگر ۴۰۹ می‌گیرد.
  * `contractGate` هم جلوی آن می‌نشیند تا بدنه پیش از رسیدن به «سرور» با schema ِ قرارداد سنجیده
  * شود، درست مثل `ZodValidationPipe`.
  *
  * مبلغ «سرور» عمداً با پیش‌نمایش کلاینت فرق دارد: اگر رسید عدد کلاینت را نشان دهد، تست می‌شکند.
  */
 
-const server = setupServer(...handlers);
-const originalFetch = globalThis.fetch;
-// jsdom `scrollTo` را پیاده نمی‌کند؛ router هنگام ناوبری صدایش می‌زند.
-window.scrollTo = () => undefined;
+const api = createIntegrationServer();
 
 const ACCESS_TOKEN = 'fe094-access';
 const CASHIER: SessionResponse = {
@@ -99,97 +90,66 @@ const SERVER_CREATED_AT = '2026-10-14T08:30:00.000Z';
 
 /* ── «سرور» فروش ──────────────────────────────────────────────── */
 
-interface Captured {
-  readonly method: string;
-  readonly path: string;
-  readonly headers: Headers;
-  readonly body: Promise<string>;
-}
-
-/** هر درخواستی که از برنامه بیرون رفت، به ترتیب. */
-let requests: Captured[] = [];
-/** کلید Idempotency → اثر انگشت درخواست و پاسخ ذخیره‌شده؛ آینه‌ی جدول `idempotency_records`. */
-let idempotency = new Map<string, { fingerprint: string; status: number; body: JsonBodyType }>();
+let ledger = new IdempotencyLedger();
 let invoices = new Map<string, SalesInvoiceVersionHistory>();
 /** پاسخ بعدی در راه گم می‌شود — فروش روی «سرور» ثبت شده ولی مرورگر خطای شبکه می‌بیند. */
 let loseNextResponse = false;
 /** رد بعدی پیش از ثبت (مثلاً قاعده‌ی کسب‌وکار سرور). */
 let rejectNext: (() => Response) | null = null;
 
-function fingerprint(method: string, path: string, rawBody: string): string {
-  const body = JSON.parse(rawBody) as Record<string, unknown>;
-  const sorted = Object.fromEntries(Object.entries(body).sort(([a], [b]) => a.localeCompare(b)));
-  return `${method} ${path} ${JSON.stringify(sorted)}`;
+function registerSale(mode: 'CASH' | 'CREDIT') {
+  return ({ request }: { request: Request }) => {
+    const loseResponse = loseNextResponse;
+    loseNextResponse = false;
+    return ledger.handle(request, (raw) => createSale(mode, raw), { loseResponse });
+  };
 }
 
-function registerSale(mode: 'CASH' | 'CREDIT') {
-  return async ({ request }: { request: Request }) => {
-    const path = new URL(request.url).pathname;
-    const rawBody = await request.text();
-    // `contractGate` نبود کلید را پیش‌تر با ۴۰۰ رد کرده است.
-    const key = request.headers.get('Idempotency-Key')!;
-    const print = fingerprint(request.method, path, rawBody);
-
-    const existing = idempotency.get(key);
-    if (existing !== undefined) {
-      if (existing.fingerprint !== print) {
-        return mockError('CONFLICT', 'این Idempotency-Key قبلاً برای درخواست دیگری استفاده شده است');
-      }
-      return HttpResponse.json(existing.body, { status: existing.status });
-    }
-
-    if (rejectNext !== null) {
-      const reject = rejectNext;
-      rejectNext = null;
-      return reject();
-    }
-
-    const body = JSON.parse(rawBody) as { partyId: string; jewelryItemId: string; paidRial?: string };
-    const sequence = invoices.size + 1;
-    const invoiceId = `d9400000-0000-4000-8000-${String(sequence).padStart(12, '0')}`;
-    const invoiceNumber = 4_720 + sequence;
-    const paid = mode === 'CASH' ? SERVER_PAYABLE_RIAL : BigInt(body.paidRial ?? '0');
-    const response = {
+function createSale(mode: 'CASH' | 'CREDIT', raw: Record<string, unknown>) {
+  if (rejectNext !== null) {
+    const reject = rejectNext;
+    rejectNext = null;
+    return reject();
+  }
+  const body = raw as { partyId: string; jewelryItemId: string; paidRial?: string };
+  const sequence = invoices.size + 1;
+  const invoiceId = `d9400000-0000-4000-8000-${String(sequence).padStart(12, '0')}`;
+  const invoiceNumber = 4_720 + sequence;
+  const paid = mode === 'CASH' ? SERVER_PAYABLE_RIAL : BigInt(body.paidRial ?? '0');
+  const response = {
+    invoiceId,
+    invoiceNumber,
+    payableRial: SERVER_PAYABLE_RIAL.toString(),
+    ...(mode === 'CREDIT' ? { receivableRial: (SERVER_PAYABLE_RIAL - paid).toString() } : {}),
+    ledgerTransactionId: `e9400000-0000-4000-8000-${String(sequence).padStart(12, '0')}`,
+    inventoryMovementId: `f9400000-0000-4000-8000-${String(sequence).padStart(12, '0')}`,
+  };
+  invoices.set(
+    invoiceId,
+    salesInvoiceVersionHistorySchema.parse({
       invoiceId,
       invoiceNumber,
-      payableRial: SERVER_PAYABLE_RIAL.toString(),
-      ...(mode === 'CREDIT' ? { receivableRial: (SERVER_PAYABLE_RIAL - paid).toString() } : {}),
-      ledgerTransactionId: `e9400000-0000-4000-8000-${String(sequence).padStart(12, '0')}`,
-      inventoryMovementId: `f9400000-0000-4000-8000-${String(sequence).padStart(12, '0')}`,
-    };
-    invoices.set(
-      invoiceId,
-      salesInvoiceVersionHistorySchema.parse({
-        invoiceId,
-        invoiceNumber,
-        versions: [
-          {
-            version: 1,
-            reason: null,
-            reasonDetail: null,
-            partyId: body.partyId,
-            actor: null,
-            createdAt: SERVER_CREATED_AT,
-            payableRial: SERVER_PAYABLE_RIAL.toString(),
-            pureWeightMg: '2895',
-            karat: 750,
-            items: [{ itemType: 'JEWELRY', itemId: body.jewelryItemId, quantity: '1', pureWeightMg: '2895', karat: 750 }],
-            totalsSnapshot: {},
-            settingsSnapshot: {},
-            ledgerEffects: [],
-            inventoryEffects: [],
-          },
-        ],
-      }),
-    );
-    idempotency.set(key, { fingerprint: print, status: 201, body: response });
-
-    if (loseNextResponse) {
-      loseNextResponse = false;
-      return HttpResponse.error();
-    }
-    return HttpResponse.json(response, { status: 201 });
-  };
+      versions: [
+        {
+          version: 1,
+          reason: null,
+          reasonDetail: null,
+          partyId: body.partyId,
+          actor: null,
+          createdAt: SERVER_CREATED_AT,
+          payableRial: SERVER_PAYABLE_RIAL.toString(),
+          pureWeightMg: '2895',
+          karat: 750,
+          items: [{ itemType: 'JEWELRY', itemId: body.jewelryItemId, quantity: '1', pureWeightMg: '2895', karat: 750 }],
+          totalsSnapshot: {},
+          settingsSnapshot: {},
+          ledgerEffects: [],
+          inventoryEffects: [],
+        },
+      ],
+    }),
+  );
+  return { status: 201, body: response };
 }
 
 const salesServer = [
@@ -202,42 +162,20 @@ const salesServer = [
   }),
 ];
 
-function writes(): Captured[] {
-  return requests.filter((request) => request.method !== 'GET');
-}
+const writes = api.writes;
 
 /* ── چرخه‌ی تست ───────────────────────────────────────────────── */
 
-beforeAll(() => {
-  server.listen({ onUnhandledRequest: 'error' });
-  server.events.on('request:start', ({ request }) => {
-    requests.push({
-      method: request.method,
-      path: new URL(request.url).pathname,
-      headers: new Headers(request.headers),
-      body: request.clone().text(),
-    });
-  });
-  // همان پل `a11y.test.tsx`: fetch ِ Node آدرس نسبی و `AbortSignal` ِ jsdom را نمی‌پذیرد.
-  const mswFetch = globalThis.fetch;
-  globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
-    const { signal: _signal, ...rest } = init ?? {};
-    return mswFetch(typeof input === 'string' && input.startsWith('/') ? new URL(input, window.location.origin) : input, rest);
-  }) as typeof fetch;
-});
-
-afterAll(() => {
-  globalThis.fetch = originalFetch;
-  server.close();
-});
+beforeAll(api.start);
+afterAll(api.stop);
 
 beforeEach(() => {
-  requests = [];
-  idempotency = new Map();
+  api.reset();
+  ledger = new IdempotencyLedger();
   invoices = new Map();
   loseNextResponse = false;
   rejectNext = null;
-  server.use(...salesServer);
+  api.server.use(...salesServer);
   sessionStorage.clear();
   useSaleDraftStore.getState().reset();
   useKeypadStore.setState({ isOpen: false, fields: [], activeId: null, buffers: {} });
@@ -247,7 +185,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
-  server.resetHandlers();
+  api.server.resetHandlers();
   useSessionStore.setState({ session: null });
 });
 
@@ -256,20 +194,7 @@ afterEach(() => {
 type User = ReturnType<typeof userEvent.setup>;
 
 function renderSalePage() {
-  const router = createRouter({ routeTree, history: createMemoryHistory({ initialEntries: ['/sales/new'] }) });
-  render(
-    <QueryClientProvider client={createQueryClient()}>
-      <RouterProvider router={router} />
-      <Toaster />
-    </QueryClientProvider>,
-  );
-}
-
-/** مقدار خام (`data-raw`) عدد مالیِ ردیفی که برچسبش `label` است. */
-function rawAmount(label: string, scope: HTMLElement = document.body): { raw: string; unit: string } {
-  const row = within(scope).getByText(label, { selector: 'span' }).parentElement!;
-  const amount = row.querySelector('[data-raw]')!;
-  return { raw: amount.getAttribute('data-raw')!, unit: amount.getAttribute('data-unit')! };
+  renderRoute('/sales/new');
 }
 
 async function next(user: User) {
@@ -346,8 +271,6 @@ async function receipt(): Promise<HTMLElement> {
   return (await screen.findByText('رسید فروش', {}, { timeout: 4000 })).closest('div.space-y-4') as HTMLElement;
 }
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u;
-
 /* ── سناریوها ─────────────────────────────────────────────────── */
 
 describe('FE-094 — فروش زیورآلات از مظنه تا رسید، روی کلاینت و store واقعی', () => {
@@ -388,9 +311,9 @@ describe('FE-094 — فروش زیورآلات از مظنه تا رسید، ر�
 
     // ── پاسخ server-authoritative: رسید از `GET /versions` ِ همان فاکتور خوانده شد
     const serverSale = jewelryCashSaleSchema.parse(
-      [...idempotency.values()][0]!.body,
+      ledger.responses()[0],
     );
-    expect(requests.some((request) => request.method === 'GET' && request.path === `/api/sales/invoices/${serverSale.invoiceId}/versions`)).toBe(true);
+    expect(api.requests().some((request) => request.method === 'GET' && request.path === `/api/sales/invoices/${serverSale.invoiceId}/versions`)).toBe(true);
     expect(within(within(page).getByText('شماره فاکتور').parentElement!).getByText(formatCount(serverSale.invoiceNumber))).toBeInTheDocument();
     expect(within(page).getByText('زمان ثبت').parentElement).toHaveTextContent(formatJalaliDateTime(new Date(SERVER_CREATED_AT)));
     expect(rawAmount('جمع فاکتور', page)).toEqual({ raw: SERVER_PAYABLE_RIAL.toString(), unit: 'rial' });
@@ -448,7 +371,7 @@ describe('FE-094 — فروش زیورآلات از مظنه تا رسید، ر�
     expect(Object.values(body).every((value) => typeof value === 'string')).toBe(true);
     expect(writes()[0]!.headers.get('Idempotency-Key')).toMatch(UUID);
 
-    const serverSale = jewelryCreditSaleSchema.parse([...idempotency.values()][0]!.body);
+    const serverSale = jewelryCreditSaleSchema.parse(ledger.responses()[0]);
     const serverReceivable = BigInt(serverSale.receivableRial);
     expect(serverReceivable).not.toBe(estimated);
     expect(rawAmount('جمع فاکتور', page).raw).toBe(SERVER_PAYABLE_RIAL.toString());

@@ -300,9 +300,14 @@ export default tseslint.config(
   },
 
   // صفحه‌ی دودِ فقط-توسعه کل ECharts را عمداً بارگذاری می‌کند و در بیلد production نیست؛
-  // تست‌ها هم در Node اجرا می‌شوند و هرگز به بسته نمی‌رسند.
+  // تست‌ها هم در Node اجرا می‌شوند و هرگز به بسته نمی‌رسند؛ `src/test/` (setup و زیرساخت
+  // Integration، FE-095) هم فقط از تست‌ها import می‌شود — `check-no-mocks.mjs` خروجی بیلد را می‌سنجد.
   {
-    files: ['apps/web/src/features/dev/**/*.{ts,tsx}', 'apps/web/**/*.test.{ts,tsx}'],
+    files: [
+      'apps/web/src/features/dev/**/*.{ts,tsx}',
+      'apps/web/**/*.test.{ts,tsx}',
+      'apps/web/src/test/**/*.{ts,tsx}',
+    ],
     rules: {
       'no-restricted-imports': ['error', { patterns: NO_API_IMPORT_PATTERNS }],
     },

@@ -16,6 +16,7 @@ function renderForm(props: Partial<Parameters<typeof SecondHandWeighingForm>[0]>
     feeRial: 25000n,
     onFeeChange: vi.fn(),
     maznehRial: 100_000_000n,
+    roundingUnitRial: 1_000n as bigint | undefined,
     ...props,
   };
 
@@ -82,6 +83,7 @@ describe('SecondHandWeighingForm — FE-057', () => {
           feeRial={0n}
           onFeeChange={vi.fn()}
           maznehRial={100_000_000n}
+          roundingUnitRial={1_000n}
           mode="WEIGHING"
         />
         <NumericKeypad />

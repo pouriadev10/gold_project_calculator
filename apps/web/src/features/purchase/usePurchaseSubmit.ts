@@ -7,7 +7,12 @@ import { createSecondHandGoldPurchase } from '@/api/purchase';
 import { queryKeys } from '@/api/query-keys';
 import { usePurchaseDraftStore } from '@/stores/purchase-draft-store';
 
-export function usePurchaseSubmit(quoteId: string | undefined, isOnline: boolean) {
+/**
+ * `defaultKarat`: عیار پیش‌فرض نسخه‌دار مستأجر (FE-095). وقتی کاربر عیاری نزده، همان عیاری
+ * فرستاده می‌شود که پیش‌نمایش با آن حساب شد — نه عیار هاردکد، و نه حذف آن که اگر تنظیم وسط
+ * جریان عوض شود، سرور بی‌صدا با عیاری غیر از آنچه کاربر دید قیمت بزند.
+ */
+export function usePurchaseSubmit(quoteId: string | undefined, isOnline: boolean, defaultKarat: number | undefined) {
   const client = useQueryClient();
   const lock = useRef(false);
   const [isSubmitting, setSubmitting] = useState(false);
@@ -23,7 +28,7 @@ export function usePurchaseSubmit(quoteId: string | undefined, isOnline: boolean
       grossWeightMg: draft.grossWeightMg,
       stoneWeightMg: draft.stoneWeightMg,
       otherDeductionWeightMg: draft.otherDeductionWeightMg,
-      purchaseKarat: draft.purchaseKarat,
+      purchaseKarat: draft.purchaseKarat ?? defaultKarat,
       quoteId,
       feeRial: draft.feeRial,
       paidRial: draft.paidRial,

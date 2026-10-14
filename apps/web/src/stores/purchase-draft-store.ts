@@ -48,8 +48,6 @@ export const NAVIGABLE_PURCHASE_STEPS = [
   'PAYMENT',
 ] as const;
 
-export const DEFAULT_PURCHASE_KARAT = 740;
-
 export interface PurchaseDraftState {
   readonly step: PurchaseStep;
   /** فروشنده — خرید دست‌دوم فقط از مصرف‌کننده است (سرور: `SecondHandPurchasePartyNotConsumerError`). */
@@ -60,8 +58,13 @@ export interface PurchaseDraftState {
   readonly stoneWeightMg: string;
   /** سایر کسورات و متعلقات به میلی‌گرم. */
   readonly otherDeductionWeightMg: string;
-  /** عیار خرید انتخابی (۱ تا ۱۰۰۰). */
-  readonly purchaseKarat: number;
+  /**
+   * عیار خرید انتخابی (۱ تا ۱۰۰۰). `null` یعنی کاربر هنوز عیاری نزده و عیار
+   * پیش‌فرض **نسخه‌دار مستأجر** (`purchase.second_hand_default_karat` در
+   * `GET /settings/general`) به کار می‌رود — هیچ عیار صنفی اینجا هاردکد نمی‌شود
+   * (قاعده‌ی ۲-۶ CLAUDE.md؛ پیش‌فرض ۷۴۰ «قابل تنظیم هر مستأجر» است). FE-095.
+   */
+  readonly purchaseKarat: number | null;
   /** کارمزد اختیاری خرید به ریال. */
   readonly feeRial: string;
   readonly paidRial: string;
@@ -91,7 +94,7 @@ export const usePurchaseDraftStore = create<PurchaseDraftState>()(
       grossWeightMg: '0',
       stoneWeightMg: '0',
       otherDeductionWeightMg: '0',
-      purchaseKarat: DEFAULT_PURCHASE_KARAT,
+      purchaseKarat: null,
       feeRial: '0',
       paidRial: '0',
       attempt: null,
@@ -141,7 +144,7 @@ export const usePurchaseDraftStore = create<PurchaseDraftState>()(
           grossWeightMg: '0',
           stoneWeightMg: '0',
           otherDeductionWeightMg: '0',
-          purchaseKarat: DEFAULT_PURCHASE_KARAT,
+          purchaseKarat: null,
           feeRial: '0',
           paidRial: '0',
           attempt: null,

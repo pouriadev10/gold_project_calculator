@@ -22,6 +22,8 @@ export interface SecondHandWeighingFormProps {
   feeRial: bigint;
   onFeeChange: (value: bigint) => void;
   maznehRial: bigint;
+  /** واحد گرد کردن نسخه‌دار مستأجر (`tenantRoundingUnitRial`)؛ `undefined` = هنوز نرسیده (FE-095). */
+  roundingUnitRial: bigint | undefined;
   /**
    * برای فیلتر بخش‌های فعال در حالت چندمرحله‌ای (Wizard).
    * اگر مشخص نشود، فرم کامل رندر می‌شود.
@@ -41,6 +43,7 @@ export function SecondHandWeighingForm({
   feeRial,
   onFeeChange,
   maznehRial,
+  roundingUnitRial,
   mode = 'FULL',
 }: SecondHandWeighingFormProps) {
   const result: SecondHandWeighingResult = calculateSecondHandWeighing(
@@ -52,6 +55,7 @@ export function SecondHandWeighingForm({
       feeRial: feeRial.toString(),
     },
     maznehRial,
+    roundingUnitRial,
   );
 
   const showWeighing = mode === 'FULL' || mode === 'WEIGHING';

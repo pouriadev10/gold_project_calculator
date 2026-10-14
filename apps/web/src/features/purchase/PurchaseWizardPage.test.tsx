@@ -35,11 +35,28 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
 
 const useLatestPriceQuoteMock = vi.fn();
 const usePartiesMock = vi.fn();
+const useGeneralSettingsMock = vi.fn();
 vi.mock('@/api/queries', async (importOriginal) => ({
   ...(await importOriginal<typeof Queries>()),
   useLatestPriceQuote: (...args: unknown[]) => useLatestPriceQuoteMock(...args),
   useParties: (...args: unknown[]) => usePartiesMock(...args),
+  useGeneralSettings: (...args: unknown[]) => useGeneralSettingsMock(...args),
 }));
+
+/** تنظیمات نسخه‌دار مستأجر؛ عیار عمداً غیر از ۷۴۰ تا هاردکد قدیمی پنهان نماند (FE-095). */
+function generalSettings(karat: string) {
+  return {
+    data: {
+      settings: [
+        { key: 'purchase.second_hand_default_karat', value: karat, version: 2, validFrom: '2026-07-01T00:00:00.000Z', createdBy: null },
+        { key: 'pricing.rial_rounding_unit', value: '1000', version: 1, validFrom: '2026-07-01T00:00:00.000Z', createdBy: null },
+      ],
+    },
+    isLoading: false,
+    isError: false,
+    refetch: vi.fn(),
+  };
+}
 
 function priceQuote(): PriceQuote {
   return {
@@ -94,6 +111,8 @@ beforeEach(() => {
   useBlockerMock.mockReset();
   useLatestPriceQuoteMock.mockReset();
   usePartiesMock.mockReset();
+  useGeneralSettingsMock.mockReset();
+  useGeneralSettingsMock.mockReturnValue(generalSettings('750'));
 
   useLatestPriceQuoteMock.mockReturnValue({ data: priceQuote(), isLoading: false, isSuccess: true });
   usePartiesMock.mockReturnValue({
@@ -224,6 +243,38 @@ describe('PurchaseWizardPage — شروع و پیمایش مراحل', () => {
     await user.click(screen.getByRole('button', { name: 'بعدی' }));
     expect(screen.getByText('مرحله ۴ از ۸ — عیار')).toBeInTheDocument();
     expect(screen.getByLabelText('عیار خرید')).toBeInTheDocument();
+  });
+
+  it('عیار خرید با پیش‌فرض نسخه‌دار مستأجر شروع می‌شود، نه عیار هاردکد (FE-095)', () => {
+    usePurchaseDraftStore.setState({ step: 'KARAT', grossWeightMg: '2500' });
+    renderPage();
+
+    expect(screen.getByLabelText('عیار خرید')).toHaveAttribute('data-value', '750');
+    expect(screen.getByText(/عیار پیش‌فرض خرید این فروشگاه: ۷۵۰/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'بعدی' })).toBeEnabled();
+  });
+
+  it('تا رسیدن تنظیمات، فیلد عیار mount نمی‌شود و «بعدی» بسته است', () => {
+    useGeneralSettingsMock.mockReturnValue({ data: undefined, isLoading: true, isError: false, refetch: vi.fn() });
+    usePurchaseDraftStore.setState({ step: 'KARAT', grossWeightMg: '2500' });
+    renderPage();
+
+    expect(screen.queryByLabelText('عیار خرید')).not.toBeInTheDocument();
+    expect(screen.getByText('در حال دریافت عیار پیش‌فرض خرید فروشگاه…')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'بعدی' })).toBeDisabled();
+  });
+
+  it('شکست دریافت تنظیمات به‌جای عیار حدسی، تلاش دوباره نشان می‌دهد', async () => {
+    const user = userEvent.setup();
+    const refetch = vi.fn();
+    useGeneralSettingsMock.mockReturnValue({ data: undefined, isLoading: false, isError: true, refetch });
+    usePurchaseDraftStore.setState({ step: 'KARAT', grossWeightMg: '2500' });
+    renderPage();
+
+    expect(screen.getByRole('alert')).toHaveTextContent('عیار پیش‌فرض خرید این فروشگاه دریافت نشد.');
+    await user.click(screen.getByRole('button', { name: 'تلاش دوباره' }));
+    expect(refetch).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: 'بعدی' })).toBeDisabled();
   });
 });
 
