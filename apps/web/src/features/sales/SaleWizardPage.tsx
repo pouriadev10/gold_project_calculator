@@ -6,6 +6,7 @@ import { UnsavedChangesGuard } from '@/components/common/UnsavedChangesGuard';
 import { EmptyState } from '@/components/common/EmptyState';
 import { UnitToggle } from '@/components/common/UnitToggle';
 import { OfflineSubmitHint } from '@/components/common/OfflineSubmitHint';
+import { PENDING_SUBMIT_ACTION, PendingSubmitNotice } from '@/components/common/PendingSubmitNotice';
 import { Button } from '@/components/ui/button';
 import { NumericKeypad } from '@/components/keypad/NumericKeypad';
 import { useMazneh } from '@/features/home/useMazneh';
@@ -73,7 +74,8 @@ export default function SaleWizardPage() {
   const setParty = useSaleDraftStore((s) => s.setParty);
   const setItems = useSaleDraftStore((s) => s.setItems);
 
-  const { preparation, isSubmitting, offline, error, outcome, submit, startNewSale } = useJewelrySaleSubmit();
+  const { preparation, isSubmitting, locked, uncertain, offline, error, outcome, submit, startNewSale } =
+    useJewelrySaleSubmit();
 
   /*
    * حین ارسال هم مسدود می‌ماند حتی اگر پیش‌نویس «پیشرفت» نداشته باشد —
@@ -138,6 +140,7 @@ export default function SaleWizardPage() {
             */}
             <SalePaymentInput
               previewPayableRial={preparation.ok ? preparation.plan.previewPayableRial : undefined}
+              disabled={locked}
             />
             {/*
               خطای ثبت در بدنه‌ی صفحه می‌ماند، نه در toast: عملیات مالی
@@ -145,7 +148,8 @@ export default function SaleWizardPage() {
               دست‌نخورده است، پس کاربر می‌تواند برگردد، اصلاح کند و دوباره بزند.
             */}
             {error ? <ApiErrorNotice error={error} /> : null}
-            {!preparation.ok ? (
+            <PendingSubmitNotice uncertain={uncertain} />
+            {!preparation.ok && !locked ? (
               <p className="flex items-start gap-1.5 text-xs text-warning" role="alert">
                 <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
                 {preparation.message}
@@ -167,7 +171,7 @@ export default function SaleWizardPage() {
             type="button"
             variant="outline"
             size="action"
-            disabled={isFirstStep || isSubmitting}
+            disabled={isFirstStep || locked}
             onClick={back}
           >
             قبلی
@@ -176,11 +180,11 @@ export default function SaleWizardPage() {
             <Button
               type="button"
               size="action"
-              disabled={!preparation.ok || isSubmitting || offline}
+              disabled={(!preparation.ok && !locked) || isSubmitting || offline}
               onClick={() => void submit()}
             >
               {isSubmitting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
-              {isSubmitting ? 'در حال ثبت...' : 'ثبت فروش'}
+              {isSubmitting ? 'در حال ثبت...' : uncertain ? PENDING_SUBMIT_ACTION : 'ثبت فروش'}
             </Button>
           ) : (
             <Button type="button" size="action" disabled={!canGoNext} onClick={next}>

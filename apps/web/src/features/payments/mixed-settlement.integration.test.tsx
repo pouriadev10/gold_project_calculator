@@ -347,7 +347,10 @@ describe('FE-096 — تسویه‌ی ترکیبی ریال + طلا + سکه، �
     expect(ledger.size).toBe(1);
     expect(partyRialBalance).toBe(OPENING_DEBT_RIAL - EXPECTED_TOTAL);
 
-    await user.click(submitButton());
+    // FE-100: پاسخ نامشخص ردیف‌ها را قفل می‌کند (رفع #37) — تنها اقدام تکرار همان درخواست است
+    expect(within(row('ردیف ۱: ریال')).getByLabelText('مبلغ')).toBeDisabled();
+    expect(screen.getByRole('button', { name: '+ ریال' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'بررسی نتیجه‌ی ثبت' }));
     await resultCard();
 
     const [first, second] = api.writes();

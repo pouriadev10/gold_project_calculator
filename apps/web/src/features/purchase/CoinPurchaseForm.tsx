@@ -66,7 +66,10 @@ export default function CoinPurchaseForm() {
   const canSubmit = isOnline && !submission.isSubmitting && (hasReadyAttempt || hasReadyDraft);
 
   async function submit() {
-    if (!canSubmit || !party || !coinTypeId || !mazneh.data) return;
+    if (!canSubmit) return;
+    // FE-100: تلاش نامطمئن (شاید بازیابی‌شده پس از بازگشت به صفحه، با فرم خالی) فقط تکرار می‌شود
+    if (submission.attempt) { await submission.submit(null, submission.attempt.rate1000); return; }
+    if (!party || !coinTypeId || !mazneh.data) return;
     await submission.submit({ partyId: party.id, coinTypeId, count: countNumber,
       purchaseUnitPriceRial: purchaseUnitPriceRial.toString(), quoteId: mazneh.data.quoteId,
       paidRial: paidRial.toString(), effectiveAt: new Date().toISOString() }, mazneh.data.gram1000);

@@ -10,20 +10,21 @@ import {
   rial,
   toSafeNumber,
 } from '@gold/core-calc';
-import type { CreateGoldSettlementInput, GoldSettlement } from '@/api/contracts';
+import { createGoldSettlementSchema, type CreateGoldSettlementInput, type GoldSettlement } from '@/api/contracts';
 import { createGoldSettlement } from '@/api/settlements';
 import { usePartyBalances } from '@/api/queries';
 import { queryKeys } from '@/api/query-keys';
 import { AmountDisplay } from '@/components/common/AmountDisplay';
 import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
 import { OFFLINE_SUBMIT_MESSAGE } from '@/components/common/OfflineSubmitHint';
+import { PENDING_SUBMIT_ACTION, PendingSubmitNotice } from '@/components/common/PendingSubmitNotice';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { KaratInput } from '@/components/keypad/KaratInput';
 import { WeightInput } from '@/components/keypad/WeightInput';
 import { UnsavedChangesGuard } from '@/components/common/UnsavedChangesGuard';
 import { useMazneh, type MaznehSnapshot } from '@/features/home/useMazneh';
-import { useIdempotentSubmit } from '@/hooks/useIdempotentSubmit';
+import { useFinancialSubmit } from '@/hooks/useFinancialSubmit';
 import { toast } from '@/stores/toast-store';
 
 /**
@@ -72,8 +73,18 @@ export function GoldSettlementForm({ partyId, onSuccess }: GoldSettlementFormPro
     if (lockedQuote === null && mazneh.data) setLockedQuote(mazneh.data);
   }, [mazneh.data, lockedQuote]);
 
-  const { submit: runSubmit, isSubmitting, reset: resetKey, offline } = useIdempotentSubmit(
+  // FE-100: کلید و بدنه (همراه quoteId و effectiveAt) تا پاسخ قطعی سنجاق می‌مانند
+  const {
+    submit: runSubmit,
+    retry,
+    isSubmitting,
+    locked,
+    uncertain,
+    reset: resetKey,
+    offline,
+  } = useFinancialSubmit(
     (key: string, input: CreateGoldSettlementInput) => createGoldSettlement(partyId, input, key),
+    { persist: { scope: `settlement:gold:${partyId}`, schema: createGoldSettlementSchema } },
   );
 
   const karatValid = karatValue >= 1n && karatValue <= 1000n;
@@ -85,7 +96,9 @@ export function GoldSettlementForm({ partyId, onSuccess }: GoldSettlementFormPro
 
   const reason: string | null = offline
     ? OFFLINE_SUBMIT_MESSAGE
-    : grossWeightMg <= 0n
+    : locked
+      ? null // تلاش سنجاق‌شده فقط تکرار می‌شود؛ فیلدهای فرم دیگر مبنا نیستند
+      : grossWeightMg <= 0n
       ? 'وزن باید بزرگ‌تر از صفر باشد.'
       : !karatValid
         ? 'عیار باید عددی بین ۱ و ۱۰۰۰ باشد.'
@@ -103,18 +116,20 @@ export function GoldSettlementForm({ partyId, onSuccess }: GoldSettlementFormPro
   }
 
   async function handleSubmit() {
-    if (reason !== null || lockedQuote === null) return;
+    if (reason !== null) return;
+    if (!locked && lockedQuote === null) return;
 
     setError(null);
-    const input: CreateGoldSettlementInput = {
-      grossWeightMg: grossWeightMg.toString(),
-      karat: toSafeNumber(karatValue),
-      quoteId: lockedQuote.quoteId,
-      effectiveAt: new Date().toISOString(),
-    };
-
     try {
-      const settlement = await runSubmit(input);
+      const settlement =
+        locked || lockedQuote === null
+          ? await retry()
+          : await runSubmit({
+              grossWeightMg: grossWeightMg.toString(),
+              karat: toSafeNumber(karatValue),
+              quoteId: lockedQuote.quoteId,
+              effectiveAt: new Date().toISOString(),
+            });
       if (!settlement) return;
 
       setResult(settlement);
@@ -163,13 +178,13 @@ export function GoldSettlementForm({ partyId, onSuccess }: GoldSettlementFormPro
   return (
     <Card>
       {/* FE-099: مبلغ واردشده و ثبت‌نشده با ترک صفحه از بین می‌رود — هشدار پیش از آن */}
-      <UnsavedChangesGuard when={grossWeightMg > 0n || karatValue > 0n} submitting={isSubmitting} />
+      <UnsavedChangesGuard when={grossWeightMg > 0n || karatValue > 0n || uncertain} submitting={isSubmitting} />
       <CardHeader>
         <CardTitle className="text-sm">پرداخت با طلا</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <WeightInput label="وزن" value={grossWeightMg} onChange={setGrossWeightMg} karat={karatValue} />
-        <KaratInput label="عیار" value={karatValue} onChange={setKaratValue} />
+        <WeightInput label="وزن" value={grossWeightMg} onChange={setGrossWeightMg} karat={karatValue} disabled={locked} />
+        <KaratInput label="عیار" value={karatValue} onChange={setKaratValue} disabled={locked} />
 
         <div className="space-y-1.5 border-t border-border pt-3 text-sm">
           <div className="flex items-center justify-between">
@@ -195,6 +210,7 @@ export function GoldSettlementForm({ partyId, onSuccess }: GoldSettlementFormPro
         </div>
 
         {error ? <ApiErrorNotice error={error} /> : null}
+        <PendingSubmitNotice uncertain={uncertain} />
 
         <Button
           size="action"
@@ -202,7 +218,7 @@ export function GoldSettlementForm({ partyId, onSuccess }: GoldSettlementFormPro
           disabled={reason !== null || isSubmitting}
           onClick={() => void handleSubmit()}
         >
-          {isSubmitting ? 'در حال ثبت…' : 'ثبت پرداخت'}
+          {isSubmitting ? 'در حال ثبت…' : uncertain ? PENDING_SUBMIT_ACTION : 'ثبت پرداخت'}
         </Button>
         {reason !== null ? <p className="text-center text-xs text-muted-foreground">{reason}</p> : null}
       </CardContent>

@@ -11,7 +11,7 @@ import {
   toSafeNumber,
   type CoinType,
 } from '@gold/core-calc';
-import type { CoinTypeVersion, CreateCoinSaleInput } from '@/api/contracts';
+import { createCoinSaleSchema, type CoinTypeVersion, type CreateCoinSaleInput } from '@/api/contracts';
 import { createCoinSale } from '@/api/sales';
 import { useCoinTypes, useInventoryBalances } from '@/api/queries';
 import { queryKeys } from '@/api/query-keys';
@@ -23,6 +23,7 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { PartySelector } from '@/components/common/PartySelector';
 import { UnitToggle } from '@/components/common/UnitToggle';
 import { OFFLINE_SUBMIT_MESSAGE } from '@/components/common/OfflineSubmitHint';
+import { PENDING_SUBMIT_ACTION, PendingSubmitNotice } from '@/components/common/PendingSubmitNotice';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select } from '@/components/ui/select';
@@ -31,7 +32,7 @@ import { MoneyInput } from '@/components/keypad/MoneyInput';
 import { NumericKeypad } from '@/components/keypad/NumericKeypad';
 import { UnsavedChangesGuard } from '@/components/common/UnsavedChangesGuard';
 import { useMazneh } from '@/features/home/useMazneh';
-import { useIdempotentSubmit } from '@/hooks/useIdempotentSubmit';
+import { useFinancialSubmit } from '@/hooks/useFinancialSubmit';
 import { toast } from '@/stores/toast-store';
 import type { PartySelection } from '@/stores/recent-parties-store';
 import { CoinPositionSummary } from './CoinPositionSummary';
@@ -126,9 +127,21 @@ export default function CoinSaleForm() {
   const [error, setError] = useState<unknown>(null);
   const [result, setResult] = useState<CoinSaleResult | null>(null);
 
-  const { submit: runSubmit, isSubmitting, reset: resetKey, offline } = useIdempotentSubmit(
-    (key: string, input: CreateCoinSaleInput) => createCoinSale(input, key),
-  );
+  /*
+   * FE-100: کلید و کل بدنه (همراه `effectiveAt`) تا پاسخ قطعی سنجاق می‌مانند. پیش از این هر ضربه
+   * `effectiveAt` تازه می‌ساخت: پاسخ گم‌شده + «ثبت» دوباره = ۴۰۹ برای فروشی که ثبت شده بود.
+   */
+  const {
+    submit: runSubmit,
+    retry,
+    isSubmitting,
+    locked,
+    uncertain,
+    reset: resetKey,
+    offline,
+  } = useFinancialSubmit((key: string, input: CreateCoinSaleInput) => createCoinSale(input, key), {
+    persist: { scope: 'sale:coin', schema: createCoinSaleSchema },
+  });
 
   const activeTypes = (coinTypesQuery.data ?? []).filter((c) => c.active);
   const selectedType = activeTypes.find((c) => c.coinTypeId === coinTypeId);
@@ -143,6 +156,7 @@ export default function CoinSaleForm() {
 
   function blockReason(): SubmitBlockReason | null {
     if (offline) return 'OFFLINE';
+    if (locked) return null; // تلاش سنجاق‌شده فقط تکرار می‌شود؛ فیلدهای فرم دیگر مبنا نیستند
     if (party === null) return 'NO_PARTY';
     if (coinTypeId === null || coin === undefined) return 'NO_COIN_TYPE';
     if (mazneh.data === null || mazneh.data === undefined) return 'NO_QUOTE';
@@ -166,21 +180,25 @@ export default function CoinSaleForm() {
   }
 
   async function handleSubmit() {
-    if (reason !== null || party === null || mazneh.data === undefined || mazneh.data === null) return;
+    if (reason !== null) return;
+    const quote = mazneh.data;
+    const ready = party !== null && coinTypeId !== null && quote !== undefined && quote !== null;
+    if (!locked && !ready) return;
 
     setError(null);
-    const input: CreateCoinSaleInput = {
-      partyId: party.id,
-      coinTypeId: coinTypeId!,
-      count: toSafeNumber(count),
-      marketUnitPriceRial: marketUnitPriceRial.toString(),
-      quoteId: mazneh.data.quoteId,
-      effectiveAt: new Date().toISOString(),
-      paidRial: paidRial.toString(),
-    };
-
     try {
-      const sale = await runSubmit(input);
+      const sale =
+        locked || !ready
+          ? await retry()
+          : await runSubmit({
+              partyId: party.id,
+              coinTypeId,
+              count: toSafeNumber(count),
+              marketUnitPriceRial: marketUnitPriceRial.toString(),
+              quoteId: quote.quoteId,
+              effectiveAt: new Date().toISOString(),
+              paidRial: paidRial.toString(),
+            });
       if (!sale) return;
 
       setResult({
@@ -252,7 +270,7 @@ export default function CoinSaleForm() {
 
       <div className="flex-1 space-y-4 p-4 pb-action">
         <SaleKindTabs />
-        <PartySelector label="مشتری" value={party} onChange={setParty} />
+        <PartySelector label="مشتری" value={party} onChange={setParty} disabled={locked} />
 
         <Card>
           <CardHeader>
@@ -271,6 +289,7 @@ export default function CoinSaleForm() {
                 <Select
                   id="coin-sale-type"
                   value={coinTypeId ?? ''}
+                  disabled={locked}
                   onChange={(event) => setCoinTypeId(event.target.value || null)}
                 >
                   <option value="">انتخاب نوع سکه</option>
@@ -283,8 +302,13 @@ export default function CoinSaleForm() {
               </div>
             )}
 
-            <CountInput label="تعداد" value={count} onChange={setCount} />
-            <MoneyInput label="قیمت واحد بازار" value={marketUnitPriceRial} onChange={setMarketUnitPriceRial} />
+            <CountInput label="تعداد" value={count} onChange={setCount} disabled={locked} />
+            <MoneyInput
+              label="قیمت واحد بازار"
+              value={marketUnitPriceRial}
+              onChange={setMarketUnitPriceRial}
+              disabled={locked}
+            />
           </CardContent>
         </Card>
 
@@ -317,13 +341,13 @@ export default function CoinSaleForm() {
               از آن عدد ناقص یخ می‌زد. «پرداخت کامل» حالا یک کپی یک‌باره‌ی
               دستی است، نه یک هم‌گامی پیوسته.
             */}
-            <MoneyInput label="مبلغ پرداختی" value={paidRial} onChange={setPaidRial} />
+            <MoneyInput label="مبلغ پرداختی" value={paidRial} onChange={setPaidRial} disabled={locked} />
             <div className="flex items-center justify-between gap-2">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                disabled={payableRial === undefined}
+                disabled={payableRial === undefined || locked}
                 onClick={() => setPaidRial(payableRial ?? 0n)}
               >
                 پرداخت کامل
@@ -336,10 +360,11 @@ export default function CoinSaleForm() {
         </Card>
 
         {error ? <ApiErrorNotice error={error} /> : null}
+        <PendingSubmitNotice uncertain={uncertain} />
 
         <div className="space-y-1.5">
           <Button size="action" className="w-full" disabled={reason !== null || isSubmitting} onClick={() => void handleSubmit()}>
-            {isSubmitting ? 'در حال ثبت…' : 'ثبت فروش'}
+            {isSubmitting ? 'در حال ثبت…' : uncertain ? PENDING_SUBMIT_ACTION : 'ثبت فروش'}
           </Button>
           {reason !== null ? <p className="text-center text-xs text-muted-foreground">{BLOCK_MESSAGE[reason]}</p> : null}
         </div>
@@ -347,7 +372,9 @@ export default function CoinSaleForm() {
 
       <NumericKeypad />
       <UnsavedChangesGuard
-        when={party !== null || coinTypeId !== null || count > 0n || marketUnitPriceRial > 0n || paidRial > 0n}
+        when={
+          party !== null || coinTypeId !== null || count > 0n || marketUnitPriceRial > 0n || paidRial > 0n || uncertain
+        }
         submitting={isSubmitting}
       />
     </div>

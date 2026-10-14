@@ -405,7 +405,9 @@ describe('FE-097 — اصلاح فاکتور از صفحه‌ی فاکتور ت�
     expect(await screen.findByText('ارتباط با سرور برقرار نشد', {}, { timeout: 4000 })).toBeInTheDocument();
     expect(detail.currentVersion).toBe(2);
 
-    await user.click(submitButton());
+    // FE-100: پاسخ نامشخص فرم را قفل می‌کند؛ ویرایش ممکن نیست، فقط تکرار همان درخواست
+    expect(screen.getByLabelText('مبلغ پرداختی اصلاح‌شده')).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'بررسی نتیجه‌ی ثبت' }));
     const result = await screen.findByLabelText('نتیجه اصلاح فاکتور', {}, { timeout: 4000 });
 
     const [first, second] = api.writes();

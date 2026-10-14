@@ -1,10 +1,16 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { z } from 'zod';
 import { formatRial } from '@gold/core-calc';
-import type { JewelryCashSale, JewelryCreditSale } from '@/api/contracts';
+import {
+  createJewelryCashSaleSchema,
+  createJewelryCreditSaleSchema,
+  type JewelryCashSale,
+  type JewelryCreditSale,
+} from '@/api/contracts';
 import { createJewelryCashSale, createJewelryCreditSale } from '@/api/sales';
 import { queryKeys } from '@/api/query-keys';
-import { useIdempotentSubmit } from '@/hooks/useIdempotentSubmit';
+import { useFinancialSubmit } from '@/hooks/useFinancialSubmit';
 import { toast } from '@/stores/toast-store';
 import { useSaleDraftStore, type LockedMazneh } from '@/stores/sale-draft-store';
 import type { PartySelection } from '@/stores/recent-parties-store';
@@ -68,6 +74,13 @@ export interface JewelrySaleSubmit {
   /** آماده‌بودن ثبت، یا دلیل مسدودبودنش — برای `disabled` دکمه و پیام کنارش. */
   readonly preparation: SaleSubmitPreparation;
   readonly isSubmitting: boolean;
+  /**
+   * FE-100: تلاشی روی سیم رفته و پاسخ قطعی‌اش نیامده — جادوگر باید قفل باشد (نه «قبلی»، نه
+   * ویرایش پرداخت)، چون «ثبت» فقط همان درخواست سنجاق‌شده را تکرار می‌کند.
+   */
+  readonly locked: boolean;
+  /** پاسخ تلاش قبلی نامشخص است — دکمه «بررسی نتیجه» می‌شود. */
+  readonly uncertain: boolean;
   /** FE-090: مرورگر آفلاین است — دکمه‌ی ثبت غیرفعال می‌شود (ثبت آفلاین وجود ندارد). */
   readonly offline: boolean;
   readonly error: unknown;
@@ -76,6 +89,12 @@ export interface JewelrySaleSubmit {
   /** بستن رسید و شروع فروش بعدی. */
   readonly startNewSale: () => void;
 }
+
+/** بدنه‌ی سنجاق‌شده‌ای که از sessionStorage برمی‌گردد دوباره با همان قرارداد سنجیده می‌شود. */
+const saleSubmitPayloadSchema = z.discriminatedUnion('mode', [
+  z.object({ mode: z.literal('CASH'), input: createJewelryCashSaleSchema }),
+  z.object({ mode: z.literal('CREDIT'), input: createJewelryCreditSaleSchema }),
+]);
 
 function post(key: string, payload: SaleSubmitPayload): Promise<JewelryCashSale | JewelryCreditSale> {
   return payload.mode === 'CASH'
@@ -97,19 +116,19 @@ export function useJewelrySaleSubmit(): JewelrySaleSubmit {
   /*
    * لحظه‌ی فروش هم‌عمر کلید Idempotency است (FE-094). سرور hash ِ بدنه را
    * کنار کلید نگه می‌دارد (`request-hash.ts`): همان کلید با بدنه‌ی دیگر ۴۰۹
-   * می‌گیرد، نه پاسخ تکراری. اگر هر تلاش `effectiveAt` تازه بسازد، وقتی
-   * پاسخ اول در راه گم شده ولی فروش روی سرور ثبت شده، تلاش دوباره ۴۰۹
-   * می‌خورد و کاربر خطا می‌بیند برای فروشی که ثبت شده است. پس اولین تلاش
-   * زمان را تعیین می‌کند و تا موفقیت (همراه کلید) ثابت می‌ماند.
+   * می‌گیرد، نه پاسخ تکراری. FE-100 کل بدنه (نه فقط `effectiveAt`) را همراه
+   * کلید سنجاق می‌کند و در sessionStorage نگه می‌دارد — مثل خودِ پیش‌نویس:
+   * ترک جادوگر یا تازه‌سازی پس از پاسخ گم‌شده، فروش دوم نمی‌سازد.
    */
-  const effectiveAtRef = useRef<Date | null>(null);
-
   const {
     submit: runSubmit,
+    pending,
+    locked,
+    uncertain,
     isSubmitting,
     reset: resetKey,
     offline,
-  } = useIdempotentSubmit(post);
+  } = useFinancialSubmit(post, { persist: { scope: 'sale:jewelry', schema: saleSubmitPayloadSchema } });
 
   /*
    * `effectiveAt` لحظه‌ی هر رندر است، نه لحظه‌ی ضربه — ولی فقط برای
@@ -119,18 +138,23 @@ export function useJewelrySaleSubmit(): JewelrySaleSubmit {
   const preparation = prepareJewelrySale({ party, items, lockedMazneh, paidRial }, new Date());
 
   const submit = useCallback(async () => {
-    const effectiveAt = effectiveAtRef.current ?? new Date();
-    const prepared = prepareJewelrySale({ party, items, lockedMazneh, paidRial }, effectiveAt);
-    // `party`/`lockedMazneh` نال از قبل `prepared.ok` را false کرده؛ تکرارش فقط برای narrowing تایپ است
-    if (!prepared.ok || party === null || lockedMazneh === null) return;
+    const prepared = prepareJewelrySale({ party, items, lockedMazneh, paidRial }, new Date());
+    /*
+     * رسید به مشتری و نرخ قفل‌شده نیاز دارد — هر دو در پیش‌نویس sessionStorage هستند و جادوگر
+     * تا پاسخ قطعی قفل است، پس برای تلاش سنجاق‌شده هم سر جایشان‌اند. بدون تلاش سنجاق‌شده،
+     * `prepared.ok` همان شرط‌ها را از قبل گرفته؛ تکرارش فقط برای narrowing تایپ است.
+     */
+    if (party === null || lockedMazneh === null) return;
+    // تلاش سنجاق‌شده بر پیش‌نویس مقدم است (هوک هم همین را تضمین می‌کند)
+    const payload = pending?.payload ?? (prepared.ok ? prepared.plan.payload : null);
+    if (payload === null) return;
 
-    effectiveAtRef.current = effectiveAt;
     setError(null);
     try {
-      const sale = await runSubmit(prepared.plan.payload);
+      const sale = await runSubmit(payload);
       if (!sale) return; // ضربه‌ی دوم حین ارسال قبلی — بی‌اثر، نه خطا
 
-      const preview = prepared.plan.previewPayableRial;
+      const preview = prepared.ok ? prepared.plan.previewPayableRial : undefined;
       const receivableRial = 'receivableRial' in sale ? sale.receivableRial : 0n;
       setOutcome({
         sale,
@@ -138,7 +162,7 @@ export function useJewelrySaleSubmit(): JewelrySaleSubmit {
         lockedMazneh,
         previewMismatchRial:
           preview !== undefined && preview !== sale.payableRial ? sale.payableRial - preview : undefined,
-        mode: prepared.plan.payload.mode,
+        mode: payload.mode,
         // مانده از سرور می‌آید؛ پرداخت‌شده باقیمانده‌ی همان دو عدد سرور است، نه عددی که کلاینت فرستاده
         paidRial: sale.payableRial - receivableRial,
         receivableRial,
@@ -159,15 +183,14 @@ export function useJewelrySaleSubmit(): JewelrySaleSubmit {
       ]);
 
       toast.success('فروش ثبت شد', `${formatRial(sale.payableRial)} ریال`);
-      // موفقیت قطعی — کلید و لحظه‌ی تازه برای فروش بعدی، و پیش‌نویس خالی
-      effectiveAtRef.current = null;
+      // موفقیت قطعی — کلید تازه برای فروش بعدی، و پیش‌نویس خالی
       resetKey();
       resetDraft();
     } catch (caught) {
       // پیش‌نویس دست‌نخورده می‌ماند تا کاربر بتواند اصلاح کند و دوباره بزند
       setError(caught);
     }
-  }, [party, items, lockedMazneh, paidRial, runSubmit, queryClient, resetKey, resetDraft]);
+  }, [party, items, lockedMazneh, paidRial, pending, runSubmit, queryClient, resetKey, resetDraft]);
 
   const startNewSale = useCallback(() => {
     setOutcome(null);
@@ -175,5 +198,5 @@ export function useJewelrySaleSubmit(): JewelrySaleSubmit {
     resetDraft();
   }, [resetDraft]);
 
-  return { preparation, isSubmitting, offline, error, outcome, submit, startNewSale };
+  return { preparation, isSubmitting, locked, uncertain, offline, error, outcome, submit, startNewSale };
 }

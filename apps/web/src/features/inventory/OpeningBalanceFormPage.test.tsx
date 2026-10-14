@@ -231,8 +231,12 @@ describe('OpeningBalanceFormPage — نتیجه‌ی ثبت', () => {
     await user.click(screen.getByRole('button', { name: 'تأیید و ثبت' }));
 
     expect(await screen.findByRole('alert')).toBeInTheDocument();
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.queryByText('موجودی افتتاحیه با موفقیت ثبت شد.')).not.toBeInTheDocument();
     // فرم دست‌نخورده مانده — عدد وارد‌شده گم نشده
     expect(screen.getByLabelText('وزن آبشده (طلای خالص ۱۰۰۰)')).toHaveAttribute('data-value', '5000');
+    // FE-100: خطای نامشخص (نه رد قطعی سرور) فرم را قفل و فقط تکرار همان درخواست را ممکن می‌کند
+    expect(screen.getByRole('status')).toHaveTextContent('نتیجه‌ی ثبت قبلی هنوز مشخص نیست');
+    expect(screen.getByLabelText('وزن آبشده (طلای خالص ۱۰۰۰)')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'بررسی نتیجه‌ی ثبت' })).not.toBeDisabled();
   });
 });

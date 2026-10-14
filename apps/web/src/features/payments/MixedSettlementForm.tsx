@@ -2,13 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { X } from 'lucide-react';
 import { bullionPrice, coinPositionValue, dualFromRial, formatCount, formatRial, grossMg, karat as toKarat, rial, toSafeNumber } from '@gold/core-calc';
-import type { CreateMixedSettlementInput, MixedSettlement } from '@/api/contracts';
+import { createMixedSettlementSchema, type CreateMixedSettlementInput, type MixedSettlement } from '@/api/contracts';
 import { createMixedSettlement } from '@/api/settlements';
 import { useCoinTypes, usePartyBalances } from '@/api/queries';
 import { queryKeys } from '@/api/query-keys';
 import { AmountDisplay } from '@/components/common/AmountDisplay';
 import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
 import { OFFLINE_SUBMIT_MESSAGE } from '@/components/common/OfflineSubmitHint';
+import { PENDING_SUBMIT_ACTION, PendingSubmitNotice } from '@/components/common/PendingSubmitNotice';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select } from '@/components/ui/select';
@@ -18,7 +19,7 @@ import { MoneyInput } from '@/components/keypad/MoneyInput';
 import { WeightInput } from '@/components/keypad/WeightInput';
 import { UnsavedChangesGuard } from '@/components/common/UnsavedChangesGuard';
 import { useMazneh, type MaznehSnapshot } from '@/features/home/useMazneh';
-import { useIdempotentSubmit } from '@/hooks/useIdempotentSubmit';
+import { useFinancialSubmit } from '@/hooks/useFinancialSubmit';
 import { toast } from '@/stores/toast-store';
 
 /**
@@ -151,20 +152,27 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
   const [lockedQuote, setLockedQuote] = useState<MaznehSnapshot | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [result, setResult] = useState<MixedSettlement | null>(null);
-  /*
-   * لحظه‌ی تسویه هم‌عمر کلید Idempotency است (FE-096، همان رفع FE-094). سرور hash ِ بدنه را کنار
-   * کلید نگه می‌دارد؛ اگر هر تلاش `effectiveAt` تازه بسازد، پس از پاسخ گم‌شده تلاش دوباره ۴۰۹
-   * می‌گیرد برای تسویه‌ای که ثبت شده است. اولین تلاش تعیینش می‌کند و فقط `resetForm` پاکش می‌کند.
-   */
-  const effectiveAtRef = useRef<string | null>(null);
 
   const needsQuote = lines.some((line) => line.type === 'GOLD' || line.type === 'COIN');
   useEffect(() => {
     if (needsQuote && lockedQuote === null && mazneh.data) setLockedQuote(mazneh.data);
   }, [needsQuote, mazneh.data, lockedQuote]);
 
-  const { submit: runSubmit, isSubmitting, reset: resetKey, offline } = useIdempotentSubmit(
+  /*
+   * لحظه‌ی تسویه هم‌عمر کلید Idempotency است (FE-096). سرور hash ِ بدنه را کنار کلید نگه می‌دارد؛
+   * FE-100 کل بدنه (ردیف‌ها، quoteId، effectiveAt) را با کلید سنجاق می‌کند: پس از خطای نامطمئن
+   * ردیف‌ها قفل می‌مانند و «بررسی نتیجه» همان درخواست را تکرار می‌کند — نه ردیف‌های ویرایش‌شده.
+   */
+  const {
+    submit: runSubmit,
+    isSubmitting,
+    locked,
+    uncertain,
+    reset: resetKey,
+    offline,
+  } = useFinancialSubmit(
     (key: string, input: CreateMixedSettlementInput) => createMixedSettlement(partyId, input, key),
+    { persist: { scope: `settlement:mixed:${partyId}`, schema: createMixedSettlementSchema } },
   );
 
   const activeCoinTypes = (coinTypesQuery.data ?? []).filter((c) => c.active);
@@ -181,7 +189,9 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
   const hasQuoteGap = needsQuote && lockedQuote === null;
   const reason: string | null = offline
     ? OFFLINE_SUBMIT_MESSAGE
-    : lines.length === 0
+    : locked
+      ? null // تلاش سنجاق‌شده فقط تکرار می‌شود؛ ردیف‌های فرم دیگر مبنا نیستند
+      : lines.length === 0
       ? 'حداقل یک ردیف اضافه کنید.'
       : errors.some((e) => e !== null)
         ? 'یک یا چند ردیف ناقص یا نامعتبر است.'
@@ -215,7 +225,6 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
     setLockedQuote(null);
     setError(null);
     setResult(null);
-    effectiveAtRef.current = null;
     resetKey();
   }
 
@@ -226,11 +235,12 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
     const requestLines = lines
       .map((line) => toRequestLine(line, quoteId))
       .filter((line): line is CreateMixedSettlementInput['lines'][number] => line !== null);
-    if (requestLines.length !== lines.length) return; // یعنی مظنه یا نوع سکه هنوز ناقص است؛ reason باید همین را قبلاً گرفته باشد
+    // یعنی مظنه یا نوع سکه هنوز ناقص است؛ reason باید همین را قبلاً گرفته باشد (تلاش سنجاق‌شده مستثناست)
+    if (!locked && requestLines.length !== lines.length) return;
 
     setError(null);
-    effectiveAtRef.current ??= new Date().toISOString();
-    const input: CreateMixedSettlementInput = { lines: requestLines, effectiveAt: effectiveAtRef.current };
+    // اگر تلاشی سنجاق شده باشد، هوک همان را می‌فرستد و این بدنه‌ی تازه نادیده گرفته می‌شود
+    const input: CreateMixedSettlementInput = { lines: requestLines, effectiveAt: new Date().toISOString() };
 
     try {
       const settlement = await runSubmit(input);
@@ -286,26 +296,26 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
   return (
     <Card>
       {/* FE-099: مبلغ واردشده و ثبت‌نشده با ترک صفحه از بین می‌رود — هشدار پیش از آن */}
-      <UnsavedChangesGuard when={lines.length > 0} submitting={isSubmitting} />
+      <UnsavedChangesGuard when={lines.length > 0 || uncertain} submitting={isSubmitting} />
       <CardHeader>
         <CardTitle className="text-sm">تسویه‌ی ترکیبی</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <Button type="button" variant="outline" size="sm" disabled={isSubmitting} onClick={() => addLine('RIAL')}>
+          <Button type="button" variant="outline" size="sm" disabled={locked} onClick={() => addLine('RIAL')}>
             + ریال
           </Button>
-          <Button type="button" variant="outline" size="sm" disabled={isSubmitting} onClick={() => addLine('GOLD')}>
+          <Button type="button" variant="outline" size="sm" disabled={locked} onClick={() => addLine('GOLD')}>
             + طلا
           </Button>
-          <Button type="button" variant="outline" size="sm" disabled={isSubmitting} onClick={() => addLine('COIN')}>
+          <Button type="button" variant="outline" size="sm" disabled={locked} onClick={() => addLine('COIN')}>
             + سکه
           </Button>
           <Button
             type="button"
             variant="outline"
             size="sm"
-            disabled={availableCreditRial <= 0n || isSubmitting}
+            disabled={availableCreditRial <= 0n || locked}
             onClick={() => addLine('CREDIT')}
           >
             + مانده اعتباری
@@ -325,7 +335,7 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
                */
               <fieldset
                 key={line.id}
-                disabled={isSubmitting}
+                disabled={locked}
                 aria-label={`ردیف ${formatCount(index + 1)}: ${LINE_LABEL[line.type]}`}
                 aria-describedby={errors[index] !== null ? `${line.id}-error` : undefined}
                 className="min-w-0 space-y-2 rounded-lg border border-border p-3"
@@ -345,7 +355,7 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
                 {line.type === 'RIAL' || line.type === 'CREDIT' ? (
                   <MoneyInput
                     label="مبلغ"
-                    disabled={isSubmitting}
+                    disabled={locked}
                     value={line.amountRial}
                     onChange={(value) => updateLine(line.id, { amountRial: value })}
                   />
@@ -355,12 +365,12 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
                   <>
                     <WeightInput
                       label="وزن"
-                      disabled={isSubmitting}
+                      disabled={locked}
                       value={line.grossWeightMg}
                       onChange={(value) => updateLine(line.id, { grossWeightMg: value })}
                       karat={line.karat}
                     />
-                    <KaratInput label="عیار" disabled={isSubmitting} value={line.karat} onChange={(value) => updateLine(line.id, { karat: value })} />
+                    <KaratInput label="عیار" disabled={locked} value={line.karat} onChange={(value) => updateLine(line.id, { karat: value })} />
                   </>
                 ) : null}
 
@@ -383,10 +393,10 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
                         ))}
                       </Select>
                     </div>
-                    <CountInput label="تعداد" disabled={isSubmitting} value={line.count} onChange={(value) => updateLine(line.id, { count: value })} />
+                    <CountInput label="تعداد" disabled={locked} value={line.count} onChange={(value) => updateLine(line.id, { count: value })} />
                     <MoneyInput
                       label="نرخ بازار"
-                      disabled={isSubmitting}
+                      disabled={locked}
                       value={line.marketUnitPriceRial}
                       onChange={(value) => updateLine(line.id, { marketUnitPriceRial: value })}
                     />
@@ -440,6 +450,7 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
         </div>
 
         {error ? <ApiErrorNotice error={error} /> : null}
+        <PendingSubmitNotice uncertain={uncertain} />
 
         <Button
           size="action"
@@ -447,7 +458,7 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
           disabled={reason !== null || isSubmitting}
           onClick={() => void handleSubmit()}
         >
-          {isSubmitting ? 'در حال ثبت…' : 'ثبت تسویه‌ی ترکیبی'}
+          {isSubmitting ? 'در حال ثبت…' : uncertain ? PENDING_SUBMIT_ACTION : 'ثبت تسویه‌ی ترکیبی'}
         </Button>
         {reason !== null ? <p className="text-center text-xs text-muted-foreground">{reason}</p> : null}
       </CardContent>

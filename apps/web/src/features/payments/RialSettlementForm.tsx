@@ -1,19 +1,20 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { dualFromRial, formatRial } from '@gold/core-calc';
-import type { CreateRialSettlementInput, RialSettlement } from '@/api/contracts';
+import { createRialSettlementSchema, type CreateRialSettlementInput, type RialSettlement } from '@/api/contracts';
 import { createRialSettlement } from '@/api/settlements';
 import { usePartyBalances } from '@/api/queries';
 import { queryKeys } from '@/api/query-keys';
 import { AmountDisplay } from '@/components/common/AmountDisplay';
 import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
 import { OFFLINE_SUBMIT_MESSAGE } from '@/components/common/OfflineSubmitHint';
+import { PENDING_SUBMIT_ACTION, PendingSubmitNotice } from '@/components/common/PendingSubmitNotice';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MoneyInput } from '@/components/keypad/MoneyInput';
 import { UnsavedChangesGuard } from '@/components/common/UnsavedChangesGuard';
 import { useMazneh } from '@/features/home/useMazneh';
-import { useIdempotentSubmit } from '@/hooks/useIdempotentSubmit';
+import { useFinancialSubmit } from '@/hooks/useFinancialSubmit';
 import { toast } from '@/stores/toast-store';
 
 /**
@@ -61,8 +62,17 @@ export function RialSettlementForm({ partyId, onSuccess }: RialSettlementFormPro
   const [error, setError] = useState<unknown>(null);
   const [result, setResult] = useState<RialSettlement | null>(null);
 
-  const { submit: runSubmit, isSubmitting, reset: resetKey, offline } = useIdempotentSubmit(
+  // FE-100: کلید و بدنه با هم سنجاق می‌شوند تا پاسخ قطعی — و از ترک صفحه جان به در می‌برند
+  const {
+    submit: runSubmit,
+    isSubmitting,
+    locked,
+    uncertain,
+    reset: resetKey,
+    offline,
+  } = useFinancialSubmit(
     (key: string, input: CreateRialSettlementInput) => createRialSettlement(partyId, input, key),
+    { persist: { scope: `settlement:rial:${partyId}`, schema: createRialSettlementSchema } },
   );
 
   const receivableRial = balancesQuery.data ? BigInt(balancesQuery.data.rawBalances.rial) : undefined;
@@ -70,7 +80,12 @@ export function RialSettlementForm({ partyId, onSuccess }: RialSettlementFormPro
   const fullAmount = receivableRial !== undefined && receivableRial > 0n ? receivableRial : undefined;
   const rate1000 = mazneh.data?.gram1000;
 
-  const reason = offline ? OFFLINE_SUBMIT_MESSAGE : amountRial <= 0n ? 'مبلغ باید بزرگ‌تر از صفر باشد.' : null;
+  // تلاش نامطمئن فقط تکرار می‌شود؛ فیلدهای فرم (شاید خالی، پس از بازگشت به صفحه) دیگر مبنا نیستند
+  const reason = offline
+    ? OFFLINE_SUBMIT_MESSAGE
+    : !locked && amountRial <= 0n
+      ? 'مبلغ باید بزرگ‌تر از صفر باشد.'
+      : null;
 
   function resetForm() {
     setAmountRial(0n);
@@ -83,6 +98,7 @@ export function RialSettlementForm({ partyId, onSuccess }: RialSettlementFormPro
     if (reason !== null) return;
 
     setError(null);
+    // اگر تلاشی سنجاق شده باشد، هوک همان را می‌فرستد و این بدنه‌ی تازه نادیده گرفته می‌شود
     const input: CreateRialSettlementInput = {
       amountRial: amountRial.toString(),
       effectiveAt: new Date().toISOString(),
@@ -132,7 +148,7 @@ export function RialSettlementForm({ partyId, onSuccess }: RialSettlementFormPro
   return (
     <Card>
       {/* FE-099: مبلغ واردشده و ثبت‌نشده با ترک صفحه از بین می‌رود — هشدار پیش از آن */}
-      <UnsavedChangesGuard when={amountRial > 0n} submitting={isSubmitting} />
+      <UnsavedChangesGuard when={amountRial > 0n || uncertain} submitting={isSubmitting} />
       <CardHeader>
         <CardTitle className="text-sm">پرداخت ریالی</CardTitle>
       </CardHeader>
@@ -148,7 +164,7 @@ export function RialSettlementForm({ partyId, onSuccess }: RialSettlementFormPro
           </div>
         ) : null}
 
-        <MoneyInput label="مبلغ" value={amountRial} onChange={setAmountRial} />
+        <MoneyInput label="مبلغ" value={amountRial} onChange={setAmountRial} disabled={locked} />
 
         {receivableRial !== undefined && amountRial > 0n ? (
           <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -165,13 +181,14 @@ export function RialSettlementForm({ partyId, onSuccess }: RialSettlementFormPro
           type="button"
           variant="outline"
           size="sm"
-          disabled={fullAmount === undefined}
+          disabled={fullAmount === undefined || locked}
           onClick={() => setAmountRial(fullAmount ?? 0n)}
         >
           پرداخت کامل
         </Button>
 
         {error ? <ApiErrorNotice error={error} /> : null}
+        <PendingSubmitNotice uncertain={uncertain} />
 
         <Button
           size="action"
@@ -179,7 +196,7 @@ export function RialSettlementForm({ partyId, onSuccess }: RialSettlementFormPro
           disabled={reason !== null || isSubmitting}
           onClick={() => void handleSubmit()}
         >
-          {isSubmitting ? 'در حال ثبت…' : 'ثبت پرداخت'}
+          {isSubmitting ? 'در حال ثبت…' : uncertain ? PENDING_SUBMIT_ACTION : 'ثبت پرداخت'}
         </Button>
         {reason !== null ? <p className="text-center text-xs text-muted-foreground">{reason}</p> : null}
       </CardContent>

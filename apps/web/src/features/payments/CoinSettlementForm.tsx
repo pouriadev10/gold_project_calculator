@@ -13,7 +13,12 @@ import {
   toSafeNumber,
   type CoinType,
 } from '@gold/core-calc';
-import type { CoinSettlement, CoinTypeVersion, CreateCoinSettlementInput } from '@/api/contracts';
+import {
+  createCoinSettlementSchema,
+  type CoinSettlement,
+  type CoinTypeVersion,
+  type CreateCoinSettlementInput,
+} from '@/api/contracts';
 import { createCoinSettlement } from '@/api/settlements';
 import { useCoinTypes, usePartyBalances } from '@/api/queries';
 import { queryKeys } from '@/api/query-keys';
@@ -22,6 +27,7 @@ import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
 import { CardSkeleton } from '@/components/common/CardSkeleton';
 import { ErrorState } from '@/components/common/ErrorState';
 import { OFFLINE_SUBMIT_MESSAGE } from '@/components/common/OfflineSubmitHint';
+import { PENDING_SUBMIT_ACTION, PendingSubmitNotice } from '@/components/common/PendingSubmitNotice';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select } from '@/components/ui/select';
@@ -29,7 +35,7 @@ import { CountInput } from '@/components/keypad/CountInput';
 import { MoneyInput } from '@/components/keypad/MoneyInput';
 import { UnsavedChangesGuard } from '@/components/common/UnsavedChangesGuard';
 import { useMazneh } from '@/features/home/useMazneh';
-import { useIdempotentSubmit } from '@/hooks/useIdempotentSubmit';
+import { useFinancialSubmit } from '@/hooks/useFinancialSubmit';
 import { toast } from '@/stores/toast-store';
 
 /**
@@ -85,8 +91,18 @@ export function CoinSettlementForm({ partyId, onSuccess }: CoinSettlementFormPro
   const [error, setError] = useState<unknown>(null);
   const [result, setResult] = useState<CoinSettlement | null>(null);
 
-  const { submit: runSubmit, isSubmitting, reset: resetKey, offline } = useIdempotentSubmit(
+  // FE-100: کلید و بدنه (همراه quoteId و effectiveAt) تا پاسخ قطعی سنجاق می‌مانند
+  const {
+    submit: runSubmit,
+    retry,
+    isSubmitting,
+    locked,
+    uncertain,
+    reset: resetKey,
+    offline,
+  } = useFinancialSubmit(
     (key: string, input: CreateCoinSettlementInput) => createCoinSettlement(partyId, input, key),
+    { persist: { scope: `settlement:coin:${partyId}`, schema: createCoinSettlementSchema } },
   );
 
   const activeTypes = (coinTypesQuery.data ?? []).filter((c) => c.active);
@@ -111,7 +127,9 @@ export function CoinSettlementForm({ partyId, onSuccess }: CoinSettlementFormPro
 
   const reason: string | null = offline
     ? OFFLINE_SUBMIT_MESSAGE
-    : coinTypeId === null || coin === undefined
+    : locked
+      ? null // تلاش سنجاق‌شده فقط تکرار می‌شود؛ فیلدهای فرم دیگر مبنا نیستند
+      : coinTypeId === null || coin === undefined
       ? 'نوع سکه انتخاب نشده است.'
       : mazneh.data === null || mazneh.data === undefined
         ? 'مظنه هنوز دریافت نشده — چند لحظه صبر کنید.'
@@ -131,19 +149,23 @@ export function CoinSettlementForm({ partyId, onSuccess }: CoinSettlementFormPro
   }
 
   async function handleSubmit() {
-    if (reason !== null || coinTypeId === null || mazneh.data === undefined || mazneh.data === null) return;
+    if (reason !== null) return;
+    const quote = mazneh.data;
+    const ready = coinTypeId !== null && quote !== undefined && quote !== null;
+    if (!locked && !ready) return;
 
     setError(null);
-    const input: CreateCoinSettlementInput = {
-      coinTypeId,
-      count: toSafeNumber(count),
-      marketUnitPriceRial: marketUnitPriceRial.toString(),
-      quoteId: mazneh.data.quoteId,
-      effectiveAt: new Date().toISOString(),
-    };
-
     try {
-      const settlement = await runSubmit(input);
+      const settlement =
+        locked || !ready
+          ? await retry()
+          : await runSubmit({
+              coinTypeId,
+              count: toSafeNumber(count),
+              marketUnitPriceRial: marketUnitPriceRial.toString(),
+              quoteId: quote.quoteId,
+              effectiveAt: new Date().toISOString(),
+            });
       if (!settlement) return;
 
       setResult(settlement);
@@ -189,7 +211,7 @@ export function CoinSettlementForm({ partyId, onSuccess }: CoinSettlementFormPro
     <Card>
       {/* FE-099: مبلغ واردشده و ثبت‌نشده با ترک صفحه از بین می‌رود — هشدار پیش از آن */}
       <UnsavedChangesGuard
-        when={coinTypeId !== null || count > 0n || marketUnitPriceRial > 0n}
+        when={coinTypeId !== null || count > 0n || marketUnitPriceRial > 0n || uncertain}
         submitting={isSubmitting}
       />
       <CardHeader>
@@ -208,6 +230,7 @@ export function CoinSettlementForm({ partyId, onSuccess }: CoinSettlementFormPro
             <Select
               id="coin-settlement-type"
               value={coinTypeId ?? ''}
+              disabled={locked}
               onChange={(event) => setCoinTypeId(event.target.value || null)}
             >
               <option value="">انتخاب نوع سکه</option>
@@ -220,12 +243,12 @@ export function CoinSettlementForm({ partyId, onSuccess }: CoinSettlementFormPro
           </div>
         )}
 
-        <CountInput label="تعداد" value={count} onChange={setCount} />
+        <CountInput label="تعداد" value={count} onChange={setCount} disabled={locked} />
         {grossWeightMg !== undefined ? (
           <p className="text-xs text-muted-foreground">معادل وزنی (فقط نمایشی): {formatGram(grossWeightMg)}</p>
         ) : null}
 
-        <MoneyInput label="نرخ بازار" value={marketUnitPriceRial} onChange={setMarketUnitPriceRial} />
+        <MoneyInput label="نرخ بازار" value={marketUnitPriceRial} onChange={setMarketUnitPriceRial} disabled={locked} />
 
         <div className="space-y-2 border-t border-border pt-3 text-sm">
           <div className="flex items-center justify-between">
@@ -263,6 +286,7 @@ export function CoinSettlementForm({ partyId, onSuccess }: CoinSettlementFormPro
         </div>
 
         {error ? <ApiErrorNotice error={error} /> : null}
+        <PendingSubmitNotice uncertain={uncertain} />
 
         <Button
           size="action"
@@ -270,7 +294,7 @@ export function CoinSettlementForm({ partyId, onSuccess }: CoinSettlementFormPro
           disabled={reason !== null || isSubmitting}
           onClick={() => void handleSubmit()}
         >
-          {isSubmitting ? 'در حال ثبت…' : 'ثبت پرداخت'}
+          {isSubmitting ? 'در حال ثبت…' : uncertain ? PENDING_SUBMIT_ACTION : 'ثبت پرداخت'}
         </Button>
         {reason !== null ? <p className="text-center text-xs text-muted-foreground">{reason}</p> : null}
       </CardContent>

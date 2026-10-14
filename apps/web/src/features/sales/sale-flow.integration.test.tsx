@@ -393,7 +393,9 @@ describe('FE-094 — فروش زیورآلات از مظنه تا رسید، ر�
     expect(screen.queryByText('رسید فروش')).not.toBeInTheDocument();
     expect(useSaleDraftStore.getState().items).toHaveLength(1);
 
-    await user.click(await submitButton());
+    // FE-100: پاسخ نامشخص جادوگر را قفل می‌کند؛ تنها اقدام تکرار همان درخواست است
+    expect(screen.getByRole('button', { name: 'قبلی' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'بررسی نتیجه‌ی ثبت' }));
     const page = await receipt();
 
     const [first, second] = writes();
@@ -404,6 +406,30 @@ describe('FE-094 — فروش زیورآلات از مظنه تا رسید، ر�
     expect(invoices.size).toBe(1);
     const [invoice] = invoices.values();
     expect(within(within(page).getByText('شماره فاکتور').parentElement!).getByText(formatCount(invoice!.invoiceNumber))).toBeInTheDocument();
+  }, 30_000);
+
+  it('FE-100: پاسخ گم‌شده و بارگذاری دوباره‌ی صفحه — جادوگر قفل برمی‌گردد و همان فروش را بررسی می‌کند', async () => {
+    const user = userEvent.setup();
+    await walkToReview(user);
+
+    loseNextResponse = true;
+    await user.click(await submitButton());
+    await screen.findByText('ارتباط با سرور برقرار نشد', {}, { timeout: 4000 });
+    expect(invoices.size).toBe(1);
+
+    // تب تازه‌سازی شد: فقط sessionStorage می‌ماند (پیش‌نویس + تلاش سنجاق‌شده)
+    cleanup();
+    renderRoute('/sales/new');
+    const check = await screen.findByRole('button', { name: 'بررسی نتیجه‌ی ثبت' }, { timeout: 4000 });
+    expect(screen.getByRole('button', { name: 'قبلی' })).toBeDisabled();
+    await user.click(check);
+    await receipt();
+
+    const [first, second] = writes();
+    expect(writes()).toHaveLength(2);
+    expect(second!.headers.get('Idempotency-Key')).toBe(first!.headers.get('Idempotency-Key'));
+    expect(await second!.body).toBe(await first!.body);
+    expect(invoices.size).toBe(1);
   }, 30_000);
 
   it('ضربه‌ی دوباره روی «ثبت فروش» حین ارسال، درخواست دوم نمی‌فرستد', async () => {

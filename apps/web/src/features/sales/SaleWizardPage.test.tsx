@@ -504,7 +504,26 @@ describe('SaleWizardPage — ثبت فروش (FE-045)', () => {
     expect(screen.queryByText('رسید فروش')).not.toBeInTheDocument();
     expect(useSaleDraftStore.getState().items).toHaveLength(1);
     expect(useSaleDraftStore.getState().party).not.toBeNull();
-    expect(screen.getByRole('button', { name: 'ثبت فروش' })).not.toBeDisabled();
+    // FE-100: ۵xx یعنی «شاید ثبت شده» — جادوگر قفل است و تنها اقدام، تکرار همان درخواست است
+    expect(screen.getByRole('button', { name: 'بررسی نتیجه‌ی ثبت' })).not.toBeDisabled();
+    expect(screen.getByRole('button', { name: 'قبلی' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'پرداخت ناقص (نسیه)' })).toBeDisabled();
+    expect(screen.getByRole('status')).toHaveTextContent('نتیجه‌ی ثبت قبلی هنوز مشخص نیست');
+  });
+
+  it('FE-100: رد قطعی سرور (۴۲۲) قفل نمی‌کند — پیش‌نویس قابل اصلاح و «ثبت فروش» برمی‌گردد', async () => {
+    createJewelryCashSaleMock.mockRejectedValueOnce(
+      new ApiError(422, 'VALIDATION_ERROR', 'اعتبارسنجی'),
+    );
+    const user = userEvent.setup();
+    seedReadyDraft();
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: 'ثبت فروش' }));
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'ثبت فروش' })).not.toBeDisabled());
+    expect(screen.getByRole('button', { name: 'قبلی' })).not.toBeDisabled();
+    expect(screen.queryByText(/نتیجه‌ی ثبت قبلی هنوز مشخص نیست/)).not.toBeInTheDocument();
   });
 
   it('تلاش دوباره پس از خطا همان کلید Idempotency را می‌فرستد — نه یک فاکتور تازه', async () => {
@@ -517,11 +536,13 @@ describe('SaleWizardPage — ثبت فروش (FE-045)', () => {
 
     await user.click(screen.getByRole('button', { name: 'ثبت فروش' }));
     await waitFor(() => expect(screen.getByText('خطا در انجام عملیات')).toBeInTheDocument());
-    await user.click(screen.getByRole('button', { name: 'ثبت فروش' }));
+    await user.click(screen.getByRole('button', { name: 'بررسی نتیجه‌ی ثبت' }));
     await waitFor(() => expect(screen.getByText('رسید فروش')).toBeInTheDocument());
 
     expect(createJewelryCashSaleMock).toHaveBeenCalledTimes(2);
     expect(createJewelryCashSaleMock.mock.calls[0]?.[1]).toBe(createJewelryCashSaleMock.mock.calls[1]?.[1]);
+    // FE-100: بدنه هم عیناً همان است — همان effectiveAt، نه لحظه‌ی ضربه‌ی دوم
+    expect(createJewelryCashSaleMock.mock.calls[1]?.[0]).toEqual(createJewelryCashSaleMock.mock.calls[0]?.[0]);
   });
 
   it('اختلاف مبلغ سرور با پیش‌نمایش کلاینت را نشان می‌دهد — عدد سرور برنده است', async () => {

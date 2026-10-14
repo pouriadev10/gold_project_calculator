@@ -1,4 +1,6 @@
 import '@testing-library/jest-dom/vitest';
+import { afterEach } from 'vitest';
+import { SUBMIT_ATTEMPT_STORAGE_PREFIX } from '@/lib/submit-attempt-storage';
 
 /**
  * jsdom متد‌های Pointer Capture را پیاده نمی‌کند. `vaul` (Drawer/Bottom Sheet)
@@ -31,3 +33,15 @@ window.getComputedStyle = (element: Element, pseudoElement?: string | null) => {
   }
   return style;
 };
+
+/**
+ * FE-100: تلاش ثبت نامطمئن در sessionStorage ِ همان تب می‌ماند تا ترک صفحه گمش نکند. jsdom یک
+ * sessionStorage برای کل فایل تست دارد؛ بدون این پاک‌سازی، تلاشی که یک تست نامطمئن رها کرده، فرم
+ * تست بعدی را قفل می‌کند. فقط کلیدهای همین پیشوند — بقیه‌ی storage رفتار پیشین را دارد.
+ */
+afterEach(() => {
+  for (let index = sessionStorage.length - 1; index >= 0; index -= 1) {
+    const key = sessionStorage.key(index);
+    if (key?.startsWith(SUBMIT_ATTEMPT_STORAGE_PREFIX)) sessionStorage.removeItem(key);
+  }
+});

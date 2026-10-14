@@ -5,12 +5,18 @@ import { formatCoinCount, formatGram, toSafeNumber } from '@gold/core-calc';
 import { useCoinTypes } from '@/api/queries';
 import { createOpeningBalance } from '@/api/opening-balances';
 import { queryKeys } from '@/api/query-keys';
-import type { CreateOpeningBalanceInput, OpeningBalance, OpeningBalanceLine } from '@/api/contracts';
+import {
+  createOpeningBalanceSchema,
+  type CreateOpeningBalanceInput,
+  type OpeningBalance,
+  type OpeningBalanceLine,
+} from '@/api/contracts';
 import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
 import { CardSkeleton } from '@/components/common/CardSkeleton';
 import { ErrorState } from '@/components/common/ErrorState';
 import { PageHeader } from '@/components/common/PageHeader';
 import { OfflineSubmitHint } from '@/components/common/OfflineSubmitHint';
+import { PENDING_SUBMIT_ACTION, PendingSubmitNotice } from '@/components/common/PendingSubmitNotice';
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -25,7 +31,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { CountInput } from '@/components/keypad/CountInput';
 import { NumericKeypad } from '@/components/keypad/NumericKeypad';
 import { WeightInput } from '@/components/keypad/WeightInput';
-import { useIdempotentSubmit } from '@/hooks/useIdempotentSubmit';
+import { useFinancialSubmit } from '@/hooks/useFinancialSubmit';
 import { toast } from '@/stores/toast-store';
 import { JewelryLineSelector, type SelectedJewelryLine } from './JewelryLineSelector';
 
@@ -91,8 +97,13 @@ export default function OpeningBalanceFormPage() {
   const [submitError, setSubmitError] = useState<unknown>(null);
   const [lastRegistered, setLastRegistered] = useState<OpeningBalance | null>(null);
 
-  const { submit, isSubmitting, reset, offline } = useIdempotentSubmit((key: string, input: CreateOpeningBalanceInput) =>
-    createOpeningBalance(input, key),
+  /*
+   * FE-100: کلید و کل بدنه (همراه `effectiveAt`) تا پاسخ قطعی سنجاق می‌مانند و از ترک صفحه جان
+   * به در می‌برند. سند افتتاحیه یک‌بار ساخته می‌شود؛ تکرارش موجودی را دوبرابر می‌کند.
+   */
+  const { submit, isSubmitting, locked, uncertain, reset, offline } = useFinancialSubmit(
+    (key: string, input: CreateOpeningBalanceInput) => createOpeningBalance(input, key),
+    { persist: { scope: 'opening-balance', schema: createOpeningBalanceSchema } },
   );
 
   const lines = useMemo(
@@ -110,6 +121,7 @@ export default function OpeningBalanceFormPage() {
   const handleConfirm = async () => {
     setSubmitError(null);
     try {
+      // اگر تلاشی سنجاق شده باشد، هوک همان را می‌فرستد و این بدنه‌ی تازه نادیده گرفته می‌شود
       const input: CreateOpeningBalanceInput = {
         effectiveAt: new Date().toISOString(),
         description: trimmedDescription,
@@ -148,11 +160,12 @@ export default function OpeningBalanceFormPage() {
         ) : null}
 
         {submitError ? <ApiErrorNotice error={submitError} /> : null}
+        <PendingSubmitNotice uncertain={uncertain} />
 
         <Card>
           <CardContent className="space-y-3 pt-6">
             <h2 className="text-sm font-semibold">کالای زیورآلات</h2>
-            <JewelryLineSelector lines={jewelryLines} onChange={setJewelryLines} disabled={isSubmitting} />
+            <JewelryLineSelector lines={jewelryLines} onChange={setJewelryLines} disabled={locked} />
           </CardContent>
         </Card>
 
@@ -163,7 +176,7 @@ export default function OpeningBalanceFormPage() {
               label="وزن آبشده (طلای خالص ۱۰۰۰)"
               value={meltedGoldMg}
               onChange={setMeltedGoldMg}
-              disabled={isSubmitting}
+              disabled={locked}
             />
           </CardContent>
         </Card>
@@ -185,7 +198,7 @@ export default function OpeningBalanceFormPage() {
                   onChange={(next) =>
                     setCoinCounts((prev) => ({ ...prev, [coinType.coinTypeId]: next }))
                   }
-                  disabled={isSubmitting}
+                  disabled={locked}
                 />
               ))}
           </CardContent>
@@ -200,19 +213,21 @@ export default function OpeningBalanceFormPage() {
               id="opening-balance-description"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              disabled={isSubmitting}
+              disabled={locked}
               maxLength={DESCRIPTION_MAX}
             />
           </CardContent>
         </Card>
 
+        {/* تلاش نامطمئن مرور دوباره ندارد: همان درخواست سنجاق‌شده مستقیم تکرار می‌شود */}
         <Button
           type="button"
           size="action"
-          disabled={!canSubmit || isSubmitting || offline}
-          onClick={() => setConfirmOpen(true)}
+          disabled={(!canSubmit && !locked) || isSubmitting || offline}
+          onClick={() => (locked ? void handleConfirm() : setConfirmOpen(true))}
         >
-          مرور و ثبت موجودی افتتاحیه
+          {isSubmitting && !confirmOpen ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
+          {uncertain || (isSubmitting && !confirmOpen) ? PENDING_SUBMIT_ACTION : 'مرور و ثبت موجودی افتتاحیه'}
         </Button>
         <OfflineSubmitHint offline={offline} />
       </div>

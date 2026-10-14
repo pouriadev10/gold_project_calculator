@@ -34,6 +34,7 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { PartySelector } from '@/components/common/PartySelector';
 import { UnitToggle } from '@/components/common/UnitToggle';
 import { OfflineSubmitHint } from '@/components/common/OfflineSubmitHint';
+import { PENDING_SUBMIT_ACTION, PendingSubmitNotice } from '@/components/common/PendingSubmitNotice';
 import { CountInput } from '@/components/keypad/CountInput';
 import { MoneyInput } from '@/components/keypad/MoneyInput';
 import { NumericKeypad } from '@/components/keypad/NumericKeypad';
@@ -44,7 +45,7 @@ import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { UnsavedChangesGuard } from '@/components/common/UnsavedChangesGuard';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { useIdempotentSubmit } from '@/hooks/useIdempotentSubmit';
+import { useFinancialSubmit } from '@/hooks/useFinancialSubmit';
 import { isolateBidi } from '@/lib/bidi';
 import type { PartySelection } from '@/stores/recent-parties-store';
 
@@ -260,7 +261,17 @@ function AmendmentForm({
     (key: string, payload: AmendSalesInvoiceInput) => amendSalesInvoice(detail.id, payload, key),
     [detail.id],
   );
-  const submission = useIdempotentSubmit(action);
+  /*
+   * FE-100: کلید و بدنه تا پاسخ قطعی سنجاق می‌مانند. scope نسخه را هم دارد: اگر تلاش گم‌شده در
+   * واقع ثبت شده باشد، نسخه‌ی جاری عوض شده و فرم تازه (key همان نسخه) تلاش قدیمی را روی نسخه‌ی
+   * بعدی تکرار نمی‌کند؛ اگر ثبت نشده باشد، همان نسخه است و «بررسی نتیجه» همان درخواست را می‌فرستد.
+   */
+  const submission = useFinancialSubmit(action, {
+    persist: {
+      scope: `invoice-amend:${detail.id}:v${detail.currentVersion}`,
+      schema: amendSalesInvoiceSchema,
+    },
+  });
   // FE-099: هر تغییری نسبت به نسخه‌ی جاری که هنوز به نسخه‌ی تازه تبدیل نشده
   const unsaved =
     party?.id !== detail.party.id ||
@@ -275,6 +286,11 @@ function AmendmentForm({
     if (!submitAllowed) return;
     setError(null);
     setValidationError(null);
+    if (submission.locked) {
+      // تلاش سنجاق‌شده: اعتبارسنجی فرم بی‌معناست، همان درخواست تکرار می‌شود
+      await complete(() => submission.retry());
+      return;
+    }
     if (!party || !item || !itemId || party.status !== 'ACTIVE') {
       setValidationError('مشتری و قلم معتبر را انتخاب کنید.');
       return;
@@ -314,8 +330,13 @@ function AmendmentForm({
       setValidationError(parsed.error.issues[0]?.message ?? 'اطلاعات فرم معتبر نیست.');
       return;
     }
+    const payload = parsed.data;
+    await complete(() => submission.submit(payload));
+  }
+
+  async function complete(send: () => Promise<AmendedSalesInvoice | undefined>): Promise<void> {
     try {
-      const next = await submission.submit(parsed.data);
+      const next = await send();
       if (!next) return;
       onCompleted(next);
       await Promise.all([
@@ -358,7 +379,7 @@ function AmendmentForm({
         </CardContent>
       </Card>
 
-      <PartySelector label="مشتری اصلاح‌شده" value={party} onChange={setParty} />
+      <PartySelector label="مشتری اصلاح‌شده" value={party} onChange={setParty} disabled={submission.locked} />
 
       <Card>
         <CardHeader>
@@ -372,6 +393,7 @@ function AmendmentForm({
                 placeholder="نام یا کد کالا"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
+                disabled={submission.locked}
               />
               {jewelry.isError ? (
                 <ErrorState
@@ -382,6 +404,7 @@ function AmendmentForm({
               <Select
                 aria-label="قلم زیورآلات"
                 value={itemId}
+                disabled={submission.locked}
                 onChange={(event) => setItemId(event.target.value)}
               >
                 <option value="">انتخاب قلم</option>
@@ -449,6 +472,7 @@ function AmendmentForm({
               <Select
                 aria-label="نوع سکه"
                 value={itemId}
+                disabled={submission.locked}
                 onChange={(event) => setItemId(event.target.value)}
               >
                 <option value="">انتخاب نوع سکه</option>
@@ -468,13 +492,13 @@ function AmendmentForm({
                 label="تعداد سکه"
                 value={count}
                 onChange={setCount}
-                disabled={submission.isSubmitting}
+                disabled={submission.locked}
               />
               <MoneyInput
                 label="قیمت واحد بازار"
                 value={marketUnitPriceRial}
                 onChange={setMarketUnitPriceRial}
-                disabled={submission.isSubmitting}
+                disabled={submission.locked}
               />
             </>
           ) : (
@@ -494,7 +518,7 @@ function AmendmentForm({
             label="مبلغ پرداختی اصلاح‌شده"
             value={paidRial}
             onChange={setPaidRial}
-            disabled={submission.isSubmitting}
+            disabled={submission.locked}
           />
           <div className="space-y-1.5">
             <label htmlFor="amend-reason" className="text-sm font-medium">
@@ -504,7 +528,7 @@ function AmendmentForm({
               id="amend-reason"
               value={reason}
               onChange={(event) => setReason(event.target.value as InvoiceAmendmentReason)}
-              disabled={submission.isSubmitting}
+              disabled={submission.locked}
             >
               {REASONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -522,7 +546,7 @@ function AmendmentForm({
                 id="amend-reason-detail"
                 value={reasonDetail}
                 onChange={(event) => setReasonDetail(event.target.value)}
-                disabled={submission.isSubmitting}
+                disabled={submission.locked}
                 required
               />
             </div>
@@ -536,6 +560,7 @@ function AmendmentForm({
         </p>
       ) : null}
       {error ? <ApiErrorNotice error={error} /> : null}
+      <PendingSubmitNotice uncertain={submission.uncertain} />
       {checkingPolicy ? (
         <p className="text-sm text-muted-foreground" aria-live="polite">
           در حال بررسی دوبارهٔ مجوز اصلاح…
@@ -548,11 +573,15 @@ function AmendmentForm({
         disabled={!submitAllowed || submission.isSubmitting || !item || submission.offline}
         onClick={() => void submit()}
       >
-        {submission.isSubmitting ? 'در حال ثبت نسخهٔ جدید…' : 'ثبت اصلاح فاکتور'}
+        {submission.isSubmitting
+          ? 'در حال ثبت نسخهٔ جدید…'
+          : submission.uncertain
+            ? PENDING_SUBMIT_ACTION
+            : 'ثبت اصلاح فاکتور'}
       </Button>
       <OfflineSubmitHint offline={submission.offline} />
       <NumericKeypad />
-      <UnsavedChangesGuard when={unsaved} submitting={submission.isSubmitting} />
+      <UnsavedChangesGuard when={unsaved || submission.uncertain} submitting={submission.isSubmitting} />
     </div>
   );
 }

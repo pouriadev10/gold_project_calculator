@@ -35,7 +35,14 @@ import { useSaleDraftStore } from '@/stores/sale-draft-store';
  * `receivableRial` پاسخ سرور است که روی رسید نشان داده می‌شود — به همین
  * دلیل این عدد صریح «تخمینی» برچسب خورده، نه اینکه بی‌نام رها شود.
  */
-export function SalePaymentInput({ previewPayableRial }: { readonly previewPayableRial: bigint | undefined }) {
+export function SalePaymentInput({
+  previewPayableRial,
+  disabled = false,
+}: {
+  readonly previewPayableRial: bigint | undefined;
+  /** FE-100: حین ثبت و تا پاسخ قطعی، مبلغ همان است که سنجاق شده — ویرایش بی‌اثر و گمراه‌کننده است. */
+  readonly disabled?: boolean;
+}) {
   const paidRial = useSaleDraftStore((s) => s.paidRial);
   const setPaidRial = useSaleDraftStore((s) => s.setPaidRial);
   const lockedMazneh = useSaleDraftStore((s) => s.lockedMazneh);
@@ -60,6 +67,7 @@ export function SalePaymentInput({ previewPayableRial }: { readonly previewPayab
             type="button"
             variant={isFullPayment ? 'default' : 'outline'}
             aria-pressed={isFullPayment}
+            disabled={disabled}
             onClick={() => setPaidRial(null)}
           >
             پرداخت کامل
@@ -68,6 +76,7 @@ export function SalePaymentInput({ previewPayableRial }: { readonly previewPayab
             type="button"
             variant={isFullPayment ? 'outline' : 'default'}
             aria-pressed={!isFullPayment}
+            disabled={disabled}
             // ورود به نسیه از صفر شروع می‌شود، نه از جمع کل: عدد پیش‌پرشده‌ی
             // برابر جمع کل یعنی کاربر باید اول پاکش کند تا بتواند مبلغ واقعی را بزند
             onClick={() => setPaidRial(draftPaid.toString())}
@@ -90,6 +99,7 @@ export function SalePaymentInput({ previewPayableRial }: { readonly previewPayab
                 setPaidRial(value.toString());
               }}
               hint="باقی‌مانده به‌عنوان بدهی در حساب همین مشتری ثبت می‌شود."
+              disabled={disabled}
             />
 
             {estimatedBalance !== undefined && rate1000 !== undefined ? (
