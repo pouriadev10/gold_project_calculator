@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { formatRial } from '@gold/core-calc';
 import type { JewelryCashSale, JewelryCreditSale } from '@/api/contracts';
@@ -94,6 +94,16 @@ export function useJewelrySaleSubmit(): JewelrySaleSubmit {
   const [error, setError] = useState<unknown>(null);
   const [outcome, setOutcome] = useState<SaleSubmitOutcome | null>(null);
 
+  /*
+   * لحظه‌ی فروش هم‌عمر کلید Idempotency است (FE-094). سرور hash ِ بدنه را
+   * کنار کلید نگه می‌دارد (`request-hash.ts`): همان کلید با بدنه‌ی دیگر ۴۰۹
+   * می‌گیرد، نه پاسخ تکراری. اگر هر تلاش `effectiveAt` تازه بسازد، وقتی
+   * پاسخ اول در راه گم شده ولی فروش روی سرور ثبت شده، تلاش دوباره ۴۰۹
+   * می‌خورد و کاربر خطا می‌بیند برای فروشی که ثبت شده است. پس اولین تلاش
+   * زمان را تعیین می‌کند و تا موفقیت (همراه کلید) ثابت می‌ماند.
+   */
+  const effectiveAtRef = useRef<Date | null>(null);
+
   const {
     submit: runSubmit,
     isSubmitting,
@@ -109,10 +119,12 @@ export function useJewelrySaleSubmit(): JewelrySaleSubmit {
   const preparation = prepareJewelrySale({ party, items, lockedMazneh, paidRial }, new Date());
 
   const submit = useCallback(async () => {
-    const prepared = prepareJewelrySale({ party, items, lockedMazneh, paidRial }, new Date());
+    const effectiveAt = effectiveAtRef.current ?? new Date();
+    const prepared = prepareJewelrySale({ party, items, lockedMazneh, paidRial }, effectiveAt);
     // `party`/`lockedMazneh` نال از قبل `prepared.ok` را false کرده؛ تکرارش فقط برای narrowing تایپ است
     if (!prepared.ok || party === null || lockedMazneh === null) return;
 
+    effectiveAtRef.current = effectiveAt;
     setError(null);
     try {
       const sale = await runSubmit(prepared.plan.payload);
@@ -147,7 +159,8 @@ export function useJewelrySaleSubmit(): JewelrySaleSubmit {
       ]);
 
       toast.success('فروش ثبت شد', `${formatRial(sale.payableRial)} ریال`);
-      // موفقیت قطعی — کلید تازه برای فروش بعدی، و پیش‌نویس خالی
+      // موفقیت قطعی — کلید و لحظه‌ی تازه برای فروش بعدی، و پیش‌نویس خالی
+      effectiveAtRef.current = null;
       resetKey();
       resetDraft();
     } catch (caught) {
