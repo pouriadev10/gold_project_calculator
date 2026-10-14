@@ -1,4 +1,3 @@
-import { useBlocker } from '@tanstack/react-router';
 import { Info } from 'lucide-react';
 import { dualFromRial, toPersianDigits, toSafeNumber } from '@gold/core-calc';
 import { useGeneralSettings } from '@/api/queries';
@@ -6,6 +5,7 @@ import { AmountDisplay } from '@/components/common/AmountDisplay';
 import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
 import { MoneyInput } from '@/components/keypad/MoneyInput';
 import { PageHeader } from '@/components/common/PageHeader';
+import { UnsavedChangesGuard } from '@/components/common/UnsavedChangesGuard';
 import { RetryPanel } from '@/components/common/RetryPanel';
 import { UnitToggle } from '@/components/common/UnitToggle';
 import { Button } from '@/components/ui/button';
@@ -76,7 +76,7 @@ export default function PurchaseWizardPage() {
   const setPurchaseKarat = usePurchaseDraftStore((s) => s.setPurchaseKarat);
   const setFeeRial = usePurchaseDraftStore((s) => s.setFeeRial);
 
-  useBlocker(() => true, !submission.receipt && hasPurchaseDraftProgress({ step, seller, grossWeightMg, feeRial }));
+  const unsaved = !submission.receipt && hasPurchaseDraftProgress({ step, seller, grossWeightMg, feeRial });
 
   const stepIndex = PURCHASE_STEPS.indexOf(step);
   const isFirstStep = stepIndex === 0;
@@ -286,6 +286,8 @@ export default function PurchaseWizardPage() {
 
       {/* صفحه‌کلید عددی سفارشی درون‌برنامه‌ای */}
       <NumericKeypad />
+      {/* FE-099: پیش‌نویس در sessionStorage همین تب می‌ماند؛ ترک صفحه هرگز چیزی ثبت نمی‌کند */}
+      <UnsavedChangesGuard when={unsaved} submitting={submission.isSubmitting} draft="session" />
     </div>
   );
 }

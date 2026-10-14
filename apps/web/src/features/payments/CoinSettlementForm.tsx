@@ -27,6 +27,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select } from '@/components/ui/select';
 import { CountInput } from '@/components/keypad/CountInput';
 import { MoneyInput } from '@/components/keypad/MoneyInput';
+import { UnsavedChangesGuard } from '@/components/common/UnsavedChangesGuard';
 import { useMazneh } from '@/features/home/useMazneh';
 import { useIdempotentSubmit } from '@/hooks/useIdempotentSubmit';
 import { toast } from '@/stores/toast-store';
@@ -186,6 +187,11 @@ export function CoinSettlementForm({ partyId, onSuccess }: CoinSettlementFormPro
 
   return (
     <Card>
+      {/* FE-099: مبلغ واردشده و ثبت‌نشده با ترک صفحه از بین می‌رود — هشدار پیش از آن */}
+      <UnsavedChangesGuard
+        when={coinTypeId !== null || count > 0n || marketUnitPriceRial > 0n}
+        submitting={isSubmitting}
+      />
       <CardHeader>
         <CardTitle className="text-sm">پرداخت با سکه</CardTitle>
       </CardHeader>

@@ -15,6 +15,7 @@ import { MoneyInput } from '@/components/keypad/MoneyInput';
 import { WeightInput } from '@/components/keypad/WeightInput';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { UnsavedChangesGuard } from '@/components/common/UnsavedChangesGuard';
 import { useMazneh } from '@/features/home/useMazneh';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { formatJalaliDateTime } from '@/lib/date';
@@ -361,6 +362,19 @@ export default function B2cBuybackStartPage() {
       ) : null}
 
       <NumericKeypad />
+      {/* FE-099: اندازه‌گیری یا مقایسه‌ی ثبت‌نشده؛ پس از رسید نگهبان کنار می‌رود */}
+      <UnsavedChangesGuard
+        when={
+          !submission.receipt &&
+          (grossWeightMg > 0n ||
+            stoneWeightMg > 0n ||
+            otherDeductionWeightMg > 0n ||
+            purchaseKarat > 0n ||
+            paidRial > 0n ||
+            preview !== null)
+        }
+        submitting={submission.isSubmitting}
+      />
     </div>
   );
 }

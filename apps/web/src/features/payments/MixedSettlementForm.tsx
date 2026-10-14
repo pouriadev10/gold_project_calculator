@@ -16,6 +16,7 @@ import { CountInput } from '@/components/keypad/CountInput';
 import { KaratInput } from '@/components/keypad/KaratInput';
 import { MoneyInput } from '@/components/keypad/MoneyInput';
 import { WeightInput } from '@/components/keypad/WeightInput';
+import { UnsavedChangesGuard } from '@/components/common/UnsavedChangesGuard';
 import { useMazneh, type MaznehSnapshot } from '@/features/home/useMazneh';
 import { useIdempotentSubmit } from '@/hooks/useIdempotentSubmit';
 import { toast } from '@/stores/toast-store';
@@ -284,6 +285,8 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
 
   return (
     <Card>
+      {/* FE-099: مبلغ واردشده و ثبت‌نشده با ترک صفحه از بین می‌رود — هشدار پیش از آن */}
+      <UnsavedChangesGuard when={lines.length > 0} submitting={isSubmitting} />
       <CardHeader>
         <CardTitle className="text-sm">تسویه‌ی ترکیبی</CardTitle>
       </CardHeader>

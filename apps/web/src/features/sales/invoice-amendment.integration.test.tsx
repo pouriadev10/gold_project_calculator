@@ -416,6 +416,23 @@ describe('FE-097 — اصلاح فاکتور از صفحه‌ی فاکتور ت�
     expect(within(result).getByText(new RegExp(`نسخهٔ ${formatCount(2)}$`))).toBeInTheDocument();
   }, 60_000);
 
+  it('FE-099: اصلاح ثبت‌نشده با ترک صفحه پرسیده می‌شود و ترک هیچ نسخه‌ای نمی‌سازد', async () => {
+    const user = userEvent.setup();
+    await prepareAmendment(user);
+
+    await user.click(screen.getByRole('link', { name: /بازگشت به فاکتور/ }));
+    const dialog = await screen.findByRole('dialog', {}, { timeout: 4000 });
+    expect(dialog).toHaveTextContent('تغییرات ثبت نشده‌اند');
+    await user.click(within(dialog).getByRole('button', { name: 'ماندن در صفحه' }));
+    expect(screen.getByLabelText('قلم زیورآلات')).toHaveValue(CORRECT_ITEM.jewelryItemId);
+
+    await user.click(screen.getByRole('link', { name: /بازگشت به فاکتور/ }));
+    await user.click(await screen.findByRole('button', { name: 'ترک صفحه' }));
+    await screen.findByRole('heading', { level: 1, name: 'جزئیات فاکتور' }, { timeout: 4000 });
+    expect(api.writes()).toHaveLength(0);
+    expect(detail.currentVersion).toBe(1);
+  }, 60_000);
+
   it('رد سرور در تراکنش نوشتن: پیام در صفحه، هیچ نسخه‌ی تازه‌ای نیست و فرم قابل اصلاح می‌ماند', async () => {
     const user = userEvent.setup();
     await prepareAmendment(user);

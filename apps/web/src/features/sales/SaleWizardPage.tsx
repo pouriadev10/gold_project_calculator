@@ -1,8 +1,8 @@
-import { useBlocker } from '@tanstack/react-router';
 import { AlertTriangle, Construction, Loader2 } from 'lucide-react';
 import { PartySelector } from '@/components/common/PartySelector';
 import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
 import { PageHeader } from '@/components/common/PageHeader';
+import { UnsavedChangesGuard } from '@/components/common/UnsavedChangesGuard';
 import { EmptyState } from '@/components/common/EmptyState';
 import { UnitToggle } from '@/components/common/UnitToggle';
 import { OfflineSubmitHint } from '@/components/common/OfflineSubmitHint';
@@ -51,12 +51,11 @@ import { SaleKindTabs } from './SaleKindTabs';
  * (اینجا `WeightInput`/`KaratInput` داخل `JewelryItemSelector`) دارد
  * باید دقیقاً یک نمونه در درخت خودش داشته باشد، نه صفر و نه بیشتر از یک.
  *
- * `useBlocker` هم‌زمان دو قاعده را برآورده می‌کند: «route leave warning»
- * (پیمایش داخلی مسدود و با تأیید مرورگر پرسیده می‌شود) و نیمی از
- * «refresh رفتار مشخص داشته باشد» (`enableBeforeUnload` هشدار مرورگر
- * پیش از تازه‌سازی/بستن را هم فعال می‌کند) — نیم دیگرش را خودِ
- * `sale-draft-store.ts` با `sessionStorage` می‌دهد: حتی اگر کاربر از آن
- * هشدار رد شود، draft از دست نمی‌رود.
+ * `UnsavedChangesGuard` (FE-099) هم‌زمان دو قاعده را برآورده می‌کند: «route leave warning»
+ * (پیمایش داخلی با گفت‌وگوی «ماندن / ترک» پرسیده می‌شود — پیش‌تر `useBlocker` ِ قدیمی بی‌صدا
+ * مسدود می‌کرد) و نیمی از «refresh رفتار مشخص داشته باشد» (هشدار `beforeunload` ِ مرورگر) —
+ * نیم دیگرش را خودِ `sale-draft-store.ts` با `sessionStorage` می‌دهد: حتی اگر کاربر صفحه را ترک
+ * کند، draft از دست نمی‌رود و هرگز خودکار ثبت نمی‌شود.
  */
 
 const STEP_PLACEHOLDER: Record<Extract<SaleStep, 'PAYMENT'>, string> = {
@@ -81,7 +80,7 @@ export default function SaleWizardPage() {
    * ترک صفحه وسط یک نوشتن مالی بدترین لحظه‌ی ممکن است. بعد از موفقیت
    * برعکس: پیش‌نویس پاک شده و رسید هیچ چیز از‌دست‌رفتنی ندارد.
    */
-  useBlocker(() => true, isSubmitting || (outcome === null && hasSaleDraftProgress({ step, party, items })));
+  const unsaved = outcome === null && hasSaleDraftProgress({ step, party, items });
 
   const stepIndex = SALE_STEPS.indexOf(step);
   const isFirstStep = stepIndex === 0;
@@ -192,6 +191,7 @@ export default function SaleWizardPage() {
       </div>
 
       <NumericKeypad />
+      <UnsavedChangesGuard when={unsaved} submitting={isSubmitting} draft="session" />
     </div>
   );
 }

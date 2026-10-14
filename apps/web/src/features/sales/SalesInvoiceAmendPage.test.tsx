@@ -19,6 +19,8 @@ const coinTypesMock = vi.fn();
 
 vi.mock('@tanstack/react-router', () => ({
   useParams: () => ({ invoiceId }),
+  // بدون RouterProvider؛ نگهبان خروج (FE-099) چیزی رندر نمی‌کند
+  useRouter: () => null,
   Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>,
 }));
 vi.mock('@/api/queries', () => ({

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useBlocker } from '@tanstack/react-router';
 import { dualFromRial, formatCoinCount, grossUg, karat as toKarat, toSafeNumber, type CoinType } from '@gold/core-calc';
 import { AmountDisplay } from '@/components/common/AmountDisplay';
 import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
@@ -11,6 +10,7 @@ import { UnitToggle } from '@/components/common/UnitToggle';
 import { CountInput } from '@/components/keypad/CountInput';
 import { MoneyInput } from '@/components/keypad/MoneyInput';
 import { NumericKeypad } from '@/components/keypad/NumericKeypad';
+import { UnsavedChangesGuard } from '@/components/common/UnsavedChangesGuard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select } from '@/components/ui/select';
@@ -59,7 +59,6 @@ export default function CoinPurchaseForm() {
   const invalidCount = count === 0n ? undefined : countNumber === 0 ? 'تعداد واردشده بیش از حد مجاز است.' : undefined;
   const overpaid = paidRial > amountRial;
   const hasProgress = party !== null || coinTypeId !== null || count > 0n || purchaseUnitPriceRial > 0n || paidRial > 0n;
-  useBlocker(() => true, !submission.receipt && hasProgress);
 
   const hasReadyAttempt = submission.attempt !== null;
   const hasReadyDraft = !locked && !nonConsumer && party?.status === 'ACTIVE' && coin !== undefined
@@ -127,5 +126,6 @@ export default function CoinPurchaseForm() {
     </div>
     <div className="fixed inset-x-0 bottom-above-nav z-20 border-t border-border bg-background/95 px-4 py-3 backdrop-blur-sm lg:static lg:border-0 lg:bg-transparent"><Button size="action" disabled={!canSubmit} onClick={() => void submit()} aria-busy={submission.isSubmitting}>{submission.isSubmitting ? 'در حال ثبت…' : submission.attempt ? 'بررسی نتیجه خرید' : 'ثبت خرید سکه'}</Button></div>
     <NumericKeypad />
+    <UnsavedChangesGuard when={!submission.receipt && hasProgress} submitting={submission.isSubmitting} />
   </div>;
 }

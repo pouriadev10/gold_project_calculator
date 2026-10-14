@@ -28,6 +28,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
+import { UnsavedChangesGuard } from '@/components/common/UnsavedChangesGuard';
 import { useHasRole } from '@/hooks/useHasRole';
 import { useIdempotentSubmit } from '@/hooks/useIdempotentSubmit';
 import { formatJalaliDateTime } from '@/lib/date';
@@ -289,6 +290,7 @@ function VersionEditor({ type, onDone }: { type: CoinTypeHistory; onDone: () => 
 
   return (
     <div className="space-y-3 border-t border-border pt-3">
+      <UnsavedChangesGuard when={!unchanged} submitting={isSubmitting} />
       <h3 className="text-sm font-semibold">نسخه جدید</h3>
       <CoinTypeFields draft={draft} onChange={setDraft} withCode={false} showErrors={attempted} />
       <p className="text-xs leading-5 text-muted-foreground">
@@ -340,6 +342,10 @@ function NewCoinTypeForm({ existingCodes, onDone }: { existingCodes: ReadonlySet
   return (
     <Card>
       <CardContent className="space-y-3 pt-6">
+        <UnsavedChangesGuard
+          when={(Object.keys(EMPTY_DRAFT) as (keyof CoinTypeDraft)[]).some((key) => draft[key] !== EMPTY_DRAFT[key])}
+          submitting={isSubmitting}
+        />
         <h2 className="text-sm font-semibold">نوع سکه‌ی تازه</h2>
         <CoinTypeFields draft={draft} onChange={setDraft} withCode showErrors={attempted} codeTaken={codeTaken} />
         {error ? <ApiErrorNotice error={error} /> : null}

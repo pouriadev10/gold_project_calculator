@@ -26,6 +26,27 @@ import SaleWizardPage from './SaleWizardPage';
  */
 
 const useBlockerMock = vi.fn();
+
+/**
+ * FE-099: صفحه نگهبان `UnsavedChangesGuard` را mount می‌کند که `useBlocker({ shouldBlockFn,
+ * enableBeforeUnload, withResolver })` را صدا می‌زند. تصمیم نگهبان همیشه با آخرین وضعیت صفحه گرفته
+ * می‌شود؛ این تابع آن تصمیم را برای خروج به صفحه‌ی دیگر می‌پرسد.
+ */
+function guardBlocksLeaving(): boolean {
+  const options = useBlockerMock.mock.lastCall?.[0] as
+    | {
+        shouldBlockFn: (args: { current: { pathname: string }; next: { pathname: string } }) => boolean;
+        enableBeforeUnload: () => boolean;
+      }
+    | undefined;
+  if (!options) return false;
+  const leaving = options.shouldBlockFn({ current: { pathname: '/here' }, next: { pathname: '/elsewhere' } });
+  // تازه‌سازی/بستن تب همان تصمیم را می‌گیرد
+  expect(options.enableBeforeUnload()).toBe(leaving);
+  // تغییر search همان صفحه خروج نیست
+  expect(options.shouldBlockFn({ current: { pathname: '/here' }, next: { pathname: '/here' } })).toBe(false);
+  return leaving;
+}
 vi.mock('@tanstack/react-router', async (importOriginal) => {
   const actual = await importOriginal<typeof ReactRouter>();
   return {
@@ -47,6 +68,7 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
       </a>
     ),
     useBlocker: (...args: unknown[]) => useBlockerMock(...args),
+    useRouter: () => ({}),
   };
 });
 
@@ -205,6 +227,7 @@ beforeEach(() => {
   useSaleDraftStore.getState().reset();
   sessionStorage.clear();
   useBlockerMock.mockReset();
+  useBlockerMock.mockReturnValue({ status: 'idle' });
   createJewelryCashSaleMock.mockReset();
   createJewelryCreditSaleMock.mockReset();
   useInvoiceVersionsMock.mockReset();
@@ -589,7 +612,7 @@ describe('SaleWizardPage — ثبت فروش (FE-045)', () => {
 describe('SaleWizardPage — هشدار خروج مسیر', () => {
   it('روی مرحله‌ی اول بدون هیچ انتخابی، شرط مسدودسازی خاموش است', () => {
     renderPage();
-    expect(useBlockerMock).toHaveBeenLastCalledWith(expect.any(Function), false);
+    expect(guardBlocksLeaving()).toBe(false);
   });
 
   it('بعد از انتخاب مشتری، شرط مسدودسازی روشن می‌شود', async () => {
@@ -601,6 +624,6 @@ describe('SaleWizardPage — هشدار خروج مسیر', () => {
     await waitFor(() => expect(screen.getByText('حسین مرادی')).toBeInTheDocument());
     await user.click(screen.getByText('حسین مرادی'));
 
-    expect(useBlockerMock).toHaveBeenLastCalledWith(expect.any(Function), true);
+    expect(guardBlocksLeaving()).toBe(true);
   });
 });

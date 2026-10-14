@@ -19,6 +19,7 @@ import { NumericKeypad } from '@/components/keypad/NumericKeypad';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select } from '@/components/ui/select';
+import { UnsavedChangesGuard } from '@/components/common/UnsavedChangesGuard';
 import { useHasRole } from '@/hooks/useHasRole';
 import { useIdempotentSubmit } from '@/hooks/useIdempotentSubmit';
 import { formatJalaliDateTime } from '@/lib/date';
@@ -133,6 +134,7 @@ function SettingEditor({ setting, onDone }: { setting: GeneralSetting; onDone: (
 
   return (
     <div className="space-y-3 border-t border-border pt-3">
+      <UnsavedChangesGuard when={!unchanged} submitting={isSubmitting} />
       {meta.kind === 'karat' ? (
         <KaratInput label={`${meta.label} جدید`} value={bigintDraft} onChange={onNumber} {...(fieldError ? { error: fieldError } : {})} />
       ) : meta.kind === 'rial' ? (

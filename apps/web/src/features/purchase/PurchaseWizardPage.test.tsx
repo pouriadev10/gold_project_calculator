@@ -15,6 +15,27 @@ import PurchaseWizardPage from './PurchaseWizardPage';
  */
 
 const useBlockerMock = vi.fn();
+
+/**
+ * FE-099: صفحه نگهبان `UnsavedChangesGuard` را mount می‌کند که `useBlocker({ shouldBlockFn,
+ * enableBeforeUnload, withResolver })` را صدا می‌زند. تصمیم نگهبان همیشه با آخرین وضعیت صفحه گرفته
+ * می‌شود؛ این تابع آن تصمیم را برای خروج به صفحه‌ی دیگر می‌پرسد.
+ */
+function guardBlocksLeaving(): boolean {
+  const options = useBlockerMock.mock.lastCall?.[0] as
+    | {
+        shouldBlockFn: (args: { current: { pathname: string }; next: { pathname: string } }) => boolean;
+        enableBeforeUnload: () => boolean;
+      }
+    | undefined;
+  if (!options) return false;
+  const leaving = options.shouldBlockFn({ current: { pathname: '/here' }, next: { pathname: '/elsewhere' } });
+  // تازه‌سازی/بستن تب همان تصمیم را می‌گیرد
+  expect(options.enableBeforeUnload()).toBe(leaving);
+  // تغییر search همان صفحه خروج نیست
+  expect(options.shouldBlockFn({ current: { pathname: '/here' }, next: { pathname: '/here' } })).toBe(false);
+  return leaving;
+}
 vi.mock('@tanstack/react-router', async (importOriginal) => {
   const actual = await importOriginal<typeof ReactRouter>();
   return {
@@ -30,6 +51,7 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
       </a>
     ),
     useBlocker: (...args: unknown[]) => useBlockerMock(...args),
+    useRouter: () => ({}),
   };
 });
 
@@ -109,6 +131,7 @@ beforeEach(() => {
   sessionStorage.clear();
   localStorage.clear();
   useBlockerMock.mockReset();
+  useBlockerMock.mockReturnValue({ status: 'idle' });
   useLatestPriceQuoteMock.mockReset();
   usePartiesMock.mockReset();
   useGeneralSettingsMock.mockReset();
@@ -148,7 +171,7 @@ it('registers from payment and renders the authoritative server receipt', async 
   expect(screen.getByText('مرحله ۸ از ۸ — رسید')).toBeInTheDocument();
   expect(screen.getByText(receipt.secondHandPurchaseId)).toBeInTheDocument();
   expect(screen.getByLabelText('رسید خرید')).toHaveTextContent('مانده بستانکاری فروشنده');
-  expect(useBlockerMock).toHaveBeenLastCalledWith(expect.any(Function), false);
+  expect(guardBlocksLeaving()).toBe(false);
   await user.click(screen.getByRole('button', { name: 'خرید جدید' }));
   expect(screen.getByText('مرحله ۱ از ۸ — فروشنده')).toBeInTheDocument();
 });
@@ -334,7 +357,7 @@ describe('PurchaseWizardPage — مرحله‌ی آخر و هشدار خروج',
 
   it('روی مرحله‌ی اول بدون هیچ انتخابی، شرط مسدودسازی خاموش است', () => {
     renderPage();
-    expect(useBlockerMock).toHaveBeenLastCalledWith(expect.any(Function), false);
+    expect(guardBlocksLeaving()).toBe(false);
   });
 
   it('بعد از انتخاب فروشنده، شرط مسدودسازی روشن می‌شود', async () => {
@@ -342,6 +365,6 @@ describe('PurchaseWizardPage — مرحله‌ی آخر و هشدار خروج',
     renderPage();
 
     await selectSeller(user, 'حسین مرادی');
-    expect(useBlockerMock).toHaveBeenLastCalledWith(expect.any(Function), true);
+    expect(guardBlocksLeaving()).toBe(true);
   });
 });

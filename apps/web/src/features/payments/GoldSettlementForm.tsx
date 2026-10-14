@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { KaratInput } from '@/components/keypad/KaratInput';
 import { WeightInput } from '@/components/keypad/WeightInput';
+import { UnsavedChangesGuard } from '@/components/common/UnsavedChangesGuard';
 import { useMazneh, type MaznehSnapshot } from '@/features/home/useMazneh';
 import { useIdempotentSubmit } from '@/hooks/useIdempotentSubmit';
 import { toast } from '@/stores/toast-store';
@@ -161,6 +162,8 @@ export function GoldSettlementForm({ partyId, onSuccess }: GoldSettlementFormPro
 
   return (
     <Card>
+      {/* FE-099: مبلغ واردشده و ثبت‌نشده با ترک صفحه از بین می‌رود — هشدار پیش از آن */}
+      <UnsavedChangesGuard when={grossWeightMg > 0n || karatValue > 0n} submitting={isSubmitting} />
       <CardHeader>
         <CardTitle className="text-sm">پرداخت با طلا</CardTitle>
       </CardHeader>

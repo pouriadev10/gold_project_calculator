@@ -29,6 +29,7 @@ import { Select } from '@/components/ui/select';
 import { CountInput } from '@/components/keypad/CountInput';
 import { MoneyInput } from '@/components/keypad/MoneyInput';
 import { NumericKeypad } from '@/components/keypad/NumericKeypad';
+import { UnsavedChangesGuard } from '@/components/common/UnsavedChangesGuard';
 import { useMazneh } from '@/features/home/useMazneh';
 import { useIdempotentSubmit } from '@/hooks/useIdempotentSubmit';
 import { toast } from '@/stores/toast-store';
@@ -345,6 +346,10 @@ export default function CoinSaleForm() {
       </div>
 
       <NumericKeypad />
+      <UnsavedChangesGuard
+        when={party !== null || coinTypeId !== null || count > 0n || marketUnitPriceRial > 0n || paidRial > 0n}
+        submitting={isSubmitting}
+      />
     </div>
   );
 }

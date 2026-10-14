@@ -42,6 +42,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { UnsavedChangesGuard } from '@/components/common/UnsavedChangesGuard';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useIdempotentSubmit } from '@/hooks/useIdempotentSubmit';
 import { isolateBidi } from '@/lib/bidi';
@@ -260,6 +261,15 @@ function AmendmentForm({
     [detail.id],
   );
   const submission = useIdempotentSubmit(action);
+  // FE-099: هر تغییری نسبت به نسخه‌ی جاری که هنوز به نسخه‌ی تازه تبدیل نشده
+  const unsaved =
+    party?.id !== detail.party.id ||
+    itemId !== (item?.itemId ?? '') ||
+    count !== (item?.itemType === 'COIN' ? BigInt(item.quantity) : 1n) ||
+    marketUnitPriceRial !== 0n ||
+    paidRial !== BigInt(before.paidRial) ||
+    reason !== 'OTHER' ||
+    reasonDetail.trim() !== '';
 
   async function submit(): Promise<void> {
     if (!submitAllowed) return;
@@ -542,6 +552,7 @@ function AmendmentForm({
       </Button>
       <OfflineSubmitHint offline={submission.offline} />
       <NumericKeypad />
+      <UnsavedChangesGuard when={unsaved} submitting={submission.isSubmitting} />
     </div>
   );
 }

@@ -11,6 +11,7 @@ import { OFFLINE_SUBMIT_MESSAGE } from '@/components/common/OfflineSubmitHint';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MoneyInput } from '@/components/keypad/MoneyInput';
+import { UnsavedChangesGuard } from '@/components/common/UnsavedChangesGuard';
 import { useMazneh } from '@/features/home/useMazneh';
 import { useIdempotentSubmit } from '@/hooks/useIdempotentSubmit';
 import { toast } from '@/stores/toast-store';
@@ -130,6 +131,8 @@ export function RialSettlementForm({ partyId, onSuccess }: RialSettlementFormPro
 
   return (
     <Card>
+      {/* FE-099: مبلغ واردشده و ثبت‌نشده با ترک صفحه از بین می‌رود — هشدار پیش از آن */}
+      <UnsavedChangesGuard when={amountRial > 0n} submitting={isSubmitting} />
       <CardHeader>
         <CardTitle className="text-sm">پرداخت ریالی</CardTitle>
       </CardHeader>
