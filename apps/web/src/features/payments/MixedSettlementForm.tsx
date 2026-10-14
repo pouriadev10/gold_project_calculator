@@ -150,6 +150,12 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
   const [lockedQuote, setLockedQuote] = useState<MaznehSnapshot | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [result, setResult] = useState<MixedSettlement | null>(null);
+  /*
+   * لحظه‌ی تسویه هم‌عمر کلید Idempotency است (FE-096، همان رفع FE-094). سرور hash ِ بدنه را کنار
+   * کلید نگه می‌دارد؛ اگر هر تلاش `effectiveAt` تازه بسازد، پس از پاسخ گم‌شده تلاش دوباره ۴۰۹
+   * می‌گیرد برای تسویه‌ای که ثبت شده است. اولین تلاش تعیینش می‌کند و فقط `resetForm` پاکش می‌کند.
+   */
+  const effectiveAtRef = useRef<string | null>(null);
 
   const needsQuote = lines.some((line) => line.type === 'GOLD' || line.type === 'COIN');
   useEffect(() => {
@@ -208,6 +214,7 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
     setLockedQuote(null);
     setError(null);
     setResult(null);
+    effectiveAtRef.current = null;
     resetKey();
   }
 
@@ -221,7 +228,8 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
     if (requestLines.length !== lines.length) return; // یعنی مظنه یا نوع سکه هنوز ناقص است؛ reason باید همین را قبلاً گرفته باشد
 
     setError(null);
-    const input: CreateMixedSettlementInput = { lines: requestLines, effectiveAt: new Date().toISOString() };
+    effectiveAtRef.current ??= new Date().toISOString();
+    const input: CreateMixedSettlementInput = { lines: requestLines, effectiveAt: effectiveAtRef.current };
 
     try {
       const settlement = await runSubmit(input);
