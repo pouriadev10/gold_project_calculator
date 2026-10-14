@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useRef } from 'react';
 import { setUnauthorizedHandler } from '@/api/query-client';
+import { clearTenantData } from '@/lib/tenant-data';
 import {
   consumeDeliberateLogoutFlag,
   SESSION_STORAGE_KEY,
@@ -24,6 +25,11 @@ import {
  * ۳. **اتصال قلاب FE-009.** `setUnauthorizedHandler` نقطه‌ای است که
  *    `query-client.ts` از قبل برای FE-027 آماده کرده بود — برای فراخوانی
  *    مستقیمی که (فرضاً در آینده) از مسیر `client.ts` عبور نکند.
+ *
+ * **خروج عمدی همه‌ی داده‌ی مستأجر را پاک می‌کند** (FE-101، `clearTenantData`): کش، پیش‌نویس‌ها،
+ * اشخاص و کالاهای اخیر، تلاش‌های ثبت و toastها. انقضای نشست فقط کش را پاک می‌کند — همان کاربر پس
+ * از ورود دوباره پیش‌نویسش را می‌خواهد؛ اگر کاربر یا مستأجر دیگری وارد شود، `claimTenantData` در
+ * صفحه‌ی ورود بقیه را پاک می‌کند.
  *
  * فقط به **گذار** فعال→null واکنش می‌دهد، نه به null بودن در mount اول:
  * تا وقتی FE-028 (Route Guard) نیست، صفحه‌ای که هنوز کسی وارد نشده هم
@@ -56,7 +62,8 @@ export function useSessionGuard(): void {
 
         if (!hasSession && hadSession.current) {
           const deliberate = consumeDeliberateLogoutFlag();
-          queryClient.clear();
+          if (deliberate) clearTenantData(queryClient);
+          else queryClient.clear();
           void navigate({ to: '/login', search: deliberate ? {} : { reason: 'expired' } });
         }
 

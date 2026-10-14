@@ -7,7 +7,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { createRialSettlementSchema } from '@gold/contracts';
 import type { SessionResponse } from '@/api/contracts';
 import { createQueryClient } from '@/api/query-client';
-import { routeTree } from '@/app/router';
+import { routeTree, routerDefaults } from '@/app/router';
 import { Toaster } from '@/components/common/Toaster';
 import { useKeypadStore } from '@/components/keypad/keypad-store';
 import { contractGate } from '@/mocks/handlers/contract-gate';
@@ -111,7 +111,7 @@ type User = ReturnType<typeof userEvent.setup>;
 
 /** مثل `renderRoute`، ولی router را برمی‌گرداند تا back/forward ِ تاریخچه را بشود زد. */
 function renderApp(path: string) {
-  const router = createRouter({ routeTree, history: createMemoryHistory({ initialEntries: [path] }) });
+  const router = createRouter({ routeTree, ...routerDefaults, history: createMemoryHistory({ initialEntries: [path] }) });
   render(
     <QueryClientProvider client={createQueryClient()}>
       <RouterProvider router={router} />

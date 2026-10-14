@@ -1,8 +1,12 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type * as ReactRouter from '@tanstack/react-router';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError, NetworkError } from '@/api/api-error';
+import { DATA_OWNER_STORAGE_KEY } from '@/lib/tenant-data';
+import { useRecentPartiesStore } from '@/stores/recent-parties-store';
+import { useSaleDraftStore } from '@/stores/sale-draft-store';
 import { useSessionStore } from '@/stores/session-store';
 import { LoginPage } from './LoginPage';
 
@@ -32,6 +36,14 @@ const VALID_SESSION = {
   role: 'OWNER',
 };
 
+function renderLogin() {
+  return render(
+    <QueryClientProvider client={new QueryClient()}>
+      <LoginPage />
+    </QueryClientProvider>,
+  );
+}
+
 async function fillAndSubmit(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText('ایمیل'), 'owner@example.com');
   await user.type(screen.getByLabelText('رمز عبور'), 'password123');
@@ -52,7 +64,7 @@ afterEach(() => {
 
 describe('LoginPage — فیلدها و اعتبارسنجی', () => {
   it('سه فیلد و دکمه‌ی ورود را نشان می‌دهد', () => {
-    render(<LoginPage />);
+    renderLogin();
     expect(screen.getByLabelText('ایمیل')).toBeInTheDocument();
     expect(screen.getByLabelText('رمز عبور')).toBeInTheDocument();
     expect(screen.getByLabelText('شناسه‌ی فروشگاه')).toBeInTheDocument();
@@ -61,7 +73,7 @@ describe('LoginPage — فیلدها و اعتبارسنجی', () => {
 
   it('ارسال خالی هر سه خطای الزامی را نشان می‌دهد و login صدا زده نمی‌شود', async () => {
     const user = userEvent.setup();
-    render(<LoginPage />);
+    renderLogin();
 
     await user.click(screen.getByRole('button', { name: 'ورود' }));
 
@@ -73,7 +85,7 @@ describe('LoginPage — فیلدها و اعتبارسنجی', () => {
 
   it('هر خطا به ورودی خودش وصل است تا صفحه‌خوان با برگشت به فیلد آن را بخواند (FE-084)', async () => {
     const user = userEvent.setup();
-    render(<LoginPage />);
+    renderLogin();
 
     // پیش از خطا، هیچ توضیحی آویزان نیست.
     expect(screen.getByLabelText('ایمیل')).not.toHaveAttribute('aria-describedby');
@@ -87,7 +99,7 @@ describe('LoginPage — فیلدها و اعتبارسنجی', () => {
   });
 
   it('فیلدهای ایمیل و رمز autoComplete مناسب برای مدیر رمز دارند', () => {
-    render(<LoginPage />);
+    renderLogin();
     expect(screen.getByLabelText('ایمیل')).toHaveAttribute('autoComplete', 'username');
     expect(screen.getByLabelText('رمز عبور')).toHaveAttribute('autoComplete', 'current-password');
   });
@@ -96,7 +108,7 @@ describe('LoginPage — فیلدها و اعتبارسنجی', () => {
 describe('LoginPage — نمایش/پنهان‌کردن رمز', () => {
   it('با کلیک روی دکمه‌ی چشم، نوع فیلد بین password و text جابه‌جا می‌شود', async () => {
     const user = userEvent.setup();
-    render(<LoginPage />);
+    renderLogin();
 
     const passwordInput = screen.getByLabelText('رمز عبور');
     expect(passwordInput).toHaveAttribute('type', 'password');
@@ -113,7 +125,7 @@ describe('LoginPage — ورود موفق (تمام است وقتی #۱)', () =>
   it('نشست را ذخیره و به داشبورد navigate می‌کند', async () => {
     loginMock.mockResolvedValue(VALID_SESSION);
     const user = userEvent.setup();
-    render(<LoginPage />);
+    renderLogin();
 
     await fillAndSubmit(user);
 
@@ -126,7 +138,7 @@ describe('LoginPage — ورود ناموفق (تمام است وقتی #۲)', (
   it('۴۰۱ پیام دقیق «ایمیل یا رمز عبور نادرست است» را نشان می‌دهد، نه پیام نشست‌منقضی‌شده', async () => {
     loginMock.mockRejectedValue(new ApiError(401, 'UNAUTHORIZED', 'ایمیل یا رمز عبور نادرست است'));
     const user = userEvent.setup();
-    render(<LoginPage />);
+    renderLogin();
 
     await fillAndSubmit(user);
 
@@ -140,7 +152,7 @@ describe('LoginPage — ورود ناموفق (تمام است وقتی #۲)', (
       new ApiError(403, 'FORBIDDEN', 'این مستأجر معلق است و امکان ورود ندارد'),
     );
     const user = userEvent.setup();
-    render(<LoginPage />);
+    renderLogin();
 
     await fillAndSubmit(user);
 
@@ -150,7 +162,7 @@ describe('LoginPage — ورود ناموفق (تمام است وقتی #۲)', (
   it('خطای شبکه پیام عمومی اتصال را نشان می‌دهد', async () => {
     loginMock.mockRejectedValue(new NetworkError());
     const user = userEvent.setup();
-    render(<LoginPage />);
+    renderLogin();
 
     await fillAndSubmit(user);
 
@@ -167,7 +179,7 @@ describe('LoginPage — loading و جلوگیری از چند submit', () => {
       }),
     );
     const user = userEvent.setup();
-    render(<LoginPage />);
+    renderLogin();
 
     await fillAndSubmit(user);
     expect(screen.getByRole('button', { name: 'ورود' })).toBeDisabled();
@@ -184,7 +196,7 @@ describe('LoginPage — loading و جلوگیری از چند submit', () => {
       }),
     );
     const user = userEvent.setup();
-    render(<LoginPage />);
+    renderLogin();
 
     await user.type(screen.getByLabelText('ایمیل'), 'owner@example.com');
     await user.type(screen.getByLabelText('رمز عبور'), 'password123');
@@ -203,13 +215,13 @@ describe('LoginPage — loading و جلوگیری از چند submit', () => {
 describe('LoginPage — نشست منقضی‌شده', () => {
   it('با reason=expired پیام مربوطه را نشان می‌دهد', () => {
     searchValue = { reason: 'expired' };
-    render(<LoginPage />);
+    renderLogin();
     expect(screen.getByRole('alert')).toHaveTextContent('نشست قبلی شما منقضی شده است');
   });
 
   it('بدون reason پیامی نشان داده نمی‌شود', () => {
     searchValue = {};
-    render(<LoginPage />);
+    renderLogin();
     expect(screen.queryByText(/نشست قبلی شما منقضی شده است/)).not.toBeInTheDocument();
   });
 });
@@ -222,7 +234,7 @@ describe('LoginPage — token خام در log نمایش داده نمی‌شو�
 
     loginMock.mockResolvedValue(VALID_SESSION);
     const user = userEvent.setup();
-    render(<LoginPage />);
+    renderLogin();
     await fillAndSubmit(user);
     await waitFor(() => expect(navigateMock).toHaveBeenCalled());
 
@@ -233,5 +245,74 @@ describe('LoginPage — token خام در log نمایش داده نمی‌شو�
 
     expect(allLoggedText).not.toContain(VALID_SESSION.accessToken);
     expect(allLoggedText).not.toContain(VALID_SESSION.refreshToken);
+  });
+});
+
+describe('LoginPage — داده‌ی مستأجر یا کاربر قبلی (FE-101)', () => {
+  const PREVIOUS_PARTY = {
+    id: 'p-old',
+    displayName: 'مشتری فروشگاه قبلی',
+    mobile: '09120000000',
+    type: 'CONSUMER',
+    status: 'ACTIVE',
+  } as const;
+
+  beforeEach(() => {
+    localStorage.removeItem(DATA_OWNER_STORAGE_KEY);
+    useRecentPartiesStore.setState({ recent: [PREVIOUS_PARTY] });
+    useSaleDraftStore.setState({ party: PREVIOUS_PARTY, step: 'ITEMS' });
+  });
+
+  afterEach(() => {
+    useRecentPartiesStore.getState().clear();
+    useSaleDraftStore.getState().reset();
+    localStorage.removeItem(DATA_OWNER_STORAGE_KEY);
+  });
+
+  it('ورود مستأجر دیگر، فهرست اخیر و پیش‌نویس قبلی را پیش از نشست تازه پاک می‌کند', async () => {
+    localStorage.setItem(DATA_OWNER_STORAGE_KEY, 't-other:u-other');
+    loginMock.mockResolvedValue(VALID_SESSION);
+    const user = userEvent.setup();
+    renderLogin();
+    await fillAndSubmit(user);
+    await waitFor(() => expect(navigateMock).toHaveBeenCalled());
+
+    expect(useRecentPartiesStore.getState().recent).toEqual([]);
+    expect(useSaleDraftStore.getState().party).toBeNull();
+    expect(localStorage.getItem(DATA_OWNER_STORAGE_KEY)).toBe('t1:u1');
+  });
+
+  it('مالک نامعلوم (داده‌ی پیش از FE-101) هم پاک می‌شود — سمت امن', async () => {
+    loginMock.mockResolvedValue(VALID_SESSION);
+    const user = userEvent.setup();
+    renderLogin();
+    await fillAndSubmit(user);
+    await waitFor(() => expect(navigateMock).toHaveBeenCalled());
+
+    expect(useRecentPartiesStore.getState().recent).toEqual([]);
+  });
+
+  it('ورود دوباره‌ی همان کاربر همان مستأجر، پیش‌نویس و فهرست اخیرش را نگه می‌دارد', async () => {
+    localStorage.setItem(DATA_OWNER_STORAGE_KEY, 't1:u1');
+    loginMock.mockResolvedValue(VALID_SESSION);
+    const user = userEvent.setup();
+    renderLogin();
+    await fillAndSubmit(user);
+    await waitFor(() => expect(navigateMock).toHaveBeenCalled());
+
+    expect(useRecentPartiesStore.getState().recent).toEqual([PREVIOUS_PARTY]);
+    expect(useSaleDraftStore.getState().party).toEqual(PREVIOUS_PARTY);
+  });
+
+  it('ورود ناموفق چیزی پاک نمی‌کند', async () => {
+    localStorage.setItem(DATA_OWNER_STORAGE_KEY, 't-other:u-other');
+    loginMock.mockRejectedValue(new ApiError(401, 'UNAUTHORIZED', 'ایمیل یا رمز عبور اشتباه است'));
+    const user = userEvent.setup();
+    renderLogin();
+    await fillAndSubmit(user);
+    await screen.findByText('ایمیل یا رمز عبور اشتباه است');
+
+    expect(useRecentPartiesStore.getState().recent).toEqual([PREVIOUS_PARTY]);
+    expect(localStorage.getItem(DATA_OWNER_STORAGE_KEY)).toBe('t-other:u-other');
   });
 });

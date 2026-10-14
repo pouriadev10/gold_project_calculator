@@ -4,7 +4,7 @@ import { render, within } from '@testing-library/react';
 import { HttpResponse, type JsonBodyType } from 'msw';
 import { setupServer, type SetupServer } from 'msw/node';
 import { createQueryClient } from '@/api/query-client';
-import { routeTree } from '@/app/router';
+import { routeTree, routerDefaults } from '@/app/router';
 import { Toaster } from '@/components/common/Toaster';
 import { handlers } from '@/mocks/handlers';
 import { mockError } from '@/mocks/handlers/errors';
@@ -139,7 +139,7 @@ function canonicalJson(value: unknown): string {
 
 /** رندر کل برنامه روی یک مسیر — همان چیدمان `main.tsx`. */
 export function renderRoute(path: string): void {
-  const router = createRouter({ routeTree, history: createMemoryHistory({ initialEntries: [path] }) });
+  const router = createRouter({ routeTree, ...routerDefaults, history: createMemoryHistory({ initialEntries: [path] }) });
   render(
     <QueryClientProvider client={createQueryClient()}>
       <RouterProvider router={router} />

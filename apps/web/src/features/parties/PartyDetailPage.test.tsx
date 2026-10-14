@@ -181,8 +181,24 @@ describe('PartyDetailPage — مشخصات', () => {
     expect(screen.getByText('مصرف‌کننده')).toBeInTheDocument();
     // شناسه‌ها با ارقام فارسی نمایش داده می‌شوند؛ مقدار ذخیره‌شده لاتین می‌ماند (FE-083).
     expect(screen.getByText('۰۹۱۲۱۲۳۴۵۶۷')).toBeInTheDocument();
-    expect(screen.getByText('۰۰۱۲۳۴۵۶۷۸')).toBeInTheDocument();
+    // FE-101: کد ملی پیش‌فرض پوشانده است
+    expect(screen.getByText('۰۰۱••••۶۷۸')).toBeInTheDocument();
+    expect(screen.queryByText('۰۰۱۲۳۴۵۶۷۸')).not.toBeInTheDocument();
     expect(screen.getByText('مشتری قدیمی')).toBeInTheDocument();
+  });
+
+  it('FE-101: کد ملی کامل فقط با ضربه‌ی صریح نشان داده و با ضربه‌ی دوباره پنهان می‌شود', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    expect(document.body.textContent).not.toContain('0012345678');
+
+    await user.click(screen.getByRole('button', { name: 'نمایش کامل کد ملی' }));
+    expect(screen.getByText('۰۰۱۲۳۴۵۶۷۸')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'پنهان کردن کد ملی' })).toHaveAttribute('aria-pressed', 'true');
+
+    await user.click(screen.getByRole('button', { name: 'پنهان کردن کد ملی' }));
+    expect(screen.queryByText('۰۰۱۲۳۴۵۶۷۸')).not.toBeInTheDocument();
+    expect(screen.getByText('۰۰۱••••۶۷۸')).toBeInTheDocument();
   });
 
   it('لینک «اشخاص» به فهرست برمی‌گردد', () => {

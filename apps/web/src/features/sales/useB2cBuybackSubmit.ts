@@ -9,16 +9,16 @@ import { ApiError } from '@/api/api-error';
 import { newIdempotencyKey } from '@/api/client';
 import { createB2cBuyback } from '@/api/purchase';
 import { queryKeys } from '@/api/query-keys';
+import { B2C_BUYBACK_ATTEMPT_STORAGE_PREFIX } from '@/lib/submit-attempt-storage';
 
 interface B2cBuybackAttempt {
   readonly key: string;
   readonly input: CreateB2cBuybackInput;
 }
 
-const ATTEMPT_STORAGE_PREFIX = 'gold-ui-b2c-buyback-attempt:';
 
 function attemptStorageKey(invoiceId: string): string {
-  return `${ATTEMPT_STORAGE_PREFIX}${invoiceId}`;
+  return `${B2C_BUYBACK_ATTEMPT_STORAGE_PREFIX}${invoiceId}`;
 }
 
 function readAttempt(invoiceId: string): B2cBuybackAttempt | null {

@@ -37,7 +37,14 @@ function stripMockWorker(): Plugin {
   };
 }
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  /*
+   * FE-101: «DevTools logging production» — بیلد production هر `console.*` و `debugger` را حذف
+   * می‌کند (کد برنامه و کتابخانه‌ها). ESLint (`no-console`) جلوی نوشتنش را می‌گیرد؛ این تضمین
+   * خروجی است، و `scripts/check-no-mocks.mjs` روی همان خروجی وارسی می‌کند. توسعه و تست دست‌نخورده.
+   */
+  esbuild: command === 'build' ? { drop: ['console', 'debugger'] } : {},
+
   plugins: [
     react(),
     stripMockWorker(),
@@ -153,4 +160,4 @@ export default defineConfig({
     // (FE-084، `styles/contrast.test.ts`) متن خام `globals.css` را با `?raw` می‌خواند.
     css: { include: [/globals\.css/] },
   },
-});
+}));

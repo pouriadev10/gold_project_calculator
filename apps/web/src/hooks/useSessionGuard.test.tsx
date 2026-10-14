@@ -8,6 +8,12 @@ import {
   SESSION_STORAGE_KEY,
   useSessionStore,
 } from '@/stores/session-store';
+import { B2C_BUYBACK_ATTEMPT_STORAGE_PREFIX, SUBMIT_ATTEMPT_STORAGE_PREFIX } from '@/lib/submit-attempt-storage';
+import { DATA_OWNER_STORAGE_KEY } from '@/lib/tenant-data';
+import { usePurchaseDraftStore } from '@/stores/purchase-draft-store';
+import { useRecentPartiesStore } from '@/stores/recent-parties-store';
+import { useSaleDraftStore } from '@/stores/sale-draft-store';
+import { useToastStore } from '@/stores/toast-store';
 
 const navigateMock = vi.fn();
 vi.mock('@tanstack/react-router', async (importOriginal) => {
@@ -107,5 +113,61 @@ describe('useSessionGuard — همگام‌سازی بین تب‌ها', () => {
 
     expect(useSessionStore.getState().session).toEqual(SESSION);
     expect(navigateMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('useSessionGuard — داده‌ی مستأجر (FE-101)', () => {
+  const PARTY = { id: 'p1', displayName: 'مشتری', mobile: '09120000000', type: 'CONSUMER', status: 'ACTIVE' } as const;
+  const ATTEMPT_KEY = `${SUBMIT_ATTEMPT_STORAGE_PREFIX}t1:u1:sale:coin`;
+  const B2C_KEY = `${B2C_BUYBACK_ATTEMPT_STORAGE_PREFIX}inv-1`;
+
+  function seedTenantData() {
+    useRecentPartiesStore.setState({ recent: [PARTY] });
+    useSaleDraftStore.setState({ party: PARTY, step: 'ITEMS' });
+    usePurchaseDraftStore.setState({ seller: PARTY, grossWeightMg: '1000' });
+    sessionStorage.setItem(ATTEMPT_KEY, '{"key":"k","payload":{}}');
+    sessionStorage.setItem(B2C_KEY, '{"key":"k","input":{}}');
+    sessionStorage.setItem('unrelated', 'x');
+    localStorage.setItem(DATA_OWNER_STORAGE_KEY, 't1:u1');
+    useToastStore.getState().push({ variant: 'success', title: 'فروش ثبت شد', description: 'مشتری' });
+  }
+
+  beforeEach(() => {
+    sessionStorage.clear();
+  });
+
+  it('خروج عمدی: کش، پیش‌نویس‌ها، اشخاص اخیر، تلاش‌های ثبت، toast و مالک داده پاک می‌شوند', async () => {
+    useSessionStore.setState({ session: SESSION });
+    seedTenantData();
+    const clearSpy = renderGuard();
+
+    markDeliberateLogout();
+    useSessionStore.getState().clearSession();
+
+    await waitFor(() => expect(navigateMock).toHaveBeenCalled());
+    expect(clearSpy).toHaveBeenCalled();
+    expect(useRecentPartiesStore.getState().recent).toEqual([]);
+    expect(useSaleDraftStore.getState().party).toBeNull();
+    expect(usePurchaseDraftStore.getState().seller).toBeNull();
+    expect(sessionStorage.getItem(ATTEMPT_KEY)).toBeNull();
+    expect(sessionStorage.getItem(B2C_KEY)).toBeNull();
+    expect(sessionStorage.getItem('unrelated')).toBe('x');
+    expect(useToastStore.getState().toasts).toEqual([]);
+    expect(localStorage.getItem(DATA_OWNER_STORAGE_KEY)).toBeNull();
+  });
+
+  it('انقضای نشست: فقط کش پاک می‌شود — پیش‌نویس همان کاربر برای ورود دوباره می‌ماند', async () => {
+    useSessionStore.setState({ session: SESSION });
+    seedTenantData();
+    const clearSpy = renderGuard();
+
+    useSessionStore.getState().clearSession();
+
+    await waitFor(() => expect(navigateMock).toHaveBeenCalled());
+    expect(clearSpy).toHaveBeenCalled();
+    expect(useSaleDraftStore.getState().party).toEqual(PARTY);
+    expect(sessionStorage.getItem(ATTEMPT_KEY)).not.toBeNull();
+    // مالک می‌ماند تا ورود کاربر دیگر (claimTenantData) بقیه را پاک کند
+    expect(localStorage.getItem(DATA_OWNER_STORAGE_KEY)).toBe('t1:u1');
   });
 });

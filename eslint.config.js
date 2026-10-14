@@ -264,6 +264,9 @@ export default tseslint.config(
           paths: WHOLE_LIBRARY_IMPORTS,
         },
       ],
+      // FE-101: هیچ log ِ DevTools در کد برنامه — توکن، کد ملی و بدنه‌ی مالی راحت به کنسول می‌رسند.
+      // استثنای عمدی فقط با `eslint-disable-next-line` و دلیل؛ بیلد production هم console را حذف می‌کند.
+      'no-console': 'error',
       // FE-006: هر درخواست شبکه باید از apiGet/apiPost عبور کند تا Idempotency-Key،
       // timeout و اعتبارسنجی zod هیچ‌جا فراموش نشوند.
       'no-restricted-globals': [
@@ -289,9 +292,11 @@ export default tseslint.config(
   },
 
   // خود mockها msw و fixtureهایشان را import می‌کنند؛ فقط از راه import() پویای DEV به برنامه می‌رسند.
+  // (فقط-توسعه است، پس log ِ راه‌اندازی msw مجاز است.)
   {
     files: ['apps/web/src/mocks/**/*.{ts,tsx}'],
     rules: {
+      'no-console': 'off',
       'no-restricted-imports': [
         'error',
         { patterns: [...NO_API_IMPORT_PATTERNS, ...CHART_STAYS_LAZY_PATTERNS], paths: WHOLE_LIBRARY_IMPORTS },
@@ -310,6 +315,7 @@ export default tseslint.config(
     ],
     rules: {
       'no-restricted-imports': ['error', { patterns: NO_API_IMPORT_PATTERNS }],
+      'no-console': 'off',
     },
   },
 

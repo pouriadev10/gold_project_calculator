@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from '@tanstack/react-router';
-import { ChevronLeft, ChevronRight, Landmark, Loader2, Pencil, ReceiptText } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye, EyeOff, Landmark, Loader2, Pencil, ReceiptText } from 'lucide-react';
 import { dualFromPure, dualFromRial, formatCoinCount, formatGram, formatRial, toPersianDigits, toSafeNumber } from '@gold/core-calc';
 import type { DualAmount } from '@gold/core-calc';
 import { deactivateParty } from '@/api/parties';
@@ -29,6 +29,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useIdempotentSubmit } from '@/hooks/useIdempotentSubmit';
 import { formatJalaliDateTime } from '@/lib/date';
+import { maskNationalIdForDisplay } from '@/lib/sensitive-identity';
 import { toast } from '@/stores/toast-store';
 import { useUnitStore } from '@/stores/unit-store';
 import { PartyFormDialog } from './PartyFormDialog';
@@ -374,6 +375,32 @@ function DeactivateSection({ party }: { party: Party }) {
   );
 }
 
+/**
+ * کد ملی — FE-101. پیش‌فرض پوشانده (همان `maskNationalIdForDisplay` ِ انتخابگر شخص)؛ مقدار کامل
+ * فقط با ضربه‌ی صریح در DOM می‌آید، نه با hover، و با ترک صفحه دوباره پوشانده است. صفحه‌ی پیشخوان
+ * رو به مشتری است — شماره‌ی هویتی کامل نباید پیش‌فرض روی صفحه بماند.
+ */
+function RevealableNationalId({ nationalId }: { nationalId: string }) {
+  const [revealed, setRevealed] = useState(false);
+  return (
+    <span className="flex items-center gap-1">
+      <span className="tabular-nums" dir="ltr">
+        {revealed ? toPersianDigits(nationalId) : maskNationalIdForDisplay(nationalId)}
+      </span>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        aria-pressed={revealed}
+        aria-label={revealed ? 'پنهان کردن کد ملی' : 'نمایش کامل کد ملی'}
+        onClick={() => setRevealed((value) => !value)}
+      >
+        {revealed ? <EyeOff className="size-4" aria-hidden="true" /> : <Eye className="size-4" aria-hidden="true" />}
+      </Button>
+    </span>
+  );
+}
+
 function PartyProfileCard({ party, onEdit }: { party: Party; onEdit: () => void }) {
   return (
     <Card>
@@ -395,11 +422,9 @@ function PartyProfileCard({ party, onEdit }: { party: Party; onEdit: () => void 
               {party.mobile ? toPersianDigits(party.mobile) : '—'}
             </dd>
           </div>
-          <div className="flex justify-between gap-3">
+          <div className="flex items-center justify-between gap-3">
             <dt className="text-muted-foreground">کد ملی</dt>
-            <dd className="tabular-nums" dir="ltr">
-              {party.nationalId ? toPersianDigits(party.nationalId) : '—'}
-            </dd>
+            <dd>{party.nationalId ? <RevealableNationalId nationalId={party.nationalId} /> : '—'}</dd>
           </div>
           {party.notes ? (
             <div className="space-y-1">

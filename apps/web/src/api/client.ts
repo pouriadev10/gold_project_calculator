@@ -261,8 +261,19 @@ async function request<S extends z.ZodTypeAny>(
   const parsed = schema.safeParse(body);
 
   if (!parsed.success) {
-    // ناسازگاری schema یک باگ کد است، نه یک خطای کاربر — باید فوراً در کنسول دیده شود
-    console.error('پاسخ سرور با قرارداد نمی‌خواند:', path, parsed.error.issues);
+    /*
+     * ناسازگاری schema یک باگ کد است، نه یک خطای کاربر — در توسعه فوراً در کنسول دیده شود.
+     * FE-101: فقط مسیر فیلد و کد خطا، نه `issues` ِ خام که `received` (مقدار مالی، کد ملی،
+     * توکن) را هم دارد؛ و در production هیچ (بیلد هم `console` را حذف می‌کند).
+     */
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console -- فقط توسعه، بدون مقدار؛ شاخه در production حذف می‌شود
+      console.error(
+        'پاسخ سرور با قرارداد نمی‌خواند:',
+        path,
+        parsed.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.code}`),
+      );
+    }
     throw new ApiError(response.status, 'SCHEMA_MISMATCH', 'پاسخ سرور با قرارداد نمی‌خواند');
   }
 

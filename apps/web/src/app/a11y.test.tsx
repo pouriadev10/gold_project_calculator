@@ -7,7 +7,7 @@ import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { SessionResponse } from '@/api/contracts';
 import { createQueryClient } from '@/api/query-client';
-import { routeTree } from '@/app/router';
+import { routeTree, routerDefaults } from '@/app/router';
 import { Toaster } from '@/components/common/Toaster';
 import { useKeypadStore } from '@/components/keypad/keypad-store';
 import { handlers } from '@/mocks/handlers';
@@ -74,7 +74,7 @@ afterEach(() => {
 });
 
 function renderAt(path: string) {
-  const router = createRouter({ routeTree, history: createMemoryHistory({ initialEntries: [path] }) });
+  const router = createRouter({ routeTree, ...routerDefaults, history: createMemoryHistory({ initialEntries: [path] }) });
   render(
     <QueryClientProvider client={createQueryClient()}>
       <RouterProvider router={router} />

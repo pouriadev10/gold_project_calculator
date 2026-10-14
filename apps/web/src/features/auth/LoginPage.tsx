@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useState } from 'react';
@@ -11,6 +12,7 @@ import { InlineError } from '@/components/common/InlineError';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useIdempotentSubmit } from '@/hooks/useIdempotentSubmit';
+import { claimTenantData } from '@/lib/tenant-data';
 import { useSessionStore } from '@/stores/session-store';
 
 /**
@@ -37,6 +39,7 @@ function loginErrorMessage(error: unknown): string {
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const search = useSearch({ from: '/login', strict: true });
   const setSession = useSessionStore((state) => state.setSession);
   const [showPassword, setShowPassword] = useState(false);
@@ -60,6 +63,8 @@ export function LoginPage() {
     try {
       const session = await submit(values);
       if (!session) return; // ضربه‌ی دوم حین ارسال قبلی — بی‌اثر، نه خطا
+      // FE-101: داده‌ی مستأجر یا کاربر دیگری که در این مرورگر مانده، پیش از نشست تازه پاک می‌شود
+      claimTenantData(session, queryClient);
       setSession(session);
       await navigate({ to: '/dashboard' });
     } catch (error) {

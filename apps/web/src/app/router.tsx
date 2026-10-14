@@ -10,6 +10,7 @@ import { uuidSchema } from '@gold/contracts';
 import { AppNav } from '@/components/common/AppNav';
 import { AppStatusBanners } from '@/components/common/AppStatusBanners';
 import { NotFoundPage } from '@/components/common/NotFoundPage';
+import { RouteErrorFallback } from '@/components/common/RouteErrorFallback';
 import { PageSkeleton } from '@/components/common/PageSkeleton';
 import { requireAuth, requireRole } from '@/app/route-guards';
 import { HomePage } from '@/features/home/HomePage';
@@ -386,14 +387,24 @@ export const routeTree = rootRoute.addChildren([
   ]),
 ]);
 
-export const router = createRouter({
-  routeTree,
-  defaultPreload: 'intent',
+/**
+ * پیش‌فرض‌های مشترک هر router ِ این درخت — برنامه و هارنس تست‌های Integration هر دو از همین
+ * می‌سازند تا رفتار خطا/انتظاری که تست می‌بیند همان رفتار production باشد.
+ */
+export const routerDefaults = {
   // chunk تنبل هر مسیر ممکن است روی شبکه‌ی ضعیف کمی طول بکشد؛ بدون این
   // در آن فاصله صفحه سفید می‌ماند — قاعده‌ی «هیچ صفحه‌ای هنگام loading
   // سفید نماند».
   // FE-088: اسکلت صفحه، نه اسپینر — همان شکلی که پوسته‌ی inline هنگام باز شدن سرد نشان می‌دهد.
   defaultPendingComponent: PageSkeleton,
+  // FE-101: جایگزین کامپوننت پیش‌فرض TanStack که `error.message` خام را نشان می‌داد
+  defaultErrorComponent: RouteErrorFallback,
+} as const;
+
+export const router = createRouter({
+  routeTree,
+  defaultPreload: 'intent',
+  ...routerDefaults,
 });
 
 declare module '@tanstack/react-router' {
