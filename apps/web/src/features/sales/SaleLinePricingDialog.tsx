@@ -5,6 +5,7 @@ import type { JewelryWageType } from '@/api/contracts';
 import { useJewelryItem } from '@/api/queries';
 import { AmountDisplay, RateDisplay } from '@/components/common/AmountDisplay';
 import { InlineError } from '@/components/common/InlineError';
+import { UnitToggle } from '@/components/common/UnitToggle';
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -177,6 +178,14 @@ function SaleLinePricingForm({ initialPricing, onSave, onCancel }: SaleLinePrici
               </PreviewRow>
               {rate1000 !== undefined ? (
                 <>
+                  {/*
+                    FE-103: زیر ۶۴۰px این گفت‌وگو Bottom Sheet تمام‌صفحه است و کلید سربرگ صفحه پشتش
+                    پنهان می‌ماند؛ عددهای مالی همین‌جا هستند، پس کلید سراسری هم همین‌جاست.
+                  */}
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-xs text-muted-foreground">واحد نمایش</span>
+                    <UnitToggle />
+                  </div>
                   <PreviewRow label="ارزش طلا">
                     <AmountDisplay amount={dualFromRial(calcResult.calc.goldValueRial, rate1000)} size="sm" />
                   </PreviewRow>

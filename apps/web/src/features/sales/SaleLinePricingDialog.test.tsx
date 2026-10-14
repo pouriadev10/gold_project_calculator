@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import { toPersianDigits } from '@gold/core-calc';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -7,6 +7,7 @@ import type * as Queries from '@/api/queries';
 import { useKeypadStore } from '@/components/keypad/keypad-store';
 import { NumericKeypad } from '@/components/keypad/NumericKeypad';
 import type { SaleDraftItemLine } from '@/stores/sale-draft-store';
+import { useUnitStore } from '@/stores/unit-store';
 import { SaleLinePricingDialog } from './SaleLinePricingDialog';
 
 /**
@@ -181,5 +182,23 @@ describe('SaleLinePricingDialog — ذخیره', () => {
     expect(onSave).toHaveBeenCalledWith(
       expect.objectContaining({ grossWeightMg: '12000', karat: 750, wageType: 'PER_GRAM' }),
     );
+  });
+});
+
+describe('SaleLinePricingDialog — کلید واحد (FE-103)', () => {
+  it('کلید سراسری داخل خودِ گفت‌وگوست و همه‌ی مبلغ‌های پیش‌نمایش را هم‌زمان عوض می‌کند', async () => {
+    useUnitStore.setState({ unit: 'gold' });
+    const user = setupUser();
+    renderDialog();
+    const dialog = await screen.findByRole('dialog');
+    const amounts = () => [...dialog.querySelectorAll('[data-follows-unit="true"]')];
+    await waitFor(() => expect(amounts().length).toBeGreaterThanOrEqual(5));
+    expect(amounts().every((el) => el.getAttribute('data-unit') === 'gold')).toBe(true);
+
+    const toggle = within(dialog).getByRole('radiogroup', { name: 'واحد نمایش اعداد' });
+    await user.click(within(toggle).getByRole('radio', { name: 'ریال' }));
+
+    expect(useUnitStore.getState().unit).toBe('rial');
+    expect(amounts().every((el) => el.getAttribute('data-unit') === 'rial')).toBe(true);
   });
 });

@@ -172,3 +172,33 @@ describe('کلید تعویض واحد', () => {
     expect(screen.getByRole('radio', { name: 'ریال' })).toHaveAttribute('aria-checked', 'false');
   });
 });
+
+describe('AmountDisplay — FE-103: مبلغ پیرو کلید سراسری', () => {
+  function amountNode(container: HTMLElement): Element {
+    return container.querySelector('[data-raw]')!;
+  }
+
+  it('مبلغ دوچهره (هر دو چهره از سرور، بدون نرخ) از کلید سراسری پیروی می‌کند', () => {
+    const { container, rerender } = render(<AmountDisplay amount={{ kind: 'faces', rial: -7_000_000n, pureMg: -250n }} />);
+    expect(amountNode(container)).toHaveAttribute('data-unit', 'gold');
+    expect(amountNode(container)).toHaveAttribute('data-raw', '-250');
+    expect(amountNode(container)).toHaveAttribute('data-follows-unit', 'true');
+
+    useUnitStore.setState({ unit: 'rial' });
+    rerender(<AmountDisplay amount={{ kind: 'faces', rial: -7_000_000n, pureMg: -250n }} />);
+    expect(amountNode(container)).toHaveAttribute('data-unit', 'rial');
+    expect(amountNode(container)).toHaveAttribute('data-raw', '-7000000');
+  });
+
+  it('فقط مبلغی که واقعاً از کلید پیروی می‌کند نشان «پیرو» می‌گیرد', () => {
+    const { container: dual } = render(<AmountDisplay amount={AMOUNT} />);
+    const { container: fixed } = render(<AmountDisplay amount={AMOUNT} unit="rial" />);
+    const { container: raw } = render(<AmountDisplay amount={{ kind: 'raw', value: 5n, unit: 'rial' }} />);
+    const { container: rate } = render(<RateDisplay value={RATE} />);
+
+    expect(amountNode(dual)).toHaveAttribute('data-follows-unit', 'true');
+    expect(amountNode(fixed)).not.toHaveAttribute('data-follows-unit');
+    expect(amountNode(raw)).not.toHaveAttribute('data-follows-unit');
+    expect(amountNode(rate)).not.toHaveAttribute('data-follows-unit');
+  });
+});

@@ -136,6 +136,20 @@ function toRequestLine(line: MixedLine, quoteId: string | null): CreateMixedSett
   }
 }
 
+/**
+ * مبلغ ریالی خلاصه‌ها و نتیجه — FE-103، قاعده‌ی ۲-۴ CLAUDE.md. با نرخ، چهره‌ی دومقیاسه از کلید
+ * سراسری واحد پیروی می‌کند؛ بدون نرخ فقط همان چهره‌ی ریالی خام دیده می‌شود (معادل ساختگی ساخته
+ * نمی‌شود). پیش از این، مانده‌ی اعتباری، پوشش بدهی، باقی‌مانده و ریز نتیجه همیشه ریالی بودند.
+ */
+function RialAmount({ value, rate1000 }: { value: bigint; rate1000: bigint | undefined }) {
+  return (
+    <AmountDisplay
+      amount={rate1000 !== undefined ? dualFromRial(value, rate1000) : { kind: 'raw', value, unit: 'rial' }}
+      size="sm"
+    />
+  );
+}
+
 export interface MixedSettlementFormProps {
   readonly partyId: string;
   readonly onSuccess?: (settlement: MixedSettlement) => void;
@@ -177,6 +191,12 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
 
   const activeCoinTypes = (coinTypesQuery.data ?? []).filter((c) => c.active);
   const rate1000 = lockedQuote?.gram1000;
+  /*
+   * نرخ «نمایش» جدا از نرخ «محاسبه» است: پیش‌نمایش طلا/سکه فقط با مظنه‌ی قفل‌شده ساخته می‌شود،
+   * ولی تبدیل یک مبلغ ریالی به چهره‌ی طلایی برای کلید واحد همان کاری است که فرم تسویه‌ی ریالی با
+   * مظنه‌ی جاری می‌کند. وقتی ردیف طلا/سکه هست، مظنه قفل است و هر دو یکی‌اند.
+   */
+  const displayRate1000 = rate1000 ?? mazneh.data?.gram1000;
   const receivableRial = balancesQuery.data ? BigInt(balancesQuery.data.rawBalances.rial) : undefined;
   const debtRial = receivableRial !== undefined && receivableRial > 0n ? receivableRial : 0n;
   const availableCreditRial = receivableRial !== undefined && receivableRial < 0n ? -receivableRial : 0n;
@@ -271,17 +291,13 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">مجموع تسویه‌شده</span>
-            {rate1000 !== undefined ? (
-              <AmountDisplay amount={dualFromRial(result.totalSettledRial, rate1000)} size="sm" />
-            ) : (
-              <span className="tabular-nums">{formatRial(result.totalSettledRial)} ریال</span>
-            )}
+            <RialAmount value={result.totalSettledRial} rate1000={displayRate1000} />
           </div>
           <ul className="space-y-1 text-xs text-muted-foreground">
             {result.lines.map((line, index) => (
               <li key={`${line.type}-${index}`} className="flex items-center justify-between">
                 <span>{LINE_LABEL[line.type]}</span>
-                <span className="tabular-nums">{formatRial(line.settledRial)} ریال</span>
+                <RialAmount value={line.settledRial} rate1000={displayRate1000} />
               </li>
             ))}
           </ul>
@@ -406,11 +422,7 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">معادل نمایشی</span>
                   {previews[index] !== undefined && (rate1000 !== undefined || (line.type !== 'GOLD' && line.type !== 'COIN')) ? (
-                    rate1000 !== undefined ? (
-                      <AmountDisplay amount={dualFromRial(previews[index]!, rate1000)} size="sm" />
-                    ) : (
-                      <span className="tabular-nums">{formatRial(previews[index]!)} ریال</span>
-                    )
+                    <RialAmount value={previews[index]!} rate1000={displayRate1000} />
                   ) : (
                     <span className="text-muted-foreground">—</span>
                   )}
@@ -435,17 +447,23 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
         <div className="space-y-1.5 border-t border-border pt-3 text-sm">
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">مانده اعتباری شخص</span>
-            <span className="tabular-nums">{formatRial(availableCreditRial)} ریال</span>
+            <RialAmount value={availableCreditRial} rate1000={displayRate1000} />
           </div>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <span className="text-muted-foreground">خلاصه پوشش بدهی</span>
-            <span className="tabular-nums">
-              {totalCoverage !== undefined ? formatRial(totalCoverage) : '—'} از {formatRial(debtRial)} ریال
+            <span className="flex flex-wrap items-baseline justify-end gap-1 text-xs text-muted-foreground">
+              {totalCoverage !== undefined ? <RialAmount value={totalCoverage} rate1000={displayRate1000} /> : '—'}
+              {' از '}
+              <RialAmount value={debtRial} rate1000={displayRate1000} />
             </span>
           </div>
           <div className="flex items-center justify-between font-medium">
             <span className="text-muted-foreground">باقی‌مانده</span>
-            <span className="tabular-nums">{remainingRial !== undefined ? formatRial(remainingRial) : '—'} ریال</span>
+            {remainingRial !== undefined ? (
+              <RialAmount value={remainingRial} rate1000={displayRate1000} />
+            ) : (
+              <span className="tabular-nums">—</span>
+            )}
           </div>
         </div>
 

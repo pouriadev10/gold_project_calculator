@@ -69,7 +69,7 @@ function ProfitRowView({ row, report }: { row: ProfitRow; report: LedgerProfitRe
       </div>
       <div className="min-w-0 shrink-0 space-y-0.5 sm:text-end">
         <AmountDisplay
-          amount={{ kind: 'raw', value: primary, unit }}
+          amount={{ kind: 'faces', rial: measureFace(measure, 'rial'), pureMg: measureFace(measure, 'gold') }}
           signed={row.signed}
           size={row.key === 'totalProfit' ? 'lg' : 'md'}
           className="flex-wrap"

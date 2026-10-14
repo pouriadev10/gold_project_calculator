@@ -215,9 +215,12 @@ async function typeInto(user: User, field: HTMLElement, keys: string, value: str
   await waitFor(() => expect(field).toHaveAttribute('data-value', value));
 }
 
-/** متن ردیف خلاصه (برچسب + مقدار) — این بخش عدد را با `formatRial` می‌نویسد، نه `AmountDisplay`. */
-function summary(label: string): string {
-  return screen.getByText(label).parentElement!.textContent ?? '';
+/** مبلغ‌های ردیف خلاصه (مقدار خام و واحد) — از FE-103 این بخش هم از `AmountDisplay` عبور می‌کند. */
+function summaryAmounts(label: string): Array<{ raw: string | null; unit: string | null }> {
+  return [...screen.getByText(label).parentElement!.querySelectorAll('[data-raw]')].map((el) => ({
+    raw: el.getAttribute('data-raw'),
+    unit: el.getAttribute('data-unit'),
+  }));
 }
 
 /**
@@ -261,8 +264,12 @@ async function buildBasket(user: User) {
   for (const group of [gold, coin]) {
     expect(within(group).getByText('نرخ ردیف').parentElement).toHaveTextContent(`${formatRial(RATE_1000)} ریال/گرم`);
   }
-  expect(summary('خلاصه پوشش بدهی')).toContain(`${formatRial(EXPECTED_TOTAL)} از ${formatRial(OPENING_DEBT_RIAL)} ریال`);
-  expect(summary('باقی‌مانده')).toContain(`${formatRial(OPENING_DEBT_RIAL - EXPECTED_TOTAL)} ریال`);
+  // FE-103: خلاصه از `AmountDisplay` عبور می‌کند (کلید واحد روی ریال است) — مقدار خام سنجیده می‌شود
+  expect(summaryAmounts('خلاصه پوشش بدهی')).toEqual([
+    { raw: EXPECTED_TOTAL.toString(), unit: 'rial' },
+    { raw: OPENING_DEBT_RIAL.toString(), unit: 'rial' },
+  ]);
+  expect(summaryAmounts('باقی‌مانده')).toEqual([{ raw: (OPENING_DEBT_RIAL - EXPECTED_TOTAL).toString(), unit: 'rial' }]);
 }
 
 function submitButton(): HTMLElement {
@@ -323,9 +330,12 @@ describe('FE-096 — تسویه‌ی ترکیبی ریال + طلا + سکه، �
       server.totalSettledRial,
     );
     const lineLabel = { RIAL: 'ریال', GOLD: 'طلا', COIN: 'سکه', CREDIT: 'مانده اعتباری' } as const;
-    expect(within(card).getAllByRole('listitem').map((item) => item.textContent)).toEqual(
-      server.lines.map((line) => `${lineLabel[line.type]}${formatRial(BigInt(line.settledRial))} ریال`),
-    );
+    // FE-103: ریز نتیجه هم از `AmountDisplay` عبور می‌کند — برچسب و مقدار خام هر ردیف از پاسخ سرور
+    expect(
+      within(card)
+        .getAllByRole('listitem')
+        .map((item) => [item.firstElementChild?.textContent, item.querySelector('[data-raw]')?.getAttribute('data-raw')]),
+    ).toEqual(server.lines.map((line) => [lineLabel[line.type], line.settledRial]));
 
     // ── مانده‌ی جدید: پس از invalidation دوباره از سرور خوانده می‌شود
     const serverBalance = OPENING_DEBT_RIAL - EXPECTED_TOTAL + 7_000_000n;

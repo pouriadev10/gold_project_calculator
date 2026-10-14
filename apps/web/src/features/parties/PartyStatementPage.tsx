@@ -2,11 +2,11 @@ import { useCallback, useState } from 'react';
 import { Link, useParams } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, FilterX, ReceiptText } from 'lucide-react';
 import { MAX_PAGE_SIZE } from '@gold/contracts';
-import { dualFromPure, dualFromRial, formatCount, formatGram, toSafeNumber } from '@gold/core-calc';
+import { formatCount } from '@gold/core-calc';
 import { getPartyStatementPdf } from '@/api/parties';
 import { useParty, usePartyStatement } from '@/api/queries';
 import type { PartyStatementQuery, PartyStatementSourceType } from '@/api/contracts';
-import { AmountDisplay, RateDisplay } from '@/components/common/AmountDisplay';
+import { RateDisplay } from '@/components/common/AmountDisplay';
 import { CardSkeleton } from '@/components/common/CardSkeleton';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorState } from '@/components/common/ErrorState';
@@ -30,16 +30,15 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useTenantTimeZone } from '@/hooks/useTenantTimeZone';
 import { formatJalaliDateTime } from '@/lib/date';
 import { EMPTY_JALALI_RANGE, jalaliRangeToIso, type JalaliDateRange } from '@/lib/jalali';
-import { useUnitStore } from '@/stores/unit-store';
 import {
   SOURCE_LABEL,
   collectDimensions,
-  convertibleUnit,
   debtorCreditorLabel,
   dimensionLabel,
   lockedStatementRate,
 } from './party-statement';
 import type { LockedStatementRate, PartyStatementDimension, PartyStatementEntry } from './party-statement';
+import { LockedEquivalent, RawQuantity } from './StatementQuantity';
 
 /**
  * صورت‌حساب کامل شخص — FE-070، روی `GET /parties/:id/statement` (BE-057).
@@ -63,67 +62,6 @@ const DESKTOP_QUERY = '(min-width: 640px)';
 function ceilDivide(dividend: number, divisor: number): number {
   const remainder = dividend % divisor;
   return remainder === 0 ? dividend / divisor : (dividend - remainder) / divisor + 1;
-}
-
-/** مقدار خام یک بُعد در واحد اصلی خودش — ریال، گرم یا تعداد سکه. */
-function RawQuantity({
-  dimension,
-  value,
-  signed = false,
-}: {
-  dimension: PartyStatementDimension;
-  value: bigint;
-  signed?: boolean;
-}) {
-  const unit = convertibleUnit(dimension);
-  const prefix = signed && value > 0n ? '+' : '';
-  if (unit !== null) {
-    return (
-      <span className="inline-flex items-baseline gap-0.5">
-        {prefix ? <span aria-hidden="true">{prefix}</span> : null}
-        <AmountDisplay amount={{ kind: 'raw', value, unit }} size="sm" />
-      </span>
-    );
-  }
-  // سکه شمارشی است و نقره با مظنه طلا قیمت نمی‌خورد؛ هر دو فقط مقدار خام.
-  const label = dimension.kind === 'COIN' ? 'عدد' : 'گرم';
-  return (
-    <span className="inline-flex items-baseline gap-1 tabular-nums" data-raw={value.toString()}>
-      <bdi className="text-sm font-semibold">
-        {prefix}
-        {dimension.kind === 'COIN' ? formatCount(toSafeNumber(value)) : formatGram(value)}
-      </bdi>
-      <span className="text-xs font-normal text-muted-foreground">{label}</span>
-    </span>
-  );
-}
-
-/**
- * معادل با واحد انتخابی، فقط با نرخ سند. وقتی واحد فعال همان واحد خام
- * است چیزی نشان نمی‌دهد — مقدار خام همان پاسخ است.
- */
-function LockedEquivalent({
-  dimension,
-  value,
-  rate,
-}: {
-  dimension: PartyStatementDimension;
-  value: bigint;
-  rate: LockedStatementRate | null;
-}) {
-  const activeUnit = useUnitStore((state) => state.unit);
-  const unit = convertibleUnit(dimension);
-  if (unit === null || unit === activeUnit) return null;
-  if (rate === null) {
-    return <span className="block text-xs text-muted-foreground">معادل: نرخ سند ثبت نشده</span>;
-  }
-  const dual = unit === 'rial' ? dualFromRial(value, rate.rate1000) : dualFromPure(value, rate.rate1000);
-  return (
-    <span className="flex flex-wrap items-baseline gap-1 text-xs text-muted-foreground">
-      معادل:
-      <AmountDisplay amount={dual} size="sm" />
-    </span>
-  );
 }
 
 function RateSnapshot({ rate }: { rate: LockedStatementRate | null }) {

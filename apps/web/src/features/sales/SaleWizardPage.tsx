@@ -63,6 +63,13 @@ const STEP_PLACEHOLDER: Record<Extract<SaleStep, 'PAYMENT'>, string> = {
   PAYMENT: 'ثبت روش پرداخت در تسک بعد اضافه می‌شود.',
 };
 
+/**
+ * مرحله‌هایی که عدد مالی دارند — FE-103، قاعده‌ی ۲-۴ CLAUDE.md. «اقلام» قیمت هر ردیف را نشان
+ * می‌دهد، پس کلید واحد همان‌جا هم لازم است، نه فقط در «مرور». «مظنه» فقط نرخ دارد (`RateDisplay`،
+ * ذاتاً ریالی) و «مشتری» و «پرداخت» عدد مالی ندارند.
+ */
+const STEPS_WITH_AMOUNTS: ReadonlySet<SaleStep> = new Set<SaleStep>(['ITEMS', 'REVIEW']);
+
 export default function SaleWizardPage() {
   const isOnline = useOnlineStatus();
   const mazneh = useMazneh();
@@ -118,7 +125,7 @@ export default function SaleWizardPage() {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <PageHeader title="فروش جدید">{step === 'REVIEW' ? <UnitToggle /> : null}</PageHeader>
+      <PageHeader title="فروش جدید">{STEPS_WITH_AMOUNTS.has(step) ? <UnitToggle /> : null}</PageHeader>
       <SaleStepper current={step} />
 
       <div className="flex-1 space-y-4 p-4 pb-32">

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, Eye, EyeOff, Landmark, Loader2, Pencil, ReceiptText } from 'lucide-react';
-import { dualFromPure, dualFromRial, formatCoinCount, formatGram, formatRial, toPersianDigits, toSafeNumber } from '@gold/core-calc';
+import { dualFromPure, dualFromRial, formatCoinCount, toPersianDigits } from '@gold/core-calc';
 import type { DualAmount } from '@gold/core-calc';
 import { deactivateParty } from '@/api/parties';
 import { queryKeys } from '@/api/query-keys';
@@ -33,7 +33,8 @@ import { maskNationalIdForDisplay } from '@/lib/sensitive-identity';
 import { toast } from '@/stores/toast-store';
 import { useUnitStore } from '@/stores/unit-store';
 import { PartyFormDialog } from './PartyFormDialog';
-import { SOURCE_LABEL, debtorCreditorLabel } from './party-statement';
+import { SOURCE_LABEL, debtorCreditorLabel, lockedStatementRate } from './party-statement';
+import { LockedEquivalent, RawQuantity } from './StatementQuantity';
 
 /**
  * صفحه‌ی جزئیات شخص — FE-034.
@@ -253,12 +254,6 @@ function PartyBalanceCardBody({
   );
 }
 
-function statementQuantityText(dimension: { kind: 'RIAL' | 'GOLD' | 'SILVER' | 'COIN' }, quantity: bigint): string {
-  if (dimension.kind === 'RIAL') return `${formatRial(quantity)} ریال`;
-  if (dimension.kind === 'COIN') return `${formatCoinCount(toSafeNumber(quantity))} عدد`;
-  return `${formatGram(quantity)} گرم`;
-}
-
 function RecentActivityCard({ partyId }: { partyId: string }) {
   const { data, isLoading, isError, refetch } = usePartyStatement(partyId, { limit: 5, offset: 0 });
 
@@ -298,17 +293,15 @@ function RecentActivityCard({ partyId }: { partyId: string }) {
                       {formatJalaliDateTime(new Date(entry.effectiveAt))}
                     </p>
                   </div>
-                  <span
-                    className={
-                      quantity > 0n
-                        ? 'tabular-nums text-sm font-semibold text-credit'
-                        : quantity < 0n
-                          ? 'tabular-nums text-sm font-semibold text-debit'
-                          : 'tabular-nums text-sm font-semibold text-muted-foreground'
-                    }
-                  >
-                    {statementQuantityText(entry.dimension, quantity)}
-                  </span>
+                  {/* FE-103: همان سلول صورت‌حساب — مقدار خام + معادل واحد انتخابی با نرخ همان سند */}
+                  <div className="shrink-0 space-y-0.5 text-end">
+                    <RawQuantity dimension={entry.dimension} value={quantity} signed />
+                    <LockedEquivalent
+                      dimension={entry.dimension}
+                      value={quantity}
+                      rate={lockedStatementRate(entry)}
+                    />
+                  </div>
                 </li>
               );
             })}

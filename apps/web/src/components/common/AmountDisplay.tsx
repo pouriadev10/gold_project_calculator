@@ -27,8 +27,19 @@ export interface RawAmount {
   readonly unit: MoneyUnit;
 }
 
+/**
+ * هر دو چهره‌ی یک مبلغ، هر دو از سرور و بدون نرخ واحد — FE-103. گزارش سود چنین سنجه‌ای دارد:
+ * طلای معادل هر رویداد با مظنه‌ی قفل‌شده‌ی همان رویداد جمع شده و یک «نرخ» مشترک ندارد، پس
+ * `DualAmount` (که `rate1000` می‌خواهد) نیست؛ ولی مثل آن از کلید سراسری واحد پیروی می‌کند.
+ */
+export interface FacesAmount {
+  readonly kind: 'faces';
+  readonly rial: bigint;
+  readonly pureMg: bigint;
+}
+
 export interface AmountDisplayProps {
-  amount: DualAmount | RawAmount;
+  amount: DualAmount | RawAmount | FacesAmount;
   /** بازنویسی واحد برای مبلغ دومقیاسه؛ مقدار خام همیشه در واحد اصلی خودش می‌ماند. */
   unit?: MoneyUnit;
   /**
@@ -45,6 +56,20 @@ export interface AmountDisplayProps {
   className?: string;
 }
 
+/** مقدار خام همیشه در واحد خودش؛ دومقیاسه و دوچهره در واحد انتخابی (یا بازنویسی‌شده). */
+function resolveAmount(
+  amount: AmountDisplayProps['amount'],
+  selectedUnit: MoneyUnit,
+  karat: Karat | undefined,
+): { activeUnit: MoneyUnit; raw: bigint } {
+  if ('kind' in amount && amount.kind === 'raw') return { activeUnit: amount.unit, raw: amount.value };
+  if (selectedUnit === 'rial') return { activeUnit: 'rial', raw: amount.rial };
+  return {
+    activeUnit: 'gold',
+    raw: karat !== undefined ? fromPureMgSigned(amount.pureMg, karat) : amount.pureMg,
+  };
+}
+
 export function AmountDisplay({
   amount,
   unit,
@@ -55,16 +80,9 @@ export function AmountDisplay({
   className,
 }: AmountDisplayProps) {
   const globalUnit = useUnitStore((state) => state.unit);
-  const isRawOnly = 'kind' in amount;
-  const activeUnit = isRawOnly ? amount.unit : (unit ?? globalUnit);
+  const isRawOnly = 'kind' in amount && amount.kind === 'raw';
+  const { activeUnit, raw } = resolveAmount(amount, unit ?? globalUnit, karat);
   const isGold = activeUnit === 'gold';
-  const raw = isRawOnly
-    ? amount.value
-    : isGold
-      ? karat !== undefined
-        ? fromPureMgSigned(amount.pureMg, karat)
-        : amount.pureMg
-      : amount.rial;
   const text = isGold ? formatGram(raw) : formatRial(raw);
 
   const toneClass = signed
@@ -81,6 +99,8 @@ export function AmountDisplay({
       // مقدار لاتین و صحیح برای کپی، تست و ابزار کمکی — نمایش فارسی است
       data-raw={raw.toString()}
       data-unit={activeUnit}
+      // FE-103: مبلغی که از کلید سراسری واحد پیروی می‌کند — مبنای ممیزی خودکار صفحات مالی
+      data-follows-unit={!isRawOnly && unit === undefined ? 'true' : undefined}
     >
       <bdi className={cn('font-semibold', SIZE_CLASS[size])}>{text}</bdi>
       {showUnit ? (
