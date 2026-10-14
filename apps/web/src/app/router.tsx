@@ -15,6 +15,7 @@ import { PageSkeleton } from '@/components/common/PageSkeleton';
 import { requireAuth, requireRole } from '@/app/route-guards';
 import { HomePage } from '@/features/home/HomePage';
 import { useSessionGuard } from '@/hooks/useSessionGuard';
+import { useTenantScope } from '@/hooks/useTenantScope';
 import { useTheme } from '@/hooks/useTheme';
 import { useUnit } from '@/hooks/useUnit';
 import { OPENING_BALANCE_ROLES, PROFIT_REPORT_ROLES } from '@/lib/permissions';
@@ -46,6 +47,8 @@ function AppShell() {
   useUnit();
   // مرگ نشست (تمدید ناموفق، خروج، خروج در تب دیگر) را می‌بیند و به ورود می‌فرستد — FE-027
   useSessionGuard();
+  // FE-102: تا داده‌ی این تب مال مستأجر و کاربر نشست جاری نشده، صفحه رندر نمی‌شود (تعویض در تب دیگر)
+  const { ready } = useTenantScope();
 
   return (
     <div className="lg:flex lg:h-dvh lg:items-stretch lg:overflow-hidden">
@@ -58,7 +61,7 @@ function AppShell() {
         محتوا روی مانیتورهای خیلی عریض را می‌گیرد؛ زیر ۱۹۲۰px اصلاً اثر ندارد.
       */}
       <main className="min-w-0 flex-1 pb-nav lg:mx-auto lg:h-dvh lg:max-w-[1920px] lg:overflow-y-auto">
-        <Outlet />
+        {ready ? <Outlet /> : <PageSkeleton />}
       </main>
     </div>
   );

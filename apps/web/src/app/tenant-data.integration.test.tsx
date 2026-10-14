@@ -1,16 +1,16 @@
-import { cleanup, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { Party, SessionResponse } from '@/api/contracts';
 import { useKeypadStore } from '@/components/keypad/keypad-store';
-import { DATA_OWNER_STORAGE_KEY } from '@/lib/tenant-data';
+import { DATA_OWNER_STORAGE_KEY, TAB_DATA_OWNER_STORAGE_KEY } from '@/lib/tenant-data';
 import { contractGate } from '@/mocks/handlers/contract-gate';
 import { partyRecords } from '@/mocks/handlers/fixtures';
 import { usePurchaseDraftStore } from '@/stores/purchase-draft-store';
-import { useRecentPartiesStore } from '@/stores/recent-parties-store';
+import { RECENT_PARTIES_STORAGE_KEY, useRecentPartiesStore } from '@/stores/recent-parties-store';
 import { useSaleDraftStore } from '@/stores/sale-draft-store';
-import { useSessionStore } from '@/stores/session-store';
+import { SESSION_STORAGE_KEY, useSessionStore } from '@/stores/session-store';
 import { createIntegrationServer, renderRoute } from '@/test/integration';
 
 /**
@@ -169,5 +169,100 @@ describe('FE-101 — داده‌ی فروشگاه قبلی', () => {
 
     const dialog = await openSalePartySelector(user);
     expect(within(dialog).getByText(PARTY_A.displayName)).toBeInTheDocument();
+  }, 60_000);
+});
+
+/* ── FE-102: تعویض مستأجر زیر پای یک تب باز ─────────────────────────── */
+
+/**
+ * «تب دیگر» با فروشگاه ب وارد شد: همان کاری که `LoginPage` در آن تب می‌کند (`claimTenantData`
+ * مالک مشترک را ب می‌کند و داده‌ی مشترک را پاک) و نشست تازه در `localStorage`؛ این تب فقط رویداد
+ * `storage` می‌بیند — بی هیچ خروجی.
+ */
+function loginInOtherTab(tenant: 'a' | 'b') {
+  const next = sessionFor(tenant);
+  localStorage.setItem(DATA_OWNER_STORAGE_KEY, `tenant-${tenant}:user-${tenant}`);
+  localStorage.setItem(RECENT_PARTIES_STORAGE_KEY, JSON.stringify({ state: { recent: [] }, version: 0 }));
+  localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({ state: { session: next }, version: 0 }));
+  act(() => {
+    window.dispatchEvent(new StorageEvent('storage', { key: SESSION_STORAGE_KEY }));
+  });
+}
+
+/** هر درخواستی که با توکن ب رفته و شناسه‌ی داده‌ی الف را در خود دارد — نباید هیچ باشد. */
+function crossTenantRequests() {
+  return api
+    .requests()
+    .filter((request) => request.headers.get('Authorization') === 'Bearer token-b')
+    .filter((request) => request.path.includes(PARTY_A.id));
+}
+
+describe('FE-102 — تعویض مستأجر در تب دیگر', () => {
+  it('ورود فروشگاه ب در تب دیگر: بی‌فلش، پیش‌نویس الف پاک، مسیر امن بدون پرسش ترک، و اعلان', async () => {
+    const user = userEvent.setup();
+    renderRoute('/login');
+    await login(user, 'a');
+    await expectPartyListOf(user, PARTY_A, PARTY_B);
+
+    // پیش‌نویس فروش الف با مشتری الف — نگهبان ترک فعال است
+    const pickedA = { id: PARTY_A.id, displayName: PARTY_A.displayName, mobile: null, type: PARTY_A.type, status: PARTY_A.status };
+    useRecentPartiesStore.setState({ recent: [pickedA] });
+    act(() => useSaleDraftStore.setState({ party: pickedA, step: 'PARTY' }));
+    await user.click(navLink('فروش'));
+    await screen.findByRole('heading', { level: 1, name: 'فروش جدید' }, { timeout: 4000 });
+    expect(screen.getByLabelText('مشتری')).toHaveTextContent(PARTY_A.displayName);
+
+    loginInOtherTab('b');
+
+    // همان رندر: صفحه‌ی الف رفته، داده‌ی الف هیچ‌جا
+    expect(document.body.textContent).not.toContain(PARTY_A.displayName);
+    expect(await screen.findByText('حساب فعال عوض شد', {}, { timeout: 4000 })).toBeInTheDocument();
+    await screen.findByRole('heading', { level: 1, name: 'مظنه بازار' }, { timeout: 4000 });
+    expect(screen.queryByText('تغییرات ثبت نشده‌اند')).not.toBeInTheDocument();
+
+    expect(useSaleDraftStore.getState().party).toBeNull();
+    expect(useRecentPartiesStore.getState().recent).toEqual([]);
+    expect(sessionStorage.getItem(TAB_DATA_OWNER_STORAGE_KEY)).toBe('tenant-b:user-b');
+
+    await expectPartyListOf(user, PARTY_B, PARTY_A);
+    const dialog = await openSalePartySelector(user);
+    expect(within(dialog).queryByText(PARTY_A.displayName)).not.toBeInTheDocument();
+    expect(crossTenantRequests()).toEqual([]);
+  }, 60_000);
+
+  it('تب با پیش‌نویس کاربر دیگر به برنامه برمی‌گردد (پس از خروج و ورود در تب دیگر): پیش از نمایش پاک می‌شود', async () => {
+    // این تب برای الف کار می‌کرد؛ نشست حالا مال ب است (تب دیگر)، پیش‌نویس الف در sessionStorage ِ این تب
+    const pickedA = { id: PARTY_A.id, displayName: PARTY_A.displayName, mobile: null, type: PARTY_A.type, status: PARTY_A.status };
+    sessionStorage.setItem(TAB_DATA_OWNER_STORAGE_KEY, 'tenant-a:user-a');
+    localStorage.setItem(DATA_OWNER_STORAGE_KEY, 'tenant-b:user-b');
+    useSaleDraftStore.setState({ party: pickedA, step: 'PARTY' });
+    useSessionStore.setState({ session: sessionFor('b') });
+
+    renderRoute('/sales/new');
+    expect(document.body.textContent).not.toContain(PARTY_A.displayName);
+    await screen.findByRole('heading', { level: 1, name: 'فروش جدید' }, { timeout: 4000 });
+
+    expect(document.body.textContent).not.toContain(PARTY_A.displayName);
+    expect(useSaleDraftStore.getState().party).toBeNull();
+    expect(sessionStorage.getItem(TAB_DATA_OWNER_STORAGE_KEY)).toBe('tenant-b:user-b');
+    // ورود به برنامه، نه تعویض زنده — مسیری که کاربر خواسته حفظ می‌شود و اعلانی نیست
+    expect(screen.queryByText('حساب فعال عوض شد')).not.toBeInTheDocument();
+  }, 60_000);
+
+  it('تمدید نشست (همان کاربر، توکن تازه) هیچ چیز را پاک یا جابه‌جا نمی‌کند', async () => {
+    const user = userEvent.setup();
+    renderRoute('/login');
+    await login(user, 'a');
+    const pickedA = { id: PARTY_A.id, displayName: PARTY_A.displayName, mobile: null, type: PARTY_A.type, status: PARTY_A.status };
+    act(() => useSaleDraftStore.setState({ party: pickedA, step: 'PARTY' }));
+    await user.click(navLink('فروش'));
+    await screen.findByRole('heading', { level: 1, name: 'فروش جدید' }, { timeout: 4000 });
+
+    act(() => useSessionStore.setState({ session: { ...sessionFor('a'), accessToken: 'token-a-2' } }));
+
+    expect(screen.getByRole('heading', { level: 1, name: 'فروش جدید' })).toBeInTheDocument();
+    expect(screen.getByLabelText('مشتری')).toHaveTextContent(PARTY_A.displayName);
+    expect(useSaleDraftStore.getState().party?.id).toBe(PARTY_A.id);
+    expect(screen.queryByText('حساب فعال عوض شد')).not.toBeInTheDocument();
   }, 60_000);
 });
