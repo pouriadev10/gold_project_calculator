@@ -2412,9 +2412,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/app/router.tsx": {
-    "mtime": 1791996568.261875,
-    "seen": 1791997766.0210867,
-    "ast_hash": "3ce525868abcf3ea82b2d903eb801f8d",
+    "mtime": 1791998368.8022916,
+    "seen": 1791998861.3846154,
+    "ast_hash": "caaf2446228243e8f3917864b0463826",
     "semantic_hash": ""
   },
   "apps/web/src/components/common/AmountDisplay.test.tsx": {
@@ -5022,9 +5022,9 @@
     "semantic_hash": ""
   },
   "FrontTasks.md": {
-    "mtime": 1791997714.661693,
-    "seen": 1791997766.021635,
-    "ast_hash": "37ae450e2ecfbbaaf5a326fb00870db6",
+    "mtime": 1791998821.285623,
+    "seen": 1791998861.3852532,
+    "ast_hash": "75a0f9089afb11af61f4d1708f5ebd7e",
     "semantic_hash": ""
   },
   "KEYPAD-REPORT.md": {
@@ -6168,9 +6168,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/app/tenant-data.integration.test.tsx": {
-    "mtime": 1791997224.075809,
-    "seen": 1791997766.0210884,
-    "ast_hash": "a5df379158e653c8ad9b4e6cfb57d01e",
+    "mtime": 1791998424.9713237,
+    "seen": 1791998861.3846169,
+    "ast_hash": "e0b186622d2f3d9b4a791f741b58de68",
     "semantic_hash": ""
   },
   "apps/web/src/components/common/RouteErrorFallback.test.tsx": {
@@ -6186,15 +6186,21 @@
     "semantic_hash": ""
   },
   "apps/web/src/lib/tenant-data.test.ts": {
-    "mtime": 1791997263.1603644,
-    "seen": 1791997766.021377,
-    "ast_hash": "345e93d168578fd31ce356a6e9f519f0",
+    "mtime": 1791998495.3534389,
+    "seen": 1791998861.3848903,
+    "ast_hash": "456edb93214cadca9efee92d991e4665",
     "semantic_hash": ""
   },
   "apps/web/src/lib/tenant-data.ts": {
-    "mtime": 1791996365.174224,
-    "seen": 1791997766.0213778,
-    "ast_hash": "67b55bf4e55fbb8758e39712acea16e1",
+    "mtime": 1791998473.6367784,
+    "seen": 1791998861.3848915,
+    "ast_hash": "09f447f2f706f3b943eecadf0f477c42",
+    "semantic_hash": ""
+  },
+  "apps/web/src/hooks/useTenantScope.ts": {
+    "mtime": 1791998460.9205942,
+    "seen": 1791998861.384855,
+    "ast_hash": "6adbb0805f2893dface0a126f6cb42f1",
     "semantic_hash": ""
   }
 }
