@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { X } from 'lucide-react';
-import { bullionPrice, coinPositionValue, dualFromRial, formatCount, formatRial, grossMg, karat as toKarat, rial, toSafeNumber } from '@gold/core-calc';
+import { bullionPrice, coinPositionValue, formatCount, formatRial, grossMg, karat as toKarat, rial, toSafeNumber } from '@gold/core-calc';
 import { createMixedSettlementSchema, type CreateMixedSettlementInput, type MixedSettlement } from '@/api/contracts';
 import { createMixedSettlement } from '@/api/settlements';
 import { useCoinTypes, usePartyBalances } from '@/api/queries';
 import { queryKeys } from '@/api/query-keys';
-import { AmountDisplay } from '@/components/common/AmountDisplay';
 import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
+import { RialAmount } from '@/components/common/RialAmount';
 import { OFFLINE_SUBMIT_MESSAGE } from '@/components/common/OfflineSubmitHint';
 import { PENDING_SUBMIT_ACTION, PendingSubmitNotice } from '@/components/common/PendingSubmitNotice';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ import { WeightInput } from '@/components/keypad/WeightInput';
 import { UnsavedChangesGuard } from '@/components/common/UnsavedChangesGuard';
 import { useMazneh, type MaznehSnapshot } from '@/features/home/useMazneh';
 import { useFinancialSubmit } from '@/hooks/useFinancialSubmit';
+import { documentQuoteRate } from '@/lib/document-rate';
 import { toast } from '@/stores/toast-store';
 
 /**
@@ -136,20 +137,6 @@ function toRequestLine(line: MixedLine, quoteId: string | null): CreateMixedSett
   }
 }
 
-/**
- * مبلغ ریالی خلاصه‌ها و نتیجه — FE-103، قاعده‌ی ۲-۴ CLAUDE.md. با نرخ، چهره‌ی دومقیاسه از کلید
- * سراسری واحد پیروی می‌کند؛ بدون نرخ فقط همان چهره‌ی ریالی خام دیده می‌شود (معادل ساختگی ساخته
- * نمی‌شود). پیش از این، مانده‌ی اعتباری، پوشش بدهی، باقی‌مانده و ریز نتیجه همیشه ریالی بودند.
- */
-function RialAmount({ value, rate1000 }: { value: bigint; rate1000: bigint | undefined }) {
-  return (
-    <AmountDisplay
-      amount={rate1000 !== undefined ? dualFromRial(value, rate1000) : { kind: 'raw', value, unit: 'rial' }}
-      size="sm"
-    />
-  );
-}
-
 export interface MixedSettlementFormProps {
   readonly partyId: string;
   readonly onSuccess?: (settlement: MixedSettlement) => void;
@@ -166,6 +153,11 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
   const [lockedQuote, setLockedQuote] = useState<MaznehSnapshot | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [result, setResult] = useState<MixedSettlement | null>(null);
+  /**
+   * FE-104: نرخ همان سند، در لحظه‌ی ثبت گرفته می‌شود — مظنه‌ی قفل‌شده‌ی ردیف‌های طلا/سکه. سبد فقط
+   * ریالی/اعتباری نرخ ندارد و نتیجه‌اش فقط ریال خام است؛ مظنه‌ی جاری هرگز به رسید راه ندارد.
+   */
+  const [resultRate1000, setResultRate1000] = useState<bigint | null>(null);
 
   const needsQuote = lines.some((line) => line.type === 'GOLD' || line.type === 'COIN');
   useEffect(() => {
@@ -182,6 +174,7 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
     isSubmitting,
     locked,
     uncertain,
+    pending,
     reset: resetKey,
     offline,
   } = useFinancialSubmit(
@@ -245,6 +238,7 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
     setLockedQuote(null);
     setError(null);
     setResult(null);
+    setResultRate1000(null);
     resetKey();
   }
 
@@ -261,11 +255,16 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
     setError(null);
     // اگر تلاشی سنجاق شده باشد، هوک همان را می‌فرستد و این بدنه‌ی تازه نادیده گرفته می‌شود
     const input: CreateMixedSettlementInput = { lines: requestLines, effectiveAt: new Date().toISOString() };
+    // بدنه‌ای که واقعاً می‌رود: تلاش سنجاق‌شده، وگرنه همین بدنه — نرخ سند از مظنه‌ی ردیف‌های خودش
+    const sentLines = (pending?.payload ?? input).lines;
+    const sentQuoteId = sentLines.flatMap((line) => (line.type === 'GOLD' || line.type === 'COIN' ? [line.quoteId] : []))[0];
+    const documentRate = documentQuoteRate(sentQuoteId, lockedQuote);
 
     try {
       const settlement = await runSubmit(input);
       if (!settlement) return;
 
+      setResultRate1000(documentRate);
       setResult(settlement);
 
       await Promise.all([
@@ -291,13 +290,13 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">مجموع تسویه‌شده</span>
-            <RialAmount value={result.totalSettledRial} rate1000={displayRate1000} />
+            <RialAmount value={result.totalSettledRial} rate1000={resultRate1000} />
           </div>
           <ul className="space-y-1 text-xs text-muted-foreground">
             {result.lines.map((line, index) => (
               <li key={`${line.type}-${index}`} className="flex items-center justify-between">
                 <span>{LINE_LABEL[line.type]}</span>
-                <RialAmount value={line.settledRial} rate1000={displayRate1000} />
+                <RialAmount value={line.settledRial} rate1000={resultRate1000} />
               </li>
             ))}
           </ul>

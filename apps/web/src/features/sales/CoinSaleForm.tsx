@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   coinPositionValue,
-  dualFromRial,
   formatCount,
   formatRial,
   grossUg,
@@ -15,8 +14,8 @@ import { createCoinSaleSchema, type CoinTypeVersion, type CreateCoinSaleInput } 
 import { createCoinSale } from '@/api/sales';
 import { useCoinTypes, useInventoryBalances } from '@/api/queries';
 import { queryKeys } from '@/api/query-keys';
-import { AmountDisplay } from '@/components/common/AmountDisplay';
 import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
+import { RialAmount } from '@/components/common/RialAmount';
 import { CardSkeleton } from '@/components/common/CardSkeleton';
 import { ErrorState } from '@/components/common/ErrorState';
 import { PageHeader } from '@/components/common/PageHeader';
@@ -33,6 +32,7 @@ import { NumericKeypad } from '@/components/keypad/NumericKeypad';
 import { UnsavedChangesGuard } from '@/components/common/UnsavedChangesGuard';
 import { useMazneh } from '@/features/home/useMazneh';
 import { useFinancialSubmit } from '@/hooks/useFinancialSubmit';
+import { documentQuoteRate } from '@/lib/document-rate';
 import { toast } from '@/stores/toast-store';
 import type { PartySelection } from '@/stores/recent-parties-store';
 import { CoinPositionSummary } from './CoinPositionSummary';
@@ -111,6 +111,8 @@ interface CoinSaleResult {
   readonly receivableRial: bigint;
   readonly intrinsicValueRial: bigint;
   readonly bubbleRial: bigint | null;
+  /** FE-104: نرخ مظنه‌ای که فاکتور با آن ثبت شد (لحظه‌ی ثبت)؛ `null` یعنی معلوم نیست — فقط ریال. */
+  readonly rate1000: bigint | null;
 }
 
 export default function CoinSaleForm() {
@@ -137,6 +139,7 @@ export default function CoinSaleForm() {
     isSubmitting,
     locked,
     uncertain,
+    pending,
     reset: resetKey,
     offline,
   } = useFinancialSubmit((key: string, input: CreateCoinSaleInput) => createCoinSale(input, key), {
@@ -186,6 +189,8 @@ export default function CoinSaleForm() {
     if (!locked && !ready) return;
 
     setError(null);
+    // تلاش سنجاق‌شده quoteId ِ خودش را دارد؛ اگر مظنه از آن زمان عوض شده، نرخ فاکتور معلوم نیست
+    const documentRate = documentQuoteRate(locked || !ready ? pending?.payload.quoteId : quote.quoteId, quote);
     try {
       const sale =
         locked || !ready
@@ -208,6 +213,7 @@ export default function CoinSaleForm() {
         receivableRial: sale.receivableRial,
         intrinsicValueRial: sale.intrinsicValueRial,
         bubbleRial: sale.bubbleRial,
+        rate1000: documentRate,
       });
 
       await Promise.all([
@@ -238,19 +244,11 @@ export default function CoinSaleForm() {
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">مبلغ قابل‌پرداخت</span>
-                {rate1000 !== undefined ? (
-                  <AmountDisplay amount={dualFromRial(result.payableRial, rate1000)} size="sm" />
-                ) : (
-                  <span className="tabular-nums">{formatRial(result.payableRial)} ریال</span>
-                )}
+                <RialAmount value={result.payableRial} rate1000={result.rate1000} />
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">مانده</span>
-                {rate1000 !== undefined ? (
-                  <AmountDisplay amount={dualFromRial(result.receivableRial, rate1000)} size="sm" />
-                ) : (
-                  <span className="tabular-nums">{formatRial(result.receivableRial)} ریال</span>
-                )}
+                <RialAmount value={result.receivableRial} rate1000={result.rate1000} />
               </div>
             </CardContent>
           </Card>

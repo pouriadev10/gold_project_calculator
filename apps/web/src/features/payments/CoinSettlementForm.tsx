@@ -23,6 +23,7 @@ import { createCoinSettlement } from '@/api/settlements';
 import { useCoinTypes, usePartyBalances } from '@/api/queries';
 import { queryKeys } from '@/api/query-keys';
 import { AmountDisplay } from '@/components/common/AmountDisplay';
+import { RialAmount } from '@/components/common/RialAmount';
 import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
 import { CardSkeleton } from '@/components/common/CardSkeleton';
 import { ErrorState } from '@/components/common/ErrorState';
@@ -36,6 +37,7 @@ import { MoneyInput } from '@/components/keypad/MoneyInput';
 import { UnsavedChangesGuard } from '@/components/common/UnsavedChangesGuard';
 import { useMazneh } from '@/features/home/useMazneh';
 import { useFinancialSubmit } from '@/hooks/useFinancialSubmit';
+import { documentQuoteRate } from '@/lib/document-rate';
 import { toast } from '@/stores/toast-store';
 
 /**
@@ -90,6 +92,8 @@ export function CoinSettlementForm({ partyId, onSuccess }: CoinSettlementFormPro
   const [marketUnitPriceRial, setMarketUnitPriceRial] = useState(0n);
   const [error, setError] = useState<unknown>(null);
   const [result, setResult] = useState<CoinSettlement | null>(null);
+  /** FE-104: نرخ مظنه‌ای که سند با آن ثبت شد، در لحظه‌ی ثبت — نه مظنه‌ی زنده‌ی هر رندر. */
+  const [resultRate1000, setResultRate1000] = useState<bigint | null>(null);
 
   // FE-100: کلید و بدنه (همراه quoteId و effectiveAt) تا پاسخ قطعی سنجاق می‌مانند
   const {
@@ -98,6 +102,7 @@ export function CoinSettlementForm({ partyId, onSuccess }: CoinSettlementFormPro
     isSubmitting,
     locked,
     uncertain,
+    pending,
     reset: resetKey,
     offline,
   } = useFinancialSubmit(
@@ -145,6 +150,7 @@ export function CoinSettlementForm({ partyId, onSuccess }: CoinSettlementFormPro
     setMarketUnitPriceRial(0n);
     setError(null);
     setResult(null);
+    setResultRate1000(null);
     resetKey();
   }
 
@@ -155,6 +161,8 @@ export function CoinSettlementForm({ partyId, onSuccess }: CoinSettlementFormPro
     if (!locked && !ready) return;
 
     setError(null);
+    // تلاش سنجاق‌شده quoteId ِ خودش را دارد؛ اگر مظنه از آن زمان عوض شده، نرخ سند معلوم نیست (null)
+    const documentRate = documentQuoteRate(locked || !ready ? pending?.payload.quoteId : quote.quoteId, quote);
     try {
       const settlement =
         locked || !ready
@@ -168,6 +176,7 @@ export function CoinSettlementForm({ partyId, onSuccess }: CoinSettlementFormPro
             });
       if (!settlement) return;
 
+      setResultRate1000(documentRate);
       setResult(settlement);
 
       await Promise.all([
@@ -193,11 +202,7 @@ export function CoinSettlementForm({ partyId, onSuccess }: CoinSettlementFormPro
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">مبلغ تسویه‌شده</span>
-            {rate1000 !== undefined ? (
-              <AmountDisplay amount={dualFromRial(result.settledRial, rate1000)} size="sm" />
-            ) : (
-              <span className="tabular-nums">{formatRial(result.settledRial)} ریال</span>
-            )}
+            <RialAmount value={result.settledRial} rate1000={resultRate1000} />
           </div>
           <Button size="action" className="w-full" onClick={resetForm}>
             پرداخت با سکه‌ی جدید

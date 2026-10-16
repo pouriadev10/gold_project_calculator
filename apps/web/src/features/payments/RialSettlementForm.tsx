@@ -131,12 +131,13 @@ export function RialSettlementForm({ partyId, onSuccess }: RialSettlementFormPro
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">مبلغ پرداختی</span>
-            {rate1000 !== undefined ? (
-              <AmountDisplay amount={dualFromRial(result.amountRial, rate1000)} size="sm" />
-            ) : (
-              <span className="tabular-nums">{formatRial(result.amountRial)} ریال</span>
-            )}
+            {/*
+              FE-104: پرداخت ریالی سندی بدون نرخ طلاست (صورت‌حساب هم «نرخ سند ثبت نشده» می‌گوید)؛
+              معادل طلایی با مظنه‌ی جاری یعنی رسیدی که با تغییر مظنه عوض می‌شود.
+            */}
+            <AmountDisplay amount={{ kind: 'raw', value: result.amountRial, unit: 'rial' }} size="sm" />
           </div>
+          <p className="text-xs text-muted-foreground">این سند نرخ طلا ندارد؛ مبلغ همان ریال ثبت‌شده است.</p>
           <Button size="action" className="w-full" onClick={resetForm}>
             پرداخت ریالی جدید
           </Button>
