@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { dualFromRial, formatCoinCount, grossUg, karat as toKarat, toSafeNumber, type CoinType } from '@gold/core-calc';
+import { dualFromRial, formatCoinCount, toSafeNumber } from '@gold/core-calc';
 import { AmountDisplay } from '@/components/common/AmountDisplay';
 import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
 import { CardSkeleton } from '@/components/common/CardSkeleton';
@@ -15,7 +15,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select } from '@/components/ui/select';
 import { useCoinTypes, useInventoryBalances } from '@/api/queries';
-import type { CoinTypeVersion } from '@/api/contracts';
 import { MaznehBar } from '@/features/home/MaznehBar';
 import { useMazneh } from '@/features/home/useMazneh';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
@@ -26,12 +25,8 @@ import { useCoinPurchaseSubmit } from './useCoinPurchaseSubmit';
 import { PurchaseReceiptPdf } from './PurchaseReceiptPdf';
 import { purchaseReceiptShareText } from '@/lib/receipt-share';
 import { useSessionStore } from '@/stores/session-store';
+import { toCoinType } from '@/lib/coin-type';
 
-function toCoinType(version: CoinTypeVersion): CoinType {
-  const shared = { kind: 'coin' as const, id: version.coinTypeId, label: version.title,
-    grossWeightUg: grossUg(BigInt(version.grossWeightUg)), karat: toKarat(version.karat) };
-  return version.isCentralBankMinted ? { ...shared, isCentralBankMinted: true } : { ...shared, isCentralBankMinted: false };
-}
 
 export default function CoinPurchaseForm() {
   const isOnline = useOnlineStatus();

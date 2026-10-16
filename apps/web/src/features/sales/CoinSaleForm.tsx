@@ -4,13 +4,10 @@ import {
   coinPositionValue,
   formatCount,
   formatRial,
-  grossUg,
-  karat as toKarat,
   rial,
   toSafeNumber,
-  type CoinType,
 } from '@gold/core-calc';
-import { createCoinSaleSchema, type CoinTypeVersion, type CreateCoinSaleInput } from '@/api/contracts';
+import { createCoinSaleSchema, type CreateCoinSaleInput } from '@/api/contracts';
 import { createCoinSale } from '@/api/sales';
 import { useCoinTypes, useInventoryBalances } from '@/api/queries';
 import { queryKeys } from '@/api/query-keys';
@@ -37,6 +34,7 @@ import { toast } from '@/stores/toast-store';
 import type { PartySelection } from '@/stores/recent-parties-store';
 import { CoinPositionSummary } from './CoinPositionSummary';
 import { SaleKindTabs } from './SaleKindTabs';
+import { toCoinType } from '@/lib/coin-type';
 
 /**
  * فرم فروش سکه — FE-048.
@@ -91,18 +89,6 @@ const BLOCK_MESSAGE: Record<SubmitBlockReason, string> = {
   PAID_EXCEEDS_PAYABLE: 'مبلغ پرداختی نمی‌تواند از مبلغ قابل‌پرداخت بیشتر باشد.',
 };
 
-function toCoinType(version: CoinTypeVersion): CoinType {
-  const shared = {
-    kind: 'coin' as const,
-    id: version.coinTypeId,
-    label: version.title,
-    grossWeightUg: grossUg(BigInt(version.grossWeightUg)),
-    karat: toKarat(version.karat),
-  };
-  return version.isCentralBankMinted
-    ? { ...shared, isCentralBankMinted: true }
-    : { ...shared, isCentralBankMinted: false };
-}
 
 interface CoinSaleResult {
   readonly invoiceId: string;

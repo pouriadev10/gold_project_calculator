@@ -4,19 +4,14 @@ import {
   bubble,
   coinPositionValue,
   dualFromRial,
-  formatGram,
   formatRial,
-  grossUg,
   intrinsicValue,
-  karat as toKarat,
   rial,
   toSafeNumber,
-  type CoinType,
 } from '@gold/core-calc';
 import {
   createCoinSettlementSchema,
   type CoinSettlement,
-  type CoinTypeVersion,
   type CreateCoinSettlementInput,
 } from '@/api/contracts';
 import { createCoinSettlement } from '@/api/settlements';
@@ -39,6 +34,7 @@ import { useMazneh } from '@/features/home/useMazneh';
 import { useFinancialSubmit } from '@/hooks/useFinancialSubmit';
 import { documentQuoteRate } from '@/lib/document-rate';
 import { toast } from '@/stores/toast-store';
+import { formatCoinsGrossWeight, toCoinType } from '@/lib/coin-type';
 
 /**
  * پرداخت با سکه (دریافت سکه برای تسویه‌ی مانده) — FE-053، «هر روش
@@ -68,18 +64,6 @@ export interface CoinSettlementFormProps {
   readonly onSuccess?: (settlement: CoinSettlement) => void;
 }
 
-function toCoinType(version: CoinTypeVersion): CoinType {
-  const shared = {
-    kind: 'coin' as const,
-    id: version.coinTypeId,
-    label: version.title,
-    grossWeightUg: grossUg(BigInt(version.grossWeightUg)),
-    karat: toKarat(version.karat),
-  };
-  return version.isCentralBankMinted
-    ? { ...shared, isCentralBankMinted: true }
-    : { ...shared, isCentralBankMinted: false };
-}
 
 export function CoinSettlementForm({ partyId, onSuccess }: CoinSettlementFormProps) {
   const coinTypesQuery = useCoinTypes();
@@ -126,8 +110,8 @@ export function CoinSettlementForm({ partyId, onSuccess }: CoinSettlementFormPro
     count > 0n && marketUnitPriceRial > 0n
       ? coinPositionValue(toSafeNumber(count), rial(marketUnitPriceRial))
       : undefined;
-  const grossWeightMg =
-    selectedType && count > 0n ? (count * BigInt(selectedType.grossWeightUg)) / 1000n : undefined;
+  // فقط نمای گزارشی (FE-053، بخش ۲-۲)؛ FE-105: ضرب دقیق میکروگرم، نه `÷ 1000n` که بی‌صدا گرد می‌کرد
+  const grossWeightText = selectedType && count > 0n ? formatCoinsGrossWeight(count, selectedType) : undefined;
   const receivableRial = balancesQuery.data ? BigInt(balancesQuery.data.rawBalances.rial) : undefined;
 
   const reason: string | null = offline
@@ -249,8 +233,8 @@ export function CoinSettlementForm({ partyId, onSuccess }: CoinSettlementFormPro
         )}
 
         <CountInput label="تعداد" value={count} onChange={setCount} disabled={locked} />
-        {grossWeightMg !== undefined ? (
-          <p className="text-xs text-muted-foreground">معادل وزنی (فقط نمایشی): {formatGram(grossWeightMg)}</p>
+        {grossWeightText !== undefined ? (
+          <p className="text-xs text-muted-foreground">معادل وزنی (فقط نمایشی): {grossWeightText} گرم</p>
         ) : null}
 
         <MoneyInput label="نرخ بازار" value={marketUnitPriceRial} onChange={setMarketUnitPriceRial} disabled={locked} />

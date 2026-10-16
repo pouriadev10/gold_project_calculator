@@ -167,9 +167,12 @@ describe('InventoryDashboardPage — مصنوعات و انواع سکه', () =>
     expect(screen.getByText('۱ نوع · ۵ عدد')).toBeInTheDocument();
   });
 
-  it('تعداد نوع و مجموع قطعه‌ی سکه را از dashboard.inventory.coins می‌سازد', () => {
+  it('کارت سکه فقط شمار انواع را می‌گوید، نه جمع تعداد انواع مختلف (FE-105، بخش ۲-۲)', () => {
     renderPage();
-    expect(screen.getByText('۱ نوع · ۲ عدد')).toBeInTheDocument();
+    const card = screen.getByText('انواع سکه').parentElement!;
+    expect(card).toHaveTextContent('۱ نوع');
+    // هر نوع بُعد مستقل است؛ جمع «عدد» ِ انواع مختلف آن‌ها را هم‌ارز فرض می‌کرد
+    expect(card).not.toHaveTextContent('عدد');
   });
 });
 

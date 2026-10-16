@@ -3,9 +3,7 @@ import {
   bubble,
   dualFromRial,
   formatCoinCount,
-  grossUg,
   intrinsicValue,
-  karat as toKarat,
   rial,
   type CoinType,
 } from '@gold/core-calc';
@@ -18,6 +16,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { MoneyInput } from '@/components/keypad/MoneyInput';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { toCoinType } from '@/lib/coin-type';
 
 /**
  * فهرست موجودی سکه — FE-038.
@@ -41,18 +40,6 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 const DESKTOP_QUERY = '(min-width: 640px)';
 
-function toCoinType(version: CoinTypeVersion): CoinType {
-  const shared = {
-    kind: 'coin' as const,
-    id: version.coinTypeId,
-    label: version.title,
-    grossWeightUg: grossUg(BigInt(version.grossWeightUg)),
-    karat: toKarat(version.karat),
-  };
-  return version.isCentralBankMinted
-    ? { ...shared, isCentralBankMinted: true }
-    : { ...shared, isCentralBankMinted: false };
-}
 
 export interface CoinInventoryRow {
   readonly coinType: CoinTypeVersion;

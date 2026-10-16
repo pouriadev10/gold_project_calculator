@@ -147,7 +147,7 @@ describe('CoinSettlementForm — پرداخت با سکه (FE-053)', () => {
     await typeDigits(user, '3');
 
     // ۳ عدد × ۱۰ گرم = ۳۰ گرم
-    await waitFor(() => expect(screen.getByText(`معادل وزنی (فقط نمایشی): ${formatGram(30_000n)}`)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(`معادل وزنی (فقط نمایشی): ${formatGram(30_000n)} گرم`)).toBeInTheDocument());
 
     await user.click(screen.getByLabelText('نرخ بازار'));
     await typeDigits(user, '1000000000');

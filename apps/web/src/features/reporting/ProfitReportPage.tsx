@@ -131,7 +131,7 @@ function ProfitResults({ query, range }: { query: LedgerProfitReportQuery; range
         </ul>
         <p className="text-xs leading-5 text-muted-foreground">
           طلای معادل هر رویداد با مظنه‌ی قفل‌شده‌ی همان رویداد محاسبه شده و با تغییر مظنه‌ی امروز
-          عوض نمی‌شود. حباب فقط برای سکه‌های ضرب بانک مرکزی است؛ شمش حباب ندارد.
+          عوض نمی‌شود. حباب فقط برای سکه‌های ضرب بانک مرکزی است.
         </p>
       </CardContent>
     </Card>

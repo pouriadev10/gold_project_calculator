@@ -10,7 +10,8 @@ import type * as Queries from '@/api/queries';
 import { ApiError } from '@/api/api-error';
 import { useKeypadStore } from '@/components/keypad/keypad-store';
 import { useSessionStore } from '@/stores/session-store';
-import CoinTypeSettingsPage, { formatCoinWeightUg } from './CoinTypeSettingsPage';
+import { formatCoinWeightUg } from '@/lib/coin-type';
+import CoinTypeSettingsPage from './CoinTypeSettingsPage';
 
 /** FE-081 — صفحه‌ی تنظیمات انواع سکه. */
 

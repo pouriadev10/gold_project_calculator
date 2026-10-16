@@ -115,8 +115,13 @@ export default function OpeningBalanceFormPage() {
   const canSubmit = lines.length > 0 && descriptionValid;
 
   const jewelryPieceCount = jewelryLines.reduce((sum, l) => sum + (l.quantity > 0n ? l.quantity : 0n), 0n);
-  const coinLineCount = Object.values(coinCounts).filter((c) => c > 0n).length;
-  const coinTotalCount = Object.values(coinCounts).reduce((sum, c) => sum + (c > 0n ? c : 0n), 0n);
+  /*
+   * FE-105 (بخش ۲-۲): هر نوع سکه بُعد مستقل خودش است، پس تأیید هر نوع را با تعداد خودش می‌گوید —
+   * نه یک جمع «… عدد» که یک تمام و یک ربع را هم‌ارز بشمارد.
+   */
+  const coinSummary = (coinTypesQuery.data ?? [])
+    .map((coinType) => ({ coinTypeId: coinType.coinTypeId, title: coinType.title, count: coinCounts[coinType.coinTypeId] ?? 0n }))
+    .filter((row) => row.count > 0n);
 
   const handleConfirm = async () => {
     setSubmitError(null);
@@ -267,12 +272,19 @@ export default function OpeningBalanceFormPage() {
               <dt className="text-muted-foreground">وزن آبشده</dt>
               <dd className="tabular-nums">{formatGram(meltedGoldMg)} گرم</dd>
             </div>
-            <div className="flex items-center justify-between">
-              <dt className="text-muted-foreground">انواع سکه</dt>
-              <dd className="tabular-nums">
-                {formatCoinCount(coinLineCount)} نوع · {formatCoinCount(toSafeNumber(coinTotalCount))} عدد
-              </dd>
-            </div>
+            {coinSummary.length === 0 ? (
+              <div className="flex items-center justify-between">
+                <dt className="text-muted-foreground">سکه</dt>
+                <dd className="text-muted-foreground">ندارد</dd>
+              </div>
+            ) : (
+              coinSummary.map((row) => (
+                <div key={row.coinTypeId} className="flex items-center justify-between gap-2">
+                  <dt className="text-muted-foreground">{row.title}</dt>
+                  <dd className="tabular-nums">{formatCoinCount(toSafeNumber(row.count))} عدد</dd>
+                </div>
+              ))
+            )}
           </dl>
 
           <ResponsiveDialogFooter>

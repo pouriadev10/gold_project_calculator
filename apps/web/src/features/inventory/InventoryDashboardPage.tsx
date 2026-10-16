@@ -74,7 +74,11 @@ export default function InventoryDashboardPage() {
   }, [jewelryStock, coinStock]);
 
   const jewelryPieceTotal = jewelryStock?.reduce((sum, item) => sum + item.count, 0);
-  const coinPieceTotal = coinStock?.reduce((sum, item) => sum + item.count, 0);
+  /*
+   * FE-105 (بخش ۲-۲): جمع تعداد انواع مختلف سکه («۳ عدد» برای یک تمام و دو ربع) آن‌ها را هم‌ارز
+   * فرض می‌کند؛ هر نوع بُعد مستقل خودش است. این کارت فقط شمار انواع را می‌گوید و موجودی هر نوع
+   * در صفحه‌ی «موجودی سکه» جداست.
+   */
   const meltedGoldMg = dashboardQuery.data ? BigInt(dashboardQuery.data.inventory.meltedGoldPureMg) : undefined;
   const rate1000 = dashboardQuery.data?.currentMazneh
     ? BigInt(dashboardQuery.data.currentMazneh.goldRatePerGramRial)
@@ -136,7 +140,7 @@ export default function InventoryDashboardPage() {
                   <p className="text-xs text-muted-foreground">انواع سکه</p>
                   {coinStock ? (
                     <p className="text-lg font-bold tabular-nums">
-                      {formatCoinCount(coinStock.length)} نوع · {formatCoinCount(coinPieceTotal ?? 0)} عدد
+                      {formatCoinCount(coinStock.length)} نوع
                     </p>
                   ) : (
                     <Skeleton className="h-6 w-24" />

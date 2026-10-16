@@ -1,8 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { toPersianDigits } from '@gold/core-calc';
+import { formatCoinCount, toPersianDigits } from '@gold/core-calc';
 import type * as Queries from '@/api/queries';
 import type * as OpeningBalancesApi from '@/api/opening-balances';
 import type { CoinTypeVersion, JewelryItemVersion, OpeningBalance } from '@/api/contracts';
@@ -151,6 +151,22 @@ describe('OpeningBalanceFormPage — گفت‌وگوی تأیید', () => {
     await user.click(screen.getByRole('button', { name: 'مرور و ثبت موجودی افتتاحیه' }));
 
     expect(screen.getByRole('dialog')).toHaveTextContent('هرگز قابل ویرایش یا حذف نیست');
+  });
+
+  it('هر نوع سکه با تعداد خودش؛ هیچ جمع تعدادی میان انواع نیست (FE-105، بخش ۲-۲)', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await typeDigits(user, COIN_A.title, '3');
+    await typeDigits(user, COIN_B.title, '2');
+    await user.click(screen.getByRole('button', { name: 'مرور و ثبت موجودی افتتاحیه' }));
+
+    const dialog = screen.getByRole('dialog');
+    const rowOf = (title: string) => within(dialog).getByText(title, { selector: 'dt' }).parentElement!;
+    expect(rowOf(COIN_A.title)).toHaveTextContent(`${formatCoinCount(3)} عدد`);
+    expect(rowOf(COIN_B.title)).toHaveTextContent(`${formatCoinCount(2)} عدد`);
+    // ۳ + ۲ = ۵ «عدد» یک تمام و یک نیم را هم‌ارز می‌شمرد
+    expect(dialog).not.toHaveTextContent(`${formatCoinCount(5)} عدد`);
   });
 });
 

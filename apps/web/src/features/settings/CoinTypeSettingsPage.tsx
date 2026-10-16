@@ -2,7 +2,7 @@ import { useId, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { ChevronDown, ChevronRight, CircleDollarSign, History, Loader2, Plus } from 'lucide-react';
-import { formatCount, formatGram, formatKarat, formatScaled, toSafeNumber } from '@gold/core-calc';
+import { formatCount, formatKarat, toSafeNumber } from '@gold/core-calc';
 import { createCoinType, createCoinTypeVersion } from '@/api/coin-types';
 import {
   createCoinTypeSchema,
@@ -14,6 +14,7 @@ import {
   type CreateCoinTypeVersionInput,
 } from '@/api/contracts';
 import { useCoinTypeCatalog } from '@/api/queries';
+import { formatCoinWeightUg } from '@/lib/coin-type';
 import { queryKeys } from '@/api/query-keys';
 import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
 import { CardSkeleton } from '@/components/common/CardSkeleton';
@@ -61,11 +62,6 @@ const MINT_LABEL: Record<CoinMintType, string> = {
 };
 
 const MINT_TYPES = Object.keys(MINT_LABEL) as CoinMintType[];
-
-/** میکروگرم → گرم؛ اگر دقیقاً به میلی‌گرم برسد سه رقم، وگرنه شش رقم. بدون هیچ گرد کردنی. */
-export function formatCoinWeightUg(ug: bigint): string {
-  return ug % 1000n === 0n ? formatGram(ug / 1000n) : formatScaled(ug, 6);
-}
 
 interface CoinTypeDraft {
   readonly code: string;
