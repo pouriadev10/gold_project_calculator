@@ -132,7 +132,7 @@ pnpm --filter @gold/web preview
 | `pnpm --filter @gold/web check:circular` | وابستگی چرخشی (madge) |
 | `pnpm --filter @gold/web test:e2e` | مسیر پایلوت ۱۷ مرحله‌ای روی بیلد production در Chrome ِ بی‌سر، ۳۶۰px لمسی و ۱۴۴۰px؛ حدود ۶ دقیقه؛ screenshotها در `apps/web/.e2e/` |
 | `pnpm typecheck` / `pnpm test` | همه‌ی پکیج‌ها (core-calc، contracts، api، web) |
-| `pnpm gate:frontend` | دروازه‌ی کامل فرانت: typecheck، lint ِ web/core-calc/contracts، چرخشی، آزمون‌ها، build، analyze |
+| `pnpm gate:frontend` | دروازه‌ی نهایی فرانت (`scripts/gate-frontend.mjs`)، مرحله به مرحله و با جدول نتیجه: TypeScript، ESLint، محک ممنوعیت‌ها (`scripts/check-frontend-bans.mjs`: float مالی، کلاس جهت‌دار، import از بک‌اند)، چرخشی، unit، Integration، a11y، قراردادها، build + بودجه، E2E؛ حدود ۱۰ دقیقه و نیازمند Chrome/Edge. تکرار یک مرحله: `pnpm gate:frontend --only=e2e` |
 
 یک فایل یا یک نام:
 

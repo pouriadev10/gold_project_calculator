@@ -3091,7 +3091,7 @@ apps/web/README.md
 
 > تکمیل FE-108: `apps/web/README.md` — ده بخش خواسته‌شده: پیش‌نیازها (Node ≥۲۲، pnpm ۱۱ از `packageManager`، Chrome/Edge فقط برای E2E و ممیزی، Docker فقط برای API ِ واقعی)، env (سه متغیر Vite با پیش‌فرض و دام‌هایشان + متغیرهای ابزار)، dev، mock mode (ورود دمو، دروازه‌ی قرارداد، سناریوهای خطا با `?mockScenario=` و `__goldMocks`)، اتصال API (docker compose، مهاجرت صریح، `VITE_API_MODE=real`، ساخت مستأجر با `/internal/dev/tenants`)، build و preview، جدول آزمون‌ها تا `gate:frontend`، تست اندروید با `adb reverse` (و چرا نه IP ِ شبکه)، تحلیل بسته، و جدول مشکلات متداول از تجربه‌ی واقعی این مخزن (CORS و پیشوند `/api`، `SCHEMA_MISMATCH` ِ ناشی از `dist` ِ کهنه‌ی contracts، ضدویروس و E2E/PDF، سرویس‌ورکر کهنه). دستورها با کد سنجیده شدند (نام پکیج‌ها، `preview.proxy`، مسیرهای عمومی سرور، اجرای تک‌فایل vitest) و پیوندها با اسکریپت. **محدودیت ِ صریح در خود README:** هنوز endpoint ِ ساخت کاربر نیست؛ کاربر اول در حالت real با SQL ساخته می‌شود و این مسیر در این محیط (بدون Docker) آزموده نشد. فقط سند اضافه شد؛ کدی تغییر نکرد.
 ---
-## [ ] FE-109 — Gate نهایی فرانت
+## [x] FE-109 — Gate نهایی فرانت
 ### دستور
 ```bash
 pnpm gate:frontend
@@ -3109,6 +3109,8 @@ pnpm gate:frontend
 * ممنوعیت direction classes
 * ممنوعیت import از backend
 * قراردادهای API
+
+> تکمیل FE-109: `pnpm gate:frontend` حالا `scripts/gate-frontend.mjs` است (جانشین زنجیره‌ی `&&` ِ FE-003): یازده مرحله‌ی نام‌دار به ترتیب ارزان به گران، توقف در اولین شکست، جدول نتیجه با زمان هر مرحله و دستور تکرار همان مرحله (`--only=<id>`). مرحله‌ها: `typescript` (web و وابستگی‌هایش)، `eslint` (web، core-calc، contracts)، `bans`، `circular`، `unit` (core-calc + vitest ِ وب بدون سه گروه بعدی)، `integration` (`*.integration.test.*`)، `a11y` (`app/a11y.test.tsx`)، `contracts` (تست‌های `packages/contracts` + `*contract*.test.*` ِ وب، از جمله `mocks/contract-conformance`)، `build` (tsc + vite + بودجه‌ی ۲۰۰KB + `check-no-mocks`)، `bundle` (`analyze`)، `e2e` (`test:e2e`، ۳۶۰px و دسکتاپ). هر تست vitest دقیقاً یک بار اجرا می‌شود (تقسیم با نام فایل؛ ۱۳۳+۹+۱+۴ = همه‌ی ۱۴۷ فایل) و گروه بدون فایل شکست است. **محک ممنوعیت‌ها** `scripts/check-frontend-bans.mjs`: با همان `eslint.config.js` و `lintText` (بدون نوشتن فایل) ۲۳ قطعه را روی مسیرهای واقعی web/core-calc/contracts lint می‌کند — Math.round/floor، parseFloat، Number.parseFloat، toFixed، Number()، any، ts-ignore، کلاس‌های جهت‌دار (`ml-2`، `sm:text-left`، `right-0`، template، `rounded-tl-lg`) و import از `@gold/api` یا مسیر نسبی به `apps/api` — و انتظار دارد هر کدام با قاعده‌ی خودش رد شود و نمونه‌های مجاز (`ms-2 pe-4 text-start end-0`، `data-[state=open]:rtl:slide-in-from-left`، `@gold/contracts`) رد نشوند؛ پس خاموش شدن بی‌صدای یک قاعده هم دروازه را قرمز می‌کند. **اجرای کامل سبز (حدود ۱۰ دقیقه):** typecheck، lint، ۲۳/۲۳ محک، بدون وابستگی دوری، core-calc ۱۸۲، unit ِ وب ۱۲۱۰، integration ۷۳، a11y ۱۹، قرارداد ۱۹۹ + ۲۸، build با بسته‌ی اولیه‌ی ۱۳۸٫۳KB gzip (۶۹٪ بودجه)، E2E ۱۷ مرحله روی هر دو نما. شکست واقعی هم سنجیده شد: یک `Math.round` در `apps/web/src` → مرحله‌ی eslint با مسیر فایل، خط و قاعده قرمز و exit 1. CI تغییر نکرد (هنوز `pnpm lint` ِ کل مخزن را اجرا می‌کند که خطاهای از پیش موجود بک‌اند دارد)؛ E2E در CI به Chrome ِ runner نیاز دارد. README ِ وب به‌روز شد. مطابق درخواست کاربر پیش‌نمایش مرورگر اجرا نشد.
 ---
 ## [ ] FE-110 — تست پذیرش فاز ۱
 ### معیار اصلی
