@@ -13,12 +13,7 @@ describe('queryKeys', () => {
       'history',
       'MAZNEH',
     ]);
-    expect(queryKeys.parties.balanceSummary()).toEqual([
-      ...queryKeys.parties.all(),
-      'balance-summary',
-    ]);
     expect(queryKeys.parties.search('مهدی')).toEqual([...queryKeys.parties.all(), 'search', 'مهدی']);
-    expect(queryKeys.items.search('x', 'coin')).toEqual([...queryKeys.items.all(), 'search', 'x', 'coin']);
     expect(queryKeys.jewelryItems.list({ limit: 20, offset: 0 })).toEqual([
       ...queryKeys.jewelryItems.all(),
       'list',
@@ -35,7 +30,6 @@ describe('queryKeys', () => {
       'invoice-id',
     ]);
     expect(queryKeys.transactions.recent(5)).toEqual([...queryKeys.transactions.all(), 'recent', 5]);
-    expect(queryKeys.reports.profit('today')).toEqual([...queryKeys.reports.all(), 'profit', 'today']);
   });
 
   it('دو فراخوانی با آرگومان یکسان، کلید برابر (نه لزوماً همان reference) می‌دهند', () => {
@@ -51,7 +45,6 @@ describe('queryKeys', () => {
   it('all() هر بخش کوتاه‌ترین پیشوند مشترک همان بخش است', () => {
     expect(queryKeys.pricing.all()).toEqual(['pricing']);
     expect(queryKeys.parties.all()).toEqual(['parties']);
-    expect(queryKeys.items.all()).toEqual(['items']);
     expect(queryKeys.jewelryItems.all()).toEqual(['jewelry-items']);
     expect(queryKeys.salesInvoices.all()).toEqual(['sales-invoices']);
     expect(queryKeys.transactions.all()).toEqual(['transactions']);

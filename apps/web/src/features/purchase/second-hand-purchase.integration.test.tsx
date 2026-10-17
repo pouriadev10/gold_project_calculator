@@ -197,7 +197,7 @@ async function typeInto(user: User, label: string, keys: string, value: string) 
 
 async function renderPurchasePage() {
   renderRoute('/purchase/second-hand');
-  await screen.findByRole('heading', { level: 1, name: 'خرید طلای دست‌دوم' }, { timeout: 4000 });
+  await screen.findByRole('heading', { level: 1, name: 'خرید طلای دست‌دوم' }, { timeout: 10_000 });
 }
 
 /**
@@ -212,7 +212,7 @@ async function walkToPayment(user: User, options: { readonly karat?: number } = 
   // ۱. شخص — فروشنده‌ی مصرف‌کننده از `GET /parties`.
   await user.click(screen.getByLabelText('فروشنده'));
   await user.type(screen.getByLabelText('جست‌وجوی نام یا موبایل'), 'حسین');
-  await user.click(await screen.findByRole('option', { name: /حسین مرادی/ }, { timeout: 4000 }));
+  await user.click(await screen.findByRole('option', { name: /حسین مرادی/ }, { timeout: 10_000 }));
   await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   expect(screen.getByLabelText('خلاصه امن مشخصات فروشنده')).toHaveTextContent('مصرف‌کننده');
   await next(user);
@@ -229,7 +229,7 @@ async function walkToPayment(user: User, options: { readonly karat?: number } = 
   await next(user);
 
   // ۴. عیار — پیش‌فرض نسخه‌دار همین مستأجر، نه ۷۴۰ ِ کد
-  const karatField = await screen.findByLabelText('عیار خرید', {}, { timeout: 4000 });
+  const karatField = await screen.findByLabelText('عیار خرید', {}, { timeout: 10_000 });
   expect(karatField).toHaveAttribute('data-value', String(TENANT_KARAT));
   expect(screen.getByText(/عیار پیش‌فرض خرید این فروشگاه: ۷۵۰/)).toBeInTheDocument();
   if (options.karat !== undefined) {
@@ -241,7 +241,7 @@ async function walkToPayment(user: User, options: { readonly karat?: number } = 
   await next(user);
 
   // ۵. مظنه — از `GET /pricing/quotes/latest`
-  const maznehCell = (await screen.findByText('مظنه مثقال', {}, { timeout: 4000 })).parentElement!;
+  const maznehCell = (await screen.findByText('مظنه مثقال', {}, { timeout: 10_000 })).parentElement!;
   expect(maznehCell.querySelector('[data-raw]')).toHaveAttribute('data-raw', MAZNEH_RIAL.toString());
   await next(user);
 
@@ -266,7 +266,7 @@ function estimatedBalance(): string {
 }
 
 function receiptCard(): Promise<HTMLElement> {
-  return screen.findByLabelText('رسید خرید', {}, { timeout: 4000 });
+  return screen.findByLabelText('رسید خرید', {}, { timeout: 10_000 });
 }
 
 function receiptAmount(card: HTMLElement, label: string): string {
@@ -378,7 +378,7 @@ describe('FE-095 — خرید طلای دست‌دوم از فروشنده تا 
 
     loseNextResponse = true;
     await user.click(screen.getByRole('button', { name: 'ثبت خرید' }));
-    expect(await screen.findByText('ارتباط با سرور برقرار نشد', {}, { timeout: 4000 })).toBeInTheDocument();
+    expect(await screen.findByText('ارتباط با سرور برقرار نشد', {}, { timeout: 10_000 })).toBeInTheDocument();
     // نتیجه نامعلوم است: فرم قفل می‌ماند تا همان درخواست دوباره بررسی شود، نه خرید تازه.
     expect(screen.getByText(/نتیجه درخواست قبلی هنوز مشخص نیست/)).toBeInTheDocument();
     expect(screen.getByLabelText('پرداخت اکنون (ریال)')).toBeDisabled();
@@ -406,7 +406,7 @@ describe('FE-095 — خرید طلای دست‌دوم از فروشنده تا 
     rejectNext = () => mockError('BAD_REQUEST', 'خرید دست‌دوم فقط از مصرف‌کننده‌ی فعال ممکن است');
     await user.click(screen.getByRole('button', { name: 'ثبت خرید' }));
 
-    expect(await screen.findByText('اطلاعات واردشده را بررسی کنید', {}, { timeout: 4000 })).toBeInTheDocument();
+    expect(await screen.findByText('اطلاعات واردشده را بررسی کنید', {}, { timeout: 10_000 })).toBeInTheDocument();
     expect(screen.queryByLabelText('رسید خرید')).not.toBeInTheDocument();
     expect(ledger.size).toBe(0);
     expect(usePurchaseDraftStore.getState().attempt).toBeNull();

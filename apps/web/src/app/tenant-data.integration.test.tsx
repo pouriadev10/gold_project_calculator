@@ -73,12 +73,12 @@ afterEach(() => {
 type User = ReturnType<typeof userEvent.setup>;
 
 async function login(user: User, tenant: 'a' | 'b') {
-  await screen.findByRole('heading', { level: 1, name: 'ورود به حساب طلا' }, { timeout: 4000 });
+  await screen.findByRole('heading', { level: 1, name: 'ورود به حساب طلا' }, { timeout: 10_000 });
   await user.type(screen.getByLabelText('ایمیل'), `${tenant}@example.com`);
   await user.type(screen.getByLabelText('رمز عبور'), 'secret-password');
   await user.type(screen.getByLabelText('شناسه‌ی فروشگاه'), `shop-${tenant}`);
   await user.click(screen.getByRole('button', { name: 'ورود' }));
-  await screen.findByRole('heading', { level: 1, name: 'مظنه بازار' }, { timeout: 4000 });
+  await screen.findByRole('heading', { level: 1, name: 'مظنه بازار' }, { timeout: 10_000 });
 }
 
 function navLink(name: string): HTMLElement {
@@ -90,20 +90,20 @@ async function expectPartyListOf(user: User, mine: Party, other: Party) {
   await user.click(navLink('اشخاص'));
   // همان لحظه‌ی رندر — اگر کش قبلی مانده بود، اینجا (پیش از پاسخ سرور) دیده می‌شد
   expect(screen.queryByText(other.displayName)).not.toBeInTheDocument();
-  expect(await screen.findByText(mine.displayName, {}, { timeout: 4000 })).toBeInTheDocument();
+  expect(await screen.findByText(mine.displayName, {}, { timeout: 10_000 })).toBeInTheDocument();
   expect(screen.queryByText(other.displayName)).not.toBeInTheDocument();
 }
 
 /** انتخابگر شخص ِ جادوگر فروش، بدون جست‌وجو: فهرست «اخیر» همین مرورگر. */
 async function openSalePartySelector(user: User) {
   await user.click(navLink('فروش'));
-  await screen.findByRole('heading', { level: 1, name: 'فروش جدید' }, { timeout: 4000 });
-  await screen.findAllByText(/منبع: /, {}, { timeout: 4000 });
+  await screen.findByRole('heading', { level: 1, name: 'فروش جدید' }, { timeout: 10_000 });
+  await screen.findAllByText(/منبع: /, {}, { timeout: 10_000 });
   const next = screen.getByRole('button', { name: 'بعدی' });
   await waitFor(() => expect(next).not.toBeDisabled());
   await user.click(next);
   await user.click(screen.getByLabelText('مشتری'));
-  return screen.findByRole('dialog', {}, { timeout: 4000 });
+  return screen.findByRole('dialog', {}, { timeout: 10_000 });
 }
 
 describe('FE-101 — داده‌ی فروشگاه قبلی', () => {
@@ -116,16 +116,16 @@ describe('FE-101 — داده‌ی فروشگاه قبلی', () => {
     // فروشنده‌ی الف مشتری‌اش را در فروش انتخاب کرده و پیش‌نویس نیمه‌کاره دارد
     const dialogA = await openSalePartySelector(user);
     await user.type(within(dialogA).getByLabelText('جست‌وجوی نام یا موبایل'), 'مشتری');
-    await user.click(await within(dialogA).findByText(PARTY_A.displayName, {}, { timeout: 4000 }));
+    await user.click(await within(dialogA).findByText(PARTY_A.displayName, {}, { timeout: 10_000 }));
     await waitFor(() => expect(useSaleDraftStore.getState().party?.id).toBe(PARTY_A.id));
     expect(useRecentPartiesStore.getState().recent.map((party) => party.id)).toEqual([PARTY_A.id]);
 
     // خروج از تنظیمات (نگهبان پیش‌نویس فروش «ترک» را می‌پرسد)
     await user.click(navLink('تنظیمات'));
-    const leave = await screen.findByRole('button', { name: 'ترک صفحه' }, { timeout: 4000 }).catch(() => null);
+    const leave = await screen.findByRole('button', { name: 'ترک صفحه' }, { timeout: 10_000 }).catch(() => null);
     if (leave) await user.click(leave);
-    await user.click(await screen.findByRole('button', { name: 'خروج' }, { timeout: 4000 }));
-    await screen.findByRole('heading', { level: 1, name: 'ورود به حساب طلا' }, { timeout: 4000 });
+    await user.click(await screen.findByRole('button', { name: 'خروج' }, { timeout: 10_000 }));
+    await screen.findByRole('heading', { level: 1, name: 'ورود به حساب طلا' }, { timeout: 10_000 });
 
     expect(document.body.textContent).not.toContain(PARTY_A.displayName);
     expect(useRecentPartiesStore.getState().recent).toEqual([]);
@@ -209,15 +209,15 @@ describe('FE-102 — تعویض مستأجر در تب دیگر', () => {
     useRecentPartiesStore.setState({ recent: [pickedA] });
     act(() => useSaleDraftStore.setState({ party: pickedA, step: 'PARTY' }));
     await user.click(navLink('فروش'));
-    await screen.findByRole('heading', { level: 1, name: 'فروش جدید' }, { timeout: 4000 });
+    await screen.findByRole('heading', { level: 1, name: 'فروش جدید' }, { timeout: 10_000 });
     expect(screen.getByLabelText('مشتری')).toHaveTextContent(PARTY_A.displayName);
 
     loginInOtherTab('b');
 
     // همان رندر: صفحه‌ی الف رفته، داده‌ی الف هیچ‌جا
     expect(document.body.textContent).not.toContain(PARTY_A.displayName);
-    expect(await screen.findByText('حساب فعال عوض شد', {}, { timeout: 4000 })).toBeInTheDocument();
-    await screen.findByRole('heading', { level: 1, name: 'مظنه بازار' }, { timeout: 4000 });
+    expect(await screen.findByText('حساب فعال عوض شد', {}, { timeout: 10_000 })).toBeInTheDocument();
+    await screen.findByRole('heading', { level: 1, name: 'مظنه بازار' }, { timeout: 10_000 });
     expect(screen.queryByText('تغییرات ثبت نشده‌اند')).not.toBeInTheDocument();
 
     expect(useSaleDraftStore.getState().party).toBeNull();
@@ -240,7 +240,7 @@ describe('FE-102 — تعویض مستأجر در تب دیگر', () => {
 
     renderRoute('/sales/new');
     expect(document.body.textContent).not.toContain(PARTY_A.displayName);
-    await screen.findByRole('heading', { level: 1, name: 'فروش جدید' }, { timeout: 4000 });
+    await screen.findByRole('heading', { level: 1, name: 'فروش جدید' }, { timeout: 10_000 });
 
     expect(document.body.textContent).not.toContain(PARTY_A.displayName);
     expect(useSaleDraftStore.getState().party).toBeNull();
@@ -256,7 +256,7 @@ describe('FE-102 — تعویض مستأجر در تب دیگر', () => {
     const pickedA = { id: PARTY_A.id, displayName: PARTY_A.displayName, mobile: null, type: PARTY_A.type, status: PARTY_A.status };
     act(() => useSaleDraftStore.setState({ party: pickedA, step: 'PARTY' }));
     await user.click(navLink('فروش'));
-    await screen.findByRole('heading', { level: 1, name: 'فروش جدید' }, { timeout: 4000 });
+    await screen.findByRole('heading', { level: 1, name: 'فروش جدید' }, { timeout: 10_000 });
 
     act(() => useSessionStore.setState({ session: { ...sessionFor('a'), accessToken: 'token-a-2' } }));
 

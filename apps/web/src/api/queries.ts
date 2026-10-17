@@ -6,13 +6,11 @@ import {
   coinTypeListSchema,
   dashboardSchema,
   inventoryBalanceListSchema,
-  itemListSchema,
   jewelryItemListSchema,
   jewelryItemVersionSchema,
   generalSettingsSchema,
   ledgerProfitReportSchema,
   partyBalanceReportSchema,
-  partyBalanceSummarySchema,
   partyBalancesSchema,
   partyListSchema,
   partySchema,
@@ -20,7 +18,6 @@ import {
   priceFeedStatusSchema,
   priceQuoteListSchema,
   priceQuoteSchema,
-  profitReportSchema,
   recentInventoryMovementListSchema,
   salesInvoiceDetailSchema,
   salesInvoiceListSchema,
@@ -35,7 +32,6 @@ import {
   type PartyReportDirection,
   type PartyStatementQuery,
   type PriceQuoteType,
-  type ProfitPeriod,
   type ReportingDisplayUnit,
   type SalesInvoiceListQuery,
 } from './contracts';
@@ -91,22 +87,6 @@ export function usePriceFeedStatus(quoteType: PriceQuoteType = 'MAZNEH') {
     queryKey: queryKeys.pricing.feedStatus(quoteType),
     queryFn: ({ signal }) =>
       apiGet(`/pricing/feed/status?quoteType=${quoteType}`, priceFeedStatusSchema, signal),
-    staleTime: MINUTE,
-  });
-}
-
-export function useBalanceSummary() {
-  return useQuery({
-    queryKey: queryKeys.parties.balanceSummary(),
-    queryFn: ({ signal }) => apiGet('/parties/balance-summary', partyBalanceSummarySchema, signal),
-    staleTime: MINUTE,
-  });
-}
-
-export function useProfitReport(period: ProfitPeriod) {
-  return useQuery({
-    queryKey: queryKeys.reports.profit(period),
-    queryFn: ({ signal }) => apiGet(`/reports/profit?period=${period}`, profitReportSchema, signal),
     staleTime: MINUTE,
   });
 }
@@ -323,18 +303,6 @@ export function usePartyBalanceReport(
     staleTime: MINUTE,
     placeholderData: keepPreviousData,
     enabled,
-  });
-}
-
-export function useItemSearch(query: string, kind?: string) {
-  return useQuery({
-    queryKey: queryKeys.items.search(query, kind ?? 'all'),
-    queryFn: ({ signal }) => {
-      const params = new URLSearchParams({ q: query });
-      if (kind) params.set('kind', kind);
-      return apiGet(`/items?${params.toString()}`, itemListSchema, signal);
-    },
-    staleTime: MINUTE,
   });
 }
 

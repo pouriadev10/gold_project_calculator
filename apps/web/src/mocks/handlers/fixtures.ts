@@ -299,30 +299,6 @@ export const partyMgById: Record<string, number> = Object.fromEntries(
   parties.map((p) => [p.id, p.mg]),
 );
 
-/* ── کالا ─────────────────────────────────────────────────── */
-
-// TODO(real-data): از ماژول inventory
-export const items = [
-  { id: 'I-001', code: 'BR-750-12', name: 'دستبند ۱۸ عیار', kind: 'article', karat: 750, grossMg: 12_350, stockCount: 3, stockMg: 37_050 },
-  { id: 'I-002', code: 'NK-750-41', name: 'سرویس کامل ۱۸ عیار', kind: 'article', karat: 750, grossMg: 41_200, stockCount: 1, stockMg: 41_200 },
-  { id: 'I-003', code: 'RG-750-04', name: 'انگشتر ۱۸ عیار', kind: 'article', karat: 750, grossMg: 4_180, stockCount: 8, stockMg: 33_440 },
-  { id: 'I-004', code: 'AB-740', name: 'آبشده عیار ۷۴۰', kind: 'melted', karat: 740, grossMg: null, stockCount: null, stockMg: 1_240_000 },
-  { id: 'I-005', code: 'AB-995', name: 'آبشده عیار ۹۹۵', kind: 'melted', karat: 995, grossMg: null, stockCount: null, stockMg: 320_000 },
-  { id: 'I-006', code: 'CN-FULL', name: 'تمام بهار آزادی', kind: 'coin', karat: 900, grossMg: 8_133, stockCount: 12, stockMg: null },
-  { id: 'I-007', code: 'CN-HALF', name: 'نیم سکه', kind: 'coin', karat: 900, grossMg: 4_066, stockCount: 7, stockMg: null },
-] as const;
-
-export const itemRecords = items.map((i) => ({
-  id: i.id,
-  code: i.code,
-  name: i.name,
-  kind: i.kind,
-  karat: i.karat,
-  grossMg: i.grossMg === null ? null : i.grossMg.toString(),
-  stockCount: i.stockCount,
-  stockMg: i.stockMg === null ? null : i.stockMg.toString(),
-}));
-
 /* ── کالای زیورآلات (FE-036) ──────────────────────────────── */
 
 // TODO(real-data): از ماژول inventory (BE-025/BE-026)
@@ -387,36 +363,6 @@ export const JEWELRY_BALANCE_ROWS = jewelryItemVersionRecords
     itemId: item.jewelryItemId,
     quantity: String(JEWELRY_STOCK_BY_CODE[item.code]),
   }));
-
-/* ── مانده‌ی کل ───────────────────────────────────────────── */
-
-const creditMg = parties.filter((p) => p.mg > 0).reduce((sum, p) => sum + BigInt(p.mg), 0n);
-const debitMg = parties.filter((p) => p.mg < 0).reduce((sum, p) => sum + BigInt(p.mg), 0n);
-
-export const balanceSummary = {
-  credit: dualToWire(creditMg),
-  debit: dualToWire(debitMg),
-  net: dualToWire(creditMg + debitMg),
-  creditPartyCount: parties.filter((p) => p.mg > 0).length,
-  debitPartyCount: parties.filter((p) => p.mg < 0).length,
-};
-
-/* ── سود ──────────────────────────────────────────────────── */
-
-// TODO(real-data): از ماژول reporting
-function profit(operationalMg: number, fluctuationMg: number, bubbleMg: number, percentX10: bigint) {
-  const total = mg(operationalMg) + mg(fluctuationMg) + mg(bubbleMg);
-  return {
-    operational: dualToWire(mg(operationalMg)),
-    fluctuation: dualToWire(mg(fluctuationMg)),
-    coinBubble: dualToWire(mg(bubbleMg)),
-    total: dualToWire(total),
-    percentX10: percentX10.toString(),
-  };
-}
-
-export const profitToday = { period: 'today' as const, ...profit(8_400, 3_100, 1_700, 14n) };
-export const profitMonth = { period: 'month' as const, ...profit(162_000, 61_500, 26_500, 250n) };
 
 /* ── معامله‌های اخیر ──────────────────────────────────────── */
 

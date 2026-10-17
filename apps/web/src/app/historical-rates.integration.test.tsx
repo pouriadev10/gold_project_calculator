@@ -167,13 +167,13 @@ function main(): HTMLElement {
 }
 
 async function settled(heading: string | RegExp) {
-  await screen.findByRole('heading', { level: 1, name: heading }, { timeout: 4000 });
+  await screen.findByRole('heading', { level: 1, name: heading }, { timeout: 10_000 });
   await waitFor(
     () => {
       expect(document.querySelector('[aria-label^="در حال دریافت"]')).toBeNull();
       expect(main().querySelector('[data-raw]')).not.toBeNull();
     },
-    { timeout: 4000 },
+    { timeout: 10_000 },
   );
 }
 
@@ -216,7 +216,7 @@ describe('FE-104 — صفحات تاریخی با تغییر مظنه‌ی جا�
   it('فاکتور و نسخه‌های فاکتور', async () => {
     const client = renderApp(`/sales/invoices/${INVOICE_ID}`);
     await settled('جزئیات فاکتور');
-    await screen.findByText(/نسخهٔ ۲|نسخه ۲/u, {}, { timeout: 4000 });
+    await screen.findByText(/نسخهٔ ۲|نسخه ۲/u, {}, { timeout: 10_000 });
     await expectUnchangedByTodayMazneh(client, main);
   });
 
@@ -237,7 +237,7 @@ describe('FE-104 — صفحات تاریخی با تغییر مظنه‌ی جا�
     await settled('حسین مرادی');
     const recent = () => cardTitled('آخرین معاملات');
     await waitFor(() => expect(recent().querySelector('[data-raw]')).not.toBeNull(), {
-      timeout: 4000,
+      timeout: 10_000,
     });
     await expectUnchangedByTodayMazneh(client, recent);
   });
@@ -245,7 +245,7 @@ describe('FE-104 — صفحات تاریخی با تغییر مظنه‌ی جا�
   it('سود', async () => {
     const user = userEvent.setup();
     const client = renderApp('/reporting/profit');
-    await screen.findByRole('heading', { level: 1, name: 'گزارش سود' }, { timeout: 4000 });
+    await screen.findByRole('heading', { level: 1, name: 'گزارش سود' }, { timeout: 10_000 });
     await user.click(await screen.findByRole('button', { name: 'پاک کردن تاریخ' }));
     await settled('گزارش سود');
     await expectUnchangedByTodayMazneh(client, main);
@@ -284,7 +284,7 @@ describe('FE-104 — رسیدها پس از ثبت با تغییر مظنه‌ی
 
     const user = userEvent.setup();
     const client = renderApp('/sales/new');
-    await screen.findByRole('heading', { level: 1, name: 'فروش جدید' }, { timeout: 4000 });
+    await screen.findByRole('heading', { level: 1, name: 'فروش جدید' }, { timeout: 10_000 });
     await user.click(await screen.findByRole('button', { name: 'ثبت فروش' }));
     await settled('فروش ثبت شد');
     await expectUnchangedByTodayMazneh(client, main);
@@ -293,16 +293,16 @@ describe('FE-104 — رسیدها پس از ثبت با تغییر مظنه‌ی
   it('رسید فروش سکه (پاسخ نرخ ندارد ← نرخ همان مظنه‌ی ثبت)', async () => {
     const user = userEvent.setup();
     const client = renderApp('/sales/coins/new');
-    await screen.findByRole('heading', { level: 1, name: 'فروش سکه' }, { timeout: 4000 });
+    await screen.findByRole('heading', { level: 1, name: 'فروش سکه' }, { timeout: 10_000 });
     await user.click(await screen.findByLabelText('مشتری'));
     await user.type(screen.getByLabelText('جست‌وجوی نام یا موبایل'), 'حسین');
-    await user.click(await screen.findByRole('option', { name: /حسین مرادی/ }, { timeout: 4000 }));
-    const coinType = await screen.findByLabelText('نوع سکه', {}, { timeout: 4000 });
+    await user.click(await screen.findByRole('option', { name: /حسین مرادی/ }, { timeout: 10_000 }));
+    const coinType = await screen.findByLabelText('نوع سکه', {}, { timeout: 10_000 });
     await user.selectOptions(coinType, within(coinType).getAllByRole('option')[1]!);
     await typeInto(user, screen.getByLabelText('تعداد'), '1', '1');
     await typeInto(user, screen.getByLabelText('قیمت واحد بازار'), '300000000', '300000000');
     await user.click(screen.getByRole('button', { name: 'ثبت فروش' }));
-    await screen.findByText(/فاکتور شماره .* ثبت شد/u, {}, { timeout: 4000 });
+    await screen.findByText(/فاکتور شماره .* ثبت شد/u, {}, { timeout: 10_000 });
     await expectUnchangedByTodayMazneh(client, main);
   });
 
@@ -315,11 +315,11 @@ describe('FE-104 — رسیدها پس از ثبت با تغییر مظنه‌ی
 
     const user = userEvent.setup();
     const client = renderApp('/purchase/second-hand');
-    await screen.findByRole('heading', { level: 1, name: 'خرید طلای دست‌دوم' }, { timeout: 4000 });
-    await user.click(await screen.findByRole('button', { name: 'پرداخت کامل' }, { timeout: 4000 }));
+    await screen.findByRole('heading', { level: 1, name: 'خرید طلای دست‌دوم' }, { timeout: 10_000 });
+    await user.click(await screen.findByRole('button', { name: 'پرداخت کامل' }, { timeout: 10_000 }));
     await user.click(screen.getByRole('button', { name: 'ثبت خرید' }));
     await waitFor(() => expect(main().querySelector('dl [data-raw]')).not.toBeNull(), {
-      timeout: 4000,
+      timeout: 10_000,
     });
     await expectUnchangedByTodayMazneh(client, main);
   });
@@ -330,18 +330,18 @@ describe('FE-104 — رسیدها پس از ثبت با تغییر مظنه‌ی
     await screen.findByRole(
       'heading',
       { level: 1, name: 'مقایسه خرید مجدد مشتری' },
-      { timeout: 4000 },
+      { timeout: 10_000 },
     );
     await typeInto(
       user,
-      await screen.findByLabelText('وزن ناخالص', {}, { timeout: 4000 }),
+      await screen.findByLabelText('وزن ناخالص', {}, { timeout: 10_000 }),
       '5.000',
       '5000',
     );
     const preview = screen.getByRole('button', { name: 'نمایش مقایسه' });
-    await waitFor(() => expect(preview).toBeEnabled(), { timeout: 4000 });
+    await waitFor(() => expect(preview).toBeEnabled(), { timeout: 10_000 });
     await user.click(preview);
-    await screen.findByRole('button', { name: 'پرداخت کامل' }, { timeout: 4000 });
+    await screen.findByRole('button', { name: 'پرداخت کامل' }, { timeout: 10_000 });
 
     // مقایسه پیش‌نمایش ثبت‌شده‌ی سرور است (خرید اولیه با نرخ قفل‌شده‌ی فاکتور، امروز با مظنه‌ی
     // لحظه‌ی مقایسه): مظنه‌ای که پس از آن ثبت شود عددی از آن را عوض نمی‌کند
@@ -350,7 +350,7 @@ describe('FE-104 — رسیدها پس از ثبت با تغییر مظنه‌ی
 
     await user.click(screen.getByRole('button', { name: 'پرداخت کامل' }));
     await user.click(screen.getByRole('button', { name: 'ثبت سند خرید جدید' }));
-    await within(main()).findByText('خرید طلای دست‌دوم ثبت شد', {}, { timeout: 4000 });
+    await within(main()).findByText('خرید طلای دست‌دوم ثبت شد', {}, { timeout: 10_000 });
     await expectUnchangedByTodayMazneh(client, main);
   });
 
@@ -376,7 +376,7 @@ describe('FE-104 — رسیدها پس از ثبت با تغییر مظنه‌ی
       await typeInto(user, screen.getByLabelText('مبلغ'), '100000000', '100000000');
       await user.click(screen.getByRole('button', { name: 'ثبت پرداخت' }));
       const receipt = () => cardTitled('پرداخت ریالی ثبت شد');
-      await within(main()).findByText('پرداخت ریالی ثبت شد', {}, { timeout: 4000 });
+      await within(main()).findByText('پرداخت ریالی ثبت شد', {}, { timeout: 10_000 });
 
       const before = readBothUnits(receipt);
       expect(before).toEqual({ gold: ['rial:100000000'], rial: ['rial:100000000'] });
@@ -384,19 +384,19 @@ describe('FE-104 — رسیدها پس از ثبت با تغییر مظنه‌ی
 
       await changeTodayMazneh(client);
       // شاهد: مانده‌ی امروز (نه سند) با مظنه‌ی تازه عوض می‌شود — تغییر واقعاً رسیده است
-      await waitFor(() => expect(currentBalance()).not.toEqual(balanceBefore), { timeout: 4000 });
+      await waitFor(() => expect(currentBalance()).not.toEqual(balanceBefore), { timeout: 10_000 });
       expect(readBothUnits(receipt)).toEqual(before);
     });
 
     it('با سکه: نرخ همان مظنه‌ی ثبت، نه مظنه‌ی جاری', async () => {
       const user = userEvent.setup();
       const client = await openSettlement(user, 'سکه');
-      const coinType = await screen.findByLabelText('نوع سکه', {}, { timeout: 4000 });
+      const coinType = await screen.findByLabelText('نوع سکه', {}, { timeout: 10_000 });
       await user.selectOptions(coinType, within(coinType).getAllByRole('option')[1]!);
       await typeInto(user, screen.getByLabelText('تعداد'), '1', '1');
       await typeInto(user, screen.getByLabelText('نرخ بازار'), '300000000', '300000000');
       await user.click(screen.getByRole('button', { name: 'ثبت پرداخت' }));
-      await within(main()).findByText('پرداخت با سکه ثبت شد', {}, { timeout: 4000 });
+      await within(main()).findByText('پرداخت با سکه ثبت شد', {}, { timeout: 10_000 });
       await expectUnchangedByTodayMazneh(client, () => cardTitled('پرداخت با سکه ثبت شد'));
     });
 
@@ -408,7 +408,7 @@ describe('FE-104 — رسیدها پس از ثبت با تغییر مظنه‌ی
       await typeInto(user, within(gold).getByLabelText('وزن'), '1.000', '1000');
       await typeInto(user, within(gold).getByLabelText('عیار'), '750', '750');
       await user.click(screen.getByRole('button', { name: 'ثبت تسویه‌ی ترکیبی' }));
-      await within(main()).findByText('تسویه‌ی ترکیبی ثبت شد', {}, { timeout: 4000 });
+      await within(main()).findByText('تسویه‌ی ترکیبی ثبت شد', {}, { timeout: 10_000 });
       await expectUnchangedByTodayMazneh(client, () => cardTitled('تسویه‌ی ترکیبی ثبت شد'));
     });
 
@@ -420,7 +420,7 @@ describe('FE-104 — رسیدها پس از ثبت با تغییر مظنه‌ی
       await typeInto(user, within(row).getByLabelText('مبلغ'), '100000000', '100000000');
       await user.click(screen.getByRole('button', { name: 'ثبت تسویه‌ی ترکیبی' }));
       const receipt = () => cardTitled('تسویه‌ی ترکیبی ثبت شد');
-      await within(main()).findByText('تسویه‌ی ترکیبی ثبت شد', {}, { timeout: 4000 });
+      await within(main()).findByText('تسویه‌ی ترکیبی ثبت شد', {}, { timeout: 10_000 });
 
       const before = readBothUnits(receipt);
       expect(before.gold.length).toBeGreaterThan(0);

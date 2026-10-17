@@ -44,11 +44,9 @@ import {
   MOCK_PROFIT_RATE_BPS,
   MOCK_TAX_RATE_BPS,
   priceJewelryFromVersion,
-  balanceSummary,
   COIN_BALANCE_ROWS,
   COIN_TYPE_VERSIONS,
   dashboardFor,
-  itemRecords,
   JEWELRY_BALANCE_ROWS,
   ledgerProfitReportFor,
   jewelryItemVersionRecords,
@@ -58,8 +56,6 @@ import {
   partyMgById,
   partyRecords,
   partyStatementEntriesFor,
-  profitMonth,
-  profitToday,
   RECENT_INVENTORY_MOVEMENTS,
   recentTransactions,
   salesInvoiceDetailRecords,
@@ -1163,11 +1159,6 @@ export const handlers = [
     return HttpResponse.json(updated, { status: 200 });
   }),
 
-  http.get('/api/parties/balance-summary', async () => {
-    await delay(READ_DELAY_MS);
-    return HttpResponse.json(balanceSummary);
-  }),
-
   /*
    * از این‌جا به بعد handlerهای الگودار `/api/parties/:id...` می‌آیند —
    * عمداً **بعد از** `/api/parties/balance-summary`: MSW به ترتیب تعریف
@@ -1578,18 +1569,6 @@ export const handlers = [
     return HttpResponse.json(result, { status: 201 });
   }),
 
-  http.get('/api/items', async ({ request }) => {
-    await delay(READ_DELAY_MS);
-    const url = new URL(request.url);
-    const query = url.searchParams.get('q');
-    const kind = url.searchParams.get('kind');
-
-    const filtered = itemRecords.filter(
-      (i) => (matchesQuery(i.name, query) || matchesQuery(i.code, query)) && (!kind || i.kind === kind),
-    );
-    return HttpResponse.json({ items: filtered, total: filtered.length });
-  }),
-
   /**
    * `GET /inventory/jewelry-items` — قرارداد نهایی BE-026
    * (`jewelryItemQuerySchema`/`jewelryItemListSchema`): `search` کد **یا**
@@ -1898,12 +1877,6 @@ export const handlers = [
     await delay(READ_DELAY_MS);
     const limit = Number.parseInt(new URL(request.url).searchParams.get('limit') ?? '5', 10);
     return HttpResponse.json(RECENT_INVENTORY_MOVEMENTS.slice(0, limit));
-  }),
-
-  http.get('/api/reports/profit', async ({ request }) => {
-    await delay(READ_DELAY_MS);
-    const period = new URL(request.url).searchParams.get('period');
-    return HttpResponse.json(period === 'today' ? profitToday : profitMonth);
   }),
 
   http.get('/api/transactions/recent', async ({ request }) => {

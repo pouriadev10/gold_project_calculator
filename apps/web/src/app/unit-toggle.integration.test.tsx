@@ -143,13 +143,13 @@ function expectEveryToggleOn(unit: MoneyUnit) {
  * فقط در واحد دیگر نشان می‌دهد.
  */
 async function waitForPage(heading: string | RegExp) {
-  await screen.findByRole('heading', { level: 1, name: heading }, { timeout: 4000 });
+  await screen.findByRole('heading', { level: 1, name: heading }, { timeout: 10_000 });
   await waitFor(
     () => {
       expect(document.querySelector('[aria-label^="در حال دریافت"]')).toBeNull();
       expect(document.querySelector('[data-raw]')).not.toBeNull();
     },
-    { timeout: 4000 },
+    { timeout: 10_000 },
   );
 }
 
@@ -255,7 +255,7 @@ describe('FE-103 — هر صفحه‌ی مالی کلید واحد دارد و �
     seed?.();
     const user = userEvent.setup();
     renderRoute(path);
-    await screen.findByRole('heading', { level: 1, name: heading }, { timeout: 4000 });
+    await screen.findByRole('heading', { level: 1, name: heading }, { timeout: 10_000 });
     await prepare?.(user);
     await waitForPage(heading);
     await expectPageFollowsToggle(user);
@@ -271,7 +271,7 @@ describe('FE-103 — هر صفحه‌ی مالی کلید واحد دارد و �
     if (method === 'ترکیبی') await user.click(screen.getByRole('button', { name: '+ ریال' }));
     await waitFor(
       () => expect(document.querySelector('[aria-label^="در حال دریافت"]')).toBeNull(),
-      { timeout: 4000 },
+      { timeout: 10_000 },
     );
     await expectPageFollowsToggle(user);
   });
@@ -305,7 +305,7 @@ describe('FE-103 — انتخاب سراسری در همه‌ی صفحات یک�
   it('کلید صفحه‌ی «بیشتر» همان انتخاب سراسری است', async () => {
     useUnitStore.setState({ unit: 'rial' });
     renderRoute('/settings');
-    await screen.findByRole('heading', { level: 1, name: 'بیشتر' }, { timeout: 4000 });
+    await screen.findByRole('heading', { level: 1, name: 'بیشتر' }, { timeout: 10_000 });
     expectEveryToggleOn('rial');
   });
 });

@@ -1,6 +1,15 @@
 import '@testing-library/jest-dom/vitest';
+import { configure } from '@testing-library/react';
 import { afterEach } from 'vitest';
 import { SUBMIT_ATTEMPT_STORAGE_PREFIX } from '@/lib/submit-attempt-storage';
+
+/*
+ * FE-106a: پیش‌فرض `findBy*`/`waitFor` ِ Testing Library یک ثانیه است. آزمون‌های integration کل
+ * برنامه را با routeTree و چانک‌های تنبل رندر می‌کنند و وقتی ۱۴۷ فایل موازی اجرا می‌شوند، اولین رندر
+ * گاهی بیش از آن طول می‌کشد — شکست تصادفی بدون هیچ باگی. انتظار فقط تا رسیدن عنصر طول می‌کشد، پس
+ * اجرای عادی کند نمی‌شود. (`testTimeout` ِ هر آزمون سقف واقعی است.)
+ */
+configure({ asyncUtilTimeout: 10_000 });
 
 /**
  * jsdom متد‌های Pointer Capture را پیاده نمی‌کند. `vaul` (Drawer/Bottom Sheet)

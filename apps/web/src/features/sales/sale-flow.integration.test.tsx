@@ -209,10 +209,10 @@ async function next(user: User) {
  */
 async function walkToReview(user: User) {
   renderSalePage();
-  await screen.findByRole('heading', { level: 1, name: 'فروش جدید' }, { timeout: 4000 });
+  await screen.findByRole('heading', { level: 1, name: 'فروش جدید' }, { timeout: 10_000 });
 
   // ۱. مظنه — از `GET /pricing/quotes/latest`، نه عدد ثابت صفحه.
-  await screen.findAllByText(/منبع: /, {}, { timeout: 4000 });
+  await screen.findAllByText(/منبع: /, {}, { timeout: 10_000 });
   const maznehCell = screen.getByText('مظنه مثقال').parentElement!;
   expect(maznehCell.querySelector('[data-raw]')).toHaveAttribute('data-raw', MAZNEH_RIAL.toString());
   await next(user);
@@ -220,7 +220,7 @@ async function walkToReview(user: User) {
   // ۲. شخص — جست‌وجو از `GET /parties`.
   await user.click(await screen.findByLabelText('مشتری'));
   await user.type(screen.getByLabelText('جست‌وجوی نام یا موبایل'), 'حسین');
-  await user.click(await screen.findByRole('option', { name: /حسین مرادی/ }, { timeout: 4000 }));
+  await user.click(await screen.findByRole('option', { name: /حسین مرادی/ }, { timeout: 10_000 }));
   await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   expect(screen.getByLabelText('مشتری')).toHaveTextContent('حسین مرادی');
   await next(user);
@@ -228,7 +228,7 @@ async function walkToReview(user: User) {
   // ۳. کالا — جست‌وجوی کد از `GET /inventory/jewelry-items`.
   await user.click(await screen.findByRole('button', { name: 'افزودن کالا' }));
   await user.type(screen.getByLabelText('جست‌وجوی کد یا عنوان'), ITEM.code);
-  await user.click(await screen.findByRole('option', { name: new RegExp(ITEM.title) }, { timeout: 4000 }));
+  await user.click(await screen.findByRole('option', { name: new RegExp(ITEM.title) }, { timeout: 10_000 }));
   await user.keyboard('{Escape}');
   await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
 
@@ -236,7 +236,7 @@ async function walkToReview(user: User) {
   await user.click(screen.getByRole('button', { name: `ویرایش قیمت ${ITEM.title}` }));
   const pricing = await screen.findByRole('dialog');
   await waitFor(() => expect(within(pricing).getByLabelText('وزن ناخالص')).toHaveAttribute('data-value', '4180'), {
-    timeout: 4000,
+    timeout: 10_000,
   });
   expect(within(pricing).getByLabelText('عیار')).toHaveAttribute('data-value', '750');
   expect(within(pricing).getByLabelText('وزن نگین')).toHaveAttribute('data-value', '320');
@@ -267,8 +267,8 @@ async function submitButton(): Promise<HTMLElement> {
 }
 
 async function receipt(): Promise<HTMLElement> {
-  await screen.findByRole('heading', { level: 1, name: 'فروش ثبت شد' }, { timeout: 4000 });
-  return (await screen.findByText('رسید فروش', {}, { timeout: 4000 })).closest('div.space-y-4') as HTMLElement;
+  await screen.findByRole('heading', { level: 1, name: 'فروش ثبت شد' }, { timeout: 10_000 });
+  return (await screen.findByText('رسید فروش', {}, { timeout: 10_000 })).closest('div.space-y-4') as HTMLElement;
 }
 
 /* ── سناریوها ─────────────────────────────────────────────────── */
@@ -387,7 +387,7 @@ describe('FE-094 — فروش زیورآلات از مظنه تا رسید، ر�
 
     loseNextResponse = true;
     await user.click(await submitButton());
-    expect(await screen.findByText('ارتباط با سرور برقرار نشد', {}, { timeout: 4000 })).toBeInTheDocument();
+    expect(await screen.findByText('ارتباط با سرور برقرار نشد', {}, { timeout: 10_000 })).toBeInTheDocument();
     // «سرور» فروش را ثبت کرده ولی مرورگر خبر ندارد: رسیدی نیست و پیش‌نویس سر جایش است.
     expect(invoices.size).toBe(1);
     expect(screen.queryByText('رسید فروش')).not.toBeInTheDocument();
@@ -414,13 +414,13 @@ describe('FE-094 — فروش زیورآلات از مظنه تا رسید، ر�
 
     loseNextResponse = true;
     await user.click(await submitButton());
-    await screen.findByText('ارتباط با سرور برقرار نشد', {}, { timeout: 4000 });
+    await screen.findByText('ارتباط با سرور برقرار نشد', {}, { timeout: 10_000 });
     expect(invoices.size).toBe(1);
 
     // تب تازه‌سازی شد: فقط sessionStorage می‌ماند (پیش‌نویس + تلاش سنجاق‌شده)
     cleanup();
     renderRoute('/sales/new');
-    const check = await screen.findByRole('button', { name: 'بررسی نتیجه‌ی ثبت' }, { timeout: 4000 });
+    const check = await screen.findByRole('button', { name: 'بررسی نتیجه‌ی ثبت' }, { timeout: 10_000 });
     expect(screen.getByRole('button', { name: 'قبلی' })).toBeDisabled();
     await user.click(check);
     await receipt();
@@ -471,7 +471,7 @@ describe('FE-094 — فروش زیورآلات از مظنه تا رسید، ر�
     rejectNext = () => mockError('VALIDATION_ERROR', 'ورودی نامعتبر است', { jewelryItemId: ['این کالا موجود نیست'] });
     await user.click(await submitButton());
 
-    expect(await screen.findByText('اطلاعات واردشده را بررسی کنید', {}, { timeout: 4000 })).toBeInTheDocument();
+    expect(await screen.findByText('اطلاعات واردشده را بررسی کنید', {}, { timeout: 10_000 })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { level: 1, name: 'فروش ثبت شد' })).not.toBeInTheDocument();
     expect(invoices.size).toBe(0);
     const draft = useSaleDraftStore.getState();

@@ -689,6 +689,17 @@ async function runViewport(viewport) {
     cdp = await Cdp.connect(await openTarget(viewport.port));
     await cdp.send('Page.enable');
     await cdp.send('Runtime.enable');
+    // خطاهای خودِ صفحه — در شکست هر مرحله کنار متن صفحه در error.txt نوشته می‌شوند
+    const pageErrors = [];
+    cdp.on('Runtime.exceptionThrown', (event) => {
+      const detail = event.exceptionDetails;
+      pageErrors.push(`exception: ${detail?.exception?.description ?? detail?.text ?? '?'}`.slice(0, 600));
+    });
+    cdp.on('Runtime.consoleAPICalled', (event) => {
+      if (event.type !== 'error' && event.type !== 'warning') return;
+      const text = (event.args ?? []).map((arg) => arg.value ?? arg.description ?? '').join(' ');
+      pageErrors.push(`console.${event.type}: ${text}`.slice(0, 600));
+    });
     cdp.on('Page.javascriptDialogOpening', () => {
       void cdp.send('Page.handleJavaScriptDialog', { accept: true });
     });
@@ -730,7 +741,11 @@ async function runViewport(viewport) {
         if (data) writeFileSync(join(outDir, 'error.png'), Buffer.from(data, 'base64'));
         const text = await cdp.eval('document.body ? document.body.innerText : ""').catch(() => '');
         const url = await cdp.eval('location.href').catch(() => '');
-        writeFileSync(join(outDir, 'error.txt'), `${step.name}\n${message}\n${url}\n\n${text}`);
+        const errors = pageErrors.slice(-20).join('\n') || '(هیچ)';
+        writeFileSync(
+          join(outDir, 'error.txt'),
+          `${step.name}\n${message}\n${url}\n\n── خطاهای صفحه ──\n${errors}\n\n── متن صفحه ──\n${text}`,
+        );
         break;
       }
     }
@@ -752,6 +767,29 @@ async function runViewport(viewport) {
   return { viewport, results, completed, duplicates, shots: driver?.shots ?? [], toastCovered: driver?.toastCovered ?? [] };
 }
 
+/**
+ * هر فایل بیلد یک بار پیش از باز شدن مرورگر خوانده می‌شود. روی ویندوز ضدویروس (Defender، ESET) فایل
+ * تازه‌ساخته را در اولین خواندن نگه می‌دارد تا اسکنش تمام شود؛ بدون این، اولین بارگذاری چانک‌های تنبل
+ * وسط یک مرحله اتفاق می‌افتاد و renderer تا بیش از ۳۰ ثانیه جواب نمی‌داد (FE-106a: فقط نمای اولِ پس
+ * از بیلد تازه در مرحله‌ی ۲ می‌ایستاد؛ با فایل‌های از پیش خوانده‌شده همیشه سبز بود).
+ */
+function warmBuildOutput() {
+  const started = Date.now();
+  let files = 0;
+  const visit = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) visit(path);
+      else {
+        readFileSync(path);
+        files += 1;
+      }
+    }
+  };
+  visit(DIST);
+  console.log(`… ${files} فایل بیلد پیش‌خوانی شد (${Date.now() - started}ms)`);
+}
+
 async function run() {
   const only = process.argv.find((arg) => arg.startsWith('--viewport='))?.split('=')[1];
   const viewports = VIEWPORTS.filter((v) => !only || v.name === only);
@@ -765,6 +803,7 @@ async function run() {
       build: { outDir: DIST, emptyOutDir: true },
     });
   }
+  warmBuildOutput();
 
   let failed = false;
   for (const viewport of viewports) {

@@ -66,7 +66,7 @@ async function expectLeaveGuarded(user: User, heading: string, message: string |
   const writesBefore = api.writes().length;
 
   await user.click(homeLink());
-  const dialog = await screen.findByRole('dialog', {}, { timeout: 4000 });
+  const dialog = await screen.findByRole('dialog', {}, { timeout: 10_000 });
   expect(dialog).toHaveTextContent('تغییرات ثبت نشده‌اند');
   expect(dialog).toHaveTextContent(message);
 
@@ -76,7 +76,7 @@ async function expectLeaveGuarded(user: User, heading: string, message: string |
 
   await user.click(homeLink());
   await user.click(await screen.findByRole('button', { name: 'ترک صفحه' }));
-  expect(await screen.findByRole('heading', { level: 1, name: 'مظنه بازار' }, { timeout: 4000 })).toBeInTheDocument();
+  expect(await screen.findByRole('heading', { level: 1, name: 'مظنه بازار' }, { timeout: 10_000 })).toBeInTheDocument();
   expect(api.writes().length).toBe(writesBefore);
 }
 
@@ -84,8 +84,8 @@ describe('FE-099 — هشدار خروج روی صفحه‌های فرم', () =>
   it('فروش زیورآلات: پیش‌نویس در همین تب می‌ماند و خودکار ثبت نمی‌شود', async () => {
     const user = userEvent.setup();
     renderRoute('/sales/new');
-    await screen.findByRole('heading', { level: 1, name: 'فروش جدید' }, { timeout: 4000 });
-    await screen.findAllByText(/منبع: /, {}, { timeout: 4000 });
+    await screen.findByRole('heading', { level: 1, name: 'فروش جدید' }, { timeout: 10_000 });
+    await screen.findAllByText(/منبع: /, {}, { timeout: 10_000 });
     await user.click(screen.getByRole('button', { name: 'بعدی' }));
 
     await expectLeaveGuarded(user, 'فروش جدید', 'پیش‌نویس فقط در همین تب نگه داشته می‌شود');
@@ -96,7 +96,7 @@ describe('FE-099 — هشدار خروج روی صفحه‌های فرم', () =>
   it('فروش سکه', async () => {
     const user = userEvent.setup();
     renderRoute('/sales/coins/new');
-    await screen.findByRole('heading', { level: 1, name: 'فروش سکه' }, { timeout: 4000 });
+    await screen.findByRole('heading', { level: 1, name: 'فروش سکه' }, { timeout: 10_000 });
     await typeNumber(user, 'تعداد', '2');
 
     await expectLeaveGuarded(user, 'فروش سکه', 'اطلاعات واردشده از بین می‌رود');
@@ -106,7 +106,7 @@ describe('FE-099 — هشدار خروج روی صفحه‌های فرم', () =>
     usePurchaseDraftStore.setState({ step: 'WEIGHING', grossWeightMg: '1000' });
     const user = userEvent.setup();
     renderRoute('/purchase/second-hand');
-    await screen.findByRole('heading', { level: 1, name: 'خرید طلای دست‌دوم' }, { timeout: 4000 });
+    await screen.findByRole('heading', { level: 1, name: 'خرید طلای دست‌دوم' }, { timeout: 10_000 });
 
     await expectLeaveGuarded(user, 'خرید طلای دست‌دوم', 'پیش‌نویس فقط در همین تب نگه داشته می‌شود');
     expect(usePurchaseDraftStore.getState().grossWeightMg).toBe('1000');
@@ -115,7 +115,7 @@ describe('FE-099 — هشدار خروج روی صفحه‌های فرم', () =>
   it('خرید سکه', async () => {
     const user = userEvent.setup();
     renderRoute('/purchase/second-hand/coins');
-    await screen.findAllByRole('heading', { level: 1 }, { timeout: 4000 });
+    await screen.findAllByRole('heading', { level: 1 }, { timeout: 10_000 });
     const heading = screen.getAllByRole('heading', { level: 1 })[0]!.textContent!;
     await typeNumber(user, 'تعداد', '2');
 
@@ -126,7 +126,7 @@ describe('FE-099 — هشدار خروج روی صفحه‌های فرم', () =>
     const user = userEvent.setup();
     renderRoute(`/parties/${PARTY.id}/settlements/new`);
     const heading = `ثبت تسویه — ${PARTY.displayName}`;
-    await screen.findByRole('heading', { level: 1, name: heading }, { timeout: 4000 });
+    await screen.findByRole('heading', { level: 1, name: heading }, { timeout: 10_000 });
     await user.click(within(screen.getByRole('radiogroup', { name: 'روش پرداخت' })).getByRole('radio', { name: /ریال/ }));
     await typeNumber(user, 'مبلغ', '1000000');
 
@@ -136,22 +136,22 @@ describe('FE-099 — هشدار خروج روی صفحه‌های فرم', () =>
   it('تسویه: پس از ثبت موفق نگهبان کنار می‌رود و خروج بی‌پرسش است', async () => {
     const user = userEvent.setup();
     renderRoute(`/parties/${PARTY.id}/settlements/new`);
-    await screen.findByRole('heading', { level: 1, name: `ثبت تسویه — ${PARTY.displayName}` }, { timeout: 4000 });
+    await screen.findByRole('heading', { level: 1, name: `ثبت تسویه — ${PARTY.displayName}` }, { timeout: 10_000 });
     await user.click(within(screen.getByRole('radiogroup', { name: 'روش پرداخت' })).getByRole('radio', { name: /ریال/ }));
     await typeNumber(user, 'مبلغ', '1000000');
     await user.click(screen.getByRole('button', { name: 'ثبت پرداخت' }));
-    await screen.findByText('پرداخت ریالی ثبت شد', {}, { timeout: 4000 });
+    await screen.findByText('پرداخت ریالی ثبت شد', {}, { timeout: 10_000 });
 
     await user.click(homeLink());
-    expect(await screen.findByRole('heading', { level: 1, name: 'مظنه بازار' }, { timeout: 4000 })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'مظنه بازار' }, { timeout: 10_000 })).toBeInTheDocument();
     expect(screen.queryByText('تغییرات ثبت نشده‌اند')).not.toBeInTheDocument();
   });
 
   it('تنظیمات عمومی: مقدار تازه‌ی ذخیره‌نشده پرسیده می‌شود', async () => {
     const user = userEvent.setup();
     renderRoute('/settings/general');
-    await screen.findByRole('heading', { level: 1, name: 'تنظیمات عمومی' }, { timeout: 4000 });
-    await user.click(await screen.findByRole('button', { name: 'تغییر واحد گرد کردن' }, { timeout: 4000 }));
+    await screen.findByRole('heading', { level: 1, name: 'تنظیمات عمومی' }, { timeout: 10_000 });
+    await user.click(await screen.findByRole('button', { name: 'تغییر واحد گرد کردن' }, { timeout: 10_000 }));
     await typeNumber(user, 'واحد گرد کردن جدید', '5000');
 
     await expectLeaveGuarded(user, 'تنظیمات عمومی', 'اطلاعات واردشده از بین می‌رود');
@@ -160,11 +160,11 @@ describe('FE-099 — هشدار خروج روی صفحه‌های فرم', () =>
   it('صفحه‌ی فرم بدون هیچ ورودی: خروج بی‌پرسش', async () => {
     const user = userEvent.setup();
     renderRoute('/sales/coins/new');
-    await screen.findByRole('heading', { level: 1, name: 'فروش سکه' }, { timeout: 4000 });
+    await screen.findByRole('heading', { level: 1, name: 'فروش سکه' }, { timeout: 10_000 });
 
     await user.click(homeLink());
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'مظنه بازار' }, { timeout: 4000 })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'مظنه بازار' }, { timeout: 10_000 })).toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

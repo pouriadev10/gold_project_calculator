@@ -8,6 +8,7 @@ import { router } from '@/app/router';
 import { DeferredToaster } from '@/components/common/DeferredToaster';
 import { applyAppFontNow, applyAppFontOnNextPage, isAppFontLikelyCached } from '@/lib/app-font';
 import { registerServiceWorker } from '@/lib/pwa-update';
+import { shouldStartMockWorker } from '@/lib/api-mode';
 import { afterStartup } from '@/lib/startup';
 import { stylesheetsReady } from '@/lib/styles-ready';
 import { useAppUpdateStore } from '@/stores/app-update-store';
@@ -27,10 +28,11 @@ if (!container) throw new Error('عنصر ریشه پیدا نشد');
  * تصادفی و گیج‌کننده است.
  *
  * `import.meta.env.DEV` در بیلد production به `false` تبدیل می‌شود، پس
- * این شاخه و کل msw از باندل حذف می‌شوند.
+ * این شاخه و کل msw از باندل حذف می‌شوند. FE-106a: با `VITE_API_MODE=real` توسعه هم MSW را
+ * بالا نمی‌آورد و `/api` با proxy ِ Vite به API واقعی می‌رود (`lib/api-mode.ts`).
  */
 async function bootstrap(): Promise<void> {
-  if (import.meta.env.DEV) {
+  if (shouldStartMockWorker(import.meta.env)) {
     const { startMockWorker } = await import('@/mocks/browser');
     await startMockWorker();
   }

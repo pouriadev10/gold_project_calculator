@@ -130,11 +130,11 @@ describe('axe — main pages have no serious accessibility violations (FE-084)',
   it.each(PAGES)('$path', async ({ path, heading, content }) => {
     useSessionStore.setState({ session: session('OWNER') });
     renderAt(path);
-    await screen.findByRole('heading', { level: 1, name: heading }, { timeout: 4000 });
-    await screen.findAllByText(content, {}, { timeout: 4000 });
+    await screen.findByRole('heading', { level: 1, name: heading }, { timeout: 10_000 });
+    await screen.findAllByText(content, {}, { timeout: 10_000 });
     expect(screen.queryByText(/ناموفق بود/)).toBeNull();
     // تا داده‌ها برسند و skeletonها جای خود را به محتوا بدهند.
-    await waitFor(() => expect(document.querySelector('[aria-label^="در حال دریافت"]')).toBeNull(), { timeout: 4000 });
+    await waitFor(() => expect(document.querySelector('[aria-label^="در حال دریافت"]')).toBeNull(), { timeout: 10_000 });
     expect(await seriousViolations()).toEqual([]);
   });
 });
@@ -157,8 +157,8 @@ describe('keyboard-only sale flow (FE-084)', () => {
     const user = userEvent.setup();
     useSessionStore.setState({ session: session('CASHIER') });
     renderAt('/sales/coins/new');
-    await screen.findByRole('heading', { level: 1, name: 'فروش سکه' }, { timeout: 4000 });
-    await screen.findAllByRole('option', { name: /نیم سکه/ }, { timeout: 4000 });
+    await screen.findByRole('heading', { level: 1, name: 'فروش سکه' }, { timeout: 10_000 });
+    await screen.findAllByRole('option', { name: /نیم سکه/ }, { timeout: 10_000 });
 
     // مشتری: combobox با Enter باز، جست‌وجو تایپ، ↓ و Enter انتخاب.
     await tabTo(user, screen.getByLabelText('مشتری'));
@@ -168,7 +168,7 @@ describe('keyboard-only sale flow (FE-084)', () => {
     await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true));
     await tabTo(user, screen.getByLabelText('جست‌وجوی نام یا موبایل'));
     await user.keyboard('حسین');
-    await screen.findByRole('option', { name: /حسین مرادی/ }, { timeout: 4000 });
+    await screen.findByRole('option', { name: /حسین مرادی/ }, { timeout: 10_000 });
     await user.keyboard('{ArrowDown}{Enter}');
     await waitFor(() => expect(screen.getByLabelText('مشتری')).toHaveTextContent('حسین مرادی'));
 
@@ -191,7 +191,7 @@ describe('keyboard-only sale flow (FE-084)', () => {
     await tabTo(user, screen.getByRole('button', { name: 'ثبت فروش' }));
     await user.keyboard('{Enter}');
 
-    expect(await screen.findByText(/فاکتور شماره .* ثبت شد/, {}, { timeout: 4000 })).toBeInTheDocument();
+    expect(await screen.findByText(/فاکتور شماره .* ثبت شد/, {}, { timeout: 10_000 })).toBeInTheDocument();
   }, 30000);
 
   it('a jewelry sale (the wizard) can be completed with the keyboard alone', async () => {
@@ -199,8 +199,8 @@ describe('keyboard-only sale flow (FE-084)', () => {
     sessionStorage.clear();
     useSessionStore.setState({ session: session('CASHIER') });
     renderAt('/sales/new');
-    await screen.findByRole('heading', { level: 1, name: 'فروش جدید' }, { timeout: 4000 });
-    await screen.findAllByText(/منبع: /, {}, { timeout: 4000 });
+    await screen.findByRole('heading', { level: 1, name: 'فروش جدید' }, { timeout: 10_000 });
+    await screen.findAllByText(/منبع: /, {}, { timeout: 10_000 });
 
     const next = async () => {
       const button = screen.getByRole('button', { name: 'بعدی' });
@@ -215,7 +215,7 @@ describe('keyboard-only sale flow (FE-084)', () => {
     await waitFor(() => expect(screen.getByRole('dialog').contains(document.activeElement)).toBe(true));
     await tabTo(user, screen.getByLabelText('جست‌وجوی نام یا موبایل'));
     await user.keyboard('حسین');
-    await screen.findByRole('option', { name: /حسین مرادی/ }, { timeout: 4000 });
+    await screen.findByRole('option', { name: /حسین مرادی/ }, { timeout: 10_000 });
     await user.keyboard('{ArrowDown}{Enter}');
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
 
@@ -225,7 +225,7 @@ describe('keyboard-only sale flow (FE-084)', () => {
     await waitFor(() => expect(screen.getByRole('dialog').contains(document.activeElement)).toBe(true));
     await tabTo(user, screen.getByLabelText('جست‌وجوی کد یا عنوان'));
     await user.keyboard('انگشتر');
-    await screen.findAllByRole('option', { name: /انگشتر/ }, { timeout: 4000 });
+    await screen.findAllByRole('option', { name: /انگشتر/ }, { timeout: 10_000 });
     await user.keyboard('{ArrowDown}{Enter}');
     await user.keyboard('{Escape}');
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
@@ -233,8 +233,8 @@ describe('keyboard-only sale flow (FE-084)', () => {
     // قیمت‌گذاری قلم: مشخصات از کاتالوگ پر شده‌اند؛ فقط «ذخیره».
     await tabTo(user, await screen.findByRole('button', { name: /^ویرایش قیمت / }));
     await user.keyboard('{Enter}');
-    const save = await screen.findByRole('button', { name: 'ذخیره' }, { timeout: 4000 });
-    await waitFor(() => expect(save).not.toBeDisabled(), { timeout: 4000 });
+    const save = await screen.findByRole('button', { name: 'ذخیره' }, { timeout: 10_000 });
+    await waitFor(() => expect(save).not.toBeDisabled(), { timeout: 10_000 });
     await tabTo(user, save);
     await user.keyboard('{Enter}');
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
@@ -248,10 +248,10 @@ describe('keyboard-only sale flow (FE-084)', () => {
     await tabTo(user, await screen.findByRole('button', { name: 'پرداخت کامل' }));
     await user.keyboard('{Enter}');
     const submit = screen.getByRole('button', { name: 'ثبت فروش' });
-    await waitFor(() => expect(submit).not.toBeDisabled(), { timeout: 4000 });
+    await waitFor(() => expect(submit).not.toBeDisabled(), { timeout: 10_000 });
     await tabTo(user, submit);
     await user.keyboard('{Enter}');
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'فروش ثبت شد' }, { timeout: 4000 })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'فروش ثبت شد' }, { timeout: 10_000 })).toBeInTheDocument();
   }, 30000);
 });

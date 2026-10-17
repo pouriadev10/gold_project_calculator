@@ -2,11 +2,12 @@ import { existsSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
-import { defineConfig, type Plugin } from 'vite';
+import { defineConfig, loadEnv, type Plugin, type ProxyOptions } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { bundleReport } from './vite-plugins/bundle-report';
 import { nonBlockingCss } from './vite-plugins/non-blocking-css';
 import { routePreload } from './vite-plugins/route-preload';
+import { DEFAULT_API_PROXY_TARGET, resolveApiMode } from './src/lib/api-mode';
 
 const SRC = fileURLToPath(new URL('./src', import.meta.url));
 
@@ -37,7 +38,25 @@ function stripMockWorker(): Plugin {
   };
 }
 
-export default defineConfig(({ command }) => ({
+/**
+ * FE-106a: توسعه با API واقعی (`VITE_API_MODE=real`). API ِ NestJS پیشوند سراسری ندارد
+ * (`/sales/invoices`، نه `/api/sales/invoices`)، پس proxy پیشوند `/api` ِ کلاینت را برمی‌دارد.
+ * در حالت پیش‌فرض (mock) proxy نیست و MSW در مرورگر پاسخ می‌دهد.
+ */
+function apiProxy(mode: string): Record<string, ProxyOptions> {
+  const env = loadEnv(mode, process.cwd(), 'VITE_');
+  if (resolveApiMode(env.VITE_API_MODE) !== 'real') return {};
+  return {
+    '/api': {
+      target: env.VITE_API_PROXY_TARGET?.trim() || DEFAULT_API_PROXY_TARGET,
+      changeOrigin: true,
+      rewrite: (path: string) => path.replace(/^\/api(?=\/|$)/u, '') || '/',
+    },
+  };
+}
+
+export default defineConfig(({ command, mode }) => ({
+  server: { proxy: apiProxy(mode) },
   /*
    * FE-101: «DevTools logging production» — بیلد production هر `console.*` و `debugger` را حذف
    * می‌کند (کد برنامه و کتابخانه‌ها). ESLint (`no-console`) جلوی نوشتنش را می‌گیرد؛ این تضمین

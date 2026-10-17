@@ -109,8 +109,8 @@ export {
   partyReportDirectionSchema,
   partyBalanceReportSchema,
   partyBalanceReportQuerySchema,
-  // گزارش سود واقعی BE-060 (FE-075). نام جدا، چون `profitReportSchema` پایین‌تر
-  // view model محلیِ فقط‌MSW کارت سود صفحه‌ی اصلی است.
+  // گزارش سود واقعی BE-060 (FE-075). نام جدا تا با «گزارش» ِ دیگر قراردادها قاطی نشود؛ از
+  // FE-106a کارت سود صفحه‌ی اصلی هم همین را می‌خواند (view model ِ فقط‌MSW ِ قبلی حذف شد).
   profitReportSchema as ledgerProfitReportSchema,
   profitReportQuerySchema as ledgerProfitReportQuerySchema,
   type ProfitReport as LedgerProfitReport,
@@ -373,9 +373,6 @@ export type SalesInvoiceDetail = z.infer<typeof salesInvoiceDetailSchema>;
  */
 const bigintString = bigIntStringSchema.transform((value) => BigInt(value));
 
-/** عیار — عدد صحیح کوچک، پس `number` اینجا بی‌خطر است. */
-const karatNumber = z.number().int().min(1).max(1000);
-
 /* ── مبلغ دومقیاسه ─────────────────────────────────────────── */
 
 /**
@@ -445,71 +442,6 @@ export const priceFeedRefreshResultSchema = z.discriminatedUnion('outcome', [
 ]);
 export type PriceFeedRefreshResult = z.infer<typeof priceFeedRefreshResultSchema>;
 export type PriceFeedFailure = z.infer<typeof priceFeedFailureSchema>;
-
-/* ── GET /api/parties/balance-summary ──────────────────────── */
-
-/** جمع بدهکار/بستانکار روی همه‌ی اشخاص. بدون معادل بک‌اندی هنوز (BE-056/BE-058). */
-export const partyBalanceSummarySchema = z.object({
-  credit: dualAmountSchema,
-  debit: dualAmountSchema,
-  net: dualAmountSchema,
-  creditPartyCount: z.number().int().nonnegative(),
-  debitPartyCount: z.number().int().nonnegative(),
-});
-export type PartyBalanceSummary = z.infer<typeof partyBalanceSummarySchema>;
-
-/* ── GET /api/items ────────────────────────────────────────── */
-
-/**
- * جست‌وجوی یکپارچه‌ی زیورآلات + آبشده + سکه — یک تجمیع UI-محور است، نه یک
- * DTO واحد بک‌اندی. سه concept واقعی که این را می‌سازند، هر سه در
- * `@gold/contracts`: `jewelryItemVersionSchema` (زیورآلات)،
- * `coinTypeVersionSchema` (مشخصات مرجع سکه) + `inventoryBalanceSchema`
- * (موجودی سکه/آبشده). وقتی FE-036/FE-038 به بک‌اند واقعی وصل شوند، این
- * schema یا به چند فراخوانی جدا تبدیل می‌شود یا بک‌اند یک endpoint
- * تجمیعی مشابه اضافه می‌کند.
- */
-export const itemKindSchema = z.enum(['article', 'melted', 'coin']);
-export type ItemKind = z.infer<typeof itemKindSchema>;
-
-export const itemSchema = z.object({
-  id: z.string(),
-  code: z.string(),
-  name: z.string(),
-  kind: itemKindSchema,
-  karat: karatNumber.nullable(),
-  /** وزن ناخالص — برای سکه `null` است، چون سکه شمارشی است نه وزنی */
-  grossMg: bigintString.nullable(),
-  /** موجودی: برای سکه تعداد، برای بقیه میلی‌گرم */
-  stockCount: z.number().int().nullable(),
-  stockMg: bigintString.nullable(),
-});
-export type Item = z.infer<typeof itemSchema>;
-
-export const itemListSchema = z.object({
-  items: z.array(itemSchema),
-  total: z.number().int().nonnegative(),
-});
-
-/* ── GET /api/reports/profit ───────────────────────────────── */
-
-/** بدون معادل بک‌اندی هنوز — گزارش‌ها Milestone 17 هستند (BE-058 تا BE-060). */
-export const profitPeriodSchema = z.enum(['today', 'month']);
-export type ProfitPeriod = z.infer<typeof profitPeriodSchema>;
-
-export const profitReportSchema = z.object({
-  period: profitPeriodSchema,
-  /** اجرت و حاشیه‌ی فروش */
-  operational: dualAmountSchema,
-  /** تغییر قیمت طلا روی موجودی — این مهارت نیست، بازار است */
-  fluctuation: dualAmountSchema,
-  /** فقط سکه‌ی ضرب بانک مرکزی حباب دارد */
-  coinBubble: dualAmountSchema,
-  total: dualAmountSchema,
-  /** درصد در مقیاس ۱۰ — یک رقم اعشار، بدون شناور */
-  percentX10: bigintString,
-});
-export type ProfitReport = z.infer<typeof profitReportSchema>;
 
 /* ── GET /api/transactions/recent ──────────────────────────── */
 

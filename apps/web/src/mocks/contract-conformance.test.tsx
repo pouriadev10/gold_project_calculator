@@ -123,8 +123,6 @@ describe('پاسخ‌های موفق از schema ِ واقعی کلاینت می
       () => ({
         history: queries.usePriceQuoteHistory(),
         feed: queries.usePriceFeedStatus(),
-        summary: queries.useBalanceSummary(),
-        profitToday: queries.useProfitReport('today'),
         ledgerProfit: queries.useLedgerProfitReport({}),
         trend: queries.useLedgerProfitTrend([{}]),
         settings: queries.useGeneralSettings(),
@@ -136,7 +134,6 @@ describe('پاسخ‌های موفق از schema ِ واقعی کلاینت می
         statement: queries.usePartyStatement(consumer.id, partyStatementQuerySchema.parse({ referenceQuoteId: quote.id })),
         debtors: queries.usePartyBalanceReport('DEBTOR', partyBalanceReportQuerySchema.parse({ referenceQuoteId: quote.id })),
         creditors: queries.usePartyBalanceReport('CREDITOR', partyBalanceReportQuerySchema.parse({ referenceQuoteId: quote.id })),
-        items: queries.useItemSearch('دستبند'),
         coinTypes: queries.useCoinTypes(),
         catalog: queries.useCoinTypeCatalog(),
         coinBalances: queries.useInventoryBalances('COIN'),
@@ -302,7 +299,7 @@ describe('سناریوهای خطا — همان شکل و کدی که سرور 
     expect(write).toMatchObject({ status: 403, code: 'FORBIDDEN', message: SCENARIO_MESSAGES.forbidden });
     expect(presentApiError(write).kind).toBe('forbidden');
 
-    const read = renderHook(() => queries.useBalanceSummary(), { wrapper });
+    const read = renderHook(() => queries.useParties(partyListQuerySchema.parse({})), { wrapper });
     await waitFor(() => expect(read.result.current.isError).toBe(true));
     expect(read.result.current.error).toMatchObject({ status: 403, code: 'FORBIDDEN' });
   });
@@ -324,7 +321,7 @@ describe('سناریوهای خطا — همان شکل و کدی که سرور 
   it('validation و conflict خواندن را دست نمی‌زنند — سرور برای GET هیچ‌کدام را نمی‌سازد', async () => {
     for (const scenario of ['validation', 'conflict'] as const) {
       setMockScenario(scenario);
-      const read = renderHook(() => queries.useBalanceSummary(), { wrapper });
+      const read = renderHook(() => queries.useParties(partyListQuerySchema.parse({})), { wrapper });
       await waitFor(() => expect(read.result.current.isSuccess).toBe(true));
     }
   });
@@ -420,10 +417,7 @@ function serverRoutes(): string[] {
  * («بدون معادل بک‌اندی هنوز») است. افزودن به این فهرست یعنی تصمیم صریح، نه mock بی‌صدا.
  */
 const PENDING_BACKEND_ROUTES = [
-  'GET /api/items',
   'GET /api/inventory/movements/recent',
-  'GET /api/parties/balance-summary',
-  'GET /api/reports/profit',
   'GET /api/sales/invoices',
   'GET /api/sales/invoices/:invoiceId/detail',
   'GET /api/transactions/recent',

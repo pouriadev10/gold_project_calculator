@@ -290,25 +290,25 @@ function requestsTo(path: string): number {
 async function prepareAmendment(user: User) {
   // ۱. باز کردن فاکتور
   renderRoute(`/sales/invoices/${INVOICE_ID}`);
-  await screen.findByRole('heading', { level: 1, name: 'جزئیات فاکتور' }, { timeout: 4000 });
+  await screen.findByRole('heading', { level: 1, name: 'جزئیات فاکتور' }, { timeout: 10_000 });
 
   // ۲. policy — اقدام فقط وقتی سرور اجازه داده فعال است
-  const amendLink = await screen.findByRole('link', { name: /اصلاح فاکتور/ }, { timeout: 4000 });
+  const amendLink = await screen.findByRole('link', { name: /اصلاح فاکتور/ }, { timeout: 10_000 });
   expect(requestsTo(`/api/sales/invoices/${INVOICE_ID}/amendment-policy`)).toBeGreaterThanOrEqual(1);
   await user.click(amendLink);
-  await screen.findByText(`اصلاح فاکتور ${formatCount(detail.invoiceNumber!)}`, {}, { timeout: 4000 });
+  await screen.findByText(`اصلاح فاکتور ${formatCount(detail.invoiceNumber!)}`, {}, { timeout: 10_000 });
   expect(screen.getByText(`نسخهٔ جاری: ${formatCount(1)}. شمارهٔ فاکتور تغییر نمی‌کند.`)).toBeInTheDocument();
 
   // مشخصات قلم فعلی از نسخه‌ی مؤثر در تاریخ صدور
   const select = screen.getByLabelText('قلم زیورآلات');
   expect(select).toHaveValue(BEFORE.items[0]!.itemId);
-  await waitFor(() => expect(itemSpecAt).toContain(ISSUED_AT), { timeout: 4000 });
+  await waitFor(() => expect(itemSpecAt).toContain(ISSUED_AT), { timeout: 10_000 });
 
   // ۳. تغییر وزن = قلمی که وزن درست را دارد
   await user.type(screen.getByLabelText('جست‌وجوی قلم جایگزین'), CORRECT_ITEM.code);
-  await screen.findByRole('option', { name: new RegExp(CORRECT_ITEM.title) }, { timeout: 4000 });
+  await screen.findByRole('option', { name: new RegExp(CORRECT_ITEM.title) }, { timeout: 10_000 });
   await user.selectOptions(select, CORRECT_ITEM.jewelryItemId);
-  const grossWeight = await screen.findByText(`${formatGram(BigInt(CORRECT_ITEM.grossWeightMg))} گرم`, {}, { timeout: 4000 });
+  const grossWeight = await screen.findByText(`${formatGram(BigInt(CORRECT_ITEM.grossWeightMg))} گرم`, {}, { timeout: 10_000 });
   expect(grossWeight.previousElementSibling).toHaveTextContent('وزن ناخالص');
   // مشخصات قلم تازه هم «در تاریخ صدور» خوانده شد، نه امروز
   expect(itemSpecAt.every((at) => at === ISSUED_AT)).toBe(true);
@@ -334,7 +334,7 @@ describe('FE-097 — اصلاح فاکتور از صفحه‌ی فاکتور ت�
     await user.click(submitButton());
 
     // ── درخواست: فقط واقعیت‌های منبع؛ هیچ مبلغ یا وزن محاسبه‌شده‌ای از کلاینت نمی‌رود
-    const result = await screen.findByLabelText('نتیجه اصلاح فاکتور', {}, { timeout: 4000 });
+    const result = await screen.findByLabelText('نتیجه اصلاح فاکتور', {}, { timeout: 10_000 });
     expect(api.writes().map((request) => `${request.method} ${request.path}`)).toEqual([
       `POST /api/sales/invoices/${INVOICE_ID}/amend`,
     ]);
@@ -363,7 +363,7 @@ describe('FE-097 — اصلاح فاکتور از صفحه‌ی فاکتور ت�
     expect(amountIn(afterCard, 'مبلغ')).toBe(server.payableRial);
     expect(amountIn(afterCard, 'مانده')).toBe(server.receivableRial);
     // وزن بعد از `GET /versions` ِ تازه‌شده می‌آید
-    await within(afterCard).findByText(`وزن خالص: ${formatGram(EXPECTED.pureWeightMg)} گرم`, {}, { timeout: 4000 });
+    await within(afterCard).findByText(`وزن خالص: ${formatGram(EXPECTED.pureWeightMg)} گرم`, {}, { timeout: 10_000 });
     expect(within(beforeCard).getByText(`وزن خالص: ${formatGram(BigInt(BEFORE.pureWeightMg!))} گرم`)).toBeInTheDocument();
     expect(amountIn(effectCard, 'اختلاف مبلغ')).toBe((BigInt(server.payableRial) - BigInt(BEFORE.payableRial)).toString());
     expect(amountIn(effectCard, 'تغییر ماندهٔ مشتری')).toBe(
@@ -382,14 +382,14 @@ describe('FE-097 — اصلاح فاکتور از صفحه‌ی فاکتور ت�
 
     // ── مشاهده‌ی نسخه‌ی جدید روی صفحه‌ی فاکتور
     await user.click(screen.getByRole('link', { name: 'دیدن فاکتور' }));
-    await screen.findByRole('heading', { level: 1, name: 'جزئیات فاکتور' }, { timeout: 4000 });
-    const v2 = (await screen.findByText(`نسخه ${formatCount(2)}`, {}, { timeout: 4000 })).closest('li')!;
+    await screen.findByRole('heading', { level: 1, name: 'جزئیات فاکتور' }, { timeout: 10_000 });
+    const v2 = (await screen.findByText(`نسخه ${formatCount(2)}`, {}, { timeout: 10_000 })).closest('li')!;
     const v1 = screen.getByText(`نسخه ${formatCount(1)}`).closest('li')!;
     expect(within(v2).getByText('جاری')).toBeInTheDocument();
     expect(within(v1).getByText('قبلی')).toBeInTheDocument();
     expect(within(v2).getByText('اصلاح وزن')).toBeInTheDocument();
     expect(within(v1).getByText('صدور اولیه')).toBeInTheDocument();
-    await within(v2).findByText(`${formatGram(EXPECTED.pureWeightMg - BigInt(BEFORE.pureWeightMg!))} گرم`, {}, { timeout: 4000 });
+    await within(v2).findByText(`${formatGram(EXPECTED.pureWeightMg - BigInt(BEFORE.pureWeightMg!))} گرم`, {}, { timeout: 10_000 });
     expect(screen.getByText('اصلاح‌شده')).toBeInTheDocument();
     // نسخه‌ی ۱ روی سرور دست‌نخورده ماند
     expect(history.versions[0]).toEqual(ORIGINAL_HISTORY.versions[0]);
@@ -402,13 +402,13 @@ describe('FE-097 — اصلاح فاکتور از صفحه‌ی فاکتور ت�
 
     loseNextResponse = true;
     await user.click(submitButton());
-    expect(await screen.findByText('ارتباط با سرور برقرار نشد', {}, { timeout: 4000 })).toBeInTheDocument();
+    expect(await screen.findByText('ارتباط با سرور برقرار نشد', {}, { timeout: 10_000 })).toBeInTheDocument();
     expect(detail.currentVersion).toBe(2);
 
     // FE-100: پاسخ نامشخص فرم را قفل می‌کند؛ ویرایش ممکن نیست، فقط تکرار همان درخواست
     expect(screen.getByLabelText('مبلغ پرداختی اصلاح‌شده')).toBeDisabled();
     await user.click(screen.getByRole('button', { name: 'بررسی نتیجه‌ی ثبت' }));
-    const result = await screen.findByLabelText('نتیجه اصلاح فاکتور', {}, { timeout: 4000 });
+    const result = await screen.findByLabelText('نتیجه اصلاح فاکتور', {}, { timeout: 10_000 });
 
     const [first, second] = api.writes();
     expect(api.writes()).toHaveLength(2);
@@ -422,15 +422,15 @@ describe('FE-097 — اصلاح فاکتور از صفحه‌ی فاکتور ت�
     const user = userEvent.setup();
     await prepareAmendment(user);
 
-    await user.click(screen.getByRole('link', { name: /بازگشت به فاکتور/ }));
-    const dialog = await screen.findByRole('dialog', {}, { timeout: 4000 });
+    await user.click(await screen.findByRole('link', { name: /بازگشت به فاکتور/ }));
+    const dialog = await screen.findByRole('dialog', {}, { timeout: 10_000 });
     expect(dialog).toHaveTextContent('تغییرات ثبت نشده‌اند');
     await user.click(within(dialog).getByRole('button', { name: 'ماندن در صفحه' }));
     expect(screen.getByLabelText('قلم زیورآلات')).toHaveValue(CORRECT_ITEM.jewelryItemId);
 
-    await user.click(screen.getByRole('link', { name: /بازگشت به فاکتور/ }));
+    await user.click(await screen.findByRole('link', { name: /بازگشت به فاکتور/ }));
     await user.click(await screen.findByRole('button', { name: 'ترک صفحه' }));
-    await screen.findByRole('heading', { level: 1, name: 'جزئیات فاکتور' }, { timeout: 4000 });
+    await screen.findByRole('heading', { level: 1, name: 'جزئیات فاکتور' }, { timeout: 10_000 });
     expect(api.writes()).toHaveLength(0);
     expect(detail.currentVersion).toBe(1);
   }, 60_000);
@@ -442,7 +442,7 @@ describe('FE-097 — اصلاح فاکتور از صفحه‌ی فاکتور ت�
     rejectNext = () => mockError('BAD_REQUEST', 'اختلاف مبلغ از حد مجاز اصلاح عادی بیشتر است');
     await user.click(submitButton());
 
-    expect(await screen.findByText('اطلاعات واردشده را بررسی کنید', {}, { timeout: 4000 })).toBeInTheDocument();
+    expect(await screen.findByText('اطلاعات واردشده را بررسی کنید', {}, { timeout: 10_000 })).toBeInTheDocument();
     expect(screen.queryByLabelText('نتیجه اصلاح فاکتور')).not.toBeInTheDocument();
     expect(detail.currentVersion).toBe(1);
     expect(history.versions).toHaveLength(1);

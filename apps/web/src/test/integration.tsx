@@ -20,6 +20,8 @@ import { mockError } from '@/mocks/handlers/errors';
 export interface CapturedRequest {
   readonly method: string;
   readonly path: string;
+  /** رشته‌ی query ِ آدرس، با `?` (یا خالی). */
+  readonly query: string;
   readonly headers: Headers;
   readonly body: Promise<string>;
 }
@@ -58,6 +60,7 @@ export function createIntegrationServer(): IntegrationServer {
         requests.push({
           method: request.method,
           path: new URL(request.url).pathname,
+          query: new URL(request.url).search,
           headers: new Headers(request.headers),
           body: request.clone().text(),
         });

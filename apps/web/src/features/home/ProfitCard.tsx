@@ -1,14 +1,17 @@
 import { useState } from 'react';
-import { TrendingUp } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
+import { ChevronLeft } from 'lucide-react';
+import type { LedgerProfitReport } from '@/api/contracts';
+import { useLedgerProfitReport } from '@/api/queries';
 import { AmountDisplay } from '@/components/common/AmountDisplay';
 import { RetryPanel } from '@/components/common/RetryPanel';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { measureFace } from '@/features/reporting/profit-report';
+import { useTenantTimeZone } from '@/hooks/useTenantTimeZone';
+import { jalaliPresetRange, jalaliRangeToHalfOpenIso } from '@/lib/jalali';
 import { cn } from '@/lib/utils';
-import { useProfitReport } from '@/api/queries';
-import type { ProfitReport } from '@/api/contracts';
-import { formatScaled } from '@gold/core-calc';
 
 /**
  * کارت سود — امروز و این ماه.
@@ -16,6 +19,12 @@ import { formatScaled } from '@gold/core-calc';
  * تفکیک عملیاتی / نوسان / حباب سکه عمدی است: سه منشأ کاملاً متفاوت‌اند.
  * سود نوسان یعنی بازار بالا رفته، نه اینکه فروشنده خوب کار کرده. اگر
  * این سه با هم جمع شوند، کاربر نمی‌فهمد کدام دستاورد خودش بوده.
+ *
+ * FE-106a: پیش‌تر از `GET /reports/profit` می‌خواند که فقط در MSW وجود داشت و روی سرور واقعی
+ * شکست می‌خورد. حالا همان `GET /reporting/profit` ِ واقعی (BE-060) گزارش کامل سود است، با همان
+ * مرز روز مستأجر (`jalaliRangeToHalfOpenIso`؛ `to` در BE-060 انحصاری است). هر مبلغ هر دو چهره را
+ * از سرور دارد (طلای معادل با مظنه‌ی قفل‌شده‌ی هر رویداد)، پس از کلید واحد پیروی می‌کند بی‌آنکه
+ * با مظنه‌ی امروز ساخته شود. درصد سود قبلی mock منبعی در سرور نداشت و حذف شد.
  */
 
 type Period = 'today' | 'month';
@@ -25,6 +34,11 @@ const PERIOD_LABEL: Record<Period, string> = {
   month: 'این ماه',
 };
 
+/** هر دو چهره‌ی یک سنجه از پاسخ سرور، برای `AmountDisplay`. */
+function faces(measure: LedgerProfitReport['totalProfit']) {
+  return { kind: 'faces' as const, rial: measureFace(measure, 'rial'), pureMg: measureFace(measure, 'gold') };
+}
+
 /**
  * کارت خودش داده‌اش را می‌گیرد، چون بازه‌ی زمانی حالت داخلی اوست.
  * بالا بردن این حالت به صفحه، فقط یک prop اضافه می‌ساخت بی‌آنکه کسی
@@ -32,7 +46,10 @@ const PERIOD_LABEL: Record<Period, string> = {
  */
 export function ProfitCard() {
   const [period, setPeriod] = useState<Period>('month');
-  const { data, isError, refetch } = useProfitReport(period);
+  const timeZone = useTenantTimeZone();
+  // بازه‌ی پیش‌تنظیم هرگز وارونه نیست؛ `?? {}` فقط برای تایپ است
+  const query = jalaliRangeToHalfOpenIso(jalaliPresetRange(period, timeZone), timeZone) ?? {};
+  const { data, isError, refetch } = useLedgerProfitReport(query);
 
   if (isError) {
     return (
@@ -79,21 +96,23 @@ export function ProfitCard() {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <div className="flex items-end justify-between gap-3">
-          <AmountDisplay amount={data.total} signed size="xl" />
-          <span className="inline-flex items-center gap-1 rounded-md bg-credit/10 px-2 py-1 text-xs font-semibold text-credit">
-            <TrendingUp className="size-3.5" aria-hidden="true" />
-            {formatScaled(data.percentX10, 1)}٪
-          </span>
-        </div>
+        <AmountDisplay amount={faces(data.totalProfit)} signed size="xl" />
 
         <Separator />
 
         <dl className="space-y-2">
-          <BreakdownRow label="عملیاتی" hint="اجرت و حاشیه فروش" amount={data.operational} />
-          <BreakdownRow label="نوسان" hint="تغییر قیمت طلا روی موجودی" amount={data.fluctuation} />
-          <BreakdownRow label="حباب سکه" hint="فقط سکه ضرب بانک مرکزی" amount={data.coinBubble} />
+          <BreakdownRow label="عملیاتی" hint="اجرت و حاشیه فروش" amount={data.operatingProfit} />
+          <BreakdownRow label="نوسان" hint="تغییر قیمت طلا روی موجودی" amount={data.goldPriceEffect} />
+          <BreakdownRow label="حباب سکه" hint="فقط سکه ضرب بانک مرکزی" amount={data.coinBubbleEffect} />
         </dl>
+
+        <Link
+          to="/reporting/profit"
+          className="inline-flex min-h-touch cursor-pointer items-center gap-1 rounded-md text-sm font-medium text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          گزارش کامل سود
+          <ChevronLeft className="size-4" aria-hidden="true" />
+        </Link>
       </CardContent>
     </Card>
   );
@@ -106,7 +125,7 @@ function BreakdownRow({
 }: {
   label: string;
   hint: string;
-  amount: ProfitReport['operational'];
+  amount: LedgerProfitReport['totalProfit'];
 }) {
   return (
     // FE-084: هر ردیف یک جفت dt/dd معتبر است (برچسب و توضیح = dt، مبلغ = dd)؛
@@ -117,7 +136,7 @@ function BreakdownRow({
         <span className="block text-[0.6875rem] text-muted-foreground">{hint}</span>
       </dt>
       <dd>
-        <AmountDisplay amount={amount} signed size="sm" />
+        <AmountDisplay amount={faces(amount)} signed size="sm" />
       </dd>
     </div>
   );

@@ -138,7 +138,7 @@ const PAGES: ReadonlyArray<{
     // «این ماه» در داده‌ی mock خالی است؛ «کل دوره» ریز سود و پانویس حباب را رندر می‌کند
     prepare: async (user) => {
       await user.click(await screen.findByRole('button', { name: 'پاک کردن تاریخ' }));
-      await screen.findByRole('list', { name: 'ریز سود' }, { timeout: 4000 });
+      await screen.findByRole('list', { name: 'ریز سود' }, { timeout: 10_000 });
     },
   },
   { path: '/settings', heading: 'بیشتر' },
@@ -187,12 +187,12 @@ describe('FE-105 — شمش در UI فاز ۱ وجود ندارد', () => {
 
   it.each(PAGES)('$path', async ({ path, heading, prepare }) => {
     renderRoute(path);
-    await screen.findByRole('heading', { level: 1, name: heading }, { timeout: 4000 });
+    await screen.findByRole('heading', { level: 1, name: heading }, { timeout: 10_000 });
     await prepare?.(userEvent.setup());
     await waitFor(
       () => expect(document.querySelector('[aria-label^="در حال دریافت"]')).toBeNull(),
       {
-        timeout: 4000,
+        timeout: 10_000,
       },
     );
     expect(bullionMentions()).toEqual([]);

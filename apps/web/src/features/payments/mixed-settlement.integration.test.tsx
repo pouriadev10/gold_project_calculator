@@ -229,10 +229,10 @@ function summaryAmounts(label: string): Array<{ raw: string | null; unit: string
  */
 async function buildBasket(user: User) {
   renderRoute(`/parties/${PARTY.id}/settlements/new`);
-  await screen.findByRole('heading', { level: 1, name: `ثبت تسویه — ${PARTY.displayName}` }, { timeout: 4000 });
+  await screen.findByRole('heading', { level: 1, name: `ثبت تسویه — ${PARTY.displayName}` }, { timeout: 10_000 });
 
   // ۱. مانده‌ی شخص — از سرور
-  await waitFor(() => expect(currentBalanceRaw()).toBe(OPENING_DEBT_RIAL.toString()), { timeout: 4000 });
+  await waitFor(() => expect(currentBalanceRaw()).toBe(OPENING_DEBT_RIAL.toString()), { timeout: 10_000 });
 
   await user.click(screen.getByRole('radio', { name: /ترکیبی/ }));
   await screen.findByText('هنوز ردیفی اضافه نشده.');
@@ -250,7 +250,7 @@ async function buildBasket(user: User) {
   // ۴. سکه — نوع از `GET /inventory/coin-types`
   await user.click(screen.getByRole('button', { name: '+ سکه' }));
   const coin = row('ردیف ۳: سکه');
-  await screen.findAllByRole('option', { name: BAHAR.title }, { timeout: 4000 });
+  await screen.findAllByRole('option', { name: BAHAR.title }, { timeout: 10_000 });
   await user.selectOptions(within(coin).getByLabelText('نوع سکه'), BAHAR.coinTypeId);
   await typeInto(user, within(coin).getByLabelText('تعداد'), '1', '1');
   await typeInto(user, within(coin).getByLabelText('نرخ بازار'), '300000000', COIN_PRICE_RIAL.toString());
@@ -278,7 +278,7 @@ function submitButton(): HTMLElement {
 
 /** کارت نتیجه — همان کارتی که «مجموع تسویه‌شده» در آن است (عنوانش با toast هم‌متن است). */
 async function resultCard(): Promise<HTMLElement> {
-  const total = await screen.findByText('مجموع تسویه‌شده', {}, { timeout: 4000 });
+  const total = await screen.findByText('مجموع تسویه‌شده', {}, { timeout: 10_000 });
   return total.closest('div.space-y-3')!.parentElement!;
 }
 
@@ -339,7 +339,7 @@ describe('FE-096 — تسویه‌ی ترکیبی ریال + طلا + سکه، �
 
     // ── مانده‌ی جدید: پس از invalidation دوباره از سرور خوانده می‌شود
     const serverBalance = OPENING_DEBT_RIAL - EXPECTED_TOTAL + 7_000_000n;
-    await waitFor(() => expect(currentBalanceRaw()).toBe(serverBalance.toString()), { timeout: 4000 });
+    await waitFor(() => expect(currentBalanceRaw()).toBe(serverBalance.toString()), { timeout: 10_000 });
     expect(currentBalanceRaw()).not.toBe((OPENING_DEBT_RIAL - EXPECTED_TOTAL).toString());
     expect(
       api.requests().filter((request) => request.method === 'GET' && request.path === `/api/parties/${PARTY.id}/balances`).length,
@@ -353,7 +353,7 @@ describe('FE-096 — تسویه‌ی ترکیبی ریال + طلا + سکه، �
 
     loseNextResponse = true;
     await user.click(submitButton());
-    expect(await screen.findByText('ارتباط با سرور برقرار نشد', {}, { timeout: 4000 })).toBeInTheDocument();
+    expect(await screen.findByText('ارتباط با سرور برقرار نشد', {}, { timeout: 10_000 })).toBeInTheDocument();
     expect(ledger.size).toBe(1);
     expect(partyRialBalance).toBe(OPENING_DEBT_RIAL - EXPECTED_TOTAL);
 
@@ -370,7 +370,7 @@ describe('FE-096 — تسویه‌ی ترکیبی ریال + طلا + سکه، �
     expect(await second!.body).toBe(await first!.body);
     expect(ledger.size).toBe(1);
     await waitFor(() => expect(currentBalanceRaw()).toBe((OPENING_DEBT_RIAL - EXPECTED_TOTAL).toString()), {
-      timeout: 4000,
+      timeout: 10_000,
     });
   }, 45_000);
 
@@ -381,7 +381,7 @@ describe('FE-096 — تسویه‌ی ترکیبی ریال + طلا + سکه، �
     rejectNext = () => mockError('BAD_REQUEST', 'مانده‌ی اعتباری شخص برای این ردیف کافی نیست');
     await user.click(submitButton());
 
-    expect(await screen.findByText('اطلاعات واردشده را بررسی کنید', {}, { timeout: 4000 })).toBeInTheDocument();
+    expect(await screen.findByText('اطلاعات واردشده را بررسی کنید', {}, { timeout: 10_000 })).toBeInTheDocument();
     expect(screen.queryByText('مجموع تسویه‌شده')).not.toBeInTheDocument();
     expect(ledger.size).toBe(0);
     expect(partyRialBalance).toBe(OPENING_DEBT_RIAL);

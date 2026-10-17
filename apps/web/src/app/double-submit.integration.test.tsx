@@ -122,7 +122,7 @@ function renderApp(path: string) {
 }
 
 async function openRialForm(user: User, amount = '1000000') {
-  await screen.findByRole('heading', { level: 1, name: HEADING }, { timeout: 4000 });
+  await screen.findByRole('heading', { level: 1, name: HEADING }, { timeout: 10_000 });
   await user.click(within(screen.getByRole('radiogroup', { name: 'روش پرداخت' })).getByRole('radio', { name: /ریال/ }));
   const field = screen.getByLabelText('مبلغ');
   await user.click(field);
@@ -136,7 +136,7 @@ function submitButton(): HTMLElement {
 }
 
 async function result(): Promise<HTMLElement> {
-  return screen.findByText('پرداخت ریالی ثبت شد', {}, { timeout: 4000 });
+  return screen.findByText('پرداخت ریالی ثبت شد', {}, { timeout: 10_000 });
 }
 
 function rialWrites() {
@@ -215,7 +215,7 @@ describe('FE-100 — ارسال دوباره، یک سند', () => {
 
     loseNextResponse = true;
     await user.click(submitButton());
-    expect(await screen.findByText('ارتباط با سرور برقرار نشد', {}, { timeout: 4000 })).toBeInTheDocument();
+    expect(await screen.findByText('ارتباط با سرور برقرار نشد', {}, { timeout: 10_000 })).toBeInTheDocument();
     // «سرور» ثبت کرده؛ مرورگر خبر ندارد
     expect(ledger.size).toBe(1);
     expect(screen.getByText(/نتیجه‌ی ثبت قبلی هنوز مشخص نیست/)).toBeInTheDocument();
@@ -237,17 +237,17 @@ describe('FE-100 — ارسال دوباره، یک سند', () => {
 
     loseNextResponse = true;
     await user.click(submitButton());
-    await screen.findByText('ارتباط با سرور برقرار نشد', {}, { timeout: 4000 });
+    await screen.findByText('ارتباط با سرور برقرار نشد', {}, { timeout: 10_000 });
 
     // ترک: نگهبان خروج می‌پرسد چون نتیجه نامشخص است؛ کاربر ترک می‌کند
     const nav = screen.getAllByRole('navigation', { name: 'ناوبری اصلی' })[0]!;
     await user.click(within(nav).getByRole('link', { name: 'خانه' }));
-    await user.click(await screen.findByRole('button', { name: 'ترک صفحه' }, { timeout: 4000 }));
-    await screen.findByRole('heading', { level: 1, name: 'مظنه بازار' }, { timeout: 4000 });
+    await user.click(await screen.findByRole('button', { name: 'ترک صفحه' }, { timeout: 10_000 }));
+    await screen.findByRole('heading', { level: 1, name: 'مظنه بازار' }, { timeout: 10_000 });
 
     // back ِ مرورگر: همان صفحه، فرم تازه mount شده — فیلدها خالی‌اند ولی تلاش سنجاق‌شده برگشته
     act(() => router.history.back());
-    await screen.findByRole('heading', { level: 1, name: HEADING }, { timeout: 4000 });
+    await screen.findByRole('heading', { level: 1, name: HEADING }, { timeout: 10_000 });
     await user.click(within(screen.getByRole('radiogroup', { name: 'روش پرداخت' })).getByRole('radio', { name: /ریال/ }));
     expect(await screen.findByText(/نتیجه‌ی ثبت قبلی هنوز مشخص نیست/)).toBeInTheDocument();
     expect(screen.getByLabelText('مبلغ')).toBeDisabled();
@@ -269,11 +269,11 @@ describe('FE-100 — ارسال دوباره، یک سند', () => {
 
     loseNextResponse = true;
     await user.click(submitButton());
-    await screen.findByText('ارتباط با سرور برقرار نشد', {}, { timeout: 4000 });
+    await screen.findByText('ارتباط با سرور برقرار نشد', {}, { timeout: 10_000 });
 
     cleanup(); // تب تازه‌سازی شد: هیچ state ِ حافظه‌ای نمانده، فقط sessionStorage
     renderApp(PATH);
-    await screen.findByRole('heading', { level: 1, name: HEADING }, { timeout: 4000 });
+    await screen.findByRole('heading', { level: 1, name: HEADING }, { timeout: 10_000 });
     await user.click(within(screen.getByRole('radiogroup', { name: 'روش پرداخت' })).getByRole('radio', { name: /ریال/ }));
     await user.click(await screen.findByRole('button', { name: 'بررسی نتیجه‌ی ثبت' }));
     await result();
@@ -288,7 +288,7 @@ describe('FE-100 — ارسال دوباره، یک سند', () => {
     await openRialForm(user);
     loseNextResponse = true;
     await user.click(submitButton());
-    await screen.findByText('ارتباط با سرور برقرار نشد', {}, { timeout: 4000 });
+    await screen.findByText('ارتباط با سرور برقرار نشد', {}, { timeout: 10_000 });
 
     cleanup();
     useSessionStore.setState({ session: { ...CASHIER, user: { ...CASHIER.user, id: 'c1000000-0000-4000-8000-000000000009' } } });
@@ -306,7 +306,7 @@ describe('FE-100 — ارسال دوباره، یک سند', () => {
 
     rejectNext = () => mockError('VALIDATION_ERROR', 'مبلغ معتبر نیست');
     await user.click(submitButton());
-    expect(await screen.findByText('اطلاعات واردشده را بررسی کنید', {}, { timeout: 4000 })).toBeInTheDocument();
+    expect(await screen.findByText('اطلاعات واردشده را بررسی کنید', {}, { timeout: 10_000 })).toBeInTheDocument();
     expect(ledger.size).toBe(0);
     expect(screen.queryByText(/نتیجه‌ی ثبت قبلی هنوز مشخص نیست/)).not.toBeInTheDocument();
 

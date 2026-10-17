@@ -8,7 +8,6 @@ import type {
   PartyListQuery,
   PartyStatementQuery,
   PriceQuoteType,
-  ProfitPeriod,
   ReportingDisplayUnit,
   SalesInvoiceListQuery,
 } from './contracts';
@@ -45,7 +44,6 @@ export const queryKeys = {
 
   parties: {
     all: () => ['parties'] as const,
-    balanceSummary: () => [...queryKeys.parties.all(), 'balance-summary'] as const,
     search: (search: string) => [...queryKeys.parties.all(), 'search', search] as const,
     list: (query: PartyListQuery) => [...queryKeys.parties.all(), 'list', query] as const,
     detail: (id: string) => [...queryKeys.parties.all(), 'detail', id] as const,
@@ -62,11 +60,6 @@ export const queryKeys = {
       [...queryKeys.parties.all(), 'balance-report', direction, query] as const,
   },
 
-  items: {
-    all: () => ['items'] as const,
-    search: (query: string, kind: string) =>
-      [...queryKeys.items.all(), 'search', query, kind] as const,
-  },
 
   /** کالای زیورآلات — `jewelryItemVersionSchema` واقعی (BE-026)، جدا از `items` بالا که هنوز mock تجمیعی است. */
   jewelryItems: {
@@ -131,7 +124,6 @@ export const queryKeys = {
 
   reports: {
     all: () => ['reports'] as const,
-    profit: (period: ProfitPeriod) => [...queryKeys.reports.all(), 'profit', period] as const,
     /** گزارش سود واقعی — `GET /reporting/profit` (BE-060، FE-075). */
     ledgerProfit: (query: LedgerProfitReportQuery) =>
       [...queryKeys.reports.all(), 'ledger-profit', query] as const,
