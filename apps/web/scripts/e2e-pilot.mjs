@@ -10,6 +10,10 @@
  * ۳. هر نما (۳۶۰px لمسی، و دسکتاپ ۱۴۴۰px با ماوس) با **وضعیت mock تازه** و پروفایل مرورگر تازه از
  *    اول تا آخر اجرا می‌شود — مرحله‌ها به هم وابسته‌اند (شخص ساخته‌شده، فاکتورها و ...).
  *
+ * FE-110 مسیر را به همه‌ی سناریوهای پذیرش فاز ۱ رساند (پرداخت با سکه، ترکیبی، خرید سکه، بستانکاران،
+ * داشبورد) و یک فروش نقدی سکه‌ی زمان‌سنجی‌شده افزود: `maxMs` سقف زمان دیواری مرحله است (۱۵ ثانیه‌ی
+ * معیار تجربه)، و تعداد ضربه و کلید هر مرحله در `results.json` می‌آید — ورودی جدول `docs/phase1-acceptance.md`.
+ *
  * سنجش‌ها:
  * - هر مرحله باید با پیام موفقیت یا داده‌ی سرور تمام شود؛ اولین شکست اجرای آن نما را متوقف می‌کند.
  * - **هیچ درخواست مالی تکراری**: هر نوشتن `Idempotency-Key` دارد، هیچ کلیدی دو بار نیامده، هیچ دو
@@ -140,6 +144,8 @@ class Driver {
     this.shots = [];
     /** هر بار که toast روی هدف ضربه افتاد و کاربر باید اول آن را می‌بست. */
     this.toastCovered = [];
+    /** ضربه/کلیک و کلید فیزیکی/ورود متن — شمارنده‌ی تلاش کاربر در هر مرحله. */
+    this.interactions = { taps: 0, keys: 0 };
   }
 
   eval(expression) {
@@ -218,6 +224,7 @@ class Driver {
       ({ x, y } = await this.point(finder, label));
     }
     await sleep(120);
+    this.interactions.taps += 1;
     if (this.viewport.mobile) {
       const touchPoints = [{ x, y, radiusX: 4, radiusY: 4, force: 1, id: 0 }];
       await this.cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints });
@@ -247,6 +254,7 @@ class Driver {
   async typeText(finder, label, text) {
     await this.focus(finder, label);
     await this.cdp.send('Input.insertText', { text });
+    this.interactions.keys += 1;
     await sleep(150);
   }
 
@@ -259,6 +267,7 @@ class Driver {
       await pressKey(this.cdp, key);
       await sleep(KEY_INTERVAL_MS);
     }
+    this.interactions.keys += keys.length + 1; // + Enter ِ بستن کیپد
     await this.waitFor(`(${finder})?.getAttribute('data-value') === ${JSON.stringify(expected)}`, `${label} = ${expected}`, 5_000);
     // Enter کیپد را می‌بندد (کیپد آن را می‌بلعد)؛ Escape گفت‌وگوی بازِ پشت فیلد را هم می‌بست
     await pressKey(this.cdp, 'Enter');
@@ -350,7 +359,10 @@ const EXPECTED_WRITES = {
   'POST /api/inventory/jewelry-items': 1,
   'POST /api/inventory/opening-balances': 1,
   'POST /api/sales/invoices/jewelry': 1,
-  'POST /api/sales/invoices/coins': 1,
+  'POST /api/sales/invoices/coins': 2, // نسیه + نقدی ِ زمان‌سنجی‌شده
+  'POST /api/parties/:id/settlements/coins': 1,
+  'POST /api/parties/:id/settlements/mixed': 1,
+  'POST /api/purchase/second-hand/coins': 1,
   'POST /api/parties/:id/settlements/rial': 1,
   'POST /api/parties/:id/settlements/gold': 1,
   'POST /api/purchase/second-hand/gold': 1,
@@ -363,7 +375,7 @@ const normalizePath = (path) => path.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4
 
 const STEPS = [
   {
-    name: '۱. ورود',
+    name: 'ورود',
     async run(d) {
       await d.goto('/login', 'ورود');
       await d.typeText(bySelector('#login-email'), 'ایمیل', PILOT.email);
@@ -377,7 +389,7 @@ const STEPS = [
     },
   },
   {
-    name: '۲. ثبت مظنه',
+    name: 'ثبت مظنه',
     async run(d) {
       await d.goto('/pricing', 'منبع فعال');
       await d.typeNumber(field('مظنه مثقال'), 'مظنه مثقال', PILOT.mazneh);
@@ -388,7 +400,7 @@ const STEPS = [
     },
   },
   {
-    name: '۳. ایجاد شخص',
+    name: 'ایجاد شخص',
     async run(d, ctx) {
       await d.goto('/parties', 'حسین مرادی');
       await d.click(control('افزودن شخص'), 'افزودن شخص');
@@ -402,7 +414,7 @@ const STEPS = [
     },
   },
   {
-    name: '۴. ایجاد کالای زیورآلات',
+    name: 'ایجاد کالای زیورآلات',
     async run(d, ctx) {
       await d.goto('/inventory/jewelry', 'انگشتر');
       await d.click(control('کالای جدید'), 'کالای جدید');
@@ -420,7 +432,7 @@ const STEPS = [
     },
   },
   {
-    name: '۵. ثبت موجودی افتتاحیه',
+    name: 'ثبت موجودی افتتاحیه',
     async run(d) {
       await d.goto('/inventory/opening-balance', 'وزن آبشده');
       await d.click(control('افزودن کالای زیورآلات', { inDialog: false }), 'افزودن کالای زیورآلات');
@@ -438,7 +450,7 @@ const STEPS = [
     },
   },
   {
-    name: '۶. فروش نقدی زیورآلات',
+    name: 'فروش نقدی زیورآلات',
     async run(d, ctx) {
       await d.goto('/sales/new', 'منبع: ');
       await d.click(control('بعدی'), 'بعدی');
@@ -463,7 +475,7 @@ const STEPS = [
     },
   },
   {
-    name: '۷. فروش نسیه سکه',
+    name: 'فروش نسیه سکه',
     async run(d, ctx) {
       await d.goto('/sales/coins/new', 'نوع سکه');
       await d.pickParty('مشتری', 'سارا', PILOT.partyName);
@@ -478,7 +490,26 @@ const STEPS = [
     },
   },
   {
-    name: '۸. تسویه بخشی با ریال',
+    name: 'فروش نقدی سکه (زیر ۱۵ ثانیه)',
+    // معیار تجربه‌ی FE-110: ثبت معامله‌ی معمولی زیر ۱۵ ثانیه — از باز شدن فرم تا رسید
+    maxMs: 15_000,
+    async run(d) {
+      await d.goto('/sales/coins/new', 'نوع سکه');
+      await d.pickParty('مشتری', 'سارا', PILOT.partyName);
+      await d.select(bySelector('#coin-sale-type'), 'نوع سکه', PILOT.coinTypeId);
+      await d.typeNumber(field('تعداد'), 'تعداد', '1');
+      await d.typeNumber(field('قیمت واحد بازار'), 'قیمت واحد بازار', '400000000');
+      await d.typeNumber(field('مبلغ پرداختی'), 'مبلغ پرداختی', '400000000');
+      await d.click(control('ثبت فروش'), 'ثبت فروش');
+      await d.waitFor(`/فاکتور شماره .* ثبت شد/.test(window.__e2e.text())`, 'رسید فروش نقدی سکه', 20_000);
+      // دقت: مبلغ قابل پرداخت سرور دقیقاً ۱ × ۴۰۰٬۰۰۰٬۰۰۰ — بدون هیچ رقم شناور
+      const sale = d.created(/^\/api\/sales\/invoices\/coins$/u);
+      if (sale.payableRial !== '400000000') throw new Error(`مبلغ فروش نقدی سکه ${sale.payableRial}، انتظار 400000000`);
+      await d.shot('coin-cash-sale');
+    },
+  },
+  {
+    name: 'تسویه بخشی با ریال',
     async run(d, ctx) {
       await d.goto(`/parties/${ctx.party.id}/settlements/new`, 'مانده فعلی');
       // کلید سراسری واحد: از اینجا اعداد ریالی دیده و سنجیده می‌شوند (انتخاب کاربر، ماندگار)
@@ -496,7 +527,7 @@ const STEPS = [
     },
   },
   {
-    name: '۹. تسویه بخشی با طلا',
+    name: 'تسویه بخشی با طلا',
     async run(d, ctx) {
       await d.goto(`/parties/${ctx.party.id}/settlements/new`, 'مانده فعلی');
       await expectBalance(d, 'مانده فعلی', ctx.balance);
@@ -512,7 +543,49 @@ const STEPS = [
     },
   },
   {
-    name: '۱۰. خرید طلای دست‌دوم',
+    name: 'تسویه بخشی با سکه',
+    async run(d, ctx) {
+      await d.goto(`/parties/${ctx.party.id}/settlements/new`, 'مانده فعلی');
+      await expectBalance(d, 'مانده فعلی', ctx.balance);
+      await d.click(inGroup('روش پرداخت', 'سکه'), 'روش سکه');
+      await d.select(bySelector('#coin-settlement-type'), 'نوع سکه', PILOT.coinTypeId);
+      await d.typeNumber(field('تعداد'), 'تعداد', '1');
+      await d.typeNumber(field('نرخ بازار'), 'نرخ بازار', '60000000');
+      await d.click(control('ثبت پرداخت'), 'ثبت پرداخت');
+      await d.waitFor(`window.__e2e.control('پرداخت با سکه‌ی جدید')`, 'ثبت پرداخت سکه', 20_000);
+      const settled = d.created(/^\/api\/parties\/[^/]+\/settlements\/coins$/u).settledRial;
+      if (settled !== '60000000') throw new Error(`ارزش تسویه‌ی سکه ${settled}، انتظار 60000000 (۱ × نرخ بازار)`);
+      ctx.balance -= BigInt(settled);
+      await expectBalance(d, 'مانده فعلی', ctx.balance);
+      await d.shot('coin-settlement');
+    },
+  },
+  {
+    name: 'تسویه ترکیبی (ریال + طلا)',
+    async run(d, ctx) {
+      await d.goto(`/parties/${ctx.party.id}/settlements/new`, 'مانده فعلی');
+      await expectBalance(d, 'مانده فعلی', ctx.balance);
+      await d.click(inGroup('روش پرداخت', 'ترکیبی'), 'روش ترکیبی');
+      await d.click(control('+ ریال'), '+ ریال');
+      await d.typeNumber(field('مبلغ', { group: `ردیف ${toPersian('1')}: ریال` }), 'مبلغ ردیف ریال', '20000000');
+      await d.click(control('+ طلا'), '+ طلا');
+      const goldRow = `ردیف ${toPersian('2')}: طلا`;
+      await d.typeNumber(field('وزن', { group: goldRow }), 'وزن ردیف طلا', '0.200', '200');
+      await d.typeNumber(field('عیار', { group: goldRow }), 'عیار ردیف طلا', '750');
+      await d.click(control('ثبت تسویه‌ی ترکیبی'), 'ثبت تسویه‌ی ترکیبی');
+      await d.waitFor(`window.__e2e.control('تسویه‌ی ترکیبی جدید')`, 'ثبت تسویه‌ی ترکیبی', 20_000);
+      const mixed = d.created(/^\/api\/parties\/[^/]+\/settlements\/mixed$/u);
+      // مجموع سند باید دقیقاً جمع ردیف‌های خودش باشد (bigint)، و ردیف ریالی بی‌تغییر
+      const lineSum = mixed.lines.reduce((sum, line) => sum + BigInt(line.settledRial), 0n);
+      if (lineSum !== BigInt(mixed.totalSettledRial)) throw new Error(`جمع ردیف‌ها ${lineSum} ≠ مجموع ${mixed.totalSettledRial}`);
+      if (mixed.lines[0]?.settledRial !== '20000000') throw new Error(`ردیف ریالی ${mixed.lines[0]?.settledRial}`);
+      ctx.balance -= BigInt(mixed.totalSettledRial);
+      await expectBalance(d, 'مانده فعلی', ctx.balance);
+      await d.shot('mixed-settlement');
+    },
+  },
+  {
+    name: 'خرید طلای دست‌دوم',
     async run(d, ctx) {
       await d.goto('/purchase/second-hand', 'فروشنده');
       // فروشنده‌ی تازه با کد ملی — هویت فقط پوشانده نمایش داده می‌شود
@@ -541,7 +614,25 @@ const STEPS = [
     },
   },
   {
-    name: '۱۱. Buyback B2C',
+    name: 'خرید سکه (با مانده‌ی بستانکاری)',
+    async run(d) {
+      await d.goto('/purchase/second-hand/coins', 'نرخ خرید هر سکه');
+      await d.pickParty('فروشنده', 'رضا', PILOT.sellerName);
+      await d.select(bySelector('#coin-purchase-type'), 'نوع سکه', PILOT.coinTypeId);
+      await d.typeNumber(field('تعداد'), 'تعداد', '1');
+      await d.typeNumber(field('نرخ خرید هر سکه'), 'نرخ خرید هر سکه', '390000000');
+      // ۱۰۰ میلیون پرداخت‌نشده = بستانکاری فروشنده — مرحله‌ی «بستانکاران» همین را می‌بیند
+      await d.typeNumber(field('پرداخت اکنون'), 'پرداخت اکنون', '290000000');
+      await d.click(control('ثبت خرید سکه', { inDialog: false }), 'ثبت خرید سکه');
+      await d.waitText('خرید سکه ثبت شد', 20_000);
+      const purchase = d.created(/^\/api\/purchase\/second-hand\/coins$/u);
+      if (purchase.payableRial !== '100000000') throw new Error(`مانده‌ی خرید سکه ${purchase.payableRial}، انتظار 100000000`);
+      if (purchase.bubbleRial === null) throw new Error('سکه‌ی بانک مرکزی بدون حباب برگشت');
+      await d.shot('coin-purchase');
+    },
+  },
+  {
+    name: 'Buyback B2C',
     async run(d, ctx) {
       await d.goto(`/sales/invoices/${ctx.jewelrySale.invoiceId}/b2c-buyback`, 'اندازه‌گیری امروز');
       await d.typeNumber(field('وزن ناخالص'), 'وزن ناخالص', '10.000', '10000');
@@ -556,7 +647,7 @@ const STEPS = [
     },
   },
   {
-    name: '۱۲. اصلاح فاکتور',
+    name: 'اصلاح فاکتور',
     async run(d, ctx) {
       await d.goto(`/sales/invoices/${ctx.coinSale.invoiceId}`, 'جزئیات فاکتور');
       await d.click(control('اصلاح فاکتور', { prefix: true }), 'اصلاح فاکتور');
@@ -571,7 +662,7 @@ const STEPS = [
     },
   },
   {
-    name: '۱۳. مشاهده مانده',
+    name: 'مشاهده مانده',
     async run(d, ctx) {
       await d.goto(`/parties/${ctx.party.id}`, PILOT.partyName);
       // اصلاح فاکتور سکه پرداخت را ۳۰۰ → ۳۵۰ میلیون کرد؛ خرید مجدد کامل پرداخت شد (اثری ندارد)
@@ -586,29 +677,53 @@ const STEPS = [
     },
   },
   {
-    name: '۱۴. مشاهده صورت‌حساب',
+    name: 'مشاهده صورت‌حساب',
     async run(d, ctx) {
       await d.goto(`/parties/${ctx.party.id}/statement`, `صورت‌حساب ${PILOT.partyName}`);
       await d.shot('statement');
     },
   },
   {
-    name: '۱۵. مشاهده بدهکاران',
-    async run(d) {
+    name: 'مشاهده بدهکاران',
+    async run(d, ctx) {
+      // مبالغ مسیر باید مشتری را بدهکار نگه دارند؛ وگرنه این مرحله بی‌دلیل روشن شکست می‌خورد
+      if (ctx.balance <= 0n) throw new Error(`مانده‌ی مشتری ${ctx.balance} — داده‌ی مسیر او را از بدهکاران بیرون برده`);
       await d.goto('/reporting/debtors', 'بدهکاران');
       await d.waitText(PILOT.partyName);
       await d.shot('debtors');
     },
   },
   {
-    name: '۱۶. مشاهده سود',
+    name: 'مشاهده بستانکاران',
+    async run(d) {
+      await d.goto('/reporting/creditors', 'بستانکاران');
+      await d.waitText(PILOT.sellerName);
+      await d.shot('creditors');
+    },
+  },
+  {
+    name: 'مشاهده سود',
     async run(d) {
       await d.goto('/reporting/profit', 'گزارش سود');
       await d.shot('profit');
     },
   },
   {
-    name: '۱۷. دریافت PDF',
+    name: 'مشاهده داشبورد',
+    async run(d) {
+      await d.goto('/dashboard', 'آخرین معامله‌ها');
+      await d.waitText('مانده اشخاص');
+      await d.waitText('بستانکاران');
+      // کلید واحد روی داشبورد: طلا ← ریال، هر بار عدد با واحد تازه دیده می‌شود
+      await d.click(inGroup('واحد نمایش اعداد', 'طلا'), 'واحد طلا');
+      await d.waitFor(`document.querySelector('[data-unit="gold"][data-raw]')`, 'عدد طلایی روی داشبورد');
+      await d.click(inGroup('واحد نمایش اعداد', 'ریال'), 'واحد ریال');
+      await d.waitFor(`document.querySelector('[data-unit="rial"][data-raw]')`, 'عدد ریالی روی داشبورد');
+      await d.shot('dashboard-after');
+    },
+  },
+  {
+    name: 'دریافت PDF',
     async run(d, ctx) {
       await d.goto(`/sales/invoices/${ctx.jewelrySale.invoiceId}`, 'جزئیات فاکتور');
       const before = d.server.requests.length;
@@ -727,16 +842,23 @@ async function runViewport(viewport) {
     driver = new Driver(cdp, viewport, outDir, server);
     driver.downloads = downloads;
     const ctx = {};
-    for (const step of STEPS) {
+    for (const [index, step] of STEPS.entries()) {
+      const name = `${toPersian(String(index + 1))}. ${step.name}`;
       const started = Date.now();
+      driver.interactions = { taps: 0, keys: 0 };
       try {
         await step.run(driver, ctx);
-        results.push({ step: step.name, ok: true, ms: Date.now() - started });
-        console.log(`  ✔ ${step.name} (${Date.now() - started}ms)`);
+        const ms = Date.now() - started;
+        if (step.maxMs !== undefined && ms > step.maxMs) {
+          throw new Error(`مرحله ${ms}ms طول کشید؛ سقف ${step.maxMs}ms`);
+        }
+        results.push({ step: name, ok: true, ms, maxMs: step.maxMs, ...driver.interactions });
+        const limit = step.maxMs === undefined ? '' : ` ≤ ${step.maxMs}ms`;
+        console.log(`  ✔ ${name} (${ms}ms${limit}، ${driver.interactions.taps} ضربه، ${driver.interactions.keys} کلید)`);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        results.push({ step: step.name, ok: false, error: message });
-        console.log(`  ✖ ${step.name} — ${message}`);
+        results.push({ step: name, ok: false, error: message });
+        console.log(`  ✖ ${name} — ${message}`);
         const { data } = await cdp.send('Page.captureScreenshot', { format: 'png' }).catch(() => ({ data: '' }));
         if (data) writeFileSync(join(outDir, 'error.png'), Buffer.from(data, 'base64'));
         const text = await cdp.eval('document.body ? document.body.innerText : ""').catch(() => '');
@@ -744,7 +866,7 @@ async function runViewport(viewport) {
         const errors = pageErrors.slice(-20).join('\n') || '(هیچ)';
         writeFileSync(
           join(outDir, 'error.txt'),
-          `${step.name}\n${message}\n${url}\n\n── خطاهای صفحه ──\n${errors}\n\n── متن صفحه ──\n${text}`,
+          `${name}\n${message}\n${url}\n\n── خطاهای صفحه ──\n${errors}\n\n── متن صفحه ──\n${text}`,
         );
         break;
       }
@@ -820,7 +942,7 @@ async function run() {
     console.error('\n✖ مسیر پایلوت سبز نیست.');
     process.exitCode = 1;
   } else {
-    console.log(`\n✔ مسیر پایلوت (۱۷ مرحله) روی ${viewports.map((v) => v.name).join(' و ')} سبز است. screenshotها در ${OUT_DIR}`);
+    console.log(`\n✔ مسیر پایلوت (${toPersian(String(STEPS.length))} مرحله) روی ${viewports.map((v) => v.name).join(' و ')} سبز است. screenshotها در ${OUT_DIR}`);
   }
 }
 

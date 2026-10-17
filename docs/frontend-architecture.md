@@ -254,7 +254,7 @@ apps/web/src/
 | Integration | [`test/integration.tsx`](../apps/web/src/test/integration.tsx): `routeTree` ِ واقعی + client ِ واقعی + `msw/node`؛ هر تست نوشتن‌های جریانش را با `server.use` جواب می‌دهد و `IdempotencyLedger` معنای سرور را تقلید می‌کند؛ عدد را با `rawAmount` (`data-raw`) بسنج. نمونه‌ها: `sale-flow`، `mixed-settlement`، `invoice-amendment`، `double-submit`، `historical-rates`، `unit-toggle`، `tenant-data` |
 | قرارداد mock | `mocks/contract-conformance.test.tsx` (بخش ۳) + دروازه‌ی قرارداد [`mocks/handlers/contract-gate.ts`](../apps/web/src/mocks/handlers/contract-gate.ts): کلید Idempotency و بدنه با schema ِ سرور پیش از هر handler |
 | دسترس‌پذیری | `app/a11y.test.tsx` (axe روی صفحه‌های اصلی با `routeTree` ِ واقعی) و دو جریان فروش فقط با کیبورد، `styles/contrast.test.ts` |
-| E2E | `pnpm --filter @gold/web test:e2e` ← `scripts/e2e-pilot.mjs`: بیلد production + handlerهای MSW در Node، Chrome بی‌سر روی CDP، ۱۷ مرحله‌ی مسیر پایلوت روی ۳۶۰px لمسی و ۱۴۴۰px ماوس؛ ثبت تکراری و داده‌ی حساس در screenshot را هم می‌سنجد |
+| E2E | `pnpm --filter @gold/web test:e2e` ← `scripts/e2e-pilot.mjs`: بیلد production + handlerهای MSW در Node، Chrome بی‌سر روی CDP، ۲۳ مرحله‌ی مسیر پایلوت (سناریوهای پذیرش FE-110، [`phase1-acceptance.md`](phase1-acceptance.md)) روی ۳۶۰px لمسی و ۱۴۴۰px ماوس؛ ثبت تکراری و داده‌ی حساس در screenshot را هم می‌سنجد |
 | ممیزی‌ها | `audit:mobile`، `audit:lcp`، `audit:inp`، `audit:pwa` (گزارش‌ها در `docs/` و `PERFORMANCE.md`) |
 
 نکته‌ها: `setup.ts` سقف انتظار async را ۱۰ ثانیه گذاشته (suite ِ موازی بزرگ است)؛ `testTimeout` ۱۵ ثانیه. تست
