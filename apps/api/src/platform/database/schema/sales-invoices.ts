@@ -14,6 +14,8 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
+import { coinTypes } from './coin-types';
+import { jewelryItems } from './jewelry-items';
 import { parties } from './parties';
 import { priceQuotes } from './price-quotes';
 import { tenants } from './tenants';
@@ -110,6 +112,11 @@ export const salesInvoices = pgTable(
       'sales_invoices_quote_amount_positive_check',
       sql`${table.quoteAmountRial} IS NULL OR ${table.quoteAmountRial} > 0`,
     ),
+    /* شمارنده از صفر شروع و پیش از مصرف یک واحد زیاد می‌شود؛ اولین فاکتور ۱ است. */
+    check(
+      'sales_invoices_number_positive_check',
+      sql`${table.invoiceNumber} IS NULL OR ${table.invoiceNumber} > 0`,
+    ),
 
     /* کلید مرکب برای FK هم‌مستأجرِ نسخه‌ها و ردیف‌های فاکتور. */
     unique('sales_invoices_tenant_id_id_unique').on(table.tenantId, table.id),
@@ -184,8 +191,9 @@ export const salesInvoiceVersions = pgTable(
  * ردیف‌های یک نسخه‌ی فاکتور — BE-039. مثل خودِ نسخه، append-only.
  *
  * شناسه‌ی کالا (`item_id`) چندریختی است (به `jewelry_items` یا
- * `coin_types` می‌رود) و عمداً کلید خارجی ندارد — همان الگوی
- * `inventory_movements.item_id`.
+ * `coin_types` می‌رود)؛ همان الگوی `inventory_movements.item_id`، از BE-063
+ * با دو ستون generated و کلید خارجی هم‌مستأجر برای هر نوع (deferred تا
+ * COMMIT، مهاجرت ۰۰۳۲).
  */
 export const salesInvoiceItems = pgTable(
   'sales_invoice_items',
@@ -196,6 +204,12 @@ export const salesInvoiceItems = pgTable(
     salesInvoiceVersionId: uuid().notNull(),
     itemType: salesInvoiceItemTypeEnum().notNull(),
     itemId: uuid().notNull(),
+    /** فقط برای کلید خارجی؛ مقدارش را دیتابیس از `item_id` می‌سازد. */
+    jewelryItemId: uuid().generatedAlwaysAs(
+      sql`CASE WHEN "item_type" = 'JEWELRY' THEN "item_id" END`,
+    ),
+    /** فقط برای کلید خارجی؛ مقدارش را دیتابیس از `item_id` می‌سازد. */
+    coinTypeId: uuid().generatedAlwaysAs(sql`CASE WHEN "item_type" = 'COIN' THEN "item_id" END`),
     quantity: integer().notNull(),
     lineSnapshot: jsonb().$type<SalesInvoiceSnapshotValue>().notNull(),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
@@ -215,6 +229,16 @@ export const salesInvoiceItems = pgTable(
       ],
       name: 'sales_invoice_items_tenant_invoice_version_fk',
     }).onDelete('cascade'),
+    foreignKey({
+      columns: [table.tenantId, table.jewelryItemId],
+      foreignColumns: [jewelryItems.tenantId, jewelryItems.id],
+      name: 'sales_invoice_items_tenant_jewelry_item_fk',
+    }),
+    foreignKey({
+      columns: [table.tenantId, table.coinTypeId],
+      foreignColumns: [coinTypes.tenantId, coinTypes.id],
+      name: 'sales_invoice_items_tenant_coin_type_fk',
+    }),
 
     check('sales_invoice_items_quantity_positive_check', sql`${table.quantity} > 0`),
 

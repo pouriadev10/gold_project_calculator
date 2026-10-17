@@ -110,8 +110,6 @@ describe('ناوردای دفتر کل چندواحدی — Property-Based (BE-0
 
   afterAll(async () => {
     if (tenantId !== '') {
-      await pool.query('DELETE FROM ledger_entries WHERE tenant_id = $1', [tenantId]);
-      await pool.query('DELETE FROM ledger_transactions WHERE tenant_id = $1', [tenantId]);
       await pool.query('DELETE FROM tenants WHERE id = $1', [tenantId]);
     }
     await app.close();

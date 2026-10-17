@@ -75,6 +75,10 @@ export const jewelryItems = pgTable(
  * وزن خالص ستون نیست و ذخیره نمی‌شود: مشتق وزن ناخالص، کسورات و عیار
  * است و `articlePureMg` در `core-calc` محاسبه‌اش می‌کند. ستون کردنش
  * یعنی دو منبع حقیقت که روزی از هم واگرا می‌شوند.
+ *
+ * BE-063: مثل `coin_type_versions`، exclusion constraint مهاجرت ۰۰۳۲
+ * هم‌پوشانی دو نسخه از یک کالا را رد می‌کند و تریگر همان مهاجرت هر تغییر
+ * مشخصات قیمت‌ساز را — جز بستن بازه، عنوان و غیرفعال‌سازی نسخه‌ی باز.
  */
 export const jewelryItemVersions = pgTable(
   'jewelry_item_versions',

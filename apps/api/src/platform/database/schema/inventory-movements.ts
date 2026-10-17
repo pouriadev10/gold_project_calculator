@@ -10,6 +10,8 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import { assetDimensions } from './asset-dimensions';
+import { coinTypes } from './coin-types';
+import { jewelryItems } from './jewelry-items';
 import { tenants } from './tenants';
 
 /**
@@ -65,11 +67,15 @@ export type InventoryMovementSourceType =
  * علامت، جهت را می‌سازد: ورودی مثبت، خروجی منفی. موجودی جاری مجموع
  * ردیف‌هاست و هیچ‌جا به‌صورت ستون cache نمی‌شود.
  *
- * ## چرا کلید خارجی روی `item_id` نیست
+ * ## کلید خارجیِ `item_id` چندریختی
  *
- * ارجاع چندریختی است و به سه جدول مختلف می‌رود. به‌جای کلید خارجی، یک
- * check constraint تضمین می‌کند شناسه دقیقاً برای همان نوع‌هایی وجود
- * دارد که باید.
+ * ارجاع چندریختی است و به دو جدول مختلف می‌رود، پس خود `item_id` کلید
+ * خارجی نمی‌گیرد. یک check constraint تضمین می‌کند شناسه دقیقاً برای همان
+ * نوع‌هایی وجود دارد که باید، و از BE-063 دو ستون generated
+ * (`jewelry_item_id`، `coin_type_id`) همان شناسه را بر حسب نوع جدا می‌کنند
+ * تا هر کدام کلید خارجی هم‌مستأجرِ واقعی بگیرند — حرکتی به کالا یا سکه‌ی
+ * ناموجود حتی با SQL مستقیم هم ثبت نمی‌شود. همخوانی نوع کالا با نوع بُعد
+ * (سکه فقط روی بُعد همان سکه، بقیه روی بُعد طلا) با تریگر مهاجرت ۰۰۳۲ است.
  */
 export const inventoryMovements = pgTable(
   'inventory_movements',
@@ -86,6 +92,12 @@ export const inventoryMovements = pgTable(
     sourceId: uuid().notNull(),
     itemType: inventoryItemTypeEnum().notNull(),
     itemId: uuid(),
+    /** فقط برای کلید خارجی؛ مقدارش را دیتابیس از `item_id` می‌سازد. */
+    jewelryItemId: uuid().generatedAlwaysAs(
+      sql`CASE WHEN "item_type" = 'JEWELRY' THEN "item_id" END`,
+    ),
+    /** فقط برای کلید خارجی؛ مقدارش را دیتابیس از `item_id` می‌سازد. */
+    coinTypeId: uuid().generatedAlwaysAs(sql`CASE WHEN "item_type" = 'COIN' THEN "item_id" END`),
     /** بُعد قطعی همین حرکت؛ با کلید خارجی هم‌مستأجر محافظت می‌شود. */
     dimensionId: uuid().notNull(),
     quantity: bigint({ mode: 'bigint' }).notNull(),
@@ -98,6 +110,21 @@ export const inventoryMovements = pgTable(
       foreignColumns: [assetDimensions.tenantId, assetDimensions.id],
       name: 'inventory_movements_tenant_dimension_fk',
     }).onDelete('restrict'),
+    /*
+     * مهاجرت ۰۰۳۲ این دو را DEFERRABLE INITIALLY DEFERRED می‌کند تا حذف
+     * مستأجر — که کالا و حرکت را از دو شاخه‌ی cascade جدا می‌برد — به ترتیب
+     * پردازش شاخه‌ها حساس نباشد.
+     */
+    foreignKey({
+      columns: [table.tenantId, table.jewelryItemId],
+      foreignColumns: [jewelryItems.tenantId, jewelryItems.id],
+      name: 'inventory_movements_tenant_jewelry_item_fk',
+    }),
+    foreignKey({
+      columns: [table.tenantId, table.coinTypeId],
+      foreignColumns: [coinTypes.tenantId, coinTypes.id],
+      name: 'inventory_movements_tenant_coin_type_fk',
+    }),
     /*
      * حرکت صفر یعنی هیچ اتفاقی نیفتاده. اجازه دادنش فقط دفتر را با
      * ردیف‌هایی پر می‌کند که موجودی را عوض نمی‌کنند ولی موقع بررسی

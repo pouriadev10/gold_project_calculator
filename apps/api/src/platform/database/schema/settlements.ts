@@ -142,6 +142,20 @@ export const settlementLines = pgTable(
       'settlement_lines_accounts_distinct_check',
       sql`${table.sourceAccountId} <> ${table.destinationAccountId}`,
     ),
+    /*
+     * نرخ قفل‌شده یا کامل است یا اصلاً نیست — BE-063. ردیفی با مبلغ مظنه
+     * ولی بدون شناسه‌ی مظنه (یا برعکس) تبدیل قفل‌شده را ردیابی‌ناپذیر
+     * می‌کند (قاعده‌ی ۲-۸). snapshot عمداً جزو این جفت نیست: ردیف نقدی هم
+     * می‌تواند یادداشت ثبت کند.
+     */
+    check(
+      'settlement_lines_locked_quote_complete_check',
+      sql`(${table.lockedQuoteId} IS NULL) = (${table.lockedQuoteAmountRial} IS NULL)`,
+    ),
+    check(
+      'settlement_lines_locked_quote_amount_positive_check',
+      sql`${table.lockedQuoteAmountRial} IS NULL OR ${table.lockedQuoteAmountRial} > 0`,
+    ),
     index('settlement_lines_tenant_settlement_idx').on(table.tenantId, table.settlementId),
   ],
 );

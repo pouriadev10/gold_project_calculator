@@ -147,10 +147,8 @@ describe('تراکنش و entry دفتر کل (BE-032)', () => {
 
   afterAll(async () => {
     for (const tenantId of tenantIds) {
-      // پاک‌سازی تست با نقش migration انجام می‌شود، نه نقش runtime؛ triggerهای
-      // append-only فقط دسترسی برنامه را می‌بندند تا حذف آبشاری tenant توسعه‌ای ممکن بماند.
-      await db.delete(ledgerEntries).where(eq(ledgerEntries.tenantId, tenantId));
-      await db.delete(ledgerTransactions).where(eq(ledgerTransactions.tenantId, tenantId));
+      // append-only برای هیچ نقشی دور زده نمی‌شود (BE-063)؛ تنها مسیر پاک‌سازی
+      // حذف خودِ tenant است که دفترکلش را cascade می‌کند.
       await db.delete(tenants).where(eq(tenants.id, tenantId));
     }
     await app.close();

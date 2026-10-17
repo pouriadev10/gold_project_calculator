@@ -131,8 +131,6 @@ describe('Reversal دفتر کل (BE-036)', () => {
 
   afterAll(async () => {
     for (const tenantId of tenantIds) {
-      await db.delete(ledgerEntries).where(eq(ledgerEntries.tenantId, tenantId));
-      await db.delete(ledgerTransactions).where(eq(ledgerTransactions.tenantId, tenantId));
       await db.delete(tenants).where(eq(tenants.id, tenantId));
     }
     await app.close();

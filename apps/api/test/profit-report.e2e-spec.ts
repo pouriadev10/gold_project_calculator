@@ -13,6 +13,7 @@ import { DRIZZLE } from '../src/platform/database/database.module';
 import {
   coinTypes,
   coinTypeVersions,
+  jewelryItems,
   salesInvoiceItems,
   salesInvoiceVersions,
   salesInvoices,
@@ -191,7 +192,7 @@ describe('profit report (BE-060)', () => {
       })
     ).id;
 
-    const coinIds = await withTenantTransaction(db, tenant.id, async (transaction) => {
+    const itemIds = await withTenantTransaction(db, tenant.id, async (transaction) => {
       const [central] = await transaction
         .insert(coinTypes)
         .values({ tenantId: tenant.id, code: `CENTRAL-${randomUUID().slice(0, 8)}` })
@@ -230,22 +231,28 @@ describe('profit report (BE-060)', () => {
           active: true,
         })
         .returning();
+      // ردیف فاکتور از BE-063 کلید خارجی واقعی به کالا دارد.
+      const [jewelryItem] = await transaction
+        .insert(jewelryItems)
+        .values({ tenantId: tenant.id, code: `JWL-${randomUUID().slice(0, 8)}` })
+        .returning();
       return {
+        jewelryItemId: jewelryItem!.id,
         centralTypeId: central!.id,
         privateTypeId: privateCoin!.id,
         centralVersionId: centralVersion!.id,
         privateVersionId: privateVersion!.id,
       };
     });
-    centralCoinVersionId = coinIds.centralVersionId;
-    privateCoinVersionId = coinIds.privateVersionId;
+    centralCoinVersionId = itemIds.centralVersionId;
+    privateCoinVersionId = itemIds.privateVersionId;
 
     jewelryInvoiceId = await seedInvoice({
       invoiceNumber: 1,
       quoteId: saleQuoteId,
       payableRial: '150000000',
       itemType: 'JEWELRY',
-      itemId: randomUUID(),
+      itemId: itemIds.jewelryItemId,
       itemSnapshot: { pureWeightMg: '1000' },
       quantity: 1,
     });
@@ -254,7 +261,7 @@ describe('profit report (BE-060)', () => {
       quoteId: saleQuoteId,
       payableRial: '440000000',
       itemType: 'COIN',
-      itemId: coinIds.centralTypeId,
+      itemId: itemIds.centralTypeId,
       itemSnapshot: {
         coinTypeVersionId: centralCoinVersionId,
         intrinsicValueRial: '200000000',
@@ -267,7 +274,7 @@ describe('profit report (BE-060)', () => {
       quoteId: saleQuoteId,
       payableRial: '200000000',
       itemType: 'COIN',
-      itemId: coinIds.privateTypeId,
+      itemId: itemIds.privateTypeId,
       itemSnapshot: {
         coinTypeVersionId: privateCoinVersionId,
         intrinsicValueRial: '200000000',

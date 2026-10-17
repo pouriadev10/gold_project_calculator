@@ -164,10 +164,20 @@ export const secondHandPurchaseItems = pgTable(
       'second_hand_purchase_items_destination_matches_type_check',
       sql`(${table.itemType} = 'GOLD') = (${table.destinationInventoryType} = 'MELTED_GOLD')`,
     ),
+    /*
+     * هر ستون صریحاً `IS NOT NULL` می‌گیرد — BE-063. CHECK با نتیجه‌ی NULL
+     * قبول می‌شود، پس بدون آن ردیف طلای بی‌وزن یا سکه‌ی بی‌تعداد از هر دو
+     * check رد می‌شد.
+     */
     check(
       'second_hand_purchase_items_gold_fields_check',
       sql`
         ${table.itemType} <> 'GOLD' OR (
+          ${table.grossWeightMg} IS NOT NULL AND
+          ${table.stoneWeightMg} IS NOT NULL AND
+          ${table.otherDeductionWeightMg} IS NOT NULL AND
+          ${table.purchaseKarat} IS NOT NULL AND
+          ${table.pureWeightMg} IS NOT NULL AND
           ${table.grossWeightMg} > 0 AND
           ${table.stoneWeightMg} >= 0 AND
           ${table.otherDeductionWeightMg} >= 0 AND
@@ -189,6 +199,7 @@ export const secondHandPurchaseItems = pgTable(
           ${table.purchaseKarat} IS NULL AND
           ${table.pureWeightMg} IS NULL AND
           ${table.coinTypeId} IS NOT NULL AND
+          ${table.coinCount} IS NOT NULL AND
           ${table.coinCount} > 0
         )
       `,

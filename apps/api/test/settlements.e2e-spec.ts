@@ -243,7 +243,8 @@ describe('settlement model and lifecycle (BE-044)', () => {
           quantity: 1n,
           sourceAccountId: receivableAccountId,
           destinationAccountId: coinInventoryAccount.id,
-          lockedQuoteAmountRial: 100_000_000n,
+          // مبلغ مظنه‌ی قفل‌شده بدون شناسه‌ی مظنه از BE-063 رد می‌شود؛ این آزمون
+          // فقط چندبُعدی بودن ردیف‌ها را می‌سنجد، نه تبدیل.
           lockedConversionSnapshot: { marketUnitPriceRial: '250000000' },
         },
       ],

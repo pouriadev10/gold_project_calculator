@@ -172,10 +172,8 @@ describe('Constraint trigger تراز دفتر کل (BE-033)', () => {
 
   afterAll(async () => {
     for (const tenantId of tenantIds) {
-      // این اتصال نقش migration دارد؛ نقش runtime و triggerهای append-only عمداً
-      // برای پاک‌سازی tenantهای کوتاه‌عمر آزمون دور زده نمی‌شوند.
-      await pool.query('DELETE FROM ledger_entries WHERE tenant_id = $1', [tenantId]);
-      await pool.query('DELETE FROM ledger_transactions WHERE tenant_id = $1', [tenantId]);
+      // append-only برای هیچ نقشی دور زده نمی‌شود (BE-063)؛ تنها مسیر پاک‌سازی
+      // حذف خودِ tenant است که دفترکلش را cascade می‌کند.
       await pool.query('DELETE FROM tenants WHERE id = $1', [tenantId]);
     }
     await app.close();

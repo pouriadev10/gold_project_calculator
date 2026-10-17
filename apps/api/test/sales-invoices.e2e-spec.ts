@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { AppModule } from '../src/app.module';
 import { DRIZZLE } from '../src/platform/database/database.module';
 import {
+  jewelryItems,
   salesInvoiceItems,
   salesInvoiceVersions,
   salesInvoices,
@@ -35,6 +36,7 @@ describe('versioned sales invoices (BE-039)', () => {
   let invoices: SalesInvoicesService;
   let partyId = '';
   let quoteId = '';
+  let jewelryItemId = '';
   let actorUserId = '';
   const effectiveAt = new Date('2026-08-10T09:00:00Z');
 
@@ -72,6 +74,14 @@ describe('versioned sales invoices (BE-039)', () => {
       createdBy: actorUserId,
     });
     quoteId = quote.id;
+    // ردیف فاکتور از BE-063 کلید خارجی واقعی به کالا دارد.
+    const [jewelryItem] = await withTenantTransaction(db, tenant.id, (transaction) =>
+      transaction
+        .insert(jewelryItems)
+        .values({ tenantId: tenant.id, code: `JWL-${randomUUID().slice(0, 8)}` })
+        .returning(),
+    );
+    jewelryItemId = jewelryItem!.id;
   });
 
   afterAll(async () => {
@@ -101,7 +111,7 @@ describe('versioned sales invoices (BE-039)', () => {
       items: [
         {
           itemType: 'JEWELRY',
-          itemId: randomUUID(),
+          itemId: jewelryItemId,
           quantity: 1,
           lineSnapshot: { pureWeightMg: '7500', finalRial: '1234567890' },
         },

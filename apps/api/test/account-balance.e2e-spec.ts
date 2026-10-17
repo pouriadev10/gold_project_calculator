@@ -13,8 +13,6 @@ import {
   assetDimensions,
   coinTypes,
   ledgerAccounts,
-  ledgerEntries,
-  ledgerTransactions,
   tenants,
 } from '../src/platform/database/schema';
 import { withTenantTransaction } from '../src/platform/database/tenant-transaction';
@@ -129,8 +127,6 @@ describe('مانده‌ی حساب — getAccountBalances (BE-037)', () => {
 
   afterAll(async () => {
     for (const tenantId of tenantIds) {
-      await db.delete(ledgerEntries).where(eq(ledgerEntries.tenantId, tenantId));
-      await db.delete(ledgerTransactions).where(eq(ledgerTransactions.tenantId, tenantId));
       await db.delete(tenants).where(eq(tenants.id, tenantId));
     }
     await app.close();

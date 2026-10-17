@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { randomUUID } from 'node:crypto';
 import { Test } from '@nestjs/testing';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { AppModule } from '../src/app.module';
 import { VersionedSettingsService } from '../src/modules/pricing/versioned-settings.service';
@@ -116,20 +116,12 @@ describe('tenant initial settings (BE-019)', () => {
 
   it('raises a clear domain error instead of falling back when a required setting is absent', async () => {
     const tenant = await createTenant();
-
-    await withTenantTransaction(db, tenant.id, (transaction) =>
-      transaction
-        .delete(versionedSettings)
-        .where(
-          and(
-            eq(versionedSettings.tenantId, tenant.id),
-            eq(versionedSettings.settingKey, 'pricing.base_quote_karat'),
-          ),
-        ),
-    );
+    // نسخه‌ی تاریخی دیگر حذف‌شدنی نیست (BE-063)؛ پیش از اولین نسخه هم هیچ
+    // مقداری مؤثر نیست — همان حالت «تنظیم وجود ندارد».
+    const beforeFirstVersion = new Date(tenant.createdAt.getTime() - 1);
 
     await expect(
-      settingsService.getRequiredEffective(tenant.id, 'pricing.base_quote_karat', tenant.createdAt),
+      settingsService.getRequiredEffective(tenant.id, 'pricing.base_quote_karat', beforeFirstVersion),
     ).rejects.toMatchObject({
       name: RequiredSettingMissingError.name,
       settingKey: 'pricing.base_quote_karat',
