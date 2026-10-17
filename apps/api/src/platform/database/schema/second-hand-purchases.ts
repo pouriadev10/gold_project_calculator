@@ -117,6 +117,11 @@ export const secondHandPurchases = pgTable(
       table.tenantId,
       table.sourceInvoiceId,
     ),
+    /*
+     * BE-066 — گزارش سود خریدهای یک بازه را بدون Party می‌خواهد؛ شاخص
+     * (tenant, party, effective_at) بالا برای آن قابل استفاده نیست.
+     */
+    index('second_hand_purchases_tenant_effective_at_idx').on(table.tenantId, table.effectiveAt),
   ],
 );
 

@@ -1,0 +1,3 @@
+CREATE INDEX "sales_invoices_tenant_event_at_idx" ON "sales_invoices" USING btree ("tenant_id",coalesce("finalized_at", "created_at"),"id");--> statement-breakpoint
+CREATE INDEX "sales_invoices_tenant_finalized_at_idx" ON "sales_invoices" USING btree ("tenant_id","finalized_at") WHERE "sales_invoices"."status" = 'FINALIZED';--> statement-breakpoint
+CREATE INDEX "second_hand_purchases_tenant_effective_at_idx" ON "second_hand_purchases" USING btree ("tenant_id","effective_at");

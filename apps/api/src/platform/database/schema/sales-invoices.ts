@@ -123,6 +123,22 @@ export const salesInvoices = pgTable(
     uniqueIndex('sales_invoices_tenant_number_unique').on(table.tenantId, table.invoiceNumber),
     index('sales_invoices_tenant_party_idx').on(table.tenantId, table.partyId),
     index('sales_invoices_tenant_status_idx').on(table.tenantId, table.status),
+    /*
+     * BE-066 — فهرست فاکتورها روی همین عبارت مرتب و فیلتر می‌شود
+     * (`sales-invoice-reads.service.ts`). بدون آن هر صفحه‌ی ۵۰تایی همه‌ی
+     * فاکتورهای مستأجر را می‌خواند و مرتب می‌کند و هزینه‌اش با هر سال سابقه
+     * بزرگ‌تر می‌شود؛ با آن، صفحه دقیقاً ۵۰ ردیف می‌خواند. اسکن معکوس B-tree
+     * ترتیب DESC را هم پوشش می‌دهد.
+     */
+    index('sales_invoices_tenant_event_at_idx').on(
+      table.tenantId,
+      sql`coalesce(${table.finalizedAt}, ${table.createdAt})`,
+      table.id,
+    ),
+    /* BE-066 — گزارش سود یک بازه: فقط فاکتورهای نهایی همان بازه خوانده می‌شوند. */
+    index('sales_invoices_tenant_finalized_at_idx')
+      .on(table.tenantId, table.finalizedAt)
+      .where(sql`${table.status} = 'FINALIZED'`),
   ],
 );
 

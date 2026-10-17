@@ -239,6 +239,13 @@
       "when": 1792261934786,
       "tag": "0033_be065_app_role_global_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1792275087276,
+      "tag": "0034_be066_report_indexes",
+      "breakpoints": true
     }
   ]
 }
