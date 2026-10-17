@@ -624,9 +624,9 @@
     "semantic_hash": ""
   },
   "apps/api/drizzle/meta/_journal.json": {
-    "mtime": 1792259716.67433,
-    "seen": 1792260094.064365,
-    "ast_hash": "01cac56b6494909fca7125def1bb5018",
+    "mtime": 1792261934.7875204,
+    "seen": 1792262677.0596209,
+    "ast_hash": "b04e7d261cff3a699558f17d54ef8146",
     "semantic_hash": ""
   },
   "apps/api/nest-cli.json": {
@@ -672,9 +672,9 @@
     "semantic_hash": ""
   },
   "apps/api/src/modules/inventory/coin-types.errors.ts": {
-    "mtime": 1792258238.1472118,
-    "seen": 1792260094.0643802,
-    "ast_hash": "f23edafa4b36e3bf5723969ae533780f",
+    "mtime": 1792262280.2323408,
+    "seen": 1792262677.0596404,
+    "ast_hash": "3baa10714f6e831b20df713ac50a7c6e",
     "semantic_hash": ""
   },
   "apps/api/src/modules/inventory/coin-types.service.ts": {
@@ -720,9 +720,9 @@
     "semantic_hash": ""
   },
   "apps/api/src/modules/inventory/jewelry-items.errors.ts": {
-    "mtime": 1786392663.4765975,
-    "seen": 1789132525.9447138,
-    "ast_hash": "c464a11ef21ad9fc27d70875e4dc13d7",
+    "mtime": 1792262280.2329564,
+    "seen": 1792262677.0596547,
+    "ast_hash": "ba1d8ab8d50365393bae682fd9da63cb",
     "semantic_hash": ""
   },
   "apps/api/src/modules/inventory/jewelry-items.service.ts": {
@@ -840,15 +840,15 @@
     "semantic_hash": ""
   },
   "apps/api/src/modules/parties/parties.service.ts": {
-    "mtime": 1786392733.3002412,
-    "seen": 1789132525.9447286,
-    "ast_hash": "1e3d89ac64dc2bdf0cbbdc9bb70ef82d",
+    "mtime": 1792262280.2299063,
+    "seen": 1792262677.0596964,
+    "ast_hash": "70d97dccaba5bd4fad419a521366c56c",
     "semantic_hash": ""
   },
   "apps/api/src/modules/parties/party-balances.errors.ts": {
-    "mtime": 1786965220.0032735,
-    "seen": 1789132525.9447293,
-    "ast_hash": "e5466768de92659d86463ff8b9877e6d",
+    "mtime": 1792262280.2318294,
+    "seen": 1792262677.059698,
+    "ast_hash": "de5249fcabf940f44edf252424777a33",
     "semantic_hash": ""
   },
   "apps/api/src/modules/parties/party-balances.service.ts": {
@@ -936,9 +936,9 @@
     "semantic_hash": ""
   },
   "apps/api/src/modules/purchase/b2c-buybacks.errors.ts": {
-    "mtime": 1786965220.0053296,
-    "seen": 1789132525.9447405,
-    "ast_hash": "c9c4253aff31ac1fea3f8b598b93cc85",
+    "mtime": 1792262280.2344365,
+    "seen": 1792262677.0597389,
+    "ast_hash": "1d14af14533379117f3c911e4a7f63c3",
     "semantic_hash": ""
   },
   "apps/api/src/modules/purchase/b2c-buybacks.service.ts": {
@@ -972,9 +972,9 @@
     "semantic_hash": ""
   },
   "apps/api/src/modules/purchase/second-hand-gold-purchases.errors.ts": {
-    "mtime": 1786965220.0075593,
-    "seen": 1789132525.9447453,
-    "ast_hash": "dd24e33c153320ac1a27bbcb04acd070",
+    "mtime": 1792262280.2336943,
+    "seen": 1792262677.0597494,
+    "ast_hash": "060d9d992ed943946b168cc0a4c5936b",
     "semantic_hash": ""
   },
   "apps/api/src/modules/purchase/second-hand-gold-purchases.service.ts": {
@@ -1026,9 +1026,9 @@
     "semantic_hash": ""
   },
   "apps/api/src/modules/reporting/reporting.errors.ts": {
-    "mtime": 1786965220.0106723,
-    "seen": 1789132525.9447534,
-    "ast_hash": "f33bdbcc156de73ec307a5c42a277638",
+    "mtime": 1792262280.236938,
+    "seen": 1792262677.0597708,
+    "ast_hash": "3cde8dbd5d318981fe58d7b129703b18",
     "semantic_hash": ""
   },
   "apps/api/src/modules/reporting/reporting.module.ts": {
@@ -1134,9 +1134,9 @@
     "semantic_hash": ""
   },
   "apps/api/src/modules/sales/sales-invoices.errors.ts": {
-    "mtime": 1786392733.3042436,
-    "seen": 1789132525.944767,
-    "ast_hash": "aa5a5c1e718fab6dd8d80c06fe212c50",
+    "mtime": 1792262280.2336943,
+    "seen": 1792262677.0598102,
+    "ast_hash": "aee6267dbd31e4a5d497e3f3f1734d26",
     "semantic_hash": ""
   },
   "apps/api/src/modules/sales/sales-invoices.service.ts": {
@@ -1146,9 +1146,9 @@
     "semantic_hash": ""
   },
   "apps/api/src/modules/sales/sales-pricing.errors.ts": {
-    "mtime": 1786707255.618528,
-    "seen": 1789132525.9447684,
-    "ast_hash": "db40c017d50bac01146918f62c6c74bc",
+    "mtime": 1792262280.2329564,
+    "seen": 1792262677.0598133,
+    "ast_hash": "8ed33d97bebfdcce04d0cc8424439117",
     "semantic_hash": ""
   },
   "apps/api/src/modules/sales/sales-pricing.service.ts": {
@@ -1170,9 +1170,9 @@
     "semantic_hash": ""
   },
   "apps/api/src/modules/settlement/coin-settlements.errors.ts": {
-    "mtime": 1786965220.016229,
-    "seen": 1789132525.9447713,
-    "ast_hash": "8013446f91b8a5c6cf9ef7262bc4dd63",
+    "mtime": 1792262280.235401,
+    "seen": 1792262677.0598192,
+    "ast_hash": "e562a725013f0c730fd440ad6f0b95e1",
     "semantic_hash": ""
   },
   "apps/api/src/modules/settlement/coin-settlements.service.ts": {
@@ -1188,9 +1188,9 @@
     "semantic_hash": ""
   },
   "apps/api/src/modules/settlement/gold-settlements.errors.ts": {
-    "mtime": 1786965220.0182278,
-    "seen": 1789132525.9447734,
-    "ast_hash": "780cd09689f8fa4a6143f00395c31c0c",
+    "mtime": 1792262280.2359085,
+    "seen": 1792262677.0598242,
+    "ast_hash": "33a69302570029651e002324e696a90e",
     "semantic_hash": ""
   },
   "apps/api/src/modules/settlement/gold-settlements.service.ts": {
@@ -1206,9 +1206,9 @@
     "semantic_hash": ""
   },
   "apps/api/src/modules/settlement/mixed-settlements.errors.ts": {
-    "mtime": 1786965220.018929,
-    "seen": 1789132525.9447756,
-    "ast_hash": "a31a7ec1bb27571cf630936c5e86109c",
+    "mtime": 1792262280.2364597,
+    "seen": 1792262677.059829,
+    "ast_hash": "d3c96a7f2515f99f85a63bf6fb61f814",
     "semantic_hash": ""
   },
   "apps/api/src/modules/settlement/mixed-settlements.service.ts": {
@@ -1236,9 +1236,9 @@
     "semantic_hash": ""
   },
   "apps/api/src/modules/settlement/settlements.errors.ts": {
-    "mtime": 1786707255.622025,
-    "seen": 1789132525.9447792,
-    "ast_hash": "a58a17f38e15d7585b11d02d307d012f",
+    "mtime": 1792262280.2349408,
+    "seen": 1792262677.0598376,
+    "ast_hash": "3deec158e23795a90180545ae48b2c7c",
     "semantic_hash": ""
   },
   "apps/api/src/modules/settlement/settlements.service.ts": {
@@ -1578,9 +1578,9 @@
     "semantic_hash": ""
   },
   "apps/api/src/platform/error-contract/api-exception.filter.ts": {
-    "mtime": 1785921229.7930195,
-    "seen": 1789132525.9448214,
-    "ast_hash": "7836dc24259a13169cdaca352ad514c9",
+    "mtime": 1792262260.7497635,
+    "seen": 1792262677.0599356,
+    "ast_hash": "9fd3bdd44f72c37e45e1d3a8ade21a22",
     "semantic_hash": ""
   },
   "apps/api/src/platform/files/document-issuer.service.ts": {
@@ -1968,9 +1968,9 @@
     "semantic_hash": ""
   },
   "apps/api/test/error-contract.e2e-spec.ts": {
-    "mtime": 1785921229.8115306,
-    "seen": 1789132525.94487,
-    "ast_hash": "a60a1b34c745303961c6c599890d6d33",
+    "mtime": 1792262532.919139,
+    "seen": 1792262677.0600593,
+    "ast_hash": "fa1e4540612561fec53b3a8cd4aa4a18",
     "semantic_hash": ""
   },
   "apps/api/test/gold-settlements.e2e-spec.ts": {
@@ -3792,9 +3792,9 @@
     "semantic_hash": ""
   },
   "packages/contracts/src/parties/parties.ts": {
-    "mtime": 1791638476.9772482,
-    "seen": 1791640111.3258848,
-    "ast_hash": "319b2abcaa8291d7a87f8ad4c2ee610d",
+    "mtime": 1792261817.2348566,
+    "seen": 1792262677.060825,
+    "ast_hash": "738a86df3c5ac33111067266288b8190",
     "semantic_hash": ""
   },
   "packages/contracts/src/pricing/index.ts": {
@@ -5046,9 +5046,9 @@
     "semantic_hash": ""
   },
   "TASKS.md": {
-    "mtime": 1792261038.532663,
-    "seen": 1792261125.5274546,
-    "ast_hash": "b3e430053ab01f67e25e2ef110b13f47",
+    "mtime": 1792262593.5330966,
+    "seen": 1792262677.0615222,
+    "ast_hash": "5655933afa999a6c5da3cb2727c4e947",
     "semantic_hash": ""
   },
   "TECH-A~1.MD": {
@@ -6417,6 +6417,30 @@
     "mtime": 1792260946.0630453,
     "seen": 1792261125.526399,
     "ast_hash": "765bc11b42ae4b0a1abf9572f5c47420",
+    "semantic_hash": ""
+  },
+  "apps/api/drizzle/0033_be065_app_role_global_tables.sql": {
+    "mtime": 1792261947.845032,
+    "seen": 1792262677.0595512,
+    "ast_hash": "3b8006d9ff68e02e95d23bf6e345ead3",
+    "semantic_hash": ""
+  },
+  "apps/api/drizzle/meta/0033_snapshot.json": {
+    "mtime": 1792261934.7860544,
+    "seen": 1792262677.0596182,
+    "ast_hash": "b8e29595d478f9808c7676bbb9c38f97",
+    "semantic_hash": ""
+  },
+  "apps/api/src/platform/error-contract/resource-not-found.error.ts": {
+    "mtime": 1792262253.803252,
+    "seen": 1792262677.0599377,
+    "ast_hash": "9b3dd3ba952ae089edb7e5b60c0f9cb9",
+    "semantic_hash": ""
+  },
+  "apps/api/test/multi-tenant-security.e2e-spec.ts": {
+    "mtime": 1792262324.1799603,
+    "seen": 1792262677.0600903,
+    "ast_hash": "ea4e15be917ded8f974bcd6ccd9c1f4b",
     "semantic_hash": ""
   }
 }
