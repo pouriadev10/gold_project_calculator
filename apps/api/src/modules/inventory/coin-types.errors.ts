@@ -1,3 +1,5 @@
+import { ResourceNotFoundError } from '../../platform/error-contract/resource-not-found.error';
+
 export class InvalidCoinTypeVersionDateError extends Error {
   constructor() {
     super('Coin type version date must be after the current version start');
@@ -19,7 +21,7 @@ export class CoinMintTypeMismatchError extends Error {
   }
 }
 
-export class CoinTypeNotFoundError extends Error {
+export class CoinTypeNotFoundError extends ResourceNotFoundError {
   readonly coinTypeId: string;
 
   constructor(coinTypeId: string) {

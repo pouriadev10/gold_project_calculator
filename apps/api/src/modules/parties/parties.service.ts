@@ -5,6 +5,7 @@ import { AuditService } from '../../platform/audit/audit.service';
 import { DRIZZLE } from '../../platform/database/database.module';
 import { parties } from '../../platform/database/schema';
 import { withTenantTransaction } from '../../platform/database/tenant-transaction';
+import { ResourceNotFoundError } from '../../platform/error-contract/resource-not-found.error';
 import type { Database } from '../../platform/database/connect';
 import type { Party } from '../../platform/database/schema';
 import type { TenantTransaction } from '../../platform/database/tenant-transaction';
@@ -43,7 +44,7 @@ export interface PartyPage {
   readonly offset: number;
 }
 
-export class PartyNotFoundError extends Error {
+export class PartyNotFoundError extends ResourceNotFoundError {
   constructor() {
     super('شخص مورد نظر پیدا نشد');
   }
@@ -96,7 +97,8 @@ export class PartiesService {
           command.input.nationalId === undefined
             ? null
             : normalizeTextForStorage(command.input.nationalId),
-        linkedTenantId: command.input.linkedTenantId ?? null,
+        // قرارداد ورودی دیگر linkedTenantId نمی‌پذیرد (BE-065): پیوند بی‌رضایت به مستأجر دیگر.
+        linkedTenantId: null,
         notes:
           command.input.notes === undefined ? null : normalizeTextForStorage(command.input.notes),
       })
@@ -212,8 +214,9 @@ export class PartiesService {
           ? null
           : normalizeTextForStorage(command.input.nationalId);
     }
-    if (command.input.linkedTenantId !== undefined) {
-      values.linkedTenantId = command.input.linkedTenantId;
+    // فقط پاک کردن مجاز است؛ قرارداد مقدار غیر null را رد می‌کند (BE-065).
+    if (command.input.linkedTenantId === null) {
+      values.linkedTenantId = null;
     }
     if (command.input.notes !== undefined) {
       values.notes =

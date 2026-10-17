@@ -232,6 +232,13 @@
       "when": 1792259054184,
       "tag": "0032_be063_database_constraints",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1792261934786,
+      "tag": "0033_be065_app_role_global_tables",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,7 @@
+import { ResourceNotFoundError } from '../../platform/error-contract/resource-not-found.error';
+
 /** فاکتور در این tenant وجود ندارد. */
-export class SalesInvoiceNotFoundError extends Error {
+export class SalesInvoiceNotFoundError extends ResourceNotFoundError {
   readonly salesInvoiceId: string;
 
   constructor(salesInvoiceId: string) {
@@ -28,7 +30,7 @@ export class SalesInvoiceRequiresItemsError extends Error {
   }
 }
 
-export class SalesInvoiceQuoteNotFoundError extends Error {
+export class SalesInvoiceQuoteNotFoundError extends ResourceNotFoundError {
   constructor() {
     super('Sales invoice quote is not available to this tenant');
     this.name = 'SalesInvoiceQuoteNotFoundError';

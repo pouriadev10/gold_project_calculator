@@ -18,26 +18,36 @@ const mobileSchema = z.string().trim().min(1).max(32);
 const nationalIdSchema = z.string().trim().min(1).max(32);
 const notesSchema = z.string().trim().max(2_000);
 
-/** Input for `POST /parties`. Server-side normalization owns derived search fields. */
+/**
+ * Input for `POST /parties`. Server-side normalization owns derived search fields.
+ *
+ * `linkedTenantId` is deliberately not accepted (BE-065): linking a party to
+ * another tenant on the platform needs that tenant's consent, and phase 1 has
+ * no such flow. Letting a client set it would let tenant A claim tenant B
+ * without B ever agreeing. The column and the response field stay for the
+ * future network phase; `.strict()` rejects the key.
+ */
 export const createPartySchema = z
   .object({
     type: partyTypeSchema,
     displayName: displayNameSchema,
     mobile: mobileSchema.optional(),
     nationalId: nationalIdSchema.optional(),
-    linkedTenantId: uuidSchema.optional(),
     notes: notesSchema.optional(),
   })
   .strict();
 
-/** Input for `PATCH /parties/:id`; null clears an optional identifying field. */
+/**
+ * Input for `PATCH /parties/:id`; null clears an optional identifying field.
+ * `linkedTenantId` may only be cleared, never set — same reason as create.
+ */
 export const updatePartySchema = z
   .object({
     type: partyTypeSchema.optional(),
     displayName: displayNameSchema.optional(),
     mobile: mobileSchema.nullable().optional(),
     nationalId: nationalIdSchema.nullable().optional(),
-    linkedTenantId: uuidSchema.nullable().optional(),
+    linkedTenantId: z.null().optional(),
     notes: notesSchema.nullable().optional(),
   })
   .strict()

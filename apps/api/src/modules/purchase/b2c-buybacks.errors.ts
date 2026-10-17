@@ -1,4 +1,6 @@
-export class B2cBuybackInvoiceNotFoundError extends Error {
+import { ResourceNotFoundError } from '../../platform/error-contract/resource-not-found.error';
+
+export class B2cBuybackInvoiceNotFoundError extends ResourceNotFoundError {
   constructor() {
     super('The source sales invoice is not available to this tenant');
     this.name = 'B2cBuybackInvoiceNotFoundError';

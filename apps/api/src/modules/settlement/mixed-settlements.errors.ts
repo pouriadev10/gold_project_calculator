@@ -1,3 +1,5 @@
+import { ResourceNotFoundError } from '../../platform/error-contract/resource-not-found.error';
+
 export class MixedSettlementInvalidInputError extends Error {
   constructor(message: string) {
     super(message);
@@ -5,7 +7,7 @@ export class MixedSettlementInvalidInputError extends Error {
   }
 }
 
-export class MixedSettlementQuoteNotFoundError extends Error {
+export class MixedSettlementQuoteNotFoundError extends ResourceNotFoundError {
   constructor() {
     super(
       'A positive MAZNEH quote from the current tenant is required for a mixed settlement conversion',

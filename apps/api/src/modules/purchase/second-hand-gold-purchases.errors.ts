@@ -1,11 +1,13 @@
-export class SecondHandPurchasePartyNotFoundError extends Error {
+import { ResourceNotFoundError } from '../../platform/error-contract/resource-not-found.error';
+
+export class SecondHandPurchasePartyNotFoundError extends ResourceNotFoundError {
   constructor() {
     super('An active consumer party is required for a second-hand purchase');
     this.name = 'SecondHandPurchasePartyNotFoundError';
   }
 }
 
-export class SecondHandPurchaseNotFoundError extends Error {
+export class SecondHandPurchaseNotFoundError extends ResourceNotFoundError {
   constructor(secondHandPurchaseId: string) {
     super(`Second-hand purchase "${secondHandPurchaseId}" is not available to this tenant`);
     this.name = 'SecondHandPurchaseNotFoundError';
@@ -19,7 +21,7 @@ export class SecondHandPurchasePartyNotConsumerError extends Error {
   }
 }
 
-export class SecondHandPurchaseQuoteNotFoundError extends Error {
+export class SecondHandPurchaseQuoteNotFoundError extends ResourceNotFoundError {
   constructor() {
     super('A positive MAZNEH quote from the current tenant is required');
     this.name = 'SecondHandPurchaseQuoteNotFoundError';

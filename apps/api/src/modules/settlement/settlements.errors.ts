@@ -1,4 +1,6 @@
-export class SettlementNotFoundError extends Error {
+import { ResourceNotFoundError } from '../../platform/error-contract/resource-not-found.error';
+
+export class SettlementNotFoundError extends ResourceNotFoundError {
   readonly settlementId: string;
 
   constructor(settlementId: string) {

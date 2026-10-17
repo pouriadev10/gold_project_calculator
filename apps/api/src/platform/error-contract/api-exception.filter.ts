@@ -5,6 +5,7 @@ import { getPostgresErrorCode } from '../database/pg-errors';
 import { RequestContextService } from '../request-context/request-context.service';
 import { readRequestId, REQUEST_ID_HEADER } from '../request-context/request-id';
 import { ZodValidationException } from '../../shared/validation';
+import { ResourceNotFoundError } from './resource-not-found.error';
 import type { ArgumentsHost, ExceptionFilter } from '@nestjs/common';
 import type { ApiError, ApiErrorCode } from '@gold/contracts';
 import type { AppConfig } from '../config/env.schema';
@@ -148,6 +149,14 @@ function mapException(exception: unknown): ErrorMapping {
   }
   if (exception instanceof HttpException) {
     return mapHttpException(exception);
+  }
+  if (exception instanceof ResourceNotFoundError) {
+    return {
+      status: HttpStatus.NOT_FOUND,
+      code: 'NOT_FOUND',
+      message: 'داده‌ی مورد نظر پیدا نشد',
+      fields: EMPTY_FIELDS,
+    };
   }
 
   return internalError();

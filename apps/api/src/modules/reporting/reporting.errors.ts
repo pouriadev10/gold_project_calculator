@@ -1,4 +1,6 @@
-export class ReportingReferenceQuoteNotFoundError extends Error {
+import { ResourceNotFoundError } from '../../platform/error-contract/resource-not-found.error';
+
+export class ReportingReferenceQuoteNotFoundError extends ResourceNotFoundError {
   constructor() {
     super('Reference mazneh was not found');
   }

@@ -1,3 +1,5 @@
+import { ResourceNotFoundError } from '../../platform/error-contract/resource-not-found.error';
+
 export class InvalidJewelryItemVersionDateError extends Error {
   constructor() {
     super('Jewelry item version date must be after the current version start');
@@ -44,7 +46,7 @@ export class InvalidJewelryWeightError extends Error {
   }
 }
 
-export class JewelryItemNotFoundError extends Error {
+export class JewelryItemNotFoundError extends ResourceNotFoundError {
   readonly jewelryItemId: string;
 
   constructor(jewelryItemId: string) {

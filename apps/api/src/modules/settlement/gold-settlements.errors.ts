@@ -1,4 +1,6 @@
-export class GoldSettlementQuoteNotFoundError extends Error {
+import { ResourceNotFoundError } from '../../platform/error-contract/resource-not-found.error';
+
+export class GoldSettlementQuoteNotFoundError extends ResourceNotFoundError {
   constructor() {
     super('A positive MAZNEH quote from the current tenant is required for a gold settlement');
     this.name = 'GoldSettlementQuoteNotFoundError';

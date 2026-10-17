@@ -1,4 +1,6 @@
-export class SalesPricingQuoteNotFoundError extends Error {
+import { ResourceNotFoundError } from '../../platform/error-contract/resource-not-found.error';
+
+export class SalesPricingQuoteNotFoundError extends ResourceNotFoundError {
   constructor() {
     super('The selected mazneh quote is not available to this tenant');
     this.name = 'SalesPricingQuoteNotFoundError';

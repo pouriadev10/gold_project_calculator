@@ -9,6 +9,7 @@ import { apiErrorSchema } from '@gold/contracts';
 import { AppModule } from '../src/app.module';
 import { ZodValidationPipe } from '../src/shared/validation';
 import { REQUEST_ID_HEADER } from '../src/platform/request-context/request-id';
+import { ResourceNotFoundError } from '../src/platform/error-contract/resource-not-found.error';
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 
 const validationSchema = z.object({ name: z.string().min(1, 'نام الزامی است') });
@@ -42,6 +43,17 @@ class ErrorProbeController {
   @Get('internal')
   internal(): void {
     throw new Error('passwordHash and table private_schema_secret must never reach the client');
+  }
+
+  @Get('resource-not-found')
+  resourceNotFound(): void {
+    throw new ProbeResourceNotFoundError();
+  }
+}
+
+class ProbeResourceNotFoundError extends ResourceNotFoundError {
+  constructor() {
+    super('Party "9f1c2b9e-0000-4000-8000-000000000000" was not found for tenant private-tenant');
   }
 }
 
@@ -95,6 +107,19 @@ describe('قرارداد استاندارد خطا', () => {
     expect(conflictBody.error.code).toBe('CONFLICT');
     expect(notFoundBody.error.fields).toEqual({});
     expect(conflictBody.error.fields).toEqual({});
+  });
+
+  it('خطای دامنه‌ی «ارجاع ناموجود» بدون نگاشت controller هم ۴۰۴ است و جزئیاتش بیرون نمی‌رود (BE-065)', async () => {
+    const response = await adapter.getInstance().inject({
+      method: 'GET',
+      url: '/auth/error-probe/resource-not-found',
+    });
+    const body = apiErrorSchema.parse(response.json());
+
+    expect(response.statusCode).toBe(404);
+    expect(body.error).toMatchObject({ code: 'NOT_FOUND', message: 'داده‌ی مورد نظر پیدا نشد', fields: {} });
+    expect(response.body).not.toContain('9f1c2b9e');
+    expect(response.body).not.toContain('private-tenant');
   });
 
   it('۴۰۴ مسیریابی‌شده هم قرارداد واحد دارد', async () => {

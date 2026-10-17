@@ -1,4 +1,6 @@
-export class CoinSettlementQuoteNotFoundError extends Error {
+import { ResourceNotFoundError } from '../../platform/error-contract/resource-not-found.error';
+
+export class CoinSettlementQuoteNotFoundError extends ResourceNotFoundError {
   constructor() {
     super('A positive MAZNEH quote from the current tenant is required for a coin settlement');
     this.name = 'CoinSettlementQuoteNotFoundError';
