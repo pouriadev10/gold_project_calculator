@@ -8,11 +8,17 @@ import { bigIntStringSchema, isoDateTimeSchema, uuidSchema } from '../common/ind
  */
 export const inventoryItemTypeSchema = z.enum(['JEWELRY', 'MELTED_GOLD', 'COIN']);
 
-/** سندی که حرکت موجودی را ساخته است. فهرست بسته است، نه متن آزاد. */
+/**
+ * سندی که حرکت موجودی را ساخته است. فهرست بسته است، نه متن آزاد — آینه‌ی
+ * دقیق enum ِ `inventory_movement_source_type` دیتابیس (FE-106b دو مقدار
+ * جاافتاده‌ی خرید دست‌دوم و تسویه را افزود).
+ */
 export const inventoryMovementSourceTypeSchema = z.enum([
   'OPENING_BALANCE',
   'SALE',
   'PURCHASE',
+  'SECOND_HAND_PURCHASE',
+  'SETTLEMENT',
   'CORRECTION',
 ]);
 
@@ -44,7 +50,26 @@ export const inventoryBalanceSchema = z.object({
   quantity: inventoryQuantitySchema,
 });
 
-export type InventoryItemType = z.infer<typeof inventoryItemTypeSchema>;
+/**
+ * آخرین حرکات موجودی — `GET /inventory/movements/recent`، FE-106b.
+ *
+ * برخلاف `inventoryMovementSchema` (شناسه‌ی خام کالا)، برچسب کالا از قبل حل
+ * شده است تا کاربر بی‌واسطه بفهمد کدام کالا: عنوان آخرین نسخه‌ی زیورآلات یا
+ * نوع سکه، و «آبشده» برای آبشده که هویت مستقلی ندارد.
+ */
+export const recentInventoryMovementSchema = z.object({
+  id: uuidSchema,
+  sourceType: inventoryMovementSourceTypeSchema,
+  itemType: inventoryItemTypeSchema,
+  itemLabel: z.string().min(1),
+  quantity: inventoryQuantitySchema,
+  occurredAt: isoDateTimeSchema,
+});
+
+export const recentInventoryMovementListSchema = z.array(recentInventoryMovementSchema);
+
+export type RecentInventoryMovement = z.infer<typeof recentInventoryMovementSchema>;
+export type InventoryItemType =z.infer<typeof inventoryItemTypeSchema>;
 export type InventoryMovementSourceType = z.infer<typeof inventoryMovementSourceTypeSchema>;
 export type InventoryMovement = z.infer<typeof inventoryMovementSchema>;
 export type InventoryBalance = z.infer<typeof inventoryBalanceSchema>;

@@ -20,12 +20,15 @@ import { JewelryCashSalesService } from './jewelry-cash-sales.service';
 import { JewelryCreditSalesController } from './jewelry-credit-sales.controller';
 import { JewelryCreditSalesService } from './jewelry-credit-sales.service';
 import { InvoiceAmendmentPolicyService } from './invoice-amendment-policy.service';
+import { SalesInvoiceReadsController } from './sales-invoice-reads.controller';
+import { SalesInvoiceReadsService } from './sales-invoice-reads.service';
 import { SalesInvoicesService } from './sales-invoices.service';
 import { SalesInvoicePdfService } from './sales-invoice-pdf.service';
 import { SalesPricingService } from './sales-pricing.service';
 
 /**
- * فروش، فاکتور و اصلاح فاکتور — BE-038 تا BE-043 و BE-053 تا BE-055.
+ * فروش، فاکتور و اصلاح فاکتور — BE-038 تا BE-043 و BE-053 تا BE-055؛ فهرست و جزئیات
+ * فقط‌خواندنی فاکتور FE-106b.
  *
  * مرجوعی B2C اینجا نیست؛ طبق بخش ۲-۵ قواعد پروژه یک خرید است و در
  * `purchase` پیاده می‌شود. `PartiesModule` فقط برای بررسی «Party فعال»
@@ -50,6 +53,7 @@ import { SalesPricingService } from './sales-pricing.service';
     InvoiceHistoryController,
     JewelryCashSalesController,
     JewelryCreditSalesController,
+    SalesInvoiceReadsController,
   ],
   providers: [
     CoinSalesService,
@@ -59,6 +63,7 @@ import { SalesPricingService } from './sales-pricing.service';
     InvoiceAmendmentsService,
     InvoiceHistoryService,
     InvoiceAmendmentPolicyService,
+    SalesInvoiceReadsService,
     SalesInvoicesService,
     SalesInvoicePdfService,
     SalesPricingService,

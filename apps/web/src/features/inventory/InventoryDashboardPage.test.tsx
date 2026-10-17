@@ -258,6 +258,22 @@ describe('InventoryDashboardPage — آخرین حرکات', () => {
     expect(screen.getByText('دستبند ۱۸ عیار')).toBeInTheDocument();
     expect(screen.getByText(`${formatCoinCount(-1)} عدد`)).toBeInTheDocument();
   });
+
+  it('منبع خرید دست‌دوم و تسویه — همه‌ی منابع حرکت ِ سرور برچسب دارند (FE-106b)', () => {
+    useRecentInventoryMovementsMock.mockReturnValue({
+      data: [
+        movement({ id: 'm2', sourceType: 'SECOND_HAND_PURCHASE', itemType: 'MELTED_GOLD', itemLabel: 'آبشده', quantity: '45000' }),
+        movement({ id: 'm3', sourceType: 'SETTLEMENT', itemType: 'COIN', itemLabel: 'ربع سکه', quantity: '2' }),
+      ],
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+    renderPage();
+    expect(screen.getByText('خرید دست‌دوم')).toBeInTheDocument();
+    expect(screen.getByText('تسویه')).toBeInTheDocument();
+    expect(screen.getByText(`+${formatGram(45_000n)} گرم`)).toBeInTheDocument();
+  });
 });
 
 describe('InventoryDashboardPage — کلید تعویض واحد', () => {

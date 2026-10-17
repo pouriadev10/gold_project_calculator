@@ -366,13 +366,13 @@ export const JEWELRY_BALANCE_ROWS = jewelryItemVersionRecords
 
 /* ── معامله‌های اخیر ──────────────────────────────────────── */
 
-// TODO(real-data): از ماژول sales و purchase
+// شکل سرور: `GET /transactions/recent` (FE-106b، `RecentTransactionsService`) — شناسه = سند مبدأ
 export const recentTransactions = [
-  { id: 'TX-10432', partyName: 'حسین مرادی', kind: 'sale', title: 'دستبند ۱۸ عیار', mg: 12_350, at: '2026-07-30T11:42:00Z' },
-  { id: 'TX-10431', partyName: 'زهرا کریمی', kind: 'second-hand', title: 'خرید دست‌دوم — عیار ۷۴۰', mg: -8_600, at: '2026-07-30T10:15:00Z' },
-  { id: 'TX-10430', partyName: 'مهدی صادقی', kind: 'coin-sale', title: '۲ تمام بهار آزادی', mg: 14_640, at: '2026-07-30T09:58:00Z' },
-  { id: 'TX-10429', partyName: 'فاطمه یوسفی', kind: 'sale', title: 'سرویس کامل ۱۸ عیار', mg: 41_200, at: '2026-07-29T18:20:00Z' },
-  { id: 'TX-10428', partyName: 'علی‌رضا نجفی', kind: 'purchase', title: 'خرید آبشده', mg: -55_000, at: '2026-07-29T16:05:00Z' },
+  { id: '7a000000-0000-4000-8000-000000010432', partyName: 'حسین مرادی', kind: 'sale', title: 'دستبند ۱۸ عیار', mg: 12_350, at: '2026-07-30T11:42:00Z' },
+  { id: '7a000000-0000-4000-8000-000000010431', partyName: 'زهرا کریمی', kind: 'second-hand', title: 'خرید دست‌دوم — عیار ۷۴۰', mg: -8_600, at: '2026-07-30T10:15:00Z' },
+  { id: '7a000000-0000-4000-8000-000000010430', partyName: 'مهدی صادقی', kind: 'coin-sale', title: '۲ تمام بهار آزادی', mg: 14_640, at: '2026-07-30T09:58:00Z' },
+  { id: '7a000000-0000-4000-8000-000000010429', partyName: 'فاطمه یوسفی', kind: 'sale', title: 'سرویس کامل ۱۸ عیار', mg: 41_200, at: '2026-07-29T18:20:00Z' },
+  { id: '7a000000-0000-4000-8000-000000010428', partyName: 'علی‌رضا نجفی', kind: 'purchase', title: 'خرید آبشده', mg: -55_000, at: '2026-07-29T16:05:00Z' },
 ].map((t) => ({
   id: t.id,
   partyName: t.partyName,
@@ -826,13 +826,13 @@ export function ledgerProfitReportFor(from: string | null, to: string | null) {
 /* ── آخرین حرکات موجودی (FE-040) ──────────────────────────── */
 
 /**
- * ⚠️ بدون معادل بک‌اندی هنوز (توضیح در `api/contracts.ts`،
- * `recentInventoryMovementSchema`). سه نوع `sourceType` مختلف عمداً کنار
- * هم‌اند تا آیکون/برچسب هرکدام روی صفحه واقعاً آزموده شود.
+ * شکل `GET /inventory/movements/recent` (FE-106b، `RecentInventoryMovementsService`).
+ * چند `sourceType` مختلف عمداً کنار هم‌اند تا آیکون/برچسب هرکدام روی صفحه واقعاً
+ * آزموده شود؛ آبشده‌ی خریداری‌شده مثل سرور از خرید دست‌دوم می‌آید.
  */
 export const RECENT_INVENTORY_MOVEMENTS = [
   {
-    id: 'm1000000-0000-4000-8000-000000000001',
+    id: '71000000-0000-4000-8000-000000000001',
     sourceType: 'SALE' as const,
     itemType: 'JEWELRY' as const,
     itemLabel: 'دستبند ۱۸ عیار',
@@ -840,7 +840,7 @@ export const RECENT_INVENTORY_MOVEMENTS = [
     occurredAt: new Date(FETCHED_AT.getTime() - 2 * 60 * 60 * 1000).toISOString(),
   },
   {
-    id: 'm1000000-0000-4000-8000-000000000002',
+    id: '71000000-0000-4000-8000-000000000002',
     sourceType: 'SALE' as const,
     itemType: 'COIN' as const,
     itemLabel: 'تمام بهار آزادی',
@@ -848,15 +848,15 @@ export const RECENT_INVENTORY_MOVEMENTS = [
     occurredAt: new Date(FETCHED_AT.getTime() - 5 * 60 * 60 * 1000).toISOString(),
   },
   {
-    id: 'm1000000-0000-4000-8000-000000000003',
-    sourceType: 'PURCHASE' as const,
+    id: '71000000-0000-4000-8000-000000000003',
+    sourceType: 'SECOND_HAND_PURCHASE' as const,
     itemType: 'MELTED_GOLD' as const,
     itemLabel: 'آبشده',
     quantity: '45000',
     occurredAt: new Date(FETCHED_AT.getTime() - DAY_MS).toISOString(),
   },
   {
-    id: 'm1000000-0000-4000-8000-000000000004',
+    id: '71000000-0000-4000-8000-000000000004',
     sourceType: 'CORRECTION' as const,
     itemType: 'JEWELRY' as const,
     itemLabel: 'انگشتر ۱۸ عیار نگین‌دار',
@@ -864,7 +864,7 @@ export const RECENT_INVENTORY_MOVEMENTS = [
     occurredAt: new Date(FETCHED_AT.getTime() - 2 * DAY_MS).toISOString(),
   },
   {
-    id: 'm1000000-0000-4000-8000-000000000005',
+    id: '71000000-0000-4000-8000-000000000005',
     sourceType: 'OPENING_BALANCE' as const,
     itemType: 'COIN' as const,
     itemLabel: 'نیم سکه',

@@ -1,4 +1,4 @@
-import { ArrowDownLeft, ArrowUpRight, History, PackagePlus, Wrench } from 'lucide-react';
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, History, PackagePlus, Recycle, Wrench } from 'lucide-react';
 import { formatCoinCount, formatGram, toSafeNumber } from '@gold/core-calc';
 import { EmptyState } from '@/components/common/EmptyState';
 import { RetryPanel } from '@/components/common/RetryPanel';
@@ -22,6 +22,8 @@ import type { RecentInventoryMovement, RecentInventoryMovementSource } from '@/a
 const SOURCE_META: Record<RecentInventoryMovementSource, { icon: typeof History; label: string }> = {
   SALE: { icon: ArrowUpRight, label: 'فروش' },
   PURCHASE: { icon: ArrowDownLeft, label: 'خرید' },
+  SECOND_HAND_PURCHASE: { icon: Recycle, label: 'خرید دست‌دوم' },
+  SETTLEMENT: { icon: ArrowLeftRight, label: 'تسویه' },
   OPENING_BALANCE: { icon: PackagePlus, label: 'افتتاحیه' },
   CORRECTION: { icon: Wrench, label: 'اصلاح' },
 };

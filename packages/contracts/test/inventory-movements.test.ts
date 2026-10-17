@@ -36,6 +36,8 @@ describe('inventoryMovementSourceTypeSchema', () => {
       'OPENING_BALANCE',
       'SALE',
       'PURCHASE',
+      'SECOND_HAND_PURCHASE',
+      'SETTLEMENT',
       'CORRECTION',
     ]);
     expect(inventoryMovementSourceTypeSchema.safeParse('SOMETHING').success).toBe(false);

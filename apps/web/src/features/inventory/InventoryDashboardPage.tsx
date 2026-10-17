@@ -26,8 +26,8 @@ import { RecentMovementsCard } from './RecentMovementsCard';
  * - **اقلام کم‌موجود**: ترکیب زیورآلات+سکه (هر دو شمارشی)، آستانه‌ی
  *   نمایشی — توضیح در `LowStockCard.tsx`. آبشده وزن است، در این رتبه‌بندی
  *   نیست (قاعده‌ی ۲-۲ CLAUDE.md).
- * - **آخرین حرکات**: `useRecentInventoryMovements` — بدون معادل بک‌اندی
- *   هنوز (توضیح در `api/contracts.ts`).
+ * - **آخرین حرکات**: `useRecentInventoryMovements` — `GET /inventory/movements/recent`
+ *   (FE-106b).
  *
  * قواعد بخش FE-040: بدون چندشعبه‌ای، بدون امانی، بدون نقره/شمش در UI —
  * هیچ‌کدام اینجا مفهومی ندارند چون هیچ‌کدام از منابع داده‌ی بالا آن‌ها را

@@ -4,11 +4,6 @@ import {
   uuidSchema,
   coinTypeVersionSchema,
   inventoryBalanceSchema,
-  inventoryItemTypeSchema,
-  isoDateTimeSchema,
-  nonNegativeBigIntStringSchema,
-  paginatedSchema,
-  paginationQuerySchema,
   priceQuoteAmountRialSchema,
   priceQuoteSchema as sharedPriceQuoteSchema,
   priceFeedStatusSchema as sharedPriceFeedStatusSchema,
@@ -19,6 +14,7 @@ import {
   rialSettlementSchema as sharedRialSettlementSchema,
   goldSettlementSchema as sharedGoldSettlementSchema,
   coinSettlementSchema as sharedCoinSettlementSchema,
+  recentTransactionSchema as sharedRecentTransactionSchema,
   type Party,
 } from '@gold/contracts';
 
@@ -30,10 +26,10 @@ import {
  * ۱. **از `@gold/contracts` re-export می‌شود** — شکلی که بک‌اند همین امروز
  *    پیاده کرده (BE-003 به بعد). این‌ها را اینجا دوباره تعریف نکن؛ اگر
  *    شکلشان باید عوض شود، تغییر در `packages/contracts` است، نه اینجا.
- * ۲. **View model محلی** — یا هنوز endpoint واقعی در بک‌اند ندارد (گزارش
- *    سود، معاملات اخیر، خلاصه‌ی مانده)، یا یک تجمیع UI-محور روی چند
- *    concept واقعی است (جست‌وجوی کالا). این‌ها با MSW نگه داشته می‌شوند تا
- *    endpoint واقعی برسد.
+ * ۲. **لایه‌ی تبدیل محلی** — همان قرارداد مشترک، فقط با مبالغ رشته‌ای
+ *    تبدیل‌شده به `bigint` برای `core-calc`/JSX (`.extend` روی schema ِ
+ *    مشترک، نه تعریف دوباره). از FE-106b هیچ View model ِ بی‌endpointی نمانده:
+ *    هر مسیری که فرانت صدا می‌زند در سرور هست (آزمون قرارداد mock این را می‌سنجد).
  *
  * قاعده‌ی طلایی هر دو دسته یکی است: **هیچ مقدار پولی یا وزنی روی سیم
  * `number` نیست.**
@@ -184,185 +180,26 @@ export type InventoryBalanceList = z.infer<typeof inventoryBalanceListSchema>;
 export const coinTypeListSchema = z.array(coinTypeVersionSchema);
 export type CoinTypeList = z.infer<typeof coinTypeListSchema>;
 
-/* ══════════════ View model محلی — بدون endpoint واقعی هنوز ══════════════ */
+/* ══════════════ فهرست و جزئیات فاکتور فروش — FE-106b ══════════════ */
 
 /**
- * ⚠️ بدون endpoint بک‌اندی در حال حاضر — View model فهرست فاکتورهای فروش
- * برای FE-064. شکل آن مستقیماً از `sales_invoices`، نسخه‌ی جاری و `parties`
- * می‌آید؛ بنابراین با رسید/تاریخچه موازی یا متناقض نیست. وقتی GET واقعی
- * `/sales/invoices` اضافه شود، همین قرارداد باید به `@gold/contracts`
- * منتقل شود و صفحه هیچ تغییری نکند.
- *
- * نرخ گرم ۱۰۰۰ روی هر ردیف قفل است تا تعویض واحد فهرست هرگز از مظنه‌ی
- * امروز استفاده نکند. پیش‌نویس هنوز نرخ/مبلغ/شماره ندارد و null می‌ماند.
+ * `GET /sales/invoices` و `GET /sales/invoices/:invoiceId/detail` — پیش‌تر View model
+ * محلی FE-064/FE-065 که فقط MSW پاسخش را می‌داد؛ FE-106b همین قرارداد را بدون
+ * تغییر شکل به `packages/contracts` برد و `SalesInvoiceReadsController` آن را
+ * از snapshot ِ خود سند می‌سازد. نرخ گرم ۱۰۰۰ ِ هر ردیف قفل‌شده‌ی لحظه‌ی فروش است.
  */
-export const salesInvoiceStatusSchema = z.enum(['DRAFT', 'FINALIZED']);
-
-export const salesInvoiceListQuerySchema = paginationQuerySchema
-  .extend({
-    invoiceNumber: z.string().regex(/^\d+$/u).max(20).optional(),
-    partySearch: z.string().trim().min(1).max(200).optional(),
-    status: salesInvoiceStatusSchema.optional(),
-    from: isoDateTimeSchema.optional(),
-    to: isoDateTimeSchema.optional(),
-  })
-  .strict()
-  .superRefine((value, context) => {
-    if (
-      value.from !== undefined &&
-      value.to !== undefined &&
-      new Date(value.from).getTime() > new Date(value.to).getTime()
-    ) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['to'],
-        message: 'پایان بازه نباید پیش از شروع آن باشد',
-      });
-    }
-  });
-
-export const salesInvoiceListItemSchema = z
-  .object({
-    id: uuidSchema,
-    invoiceNumber: z.number().int().positive().nullable(),
-    status: salesInvoiceStatusSchema,
-    currentVersion: z.number().int().nonnegative(),
-    party: z.object({
-      id: uuidSchema,
-      displayName: z.string().min(1),
-    }),
-    payableRial: nonNegativeBigIntStringSchema.nullable(),
-    goldRatePerGramRial: nonNegativeBigIntStringSchema.nullable(),
-    occurredAt: isoDateTimeSchema,
-  })
-  .superRefine((value, context) => {
-    const draftShape =
-      value.status === 'DRAFT' &&
-      value.invoiceNumber === null &&
-      value.currentVersion === 0 &&
-      value.payableRial === null &&
-      value.goldRatePerGramRial === null;
-    const finalizedShape =
-      value.status === 'FINALIZED' &&
-      value.invoiceNumber !== null &&
-      value.currentVersion >= 1 &&
-      value.payableRial !== null &&
-      value.goldRatePerGramRial !== null &&
-      BigInt(value.goldRatePerGramRial) > 0n;
-
-    if (!draftShape && !finalizedShape) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'وضعیت فاکتور با شماره، نسخه و snapshot مالی آن سازگار نیست',
-      });
-    }
-  });
-
-export const salesInvoiceListSchema = paginatedSchema(salesInvoiceListItemSchema);
-
-export type SalesInvoiceStatus = z.infer<typeof salesInvoiceStatusSchema>;
-export type SalesInvoiceListQuery = z.infer<typeof salesInvoiceListQuerySchema>;
-export type SalesInvoiceListItem = z.infer<typeof salesInvoiceListItemSchema>;
-export type SalesInvoiceList = z.infer<typeof salesInvoiceListSchema>;
-
-/**
- * ⚠️ بدون endpoint بک‌اندی تجمیعی در حال حاضر — View model جزئیات
- * فاکتور برای FE-065. تمام اعداد مالی/وزنی از snapshot نسخه می‌آیند؛
- * صفحه مجاز نیست آن‌ها را با مظنه یا تنظیمات امروز بازسازی کند. endpoint
- * واقعی بعدی باید همین projection را از `sales_invoices`، نسخه‌ها، شخص و
- * دفترکل بسازد؛ تا آن زمان MSW قرارداد را اجرا می‌کند.
- */
-const salesInvoiceDetailItemSchema = z.object({
-  itemType: z.enum(['JEWELRY', 'COIN']),
-  itemId: uuidSchema,
-  title: z.string().trim().min(1),
-  quantity: z.string().regex(/^[1-9]\d*$/u),
-  pureWeightMg: nonNegativeBigIntStringSchema.nullable(),
-  karat: z.number().int().min(1).max(1000).nullable(),
-  payableRial: nonNegativeBigIntStringSchema,
-});
-
-const salesInvoiceSettingsSnapshotSchema = z.object({
-  baseQuoteKarat: nonNegativeBigIntStringSchema.nullable(),
-  mithqalGramsX10k: nonNegativeBigIntStringSchema.nullable(),
-  roundingUnitRial: nonNegativeBigIntStringSchema.nullable(),
-  roundingPolicy: z.string().trim().min(1).nullable(),
-  profitRateBps: nonNegativeBigIntStringSchema.nullable(),
-  taxRateBps: nonNegativeBigIntStringSchema.nullable(),
-});
-
-const salesInvoiceDetailVersionSchema = z.object({
-  version: z.number().int().positive(),
-  reason: z.string().nullable(),
-  reasonDetail: z.string().nullable(),
-  actor: z
-    .object({
-      id: uuidSchema,
-      displayName: z.string().trim().min(1),
-    })
-    .nullable(),
-  createdAt: isoDateTimeSchema,
-  payableRial: nonNegativeBigIntStringSchema,
-  paidRial: nonNegativeBigIntStringSchema,
-  receivableRial: nonNegativeBigIntStringSchema,
-  pureWeightMg: nonNegativeBigIntStringSchema.nullable(),
-  items: z.array(salesInvoiceDetailItemSchema),
-  settingsSnapshot: salesInvoiceSettingsSnapshotSchema,
-  ledgerSummary: z.object({
-    transactionCount: z.number().int().nonnegative(),
-    entryCount: z.number().int().nonnegative(),
-    balanced: z.boolean(),
-  }),
-});
-
-export const salesInvoiceDetailSchema = z
-  .object({
-    id: uuidSchema,
-    invoiceNumber: z.number().int().positive().nullable(),
-    status: salesInvoiceStatusSchema,
-    currentVersion: z.number().int().nonnegative(),
-    party: z.object({
-      id: uuidSchema,
-      displayName: z.string().trim().min(1),
-      type: z.enum(['CONSUMER', 'BUSINESS']),
-      status: z.enum(['ACTIVE', 'INACTIVE']),
-    }),
-    occurredAt: isoDateTimeSchema,
-    quoteSnapshot: z
-      .object({
-        amountRial: z.string().regex(/^[1-9]\d*$/u),
-        goldRatePerGramRial: z.string().regex(/^[1-9]\d*$/u),
-        observedAt: isoDateTimeSchema,
-      })
-      .nullable(),
-    versions: z.array(salesInvoiceDetailVersionSchema),
-  })
-  .superRefine((value, context) => {
-    const currentVersions = value.versions.filter(
-      (version) => version.version === value.currentVersion,
-    );
-    const draftShape =
-      value.status === 'DRAFT' &&
-      value.invoiceNumber === null &&
-      value.currentVersion === 0 &&
-      value.quoteSnapshot === null &&
-      value.versions.length === 0;
-    const finalizedShape =
-      value.status === 'FINALIZED' &&
-      value.invoiceNumber !== null &&
-      value.currentVersion > 0 &&
-      value.quoteSnapshot !== null &&
-      currentVersions.length === 1;
-
-    if (!draftShape && !finalizedShape) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'جزئیات فاکتور با وضعیت و نسخه جاری آن سازگار نیست',
-      });
-    }
-  });
-
-export type SalesInvoiceDetail = z.infer<typeof salesInvoiceDetailSchema>;
+export {
+  salesInvoiceStatusSchema,
+  salesInvoiceListQuerySchema,
+  salesInvoiceListItemSchema,
+  salesInvoiceListSchema,
+  salesInvoiceDetailSchema,
+  type SalesInvoiceStatus,
+  type SalesInvoiceListQuery,
+  type SalesInvoiceListItem,
+  type SalesInvoiceList,
+  type SalesInvoiceDetail,
+} from '@gold/contracts';
 
 /**
  * رشته‌ی ارقام صحیح روی سیم → `bigint` در برنامه.
@@ -443,19 +280,20 @@ export const priceFeedRefreshResultSchema = z.discriminatedUnion('outcome', [
 export type PriceFeedRefreshResult = z.infer<typeof priceFeedRefreshResultSchema>;
 export type PriceFeedFailure = z.infer<typeof priceFeedFailureSchema>;
 
-/* ── GET /api/transactions/recent ──────────────────────────── */
+/* ── GET /api/transactions/recent — FE-106b ─────────────────── */
 
-/** بدون معادل بک‌اندی هنوز — دفتر کل اسکلت خالی است (`ledger/index.ts`, BE-037). */
-export const transactionKindSchema = z.enum(['sale', 'purchase', 'second-hand', 'coin-sale']);
-export type TransactionKind = z.infer<typeof transactionKindSchema>;
+/**
+ * آینه‌ی `recentTransactionSchema` ِ مشترک (`RecentTransactionsController`)، فقط با
+ * مبلغ دومقیاسه‌ی تبدیل‌شده به `bigint` برای `AmountDisplay` — همان الگوی `priceQuoteSchema`.
+ * سرور ریال، معادل طلا و نرخ قفل‌شده‌ی هر سند را می‌دهد؛ اینجا چیزی محاسبه نمی‌شود.
+ */
+export {
+  recentTransactionKindSchema as transactionKindSchema,
+  type RecentTransactionKind as TransactionKind,
+} from '@gold/contracts';
 
-export const transactionSchema = z.object({
-  id: z.string(),
-  partyName: z.string(),
-  kind: transactionKindSchema,
-  title: z.string(),
+export const transactionSchema = sharedRecentTransactionSchema.extend({
   amount: dualAmountSchema,
-  occurredAt: isoDateTimeSchema,
 });
 export type Transaction = z.infer<typeof transactionSchema>;
 
@@ -463,43 +301,19 @@ export const transactionListSchema = z.object({
   items: z.array(transactionSchema),
 });
 
-/* ── GET /api/inventory/movements/recent — FE-040 ────────────── */
+/* ── GET /api/inventory/movements/recent — FE-040/FE-106b ────── */
 
 /**
- * ⚠️ بدون معادل بک‌اندی هنوز. `inventoryMovementSchema` واقعی
- * (`@gold/contracts`) با `itemId` خام (uuid یا null) کار می‌کند —
- * درست برای دفتر کل، ولی برای نمایش «آخرین حرکات» به تنهایی کافی
- * نیست: کاربر باید بی‌واسطه بفهمد کدام کالا، نه یک uuid. این view model
- * محلی، دقیقاً مثل `transactionSchema` بالا، برچسب کالا را از قبل حل‌شده
- * حمل می‌کند — همان تجمیع UI-محور، نه یک DTO سیمی بک‌اندی.
- *
- * برخلاف کامنت‌های `profitReportSchema`/`transactionSchema` بالا («دفتر
- * کل اسکلت خالی است»)، این دیگر درست نیست — دفتر کل کامل است
- * (Milestone 7 تا 13 انجام شده). فقط **فهرست‌کردن** حرکات موجودی هیچ
- * controller‌ای ندارد؛ `InventoryMovementsService` فقط `.balance()` و
- * `.balances()` (تجمیع) را expose می‌کند، نه رکوردهای خام.
+ * `RecentInventoryMovementsController` — برچسب کالا سمت سرور حل می‌شود (عنوان آخرین
+ * نسخه‌ی زیورآلات/نوع سکه، یا «آبشده»). منبع حرکت همان enum ِ کامل دیتابیس است.
  */
-export const recentInventoryMovementSourceSchema = z.enum([
-  'OPENING_BALANCE',
-  'SALE',
-  'PURCHASE',
-  'CORRECTION',
-]);
-export type RecentInventoryMovementSource = z.infer<typeof recentInventoryMovementSourceSchema>;
-
-export const recentInventoryMovementSchema = z.object({
-  id: z.string(),
-  sourceType: recentInventoryMovementSourceSchema,
-  itemType: inventoryItemTypeSchema,
-  /** برچسب حل‌شده برای نمایش — «تمام بهار آزادی»، «دستبند ۱۸ عیار»، یا «آبشده» */
-  itemLabel: z.string(),
-  /** رشته‌ی صحیح علامت‌دار — واحدش به itemType بستگی دارد، دقیقاً مثل inventoryQuantitySchema واقعی */
-  quantity: bigIntStringSchema,
-  occurredAt: isoDateTimeSchema,
-});
-export type RecentInventoryMovement = z.infer<typeof recentInventoryMovementSchema>;
-
-export const recentInventoryMovementListSchema = z.array(recentInventoryMovementSchema);
+export {
+  recentInventoryMovementSchema,
+  recentInventoryMovementListSchema,
+  inventoryMovementSourceTypeSchema as recentInventoryMovementSourceSchema,
+  type RecentInventoryMovement,
+  type InventoryMovementSourceType as RecentInventoryMovementSource,
+} from '@gold/contracts';
 
 /* ══════════════ بازگشت به @gold/contracts — فروش ══════════════ */
 

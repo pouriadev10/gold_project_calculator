@@ -35,3 +35,19 @@ export interface Paginated<TItem> {
   limit: number;
   offset: number;
 }
+
+/**
+ * فهرست‌های «آخرین …» (معاملات اخیر، حرکات اخیر موجودی) — FE-106b.
+ * صفحه‌بندی ندارند؛ فقط چند رکورد آخر برای کارت‌های داشبورد. مثل
+ * `MAX_PAGE_SIZE` مرز فنی API است، نه عدد صنفی.
+ */
+export const MAX_RECENT_LIMIT = 50;
+export const DEFAULT_RECENT_LIMIT = 5;
+
+export const recentQuerySchema = z
+  .object({
+    limit: z.coerce.number().int().min(1).max(MAX_RECENT_LIMIT).default(DEFAULT_RECENT_LIMIT),
+  })
+  .strict();
+
+export type RecentQuery = z.infer<typeof recentQuerySchema>;

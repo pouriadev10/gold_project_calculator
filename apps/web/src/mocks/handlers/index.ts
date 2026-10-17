@@ -1870,8 +1870,8 @@ export const handlers = [
   }),
 
   /**
-   * `GET /inventory/movements/recent` — FE-040. ⚠️ بدون معادل بک‌اندی
-   * هنوز (توضیح در `api/contracts.ts`).
+   * `GET /inventory/movements/recent` — FE-040؛ سرور FE-106b
+   * (`RecentInventoryMovementsController`).
    */
   http.get('/api/inventory/movements/recent', async ({ request }) => {
     await delay(READ_DELAY_MS);
@@ -1887,9 +1887,8 @@ export const handlers = [
   }),
 
   /**
-   * `GET /sales/invoices` — View model فهرست FE-064. endpoint واقعی هنوز
-   * در `apps/api` وجود ندارد؛ شکل پاسخ در `api/contracts.ts` از مدل‌های
-   * واقعی سربرگ/نسخه/شخص گرفته شده و مستقل از صفحه ساخته نشده است.
+   * `GET /sales/invoices` — فهرست FE-064؛ سرور FE-106b (`SalesInvoiceReadsController`)
+   * با همان قرارداد مشترک `salesInvoiceListSchema`. پیش‌نویس‌ها و فیلترها مثل سرور.
    */
   http.get('/api/sales/invoices', async ({ request }) => {
     await delay(READ_DELAY_MS);

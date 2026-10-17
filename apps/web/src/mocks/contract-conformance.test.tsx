@@ -413,15 +413,11 @@ function serverRoutes(): string[] {
 }
 
 /**
- * مسیرهایی که mock دارد ولی سرور هنوز ندارد — هرکدام schema ِ موقتش در `src/api/contracts.ts`
- * («بدون معادل بک‌اندی هنوز») است. افزودن به این فهرست یعنی تصمیم صریح، نه mock بی‌صدا.
+ * مسیرهایی که mock دارد ولی سرور هنوز ندارد. از FE-106b خالی است: چهار مسیر خواندنی ِ آخر
+ * (فهرست/جزئیات فاکتور، معاملات اخیر، حرکات اخیر موجودی) در سرور پیاده شدند. افزودن به این
+ * فهرست یعنی تصمیم صریح، نه mock بی‌صدا.
  */
-const PENDING_BACKEND_ROUTES = [
-  'GET /api/inventory/movements/recent',
-  'GET /api/sales/invoices',
-  'GET /api/sales/invoices/:invoiceId/detail',
-  'GET /api/transactions/recent',
-];
+const PENDING_BACKEND_ROUTES: readonly string[] = [];
 
 /** مسیرهای سرور که فرانت فاز ۱ هیچ‌جا صدا نمی‌زند، پس mock هم لازم ندارند. */
 const UNUSED_SERVER_ROUTES = ['GET /api/health', 'GET /api/auth/me', 'POST /api/inventory/jewelry-items/:id/deactivate'];

@@ -492,8 +492,8 @@ export function useInvoiceAmendmentPolicy(invoiceId: string | null) {
  *
  * صفحه‌بندی و تمام فیلترها سرورمحورند؛ `keepPreviousData` اجازه نمی‌دهد
  * ورق‌زدن یا تغییر فیلتر، فهرست را لحظه‌ای به صفحه‌ی سفید تبدیل کند.
- * endpoint فعلاً در توسعه با MSW پاسخ می‌دهد و قراردادش در
- * `api/contracts.ts` به‌عنوان View model صریح ثبت شده است.
+ * سرور: `SalesInvoiceReadsController` (FE-106b)، قرارداد مشترک در
+ * `packages/contracts` (`salesInvoiceListSchema`).
  */
 export function useSalesInvoices(query: SalesInvoiceListQuery, enabled = true) {
   return useQuery({
@@ -518,7 +518,7 @@ export function useSalesInvoices(query: SalesInvoiceListQuery, enabled = true) {
 
 /**
  * آخرین حرکات موجودی — FE-040.
- * ⚠️ بدون معادل بک‌اندی هنوز — فقط MSW پاسخ می‌دهد (توضیح در `api/contracts.ts`).
+ * سرور: `RecentInventoryMovementsController` (FE-106b) — برچسب کالا سمت سرور حل می‌شود.
  */
 export function useRecentInventoryMovements(limit = 5) {
   return useQuery({

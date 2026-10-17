@@ -3013,7 +3013,7 @@ INP زیر ۲۰۰ms.
 >
 > اعتبارسنجی: `pnpm typecheck`، `pnpm test` (۱۳۲۲ وب — ۳۵ تازه — ۱۷۱ API، ۱۹۲ قرارداد، ۱۸۲ core-calc)، lint فایل‌های تغییرکرده، `check:circular` و `pnpm build` با دروازه‌ی اندازه (۱۳۶٫۴KB از ۲۰۰KB) و نگهبان mock سبز. `test:e2e` اجرا نشد: در این محیط Chrome یا Edge نصب نیست. پیش‌نمایش مرورگر استفاده نشد.
 ---
-## [ ] FE-106 — حذف Mockهای عملیاتی
+## [x] FE-106 — حذف Mockهای عملیاتی
 ### هدف
 جایگزینی mockهای اصلی با API واقعی.
 ### موارد
@@ -3041,10 +3041,14 @@ INP زیر ۲۰۰ms.
 >
 > اعتبارسنجی: `pnpm typecheck`، `pnpm test` (۱۳۲۹ وب — ۷ تازه، سه اجرای کامل پیاپی سبز — ۱۷۱ API، ۱۹۲ قرارداد، ۱۸۲ core-calc)، lint فایل‌های تغییرکرده، `check:circular`، `pnpm build` با دروازه‌ی اندازه و نگهبان mock، و `test:e2e` (۱۷/۱۷ روی ۳۶۰px و دسکتاپ، دو اجرای پیاپی با بیلد تازه) سبز. پیش‌نمایش مرورگر استفاده نشد.
 
-### [ ] FE-106b — بک‌اند: چهار API ِ خواندنی + اتصال فرانت
+### [x] FE-106b — بک‌اند: چهار API ِ خواندنی + اتصال فرانت
 * `GET /sales/invoices` (فهرست، صفحه‌بندی و فیلتر)، `GET /sales/invoices/:id/detail`، `GET /transactions/recent`، `GET /inventory/movements/recent` — فقط‌خواندنی، محدود به مستأجر، با نقش.
 * schemaها از `apps/web/src/api/contracts.ts` به `packages/contracts` منتقل شوند.
 * `PENDING_BACKEND_ROUTES` ِ آزمون قرارداد mock خالی شود.
+
+> تکمیل FE-106b: **چهار endpoint ِ فقط‌خواندنی**، همه با `JwtAuthGuard` + `RolesGuard` و نقش `OWNER/MANAGER/CASHIER` (همان نقش تاریخچه‌ی فاکتور)، هر پرس‌وجو در `withTenantTransaction` (RLS) و با شرط صریح `tenant_id`: `SalesInvoiceReadsController` (`GET /sales/invoices` با صفحه‌بندی، شماره، نام شخص نرمال‌شده، وضعیت و بازه‌ی **شامل** روی زمان رویداد = `finalized_at` یا برای پیش‌نویس `created_at`؛ `GET /sales/invoices/:invoiceId/detail` با 404 برای مستأجر دیگر)، `RecentTransactionsController` (`GET /transactions/recent`) و `RecentInventoryMovementsController` (`GET /inventory/movements/recent`)، هر دو با `recentQuerySchema` (پیش‌فرض ۵، سقف ۵۰). **قاعده‌ی ۲-۸:** هیچ عددی با مظنه یا تنظیمات امروز ساخته نمی‌شود — `pricing/locked-gold-rate.ts` نرخ گرم ۱۰۰۰ را فقط از مظنه‌ی قفل‌شده‌ی خود سند و `baseQuoteKarat`/`mithqalGrams` ِ snapshot ِ همان سند با `core-calc` می‌سازد (همان حساب گزارش سود)؛ مبلغ، پرداختی، مانده، وزن خالص و تنظیمات هر نسخه از snapshot ِ همان نسخه است (فروش نقدی paid/receivable ندارد ← پرداختی = مبلغ، مانده = ۰)، عنوان و عیار هر ردیف از **نسخه‌ی کالایی که با آن قیمت خورده**، و `ledgerSummary` تراز هر تراکنش را در هر بُعد جدا می‌سنجد. snapshot ِ ناقص خطای صریح است (`LockedSnapshotInvalidError` → ۵۰۰)، نه عدد ساختگی. **آخرین معامله‌ها:** فاکتور نهایی (زیورآلات ← `sale`، سکه ← `coin-sale`، مبلغ مثبت) و خرید دست‌دوم (مصرف‌کننده ← `second-hand`، همکار ← `purchase`، مبلغ منفی؛ مرجوعی B2C یک خرید است، قاعده‌ی ۲-۵)، معادل طلا با `dualFromRial` به نرخ قفل‌شده‌ی هر سند؛ تسویه معامله نیست و نمی‌آید؛ سکه با تعدادش نام برده می‌شود. **آخرین حرکات:** برچسب = عنوان آخرین نسخه‌ی زیورآلات/نوع سکه، یا «آبشده». **قرارداد:** `salesInvoice*Schema` بی‌تغییر شکل به `packages/contracts/src/sales/sales-invoice-reads.ts`، `recentTransaction*` به `reporting/recent-transactions.ts` و `recentInventoryMovement*` کنار `inventoryMovementSchema` رفتند؛ وب فقط re-export می‌کند (`transactionSchema` همان schema ِ مشترک با `.extend` ِ تبدیل bigint). `inventoryMovementSourceTypeSchema` ِ مشترک کهنه بود (۴ از ۶ مقدار enum ِ دیتابیس) — `SECOND_HAND_PURCHASE` و `SETTLEMENT` افزوده شد و کارت آخرین حرکات برایشان برچسب/آیکون گرفت؛ شناسه‌ی معامله‌ها حالا uuid ِ سند مبدأ است (fixtureها اصلاح شدند). `PENDING_BACKEND_ROUTES` خالی است: هر مسیر mock در سرور هست. آزمون‌ها: API ۴۲ تازه (projectionهای خالص در برابر schema ِ مشترک، نرخ قفل‌شده = نرخ استاندارد core-calc با تنظیمات پیش‌فرض و پیروی از snapshot، snapshot ِ ناقص، پیش‌نویس، سکه بی‌وزن، ناترازی، ترتیب/سقف، مسیر و نقش و 404 ِ کنترلرها)، قرارداد ۷ تازه، وب ۱ تازه. **محدودیت:** آزمون e2e ِ دیتابیسی (`apps/api/test/*.e2e-spec.ts`) نوشته/اجرا نشد — Docker/PostgreSQL در این محیط نیست؛ SQL ِ این چهار سرویس فقط با typecheck سنجیده شده و پیش از استقرار باید روی دیتابیس واقعی (یا `VITE_API_MODE=real`) آزموده شود.
+>
+> اعتبارسنجی: `pnpm typecheck`، `pnpm test` (۱۳۳۰ وب، ۲۱۳ API، ۱۹۹ قرارداد، ۱۸۲ core-calc)، lint فایل‌های تغییرکرده (lint ِ کل ریپو ۲۴ خطای از پیش موجود در فایل‌های دست‌نخورده دارد)، `check:circular`، `pnpm build` با دروازه‌ی اندازه و نگهبان mock، و `test:e2e` (۱۷/۱۷ روی ۳۶۰px و دسکتاپ) سبز. پیش‌نمایش مرورگر استفاده نشد.
 ---
 ## [ ] FE-107 — مستندات معماری فرانت
 ### فایل

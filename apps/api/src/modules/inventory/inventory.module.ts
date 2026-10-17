@@ -13,9 +13,11 @@ import { JewelryItemsController } from './jewelry-items.controller';
 import { JewelryItemsService } from './jewelry-items.service';
 import { OpeningBalancesController } from './opening-balances.controller';
 import { OpeningBalancesService } from './opening-balances.service';
+import { RecentInventoryMovementsController } from './recent-inventory-movements.controller';
+import { RecentInventoryMovementsService } from './recent-inventory-movements.service';
 
 /**
- * کالای زیورآلات، آبشده و سکه — BE-025 تا BE-028؛ API انواع سکه FE-081.
+ * کالای زیورآلات، آبشده و سکه — BE-025 تا BE-028؛ API انواع سکه FE-081؛ آخرین حرکات FE-106b.
  *
  * `AuthModule` و `UsersModule` برای نگهبان نقش لازم‌اند (نقش از دیتابیس
  * خوانده می‌شود، نه از توکن) و `IdempotencyModule` برای مسیرهای نوشتنی.
@@ -27,13 +29,19 @@ import { OpeningBalancesService } from './opening-balances.service';
  */
 @Module({
   imports: [AuditModule, AuthModule, IdempotencyModule, LedgerModule, PricingModule, UsersModule],
-  controllers: [CoinTypesController, JewelryItemsController, OpeningBalancesController],
+  controllers: [
+    CoinTypesController,
+    JewelryItemsController,
+    OpeningBalancesController,
+    RecentInventoryMovementsController,
+  ],
   providers: [
     CoinTypesService,
     InitialCoinTypesService,
     InventoryMovementsService,
     JewelryItemsService,
     OpeningBalancesService,
+    RecentInventoryMovementsService,
   ],
   exports: [
     CoinTypesService,
