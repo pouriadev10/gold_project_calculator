@@ -624,9 +624,9 @@
     "semantic_hash": ""
   },
   "apps/api/drizzle/meta/_journal.json": {
-    "mtime": 1792261934.7875204,
-    "seen": 1792262677.0596209,
-    "ast_hash": "b04e7d261cff3a699558f17d54ef8146",
+    "mtime": 1792275087.2771208,
+    "seen": 1792275701.8839502,
+    "ast_hash": "99b5cb8c61a4d970b8a2948e55c6a976",
     "semantic_hash": ""
   },
   "apps/api/nest-cli.json": {
@@ -636,9 +636,9 @@
     "semantic_hash": ""
   },
   "apps/api/package.json": {
-    "mtime": 1786965220.0011597,
-    "seen": 1789132525.9447021,
-    "ast_hash": "120007335333205d77c0458ad4623ef3",
+    "mtime": 1792274222.4817517,
+    "seen": 1792275701.8839521,
+    "ast_hash": "95fea36825d726fea3b0dc2687801478",
     "semantic_hash": ""
   },
   "apps/api/scripts/migrate.mjs": {
@@ -1530,15 +1530,15 @@
     "semantic_hash": ""
   },
   "apps/api/src/platform/database/schema/sales-invoices.ts": {
-    "mtime": 1792259716.6768103,
-    "seen": 1792260094.0646002,
-    "ast_hash": "beeb091a373ef696652bd1d00733c397",
+    "mtime": 1792275081.885393,
+    "seen": 1792275701.8841245,
+    "ast_hash": "500c30d0fead537cf822a467228f6fce",
     "semantic_hash": ""
   },
   "apps/api/src/platform/database/schema/second-hand-purchases.ts": {
-    "mtime": 1792259716.6775298,
-    "seen": 1792260094.0646017,
-    "ast_hash": "bc62b1175517a6c20cef919a37161886",
+    "mtime": 1792275082.6817884,
+    "seen": 1792275701.8841252,
+    "ast_hash": "469209cddd134384f7578b8b75b752f7",
     "semantic_hash": ""
   },
   "apps/api/src/platform/database/schema/settlements.ts": {
@@ -5046,9 +5046,9 @@
     "semantic_hash": ""
   },
   "TASKS.md": {
-    "mtime": 1792262593.5330966,
-    "seen": 1792262677.0615222,
-    "ast_hash": "5655933afa999a6c5da3cb2727c4e947",
+    "mtime": 1792275619.921707,
+    "seen": 1792275701.8848865,
+    "ast_hash": "35a412fd3f891e722fbfbbb520e90e79",
     "semantic_hash": ""
   },
   "TECH-A~1.MD": {
@@ -6441,6 +6441,42 @@
     "mtime": 1792262324.1799603,
     "seen": 1792262677.0600903,
     "ast_hash": "ea4e15be917ded8f974bcd6ccd9c1f4b",
+    "semantic_hash": ""
+  },
+  "apps/api/drizzle/0034_be066_report_indexes.sql": {
+    "mtime": 1792275087.2771208,
+    "seen": 1792275701.883918,
+    "ast_hash": "eda56f86095ca04dba101cc6b037fb51",
+    "semantic_hash": ""
+  },
+  "apps/api/drizzle/meta/0034_snapshot.json": {
+    "mtime": 1792275087.2761142,
+    "seen": 1792275701.883949,
+    "ast_hash": "936094436ffd540b771e86456ba35a21",
+    "semantic_hash": ""
+  },
+  "apps/api/test/perf/performance-baseline.bench-spec.ts": {
+    "mtime": 1792275124.4168293,
+    "seen": 1792275701.8842182,
+    "ast_hash": "9c375ab85a112feb56eea70b4a322124",
+    "semantic_hash": ""
+  },
+  "apps/api/test/perf/query-recorder.ts": {
+    "mtime": 1792274402.5485902,
+    "seen": 1792275701.8842192,
+    "ast_hash": "97dad3ca80e884b57a3c355161f80aca",
+    "semantic_hash": ""
+  },
+  "apps/api/vitest.config.bench.mts": {
+    "mtime": 1792274214.2282403,
+    "seen": 1792275701.8842533,
+    "ast_hash": "8f78c593fc863a9a533cbab4b7ea88d5",
+    "semantic_hash": ""
+  },
+  "docs/performance-baseline.md": {
+    "mtime": 1792275594.79304,
+    "seen": 1792275701.884902,
+    "ast_hash": "e203e6f01b2c9ce42cb5585ee47d6fb5",
     "semantic_hash": ""
   }
 }
