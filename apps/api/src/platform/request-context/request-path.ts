@@ -23,8 +23,10 @@ export interface MountedRequest extends IncomingMessage {
  * - `/auth` مستأجر را از توکن یا بدنه‌ی درخواست می‌گیرد، نه از هدر —
  *   کسی که هنوز وارد نشده هدر مستأجر ندارد که بفرستد. این مسیرها
  *   احراز هویت خودشان را دارند (`JwtAuthGuard` روی آنچه لازم است).
+ * - `/docs` مستند API است (BE-070) و داده‌ی هیچ مستأجری را ندارد. در production
+ *   اصلاً ثبت نمی‌شود، پس این‌جا فقط ۴۰۴ ِ بدون هدر می‌دهد.
  */
-const PUBLIC_PATH_PREFIXES = ['/health', '/internal/dev/tenants', '/auth'] as const;
+const PUBLIC_PATH_PREFIXES = ['/health', '/internal/dev/tenants', '/auth', '/docs'] as const;
 
 /**
  * مسیر درخواست، بدون query string.

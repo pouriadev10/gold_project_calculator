@@ -9,6 +9,9 @@ allowBuilds:
   msw: true
   # swc باینری بومی را برای تبدیل دکوراتورهای NestJS در تست‌ها لینک می‌کند
   '@swc/core': true
+  # BE-070: وابستگی swagger-ui-dist؛ اسکریپت نصبش فقط آمار استفاده به سرور scarf می‌فرستد —
+  # روی سرور مالی هیچ تماس خروجی ناخواسته‌ای اجرا نمی‌شود.
+  '@scarf/scarf': false
 overrides:
   # FE-087: echarts و zrender نسخه‌ی tslib را دقیقاً روی 2.3.0 قفل کرده‌اند و Radix (از راه
   # react-remove-scroll) ‎^2 می‌خواهد؛ نتیجه دو نسخه‌ی tslib در خروجی بود. tslib 2.x سازگار

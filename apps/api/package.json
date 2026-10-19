@@ -13,7 +13,8 @@
     "test:integration": "vitest run --config vitest.config.e2e.mts",
     "bench:baseline": "vitest run --config vitest.config.bench.mts",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "node scripts/migrate.mjs"
+    "db:migrate": "node scripts/migrate.mjs",
+    "openapi:generate": "vitest run src/platform/openapi/openapi.spec.ts -u"
   },
   "dependencies": {
     "@gold/contracts": "workspace:*",
@@ -28,8 +29,10 @@
     "pino": "^10.3.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "swagger-ui-dist": "5.32.15",
     "vazirmatn": "^33.0.3",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.25.2"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.5",

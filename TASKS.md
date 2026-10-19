@@ -2419,7 +2419,7 @@ inventory movements · مظنه‌ها · audit log مجاز
 
 ---
 
-## [ ] BE-070 — Swagger و مستندات API
+## [x] BE-070 — Swagger و مستندات API
 
 **هدف** — مستندسازی endpointهای فاز ۱.
 

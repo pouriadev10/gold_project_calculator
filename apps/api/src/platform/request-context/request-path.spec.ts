@@ -35,7 +35,7 @@ describe('resolveRequestPath', () => {
 });
 
 describe('isPublicPath', () => {
-  it.each(['/health', '/internal/dev/tenants', '/internal/dev/tenants/abc'])(
+  it.each(['/health', '/internal/dev/tenants', '/internal/dev/tenants/abc', '/docs', '/docs/openapi.json'])(
     '%s عمومی است',
     (path) => {
       expect(isPublicPath(path)).toBe(true);
@@ -49,6 +49,7 @@ describe('isPublicPath', () => {
     '/healthz',
     '/internal/dev/tenants-secret',
     '/sales/invoices',
+    '/docsx',
   ])('%s مستأجر لازم دارد', (path) => {
     expect(isPublicPath(path)).toBe(false);
   });

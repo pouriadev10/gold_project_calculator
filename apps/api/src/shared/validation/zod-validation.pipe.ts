@@ -31,7 +31,8 @@ function validationFields(fieldErrors: Record<string, string[] | undefined>): Va
 }
 
 export class ZodValidationPipe<TSchema extends ZodTypeAny> implements PipeTransform {
-  constructor(private readonly schema: TSchema) {}
+  /** عمومی است تا مستند OpenAPI (BE-070) schema ِ واقعی همین مسیر را بخواند. */
+  constructor(readonly schema: TSchema) {}
 
   transform(value: unknown): z.infer<TSchema> {
     const result = this.schema.safeParse(value);

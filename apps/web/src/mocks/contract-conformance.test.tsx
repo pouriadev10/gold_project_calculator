@@ -427,6 +427,10 @@ const UNUSED_SERVER_ROUTES = [
   // BE-069: خروجی کامل مستأجر — هنوز هیچ صفحه‌ای در فرانت ندارد.
   'POST /api/platform/exports/full',
   'GET /api/platform/exports/:id',
+  // BE-070: Swagger UI و مستند OpenAPI — برای توسعه‌دهنده، نه برنامه‌ی فرانت.
+  'GET /api/docs',
+  'GET /api/docs/openapi.json',
+  'GET /api/docs/assets/:file',
 ];
 
 describe('mock مسیر یا کدی نمی‌سازد که سرور ندارد', () => {
