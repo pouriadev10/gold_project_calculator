@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { gramRate1000, karat, rateDivisorFromMarketSettings } from '@gold/core-calc';
+import { gramRate1000, karat, rateDivisorFromMarketSettings, toSafeNumber } from '@gold/core-calc';
 import { and, desc, eq } from 'drizzle-orm';
 import { priceQuotes } from '../../platform/database/schema';
 import { VersionedSettingsService } from '../pricing/versioned-settings.service';
@@ -122,7 +122,7 @@ export class ReportingDisplayService {
     }
     const goldRatePerGramRial = gramRate1000(
       quote.amountRial,
-      rateDivisorFromMarketSettings(karat(Number(baseKarat)), mithqalGramsX10k(mithqalGrams)),
+      rateDivisorFromMarketSettings(karat(toSafeNumber(baseKarat)), mithqalGramsX10k(mithqalGrams)),
     );
 
     return {

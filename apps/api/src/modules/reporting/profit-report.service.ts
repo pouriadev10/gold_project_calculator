@@ -8,6 +8,7 @@ import {
   rateDivisorFromMarketSettings,
   rial,
   valueOfPure,
+  toSafeNumber,
 } from '@gold/core-calc';
 import { and, eq, gte, inArray, isNotNull, lt } from 'drizzle-orm';
 import { DRIZZLE } from '../../platform/database/database.module';
@@ -114,7 +115,7 @@ function lockedRate1000(sale: LockedSale): bigint {
   }
   return gramRate1000(
     sale.quoteAmountRial,
-    rateDivisorFromMarketSettings(karat(Number(baseQuoteKarat)), mithqalGramsX10k(sale.settingsSnapshot)),
+    rateDivisorFromMarketSettings(karat(toSafeNumber(baseQuoteKarat)), mithqalGramsX10k(sale.settingsSnapshot)),
   );
 }
 

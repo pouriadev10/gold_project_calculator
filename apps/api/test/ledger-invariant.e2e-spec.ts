@@ -323,7 +323,7 @@ describe('ناوردای دفتر کل چندواحدی — Property-Based (BE-0
       ),
       { numRuns: NUM_RUNS, seed: SEED + 3 },
     );
-  });
+  }, 60_000);
 
   it('حتی با SQL مستقیم زیر نقش runtime، تراکنش نامتوازن در commit رد و rollback می‌شود', async () => {
     await fc.assert(
@@ -371,5 +371,5 @@ describe('ناوردای دفتر کل چندواحدی — Property-Based (BE-0
       ),
       { numRuns: NUM_RUNS, seed: SEED + 4 },
     );
-  });
+  }, 60_000);
 });

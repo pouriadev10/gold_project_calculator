@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { calculateJewelrySale } from '../src/jewelry-sale.js';
+import { calculateJewelrySale, rateDivisorFromMarketSettings } from '../src/jewelry-sale.js';
+import { RATE_DIVISOR } from '../src/pricing.js';
+import { CalcError } from '../src/types.js';
 import { grossMg, karat } from '../src/types.js';
 
 const baseInput = {
@@ -42,5 +44,19 @@ describe('calculateJewelrySale', () => {
 
   it('rejects negative financial inputs', () => {
     expect(() => calculateJewelrySale({ ...baseInput, taxRateBps: -1n })).toThrow();
+  });
+});
+
+describe('rateDivisorFromMarketSettings', () => {
+  it('قرارداد بازار (مثقال ۴٫۶۰۸۳ گرم، عیار پایه‌ی ۷۰۵) همان ثابت ۳۲۴۸٫۸۵۱۵ را می‌دهد', () => {
+    expect(rateDivisorFromMarketSettings(karat(705), 46_083n)).toBe(RATE_DIVISOR);
+  });
+
+  it('نسخه‌ی دیگر تنظیمات مقسوم‌علیه دیگری می‌دهد — عدد صنفی در کد ثابت نیست', () => {
+    expect(rateDivisorFromMarketSettings(karat(750), 46_083n)).toBe(34_562_250n);
+  });
+
+  it.each([0n, -46_083n])('مثقال غیرمثبت (%s) رد می‌شود', (mithqal) => {
+    expect(() => rateDivisorFromMarketSettings(karat(705), mithqal)).toThrow(CalcError);
   });
 });

@@ -258,7 +258,7 @@ export class SalesPricingService {
       taxRateBps: nonNegativeIntegerSetting(taxRate, SETTING_KEYS.taxRateBps),
       roundingUnitRial,
       rateDivisor: rateDivisorFromMarketSettings(
-        karat(Number(baseKarat)),
+        karat(toSafeNumber(baseKarat)),
         mithqalGramsX10k(mithqalGrams),
       ),
     });

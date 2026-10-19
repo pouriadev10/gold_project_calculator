@@ -217,7 +217,7 @@ export class PartyBalancesService {
     }
     const goldRatePerGramRial = gramRate1000(
       quote.amountRial,
-      rateDivisorFromMarketSettings(karat(Number(baseKarat)), mithqalGramsX10k(mithqalGrams)),
+      rateDivisorFromMarketSettings(karat(toSafeNumber(baseKarat)), mithqalGramsX10k(mithqalGrams)),
     );
     const rialEquivalent = dualFromRial(BigInt(rawBalances.rial), goldRatePerGramRial);
 

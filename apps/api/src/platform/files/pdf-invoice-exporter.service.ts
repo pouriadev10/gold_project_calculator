@@ -29,6 +29,22 @@ const PAGE_MARGIN = 48;
 const TEXT_SIZE = 11;
 const LINE_HEIGHT = 19;
 const LINES_PER_PAGE = 35;
+/** پهنای تقریبی هر نویسه به درصد اندازه‌ی قلم — برای راست‌چین کردن خط. */
+const GLYPH_WIDTH_PERCENT = 62;
+
+/**
+ * مختصات PDF با دو رقم اعشار از عدد صحیح صدم پوینت.
+ *
+ * همه‌ی ورودی‌ها عدد صحیح‌اند، پس حساب صحیح دقیق است و نیازی به `toFixed` (که در کل
+ * کدبیس ممنوع است) یا گرد کردن نیست — خروجی همان `x.toFixed(2)` قبلی است.
+ */
+function pdfCoordinate(hundredths: number): string {
+  if (!Number.isSafeInteger(hundredths) || hundredths < 0) {
+    throw new Error(`PDF coordinate must be a non-negative integer of hundredths, got ${hundredths}`);
+  }
+  const fraction = hundredths % 100;
+  return `${(hundredths - fraction) / 100}.${fraction.toString().padStart(2, '0')}`;
+}
 const PERSIAN_INTEGER_FORMATTER = new Intl.NumberFormat('fa-IR');
 const PERSIAN_DATE_FORMATTER = new Intl.DateTimeFormat('fa-IR', {
   dateStyle: 'medium',
@@ -365,9 +381,12 @@ function toPdf(input: InvoiceExportInput, font: ParsedFont): Buffer {
       .map((detail, lineIndex) => {
         const text = registry.encode(toRtlVisual(detail));
         const y = PAGE_HEIGHT - PAGE_MARGIN - TEXT_SIZE - lineIndex * LINE_HEIGHT;
-        const estimatedWidth = Math.min(PAGE_WIDTH - PAGE_MARGIN * 2, detail.length * TEXT_SIZE * 0.62);
-        const x = PAGE_WIDTH - PAGE_MARGIN - estimatedWidth;
-        return `BT /F1 ${TEXT_SIZE} Tf 1 0 0 1 ${x.toFixed(2)} ${y.toFixed(2)} Tm <${text}> Tj ET`;
+        const estimatedWidthHundredths = Math.min(
+          (PAGE_WIDTH - PAGE_MARGIN * 2) * 100,
+          detail.length * TEXT_SIZE * GLYPH_WIDTH_PERCENT,
+        );
+        const xHundredths = (PAGE_WIDTH - PAGE_MARGIN) * 100 - estimatedWidthHundredths;
+        return `BT /F1 ${TEXT_SIZE} Tf 1 0 0 1 ${pdfCoordinate(xHundredths)} ${pdfCoordinate(y * 100)} Tm <${text}> Tj ET`;
       })
       .join('\n');
     objects.set(

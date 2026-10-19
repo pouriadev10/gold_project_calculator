@@ -58,3 +58,51 @@ jobs:
           name: lighthouse-report
           path: apps/web/.lighthouseci/
           if-no-files-found: ignore
+
+  # BE-071: دروازه‌ی کامل بک‌اند — typecheck، lint، ممنوعیت‌ها، idempotency، unit، پوشش core-calc،
+  # مهاجرت روی دیتابیس خالی، property-based، integration، ناورداهای دفتر کل و build.
+  # دیتابیس gold_gate را خود دروازه روی این سرویس می‌سازد و پاک می‌کند.
+  backend-gate:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: gold
+          POSTGRES_PASSWORD: gold
+          POSTGRES_DB: gold
+          # همان تنظیم docker-compose.yml: ترتیب مرتب‌سازی نباید به locale ماشین CI وابسته باشد.
+          POSTGRES_INITDB_ARGS: '--encoding=UTF8 --locale=C'
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U gold -d gold"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      GATE_DATABASE_URL: postgresql://gold:gold@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: دروازه‌ی بک‌اند
+        run: pnpm gate:backend
+
+      - name: بارگذاری گزارش ناورداها
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-invariants
+          path: apps/api/.gate/invariants.json
+          if-no-files-found: ignore

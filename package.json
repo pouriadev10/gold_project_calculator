@@ -20,7 +20,8 @@
     "size": "node scripts/check-bundle-size.mjs",
     "lhci": "pnpm --filter @gold/web exec lhci autorun",
     "gate": "pnpm typecheck && pnpm lint && pnpm test && pnpm build && pnpm size",
-    "gate:frontend": "node scripts/gate-frontend.mjs"
+    "gate:frontend": "node scripts/gate-frontend.mjs",
+    "gate:backend": "node scripts/gate-backend.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.15.0",
