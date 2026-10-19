@@ -1074,9 +1074,9 @@
     "semantic_hash": ""
   },
   "apps/api/src/modules/sales/invoice-amendments.controller.ts": {
-    "mtime": 1792258238.1639678,
-    "seen": 1792260094.0644934,
-    "ast_hash": "f6b458e5a367672a18270f6939cab6e5",
+    "mtime": 1792414839.2554576,
+    "seen": 1792415497.6122632,
+    "ast_hash": "8cf9e7f9a60537d50a01be75208e8be7",
     "semantic_hash": ""
   },
   "apps/api/src/modules/sales/invoice-amendments.errors.ts": {
@@ -5046,9 +5046,9 @@
     "semantic_hash": ""
   },
   "TASKS.md": {
-    "mtime": 1792411742.4497414,
-    "seen": 1792411890.8870223,
-    "ast_hash": "152984698b52d6aa19ac6af57f4f74ef",
+    "mtime": 1792415388.364105,
+    "seen": 1792415497.6142066,
+    "ast_hash": "7ca4cfd0d3da9fc1872a1e47a8f2634a",
     "semantic_hash": ""
   },
   "TECH-A~1.MD": {
@@ -6753,6 +6753,12 @@
     "mtime": 1792413736.521194,
     "seen": 1792413951.9912832,
     "ast_hash": "b1ba02bd7698c9cdfed64a5ea052c08b",
+    "semantic_hash": ""
+  },
+  "apps/api/test/pilot-scenario.e2e-spec.ts": {
+    "mtime": 1792414996.2117152,
+    "seen": 1792415497.6128864,
+    "ast_hash": "99e4b630ff98e5b1071c7ab8f648922e",
     "semantic_hash": ""
   }
 }
