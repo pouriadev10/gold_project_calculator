@@ -2,6 +2,7 @@ import {
   Body,
   ConflictException,
   Controller,
+  ForbiddenException,
   Get,
   Headers,
   HttpCode,
@@ -23,6 +24,7 @@ import { IdempotencyKeyConflictError } from '../../platform/idempotency/idempote
 import { IdempotencyService } from '../../platform/idempotency/idempotency.service';
 import { RequestContextService } from '../../platform/request-context/request-context.service';
 import { ZodValidationPipe } from '../../shared/validation';
+import { InvoiceAmendmentPolicyDeniedError } from './invoice-amendment-policy.errors';
 import { InvoiceAmendmentsService } from './invoice-amendments.service';
 import { SalesInvoiceNotFoundError } from './sales-invoices.errors';
 import type {
@@ -31,8 +33,20 @@ import type {
   InvoiceAmendmentPreflight,
 } from '@gold/contracts';
 import type { AccessTokenPayload } from '../../platform/auth/token.service';
+import type { InvoiceAmendmentRestriction } from './invoice-amendment-policy.errors';
 
 const PATH = '/sales/invoices/:invoiceId/amend';
+
+const RESTRICTION_LABELS: Readonly<Record<InvoiceAmendmentRestriction, string>> = {
+  OUTSIDE_CORRECTION_WINDOW: 'پنجره‌ی اصلاح بسته شده است',
+  BUSINESS_DAY_CLOSED: 'روز کاری بسته شده است',
+  SETTLED_INVOICE: 'فاکتور تسویه شده است',
+  VARIANCE_EXCEEDS_MANAGER_THRESHOLD: 'اختلاف مبلغ از حد مجاز صندوقدار بیشتر است',
+};
+
+function policyDeniedMessage(restrictions: readonly InvoiceAmendmentRestriction[]): string {
+  return `اصلاح این فاکتور تأیید مدیر یا مالک لازم دارد: ${restrictions.map((restriction) => RESTRICTION_LABELS[restriction]).join('، ')}`;
+}
 
 @Controller('sales/invoices')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -104,6 +118,10 @@ export class InvoiceAmendmentsController {
     } catch (error) {
       if (error instanceof IdempotencyKeyConflictError) {
         throw new ConflictException(error.message);
+      }
+      // قاعده‌ی کسب‌وکار، نه خطای سرور: صندوقدار باید بداند تأیید مدیر لازم است (BE-072).
+      if (error instanceof InvoiceAmendmentPolicyDeniedError) {
+        throw new ForbiddenException(policyDeniedMessage(error.restrictions));
       }
       throw error;
     }
