@@ -24,7 +24,7 @@
 - **اثر روی:** همه‌ی کنترلرهای بک‌اند + `apps/web/src/api` + MSW mocks
 - **مسائل شناخته‌شده:** #27 (فقط `code` سکه، بدون عنوان)، #35 (ثابت‌های تبدیل در تنظیمات عمومی نیستند)
 
-### [ ] M-03 · اسکیمای دیتابیس و مایگریشن‌ها — `apps/api/src/platform/database` + `apps/api/drizzle`
+### [x] M-03 · اسکیمای دیتابیس و مایگریشن‌ها — `apps/api/src/platform/database` + `apps/api/drizzle`
 - **محتوا:** ۲۵ فایل schema · مایگریشن‌های ۰۰۰۰ تا ۰۰۳۵ · `tenant-transaction` · `connect` · `pg-errors`
 - **نکات بررسی:** `tenant_id` + RLS روی همه‌ی جداول · ممنوعیت UPDATE/DELETE روی `ledger_entry` · تریگر `DEFERRABLE INITIALLY DEFERRED` برای صفر بودن هر بُعد در هر تراکنش · شمارنده‌ی بدون شکاف (نه `SEQUENCE`) · تنظیمات نسخه‌دار با بازه‌ی اعتبار · `gross_weight_ug` میکروگرم · سکه به‌صورت تعداد · ایندکس‌ها
 - **اثر روی:** همه‌ی ماژول‌های بک‌اند
@@ -314,7 +314,7 @@
 | # | ایراد | اصلاح |
 |---|---|---|
 | 1 | رشته‌ی پول/وزن تا ۴۰ رقم پذیرفته می‌شد، ولی همه‌ی ستون‌ها `bigint` (۱۹ رقم) هستند. مقدار ۲۰ رقمی به INSERT می‌رسید و خطای `22003` پستگرس (بدون نگاشت) پاسخ **۵۰۰** می‌داد، نه ۴۰۰. | `bigIntStringSchema` به بازه‌ی int8 محدود شد (`DB_BIGINT_MIN/MAX`). سقف تکراری مظنه حذف شد. برای حساب درون فرانت، `canonicalIntegerStringSchema` (فقط شکل) جدا شد و `apps/web/src/lib/bigint.ts` از آن استفاده می‌کند. |
-| 2 | تعداد سکه (`z.number().int()`) سقف نداشت؛ حتی `1e20` قبول بود و ستون int4 (`sales_invoice_lines.quantity`، `second_hand_purchases.coin_count`) را با ۵۰۰ می‌شکست. | `coinCountSchema` مشترک با سقف int4 در ۵ قرارداد (فروش سکه، اصلاحیه، خرید سکه، تسویه‌ی سکه، تسویه‌ی ترکیبی). |
+| 2 | تعداد سکه (`z.number().int()`) سقف نداشت؛ حتی `1e20` قبول بود و ستون int4 (`sales_invoice_items.quantity`، `second_hand_purchase_items.coin_count`) را با ۵۰۰ می‌شکست. | `coinCountSchema` مشترک با سقف int4 در ۵ قرارداد (فروش سکه، اصلاحیه، خرید سکه، تسویه‌ی سکه، تسویه‌ی ترکیبی). |
 | 3 | چند پاسخ با regex دستی و نامتعارف (`^-?\d+$` می‌پذیرفت `"-0"`/`"007"`). | با `bigIntStringSchema`/`positiveBigIntStringSchema`/`nonNegativeBigIntStringSchema` یکدست شد (فروش نقدی، تاریخچه، جزئیات فاکتور). |
 | 4 | سطرهای اصلاحیه `strict` نبودند؛ کلید غلط بی‌صدا حذف می‌شد. `reasonDetail` سقف طول نداشت. | `strict()` و سقف ۲۰۰۰. |
 | 5 | سه پیام خطای سفارشی انگلیسی بودند و به کاربر می‌رسیدند. | فارسی شدند. |
@@ -328,3 +328,50 @@
 - **M-16:** پیام انگلیسی `reasonDetail is required…` در `invoice-amendment-policy.service.ts`.
 - **M-13/M-34:** کلیدهای `pricing.base_quote_karat` و `pricing.mithqal_grams` و نرخ سود/مالیات در قرارداد تنظیمات عمومی نیستند (#35).
 - `createMixedSettlementSchema.lines` سقف تعداد ندارد (اختیار محصولی).
+
+### M-03 · اسکیمای دیتابیس و مایگریشن‌ها — بررسی‌شده (۱۴۰۵/۰۷/۲۷)
+
+**روش:** بررسی وضعیت واقعی دیتابیس (`gold_test`) به‌جای فقط خواندن SQL:
+- RLS، policyها و grantهای نقش `gold_app`
+- همه‌ی تریگرها و توابع
+- constraintهای check، unique و exclusion و ایندکس‌ها
+- FKهای `SET NULL` و `CASCADE`
+
+بعد آزمودن مستقیم با SQL و اجرای مرحله‌ی `migrations` دروازه.
+
+#### درست بود
+
+- **RLS:** همه‌ی ۲۶ جدول مستأجری RLS **اجباری** (`FORCE`) دارند، با policy `tenant_id = current_tenant_id()`. سه جدول سراسری (`tenants`، `users`، `roles`) و `refresh_tokens` به `gold_app` grant ندارند.
+- **نقش runtime:** `gold_app` نه superuser است نه `BYPASSRLS`. `withTenantTransaction` نقش و مستأجر را با `is_local=true` تنظیم می‌کند و از `set_config` پارامتری استفاده می‌کند.
+- **Append-only:** این جدول‌ها append-only‌اند: دفتر کل (هر دو جدول)، حرکات موجودی، ممیزی، مظنه، مانده‌ی افتتاحیه، نسخه‌ها و اقلام فاکتور، سطرهای تسویه، خرید دست‌دوم، و خروجی مستأجر. استثناها فقط دو چیزند: cascade ِ حذف مستأجر، و NULL شدن سازنده هنگام حذف کاربر.
+- **ناوردای دفتر کل:** «مجموع صفر در هر بُعد» با `CONSTRAINT TRIGGER … DEFERRABLE INITIALLY DEFERRED` اجرا می‌شود (قاعده‌ی ۲-۷).
+- **جدول‌های نسخه‌دار:** تنظیمات، سکه و زیورآلات constraint ِ exclusion روی هم‌پوشانی بازه دارند، و نسخه‌ی بسته کاملاً تغییرناپذیر است.
+- **شمارنده‌ی بدون شکاف:** با جدول شمارنده و `SELECT … FOR UPDATE` کار می‌کند، نه `SEQUENCE`.
+- **ستون‌ها:** همه‌ی ستون‌های پول و وزن `bigint` هستند.
+- **مهاجرت‌ها:** اسکیمای Drizzle با مهاجرت‌ها هم‌خوان است (drift ندارد) و روی دیتابیس خالی دو بار پشت‌سرهم بی‌خطا اعمال می‌شود.
+
+#### ایرادهای رفع‌شده (مهاجرت `0036_m03_header_and_setting_guards`)
+
+| # | ایراد | اصلاح |
+|---|---|---|
+| 1 | **حذف کاربری که حتی یک تنظیم ذخیره کرده بود ممکن نبود.** FK ِ `versioned_settings.created_by` با `ON DELETE SET NULL` به تریگر `restrict_versioned_setting_update` می‌خورد و کل DELETE با 55000 شکست می‌خورد. این با SQL واقعی تأیید شد. | همان استثنایی که `enforce_append_only` دارد اینجا هم اضافه شد: فقط NULL شدن سازنده، فقط از درون cascade، و هیچ ستون دیگری عوض نشود. |
+| 2 | **سربرگ فاکتور نهایی** قابل بازنویسی بود. نرخ قفل‌شده (`quote_amount_rial` و دو فیلد همراهش)، `finalized_at` و وضعیت را می‌شد عوض کرد، در حالی که گزارش سود از همین نرخ می‌خواند (قاعده‌ی ۲-۸). | تریگر `sales_invoices_restrict_finalized_update`: پس از FINALIZED فقط اصلاحیه مجاز است (`current_version` رو به جلو و `party_id`)، به‌علاوه‌ی NULL شدن سازنده در cascade. |
+| 3 | **سربرگ تسویه‌ی نهایی** (تاریخ مؤثر و وضعیت) قابل بازنویسی بود. | تریگر `settlements_restrict_finalized_update`. |
+
+**تأیید:**
+- ۴ تست تازه در `database-constraints.e2e-spec.ts`: سه‌تا پیش از مهاجرت شکست خوردند و پس از آن سبز شدند.
+- API integration روی PostgreSQL: **۵۰۸ از ۵۰۸** (شامل ثبت، نهایی‌سازی و اصلاحیه‌ی فاکتور و همه‌ی تسویه‌ها).
+- API unit: ۲۷۶ تست.
+- typecheck و lint، و مرحله‌ی `migrations` دروازه.
+
+> مهاجرت فقط روی `gold_test` اعمال شده است. دیتابیس توسعه (`gold`) را باید خودتان مهاجرت دهید، چون مهاجرت عمداً دستی است:
+> `pnpm --filter @gold/api db:migrate`
+
+#### نیازمند تصمیم شما
+
+- **D-02 (فوری، پیش از نوروز ۱۴۰۶):** شمارنده‌ی فاکتور هر سال جلالی از ۱ شروع می‌شود، ولی ایندکس یکتا `(tenant_id, invoice_number)` است و سال در آن نیست. از ۱ فروردین ۱۴۰۶ اولین فروش با خطای یکتایی شکست می‌خورد. سال هم با منطقه‌ی زمانی سرور (UTC) حساب می‌شود. جزئیات و دو راه رفع در `PENDING-DECISIONS.md` آمده است.
+
+#### نکته‌های جزئی (بدون اقدام)
+
+- FK مرکب ِ `sales_invoice_versions → parties` از نوع `CASCADE` است. حذف شخصی که تاریخچه دارد به‌هرحال با تریگر append-only رد می‌شود، پس رفتار درست است، فقط کد خطا 55000 است نه 23503.
+- نام جدول‌ها در یادداشت M-02 اصلاح شد: `sales_invoice_items` و `second_hand_purchase_items`.

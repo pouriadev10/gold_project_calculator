@@ -4,7 +4,7 @@ import { z } from 'zod';
  * بیشینه‌ی تعداد سکه در یک سند — سقف ستون `integer` (int4) ِ PostgreSQL.
  *
  * مرز فنی ذخیره‌سازی است، نه عدد صنفی: تعداد سکه‌ی سطر فاکتور
- * (`sales_invoice_lines.quantity`) و خرید (`second_hand_purchases.coin_count`)
+ * (`sales_invoice_items.quantity`) و خرید (`second_hand_purchase_items.coin_count`)
  * int4 است. بدون این سقف، `z.number().int()` حتی `1e20` را می‌پذیرفت؛ مقدار به
  * INSERT می‌رسید و خطای `22003` ِ پستگرس به‌جای ۴۰۰ پاسخ ۵۰۰ می‌داد (و فراتر از
  * `Number.MAX_SAFE_INTEGER` تعداد اصلاً دقیق نمی‌ماند).

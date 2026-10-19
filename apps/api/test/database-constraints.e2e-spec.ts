@@ -950,6 +950,119 @@ describe('محدودیت‌های دیتابیس با SQL مستقیم (BE-063)'
       expect(transaction.createdBy).toBeNull();
     });
 
+    it('M-03: حذف کاربری که نسخه‌ی تنظیمات ساخته ممکن است و فقط سازنده NULL می‌شود', async () => {
+      const userId = await createUser('سازنده‌ی تنظیمات');
+      const settingKey = `m03.probe.${randomUUID().slice(0, 8)}`;
+      const closedId = await insertId(
+        `INSERT INTO versioned_settings (tenant_id, setting_key, value_json, valid_from, valid_to, version, created_by)
+         VALUES ($1, $2, '{"value":"1"}'::jsonb, $3, $4, 1, $5) RETURNING id`,
+        [a.id, settingKey, T0, T1, userId],
+      );
+      const openId = await insertId(
+        `INSERT INTO versioned_settings (tenant_id, setting_key, value_json, valid_from, version, created_by)
+         VALUES ($1, $2, '{"value":"2"}'::jsonb, $3, 2, $4) RETURNING id`,
+        [a.id, settingKey, T1, userId],
+      );
+
+      // بیرون از cascade، NULL کردن سازنده همچنان بازنویسی است.
+      await expect(
+        pool.query('UPDATE versioned_settings SET created_by = NULL WHERE id = $1', [openId]),
+      ).rejects.toMatchObject(rejected('55000'));
+
+      await pool.query('DELETE FROM users WHERE id = $1', [userId]);
+
+      const versions = await rows<{ id: string; createdBy: string | null; value: unknown; validTo: Date | null }>(
+        `SELECT id, created_by AS "createdBy", value_json AS value, valid_to AS "validTo"
+         FROM versioned_settings WHERE id = ANY($1::uuid[]) ORDER BY version`,
+        [[closedId, openId]],
+      );
+      expect(versions.map((version) => version.createdBy)).toEqual([null, null]);
+      expect(versions.map((version) => version.value)).toEqual([{ value: '1' }, { value: '2' }]);
+      expect(versions[0]!.validTo?.toISOString()).toBe(T1);
+      expect(versions[1]!.validTo).toBeNull();
+    });
+
+    it('M-03: سربرگ فاکتور نهایی — نرخ قفل‌شده، شماره، زمان و وضعیت با هیچ نقشی عوض نمی‌شوند', async () => {
+      const userId = await createUser('صادرکننده‌ی فاکتور');
+      const otherPartyId = await createParty(a.id);
+      const invoiceId = await insertId(
+        `INSERT INTO sales_invoices (tenant_id, invoice_number, current_version, status, party_id,
+                                     quote_id, quote_amount_rial, quote_observed_at, finalized_at, created_by)
+         VALUES ($1, 9301, 1, 'FINALIZED', $2, $3, 150000000, $4, $4, $5) RETURNING id`,
+        [a.id, partyId, quoteId, T0, userId],
+      );
+
+      for (const assignment of [
+        'quote_amount_rial = 1',
+        'quote_observed_at = now()',
+        'finalized_at = now()',
+        "status = 'DRAFT', invoice_number = NULL, current_version = 0",
+        'current_version = 0',
+        'created_by = NULL',
+      ]) {
+        await expect(
+          pool.query(`UPDATE sales_invoices SET ${assignment} WHERE id = $1`, [invoiceId]),
+        ).rejects.toMatchObject(rejected('55000'));
+      }
+
+      // اصلاحیه همچنان کار می‌کند: نسخه رو به جلو و شخص (خطای شخص).
+      await pool.query('UPDATE sales_invoices SET current_version = 2, party_id = $2 WHERE id = $1', [
+        invoiceId,
+        otherPartyId,
+      ]);
+
+      await pool.query('DELETE FROM users WHERE id = $1', [userId]);
+      const header = await one<{ version: number; partyId: string; amount: string; createdBy: string | null }>(
+        `SELECT current_version AS version, party_id AS "partyId", quote_amount_rial::text AS amount,
+                created_by AS "createdBy"
+         FROM sales_invoices WHERE id = $1`,
+        [invoiceId],
+      );
+      expect(header).toEqual({ version: 2, partyId: otherPartyId, amount: '150000000', createdBy: null });
+    });
+
+    it('M-03: پیش‌نویس فاکتور هنوز نهایی می‌شود (مسیر finalize)', async () => {
+      const draftId = await insertId(
+        `INSERT INTO sales_invoices (tenant_id, party_id) VALUES ($1, $2) RETURNING id`,
+        [a.id, partyId],
+      );
+      await pool.query(
+        `UPDATE sales_invoices
+         SET invoice_number = 9302, current_version = 1, status = 'FINALIZED', quote_id = $2,
+             quote_amount_rial = 150000000, quote_observed_at = $3, finalized_at = $3
+         WHERE id = $1`,
+        [draftId, quoteId, T0],
+      );
+      const { status } = await one<{ status: string }>('SELECT status FROM sales_invoices WHERE id = $1', [draftId]);
+      expect(status).toBe('FINALIZED');
+    });
+
+    it('M-03: سربرگ تسویه‌ی نهایی بازنویسی نمی‌شود، ولی پیش‌نویس نهایی می‌شود', async () => {
+      const userId = await createUser('ثبت‌کننده‌ی تسویه');
+      const draftId = await insertId(
+        `INSERT INTO settlements (tenant_id, party_id, created_by) VALUES ($1, $2, $3) RETURNING id`,
+        [a.id, partyId, userId],
+      );
+      await pool.query(
+        `UPDATE settlements SET status = 'FINALIZED', effective_at = $2, finalized_at = $2 WHERE id = $1`,
+        [draftId, T0],
+      );
+
+      for (const assignment of ['effective_at = now()', 'finalized_at = now()', "status = 'DRAFT'", 'created_by = NULL']) {
+        await expect(
+          pool.query(`UPDATE settlements SET ${assignment} WHERE id = $1`, [draftId]),
+        ).rejects.toMatchObject(rejected('55000'));
+      }
+
+      await pool.query('DELETE FROM users WHERE id = $1', [userId]);
+      const settlement = await one<{ createdBy: string | null; effectiveAt: Date }>(
+        'SELECT created_by AS "createdBy", effective_at AS "effectiveAt" FROM settlements WHERE id = $1',
+        [draftId],
+      );
+      expect(settlement.createdBy).toBeNull();
+      expect(settlement.effectiveAt.toISOString()).toBe(T0);
+    });
+
     it('حذف کامل مستأجر هنوز همه‌ی داده‌ی append-only اش را cascade می‌کند', async () => {
       const purged = await createTenantFixture('محدودیت‌ها — پاک‌سازی');
       const purgedPartyId = await createParty(purged.id);
