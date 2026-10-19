@@ -5046,9 +5046,9 @@
     "semantic_hash": ""
   },
   "TASKS.md": {
-    "mtime": 1792407576.5889657,
-    "seen": 1792407703.1338449,
-    "ast_hash": "1cfaee8942d5d754013bb8082b17328d",
+    "mtime": 1792408600.525108,
+    "seen": 1792408707.7589543,
+    "ast_hash": "9de830eb95679f04845cdddd97df5e81",
     "semantic_hash": ""
   },
   "TECH-A~1.MD": {
@@ -6561,6 +6561,24 @@
     "mtime": 1792407232.1089025,
     "seen": 1792407703.1338742,
     "ast_hash": "80def958a12125987ec0f3592d8a4805",
+    "semantic_hash": ""
+  },
+  "apps/api/scripts/restore-prerequisites.sql": {
+    "mtime": 1792408179.6595242,
+    "seen": 1792408707.7555423,
+    "ast_hash": "0d08d612b4138d91e1bd548480d848b3",
+    "semantic_hash": ""
+  },
+  "apps/api/scripts/verify-restore.mjs": {
+    "mtime": 1792408359.013225,
+    "seen": 1792408707.7555463,
+    "ast_hash": "994af069ff68ff3c415e0b0fbc51ac7d",
+    "semantic_hash": ""
+  },
+  "docs/backup-restore.md": {
+    "mtime": 1792408419.895146,
+    "seen": 1792408707.7589962,
+    "ast_hash": "db08451af255b3ad7b6f2632e256b2b5",
     "semantic_hash": ""
   }
 }
