@@ -852,9 +852,9 @@
     "semantic_hash": ""
   },
   "apps/api/src/modules/parties/party-balances.service.ts": {
-    "mtime": 1786965220.0037858,
-    "seen": 1789132525.94473,
-    "ast_hash": "a15441ee54867ddef736d2c0ca239cb1",
+    "mtime": 1792412156.3725564,
+    "seen": 1792413951.989144,
+    "ast_hash": "fbdedf14a7ad3a9edf0b1166adde945e",
     "semantic_hash": ""
   },
   "apps/api/src/modules/parties/party-statement-pdf.service.ts": {
@@ -1008,15 +1008,15 @@
     "semantic_hash": ""
   },
   "apps/api/src/modules/reporting/profit-report.service.ts": {
-    "mtime": 1786965220.009626,
-    "seen": 1789132525.9447496,
-    "ast_hash": "c67f2466882bd271f6942a088164f272",
+    "mtime": 1792412073.1877482,
+    "seen": 1792413951.989229,
+    "ast_hash": "3ad57bcd60800a83a287465c71c3190a",
     "semantic_hash": ""
   },
   "apps/api/src/modules/reporting/reporting-display.service.ts": {
-    "mtime": 1786965220.0101557,
-    "seen": 1789132525.9447503,
-    "ast_hash": "a0f672148f59835388000f673cd3cc40",
+    "mtime": 1792412073.174542,
+    "seen": 1792413951.9892397,
+    "ast_hash": "a8b6dbb628c55a948fcf82850644f3ad",
     "semantic_hash": ""
   },
   "apps/api/src/modules/reporting/reporting.controller.ts": {
@@ -1152,9 +1152,9 @@
     "semantic_hash": ""
   },
   "apps/api/src/modules/sales/sales-pricing.service.ts": {
-    "mtime": 1786707255.6188688,
-    "seen": 1789132525.944769,
-    "ast_hash": "1dc8a6c03eed3731ac3f9c0c4afde984",
+    "mtime": 1792412156.4832747,
+    "seen": 1792413951.989301,
+    "ast_hash": "d5f117dee1b4eb68ebe878cde68da3ba",
     "semantic_hash": ""
   },
   "apps/api/src/modules/sales/sales.module.ts": {
@@ -1218,8 +1218,8 @@
     "semantic_hash": ""
   },
   "apps/api/src/modules/settlement/rial-settlements.controller.ts": {
-    "mtime": 1786707255.6203494,
-    "seen": 1789132525.944777,
+    "mtime": 1792413063.5766816,
+    "seen": 1792413951.9893224,
     "ast_hash": "a290c5eed2ec49d042d934b63745ce91",
     "semantic_hash": ""
   },
@@ -1482,8 +1482,8 @@
     "semantic_hash": ""
   },
   "apps/api/src/platform/database/schema/ledger-transactions.ts": {
-    "mtime": 1786392733.3095808,
-    "seen": 1789132525.94481,
+    "mtime": 1792413063.3994493,
+    "seen": 1792413951.9894147,
     "ast_hash": "48962a180247dcdab44566ac35fb81e5",
     "semantic_hash": ""
   },
@@ -1500,8 +1500,8 @@
     "semantic_hash": ""
   },
   "apps/api/src/platform/database/schema/parties.ts": {
-    "mtime": 1786392733.310588,
-    "seen": 1789132525.944812,
+    "mtime": 1792413063.7249618,
+    "seen": 1792413951.9894214,
     "ast_hash": "34fbaa8a7ebdd7e50c215b3ee9b38593",
     "semantic_hash": ""
   },
@@ -1608,9 +1608,9 @@
     "semantic_hash": ""
   },
   "apps/api/src/platform/files/pdf-invoice-exporter.service.ts": {
-    "mtime": 1786965220.0259378,
-    "seen": 1789132525.944825,
-    "ast_hash": "16202da77eabc176f61896dcdccafce8",
+    "mtime": 1792412096.108211,
+    "seen": 1792413951.9894755,
+    "ast_hash": "f3d0c39bafc5cb8870bfa91f34454cf2",
     "semantic_hash": ""
   },
   "apps/api/src/platform/idempotency/dev-idempotency.controller.ts": {
@@ -2040,9 +2040,9 @@
     "semantic_hash": ""
   },
   "apps/api/test/ledger-invariant.e2e-spec.ts": {
-    "mtime": 1792259716.680272,
-    "seen": 1792260094.0647206,
-    "ast_hash": "88f5e2146f22e169fcce9e40544f7db7",
+    "mtime": 1792413379.4179642,
+    "seen": 1792413951.9896884,
+    "ast_hash": "2ff1ee8e5d1702e266aaef1e8d853ae9",
     "semantic_hash": ""
   },
   "apps/api/test/ledger-posting.e2e-spec.ts": {
@@ -3672,15 +3672,15 @@
     "semantic_hash": ""
   },
   "eslint.config.js": {
-    "mtime": 1792258238.3610938,
-    "seen": 1792260094.0652928,
+    "mtime": 1792413063.2253773,
+    "seen": 1792413951.9906886,
     "ast_hash": "7cfe864638f1f0283df6a1d0c17da567",
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1792258238.3920064,
-    "seen": 1792260094.0652938,
-    "ast_hash": "326f55fc8765e93acc775d8e650a84ce",
+    "mtime": 1792412564.940551,
+    "seen": 1792413951.9906912,
+    "ast_hash": "0e4656d628b366448ad2a03d325a081f",
     "semantic_hash": ""
   },
   "packages/contracts/package.json": {
@@ -4152,9 +4152,9 @@
     "semantic_hash": ""
   },
   "packages/core-calc/test/jewelry-sale.test.ts": {
-    "mtime": 1786392733.3243062,
-    "seen": 1789132525.9451516,
-    "ast_hash": "e07849e63e858921d954d13413e25859",
+    "mtime": 1792412246.4129095,
+    "seen": 1792413951.990905,
+    "ast_hash": "095253ddd197e4c2a50c30cf7b30fe63",
     "semantic_hash": ""
   },
   "packages/core-calc/test/karat.test.ts": {
@@ -4998,9 +4998,9 @@
     "semantic_hash": ""
   },
   ".github/workflows/ci.yml": {
-    "mtime": 1792258238.1398036,
-    "seen": 1792260094.065613,
-    "ast_hash": "18b15955c3cf9c311b977ab6a018718f",
+    "mtime": 1792413084.0674498,
+    "seen": 1792413951.991238,
+    "ast_hash": "ff17b0af695d315ac6eca6825eb1121f",
     "semantic_hash": ""
   },
   "AGENTS.md": {
@@ -6729,6 +6729,30 @@
     "mtime": 1792411512.5416617,
     "seen": 1792411890.8870456,
     "ast_hash": "129ddb82aaf14fcf78df0a990363485a",
+    "semantic_hash": ""
+  },
+  "apps/api/src/platform/idempotency/write-endpoints-idempotency.spec.ts": {
+    "mtime": 1792412968.8379705,
+    "seen": 1792413951.989499,
+    "ast_hash": "c7537d59acb46a8aac5ef93c23611211",
+    "semantic_hash": ""
+  },
+  "scripts/check-backend-bans.mjs": {
+    "mtime": 1792413009.9270434,
+    "seen": 1792413951.9909368,
+    "ast_hash": "38c3e8408e28aaf9b37c6c22d65bf8ce",
+    "semantic_hash": ""
+  },
+  "scripts/gate-backend.mjs": {
+    "mtime": 1792412574.134095,
+    "seen": 1792413951.9909468,
+    "ast_hash": "ee8f10afcb5c6d74bc63604f550ef54a",
+    "semantic_hash": ""
+  },
+  "docs/backend-gate.md": {
+    "mtime": 1792413736.521194,
+    "seen": 1792413951.9912832,
+    "ast_hash": "b1ba02bd7698c9cdfed64a5ea052c08b",
     "semantic_hash": ""
   }
 }
