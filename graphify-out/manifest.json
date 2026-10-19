@@ -624,9 +624,9 @@
     "semantic_hash": ""
   },
   "apps/api/drizzle/meta/_journal.json": {
-    "mtime": 1792275087.2771208,
-    "seen": 1792275701.8839502,
-    "ast_hash": "99b5cb8c61a4d970b8a2948e55c6a976",
+    "mtime": 1792409104.818245,
+    "seen": 1792410149.6773996,
+    "ast_hash": "170fd1b937aec1bab185d60e9927ed30",
     "semantic_hash": ""
   },
   "apps/api/nest-cli.json": {
@@ -660,9 +660,9 @@
     "semantic_hash": ""
   },
   "apps/api/src/app.module.ts": {
-    "mtime": 1792406632.0318053,
-    "seen": 1792407703.131936,
-    "ast_hash": "2591108e53534e21c99431e94cb20c67",
+    "mtime": 1792409296.0823114,
+    "seen": 1792410149.6774204,
+    "ast_hash": "6785625154b6580a85487c9af9b6f1d5",
     "semantic_hash": ""
   },
   "apps/api/src/main.ts": {
@@ -1458,9 +1458,9 @@
     "semantic_hash": ""
   },
   "apps/api/src/platform/database/schema/index.ts": {
-    "mtime": 1786965220.0199327,
-    "seen": 1789132525.9448066,
-    "ast_hash": "7eae589f9c47c0d309d503ecbd1b6ffd",
+    "mtime": 1792409101.2482972,
+    "seen": 1792410149.6778183,
+    "ast_hash": "24899373787e83592e5fc76000da5248",
     "semantic_hash": ""
   },
   "apps/api/src/platform/database/schema/inventory-movements.ts": {
@@ -3744,9 +3744,9 @@
     "semantic_hash": ""
   },
   "packages/contracts/src/index.ts": {
-    "mtime": 1786965220.1488063,
-    "seen": 1789132525.9450905,
-    "ast_hash": "6562d34aac08ef36cec20364e9119ecd",
+    "mtime": 1792409153.660909,
+    "seen": 1792410149.6794689,
+    "ast_hash": "250ef87bafe5295061e69cea5198f737",
     "semantic_hash": ""
   },
   "packages/contracts/src/inventory/coin-types.ts": {
@@ -5046,9 +5046,9 @@
     "semantic_hash": ""
   },
   "TASKS.md": {
-    "mtime": 1792408600.525108,
-    "seen": 1792408707.7589543,
-    "ast_hash": "9de830eb95679f04845cdddd97df5e81",
+    "mtime": 1792410042.9314313,
+    "seen": 1792410149.6800983,
+    "ast_hash": "17039cbde33f0ad064bef60c4f6143d4",
     "semantic_hash": ""
   },
   "TECH-A~1.MD": {
@@ -6126,9 +6126,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/mocks/contract-conformance.test.tsx": {
-    "mtime": 1792258238.3418531,
-    "seen": 1792260094.065252,
-    "ast_hash": "2eff0a3c505496a0fccf7dc28188403a",
+    "mtime": 1792409893.913651,
+    "seen": 1792410149.679374,
+    "ast_hash": "b69a569b8f6bcc9d0672bd32df273163",
     "semantic_hash": ""
   },
   "apps/web/src/mocks/handlers/contract-gate.ts": {
@@ -6579,6 +6579,84 @@
     "mtime": 1792408419.895146,
     "seen": 1792408707.7589962,
     "ast_hash": "db08451af255b3ad7b6f2632e256b2b5",
+    "semantic_hash": ""
+  },
+  "apps/api/drizzle/0035_be069_tenant_exports.sql": {
+    "mtime": 1792409115.3221393,
+    "seen": 1792410149.677307,
+    "ast_hash": "71a02a8c75b891ceb64de3d50b62c316",
+    "semantic_hash": ""
+  },
+  "apps/api/drizzle/meta/0035_snapshot.json": {
+    "mtime": 1792409104.818245,
+    "seen": 1792410149.6773968,
+    "ast_hash": "6b7d51fc9ccad72e414eb849db363d52",
+    "semantic_hash": ""
+  },
+  "apps/api/src/platform/database/schema/tenant-exports.ts": {
+    "mtime": 1792409100.4710088,
+    "seen": 1792410149.6778727,
+    "ast_hash": "0e5cca9b223f5814e537840d8f7187fb",
+    "semantic_hash": ""
+  },
+  "apps/api/src/platform/exports/tenant-export.sections.ts": {
+    "mtime": 1792409232.6584127,
+    "seen": 1792410149.6778965,
+    "ast_hash": "588febcd3822718a2ba92f993f8ce298",
+    "semantic_hash": ""
+  },
+  "apps/api/src/platform/exports/tenant-exports.controller.ts": {
+    "mtime": 1792409295.0840485,
+    "seen": 1792410149.6778986,
+    "ast_hash": "d8d1794ef04583d01f39fbc7fe65b4eb",
+    "semantic_hash": ""
+  },
+  "apps/api/src/platform/exports/tenant-exports.errors.ts": {
+    "mtime": 1792409294.9754438,
+    "seen": 1792410149.6779008,
+    "ast_hash": "814ed5994f63631b5732fcd01a09430a",
+    "semantic_hash": ""
+  },
+  "apps/api/src/platform/exports/tenant-exports.module.ts": {
+    "mtime": 1792409295.1847763,
+    "seen": 1792410149.6779032,
+    "ast_hash": "f989397d60254832322d27d3e50f231f",
+    "semantic_hash": ""
+  },
+  "apps/api/src/platform/exports/tenant-exports.service.ts": {
+    "mtime": 1792409294.8563094,
+    "seen": 1792410149.677905,
+    "ast_hash": "f40fdcadc6648c99e3990c51ce114b11",
+    "semantic_hash": ""
+  },
+  "apps/api/test/tenant-exports.e2e-spec.ts": {
+    "mtime": 1792409424.4284797,
+    "seen": 1792410149.6782167,
+    "ast_hash": "39814f947e4b05e859c1c36fec4aeb89",
+    "semantic_hash": ""
+  },
+  "packages/contracts/src/platform/index.ts": {
+    "mtime": 1792409153.6603765,
+    "seen": 1792410149.6794906,
+    "ast_hash": "02edbbfce51626cf416c0ede78d7463b",
+    "semantic_hash": ""
+  },
+  "packages/contracts/src/platform/tenant-exports.ts": {
+    "mtime": 1792409152.9170272,
+    "seen": 1792410149.6794932,
+    "ast_hash": "043ddc5b826da4e5347aadbaf86cbf2e",
+    "semantic_hash": ""
+  },
+  "packages/contracts/test/tenant-exports.test.ts": {
+    "mtime": 1792409493.57732,
+    "seen": 1792410149.6795855,
+    "ast_hash": "cbe5d0982e5702da764f882fcff391f6",
+    "semantic_hash": ""
+  },
+  "docs/tenant-export.md": {
+    "mtime": 1792410032.537239,
+    "seen": 1792410149.6801617,
+    "ast_hash": "d693672cd562c04ecd6cd6dd972fe327",
     "semantic_hash": ""
   }
 }
