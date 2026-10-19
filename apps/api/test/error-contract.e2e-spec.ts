@@ -1,15 +1,16 @@
 import 'reflect-metadata';
 import { Body, ConflictException, Controller, Get, Module, NotFoundException, Post } from '@nestjs/common';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
-import { Logger } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { z } from 'zod';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { apiErrorSchema } from '@gold/contracts';
 import { AppModule } from '../src/app.module';
 import { ZodValidationPipe } from '../src/shared/validation';
 import { REQUEST_ID_HEADER } from '../src/platform/request-context/request-id';
 import { ResourceNotFoundError } from '../src/platform/error-contract/resource-not-found.error';
+import { LOG_DESTINATION } from '../src/platform/logging/logging.tokens';
+import { LogCapture } from './support/log-capture';
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 
 const validationSchema = z.object({ name: z.string().min(1, 'نام الزامی است') });
@@ -62,13 +63,16 @@ class ErrorProbeModule {}
 
 describe('قرارداد استاندارد خطا', () => {
   const adapter = new FastifyAdapter();
-  const loggerError = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+  const logs = new LogCapture();
   let app: NestFastifyApplication;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule, ErrorProbeModule],
-    }).compile();
+    })
+      .overrideProvider(LOG_DESTINATION)
+      .useValue(logs)
+      .compile();
     app = moduleRef.createNestApplication<NestFastifyApplication>(adapter);
     await app.init();
     await adapter.getInstance().ready();
@@ -76,7 +80,6 @@ describe('قرارداد استاندارد خطا', () => {
 
   afterAll(async () => {
     await app.close();
-    loggerError.mockRestore();
   });
 
   it('خطای validation همان قرارداد و fields را دارد', async () => {
@@ -172,7 +175,9 @@ describe('قرارداد استاندارد خطا', () => {
     expect(response.body).not.toContain('stack');
     expect(response.headers[REQUEST_ID_HEADER]).toBe(body.error.requestId);
     expect(
-      loggerError.mock.calls.some(([message]) => String(message).includes(body.error.requestId)),
+      logs
+        .records()
+        .some((record) => record.event === 'request_failed' && record.requestId === body.error.requestId),
     ).toBe(true);
   });
 });

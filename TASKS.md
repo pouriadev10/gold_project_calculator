@@ -2348,7 +2348,7 @@ GET /parties/:id/statement/pdf
 
 ---
 
-## [ ] BE-067 — Logging و Observability پایه
+## [x] BE-067 — Logging و Observability پایه
 
 **هدف** — ایجاد log ساختاریافته برای عیب‌یابی.
 

@@ -1,6 +1,7 @@
 import { Global, Module, RequestMethod } from '@nestjs/common';
 import type { MiddlewareConsumer, NestModule, Type } from '@nestjs/common';
 import { shouldRegisterDevEndpoints } from '../config/dev-endpoints';
+import { RequestLoggingMiddleware } from '../logging/request-logging.middleware';
 import { TenantModule } from '../tenant/tenant.module';
 import { DevContextController } from './dev-context.controller';
 import { RequestContextService } from './request-context.service';
@@ -32,7 +33,7 @@ const DEV_CONTROLLERS: Type[] = shouldRegisterDevEndpoints() ? [DevContextContro
 export class RequestContextModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
     consumer
-      .apply(RequestIdMiddleware, TenantContextMiddleware)
+      .apply(RequestIdMiddleware, RequestLoggingMiddleware, TenantContextMiddleware)
       .forRoutes({ path: '*path', method: RequestMethod.ALL });
   }
 }

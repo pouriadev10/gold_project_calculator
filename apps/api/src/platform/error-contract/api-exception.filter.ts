@@ -1,7 +1,10 @@
 import { randomUUID } from 'node:crypto';
-import { Catch, HttpException, HttpStatus, Inject, Logger } from '@nestjs/common';
+import { Catch, HttpException, HttpStatus, Inject } from '@nestjs/common';
 import { APP_CONFIG } from '../config/config.module';
 import { getPostgresErrorCode } from '../database/pg-errors';
+import { shouldLogStackTraces } from '../logging/app-logger';
+import { APP_LOGGER } from '../logging/logging.tokens';
+import { annotateRequestLog } from '../logging/request-log';
 import { RequestContextService } from '../request-context/request-context.service';
 import { readRequestId, REQUEST_ID_HEADER } from '../request-context/request-id';
 import { ZodValidationException } from '../../shared/validation';
@@ -9,6 +12,7 @@ import { ResourceNotFoundError } from './resource-not-found.error';
 import type { ArgumentsHost, ExceptionFilter } from '@nestjs/common';
 import type { ApiError, ApiErrorCode } from '@gold/contracts';
 import type { AppConfig } from '../config/env.schema';
+import type { AppLogger } from '../logging/app-logger';
 
 type ErrorFields = Record<string, string[]>;
 
@@ -162,8 +166,13 @@ function mapException(exception: unknown): ErrorMapping {
   return internalError();
 }
 
+/** مسیر بدون query string — query ممکن است نام یا کد ملی جست‌وجوشده را داشته باشد. */
 function requestPath(request: HttpRequest): string {
-  return request.originalUrl ?? request.url ?? request.raw?.originalUrl ?? request.raw?.url ?? '/';
+  const raw =
+    request.originalUrl ?? request.url ?? request.raw?.originalUrl ?? request.raw?.url ?? '/';
+  const queryStart = raw.indexOf('?');
+
+  return queryStart === -1 ? raw : raw.slice(0, queryStart);
 }
 
 function isFastifyReply(reply: HttpReply | RawHttpResponse): reply is HttpReply {
@@ -197,11 +206,10 @@ function sendError(
  */
 @Catch()
 export class ApiExceptionFilter implements ExceptionFilter {
-  readonly #logger = new Logger(ApiExceptionFilter.name);
-
   constructor(
     @Inject(APP_CONFIG) private readonly config: AppConfig,
     @Inject(RequestContextService) private readonly context: RequestContextService,
+    @Inject(APP_LOGGER) private readonly logger: AppLogger,
   ) {}
 
   catch(exception: unknown, host: ArgumentsHost): void {
@@ -222,12 +230,19 @@ export class ApiExceptionFilter implements ExceptionFilter {
       },
     };
 
+    // کد خطا به خط پایانی log درخواست هم می‌رسد، نه فقط به response — BE-067.
+    annotateRequestLog({ errorCode: mapping.code }, request);
+
     if (mapping.status >= HttpStatus.INTERNAL_SERVER_ERROR) {
-      const stack = exception instanceof Error && this.config.nodeEnv !== 'production'
-        ? exception.stack
-        : undefined;
-      this.#logger.error(
-        JSON.stringify({
+      /*
+       * پیام خطا عمداً log نمی‌شود: خطای Drizzle پارامترهای کوئری را در پیامش
+       * دارد و می‌تواند کد ملی یا هر ورودی دیگری را لو بدهد. stack (که پیام را
+       * هم دارد) فقط بیرون از production — جایی که خواننده توسعه‌دهنده است.
+       */
+      const stack =
+        exception instanceof Error && shouldLogStackTraces(this.config) ? exception.stack : undefined;
+      this.logger.error(
+        {
           event: 'request_failed',
           requestId,
           statusCode: mapping.status,
@@ -236,7 +251,8 @@ export class ApiExceptionFilter implements ExceptionFilter {
           path: requestPath(request),
           exceptionName: exception instanceof Error ? exception.name : 'UnknownException',
           stack,
-        }),
+        },
+        'request failed',
       );
     }
 

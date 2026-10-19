@@ -8,6 +8,7 @@ import { EnvValidationError, loadEnv } from './platform/config/load-env';
 import type { AppConfig } from './platform/config/env.schema';
 import { DatabaseConnectionError } from './platform/database/database-connection.error';
 import { createPool } from './platform/database/connect';
+import { NestPinoLogger } from './platform/logging/nest-logger';
 
 /** مثل سرور توسعه‌ی فرانت، روی همه‌ی رابط‌ها گوش می‌دهد تا از گوشی هم در دسترس باشد. */
 const HOST = '0.0.0.0';
@@ -36,7 +37,10 @@ async function bootstrap(): Promise<void> {
     // بدون این، Nest خطای مقداردهی اولیه را با `process.abort()` تمام می‌کند
     // و اجرا هرگز به catch پایین نمی‌رسد.
     abortOnError: false,
+    // log راه‌اندازی تا نصب logger ساختاریافته نگه داشته می‌شود تا همه‌ی خروجی JSON باشد — BE-067.
+    bufferLogs: true,
   });
+  app.useLogger(app.get(NestPinoLogger));
 
   const appConfig = app.get<AppConfig>(APP_CONFIG);
 

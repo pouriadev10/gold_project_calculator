@@ -6,6 +6,7 @@ import { AuthModule } from './platform/auth/auth.module';
 import { ConfigModule } from './platform/config/config.module';
 import { DatabaseModule } from './platform/database/database.module';
 import { IdempotencyModule } from './platform/idempotency/idempotency.module';
+import { LoggingModule } from './platform/logging/logging.module';
 import { FilesModule } from './platform/files/files.module';
 import { RequestContextModule } from './platform/request-context/request-context.module';
 import { TenantModule } from './platform/tenant/tenant.module';
@@ -28,7 +29,7 @@ import { TenantInitializationModule } from './tenant-initialization.module';
  * دو خانواده‌ی ماژول داریم و مرزشان معنادار است:
  *
  * - `platform/` — زیرساخت افقی که همه‌ی دامنه‌ها از آن استفاده می‌کنند
- *   (دیتابیس، مستأجر، احراز هویت، ممیزی، تکرارناپذیری).
+ *   (دیتابیس، مستأجر، احراز هویت، ممیزی، تکرارناپذیری، log).
  * - `modules/`  — دامنه‌ی کسب‌وکار. هر کدام مالک جدول‌ها و قواعد خودش است.
  *
  * جهت وابستگی یک‌طرفه است: `modules/ → platform/ → shared/`.
@@ -43,6 +44,7 @@ import { TenantInitializationModule } from './tenant-initialization.module';
   imports: [
     // زیرساخت — ترتیب از پایین‌ترین لایه به بالا
     ConfigModule,
+    LoggingModule,
     DatabaseModule,
     RequestContextModule,
     TenantInitializationModule,

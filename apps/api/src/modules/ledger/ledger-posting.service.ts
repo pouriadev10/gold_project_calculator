@@ -10,6 +10,7 @@ import {
   ledgerTransactions,
 } from '../../platform/database/schema';
 import { withTenantTransaction } from '../../platform/database/tenant-transaction';
+import { recordSourceDocument } from '../../platform/logging/request-log';
 import {
   InactiveLedgerPostingAccountError,
   InactiveLedgerPostingDimensionError,
@@ -177,6 +178,13 @@ export class LedgerPostingService {
           metadata: entry.metadata,
         })),
       },
+    });
+
+    // پیوند request ID ↔ سند منشأ ↔ سند دفتر کل در خط پایانی log درخواست — BE-067.
+    recordSourceDocument({
+      sourceType: createdTransaction.sourceType,
+      sourceId: createdTransaction.sourceId,
+      ledgerTransactionId: createdTransaction.id,
     });
 
     return { transaction: createdTransaction, entries: createdEntries };

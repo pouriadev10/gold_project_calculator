@@ -1,5 +1,6 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import type { CanActivate, ExecutionContext } from '@nestjs/common';
+import { annotateRequestLog } from '../logging/request-log';
 import { AUTH_PAYLOAD_KEY } from './auth.constants';
 import { TokenService } from './token.service';
 import type { AccessTokenPayload } from './token.service';
@@ -50,6 +51,7 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     req[AUTH_PAYLOAD_KEY] = payload;
+    annotateRequestLog({ userId: payload.sub }, req);
 
     return true;
   }

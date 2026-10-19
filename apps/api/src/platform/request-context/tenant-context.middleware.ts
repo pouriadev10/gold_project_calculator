@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import type { NestMiddleware } from '@nestjs/common';
 import type { ServerResponse } from 'node:http';
+import { annotateRequestLog } from '../logging/request-log';
 import { TenantService } from '../tenant/tenant.service';
 import { isTenantWritable } from '../tenant/tenant.rules';
 import {
@@ -82,6 +83,8 @@ export class TenantContextMiddleware implements NestMiddleware {
     if (tenant === undefined) {
       throw new NotFoundException('مستأجر پیدا نشد');
     }
+
+    annotateRequestLog({ tenantId: tenant.id }, req);
 
     /*
      * مستأجر معلق می‌تواند بخواند ولی نمی‌تواند بنویسد — قاعده‌ی BE-007.
