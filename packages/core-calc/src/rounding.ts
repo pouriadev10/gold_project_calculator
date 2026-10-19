@@ -54,3 +54,26 @@ export function mulDivHalfUp(a: bigint, b: bigint, c: bigint): bigint {
 
   return isNegative ? -rounded : rounded;
 }
+
+/**
+ * عدد اعشاری **ابزار دقیق** → `bigint` مقیاس‌شده.
+ *
+ * ⚠️ **فقط برای اندازه‌گیری، هرگز برای پول یا وزن.**
+ *
+ * بعضی APIهای مرورگر ذاتاً `number` اعشاری می‌دهند (`performance.now`,
+ * `IntersectionObserver`) و آن اعداد از اول تقریبی‌اند. تبدیلشان برای
+ * نمایش اشکالی ندارد. مبلغ و وزن اما هرگز از این مسیر عبور نمی‌کنند —
+ * آن‌ها از ابتدا `bigint`اند و اصلاً `number` نمی‌شوند.
+ *
+ * اینجا زندگی می‌کند، نه در `number-bridge.ts`، چون گرد کردن است و قاعده‌ی
+ * ۲-۱ CLAUDE.md هر گرد کردنی را فقط در همین فایل مجاز می‌داند. سیاستش هم
+ * همان نیم‌به‌دور-از-صفر بقیه‌ی این فایل است (`Math.round` تنها رو به +∞
+ * می‌برد: −۲٫۵ → −۲).
+ */
+export function measurementToScaled(value: number, decimals: number): bigint {
+  if (!Number.isFinite(value)) {
+    throw new CalcError('اندازه‌گیری نامعتبر است');
+  }
+  const scaled = value * 10 ** decimals;
+  return BigInt(Math.sign(scaled) * Math.round(Math.abs(scaled)));
+}

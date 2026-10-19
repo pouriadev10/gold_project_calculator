@@ -8,6 +8,7 @@ import {
   zeroDual,
 } from '../src/dual.js';
 import { gramRate1000 } from '../src/pricing.js';
+import { CalcError } from '../src/types.js';
 
 const RATE = gramRate1000(100_000_000n);
 
@@ -87,8 +88,9 @@ describe('addDual', () => {
   });
 
   it('جمع دو نرخ متفاوت خطا می‌دهد — به‌جای ساختن بی‌صدای عدد غلط', () => {
-    expect(() =>
-      addDual(dualFromPure(1000n, RATE), dualFromPure(1000n, gramRate1000(200_000_000n))),
-    ).toThrow('جمع دو مبلغ با نرخ قفل‌شده‌ی متفاوت مجاز نیست');
+    const mismatched = () =>
+      addDual(dualFromPure(1000n, RATE), dualFromPure(1000n, gramRate1000(200_000_000n)));
+    expect(mismatched).toThrow('جمع دو مبلغ با نرخ قفل‌شده‌ی متفاوت مجاز نیست');
+    expect(mismatched).toThrow(CalcError);
   });
 });

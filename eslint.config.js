@@ -15,6 +15,8 @@ import tseslint from 'typescript-eslint';
  *   ۵. ایمپورت مستقیم از apps/api (FE-003) — مرز اپ‌ها فقط از packages/contracts رد می‌شود
  */
 
+const NUMBER_CALL_SELECTOR = "CallExpression[callee.name='Number']";
+
 /** ۱ + ۲ — گرد کردن و شناور. در همه‌جا جز rounding.ts ممنوع. */
 const noFloatMath = [
   {
@@ -38,7 +40,7 @@ const noFloatMath = [
   {
     // `Number()` روی ورودی کاربر دقت را بی‌صدا از بین می‌برد.
     // تنها نقطه‌ی مجاز تبدیل: core-calc/src/number-bridge.ts
-    selector: "CallExpression[callee.name='Number']",
+    selector: NUMBER_CALL_SELECTOR,
     message:
       'Number() ممنوع است — برای تبدیل bigint از toSafeNumber در core-calc استفاده کن.',
   },
@@ -214,9 +216,19 @@ export default tseslint.config(
 
   // دو استثنای واحد: خانه‌ی رسمی گرد کردن، و پل bigint→number
   {
-    files: ['packages/core-calc/src/rounding.ts', 'packages/core-calc/src/number-bridge.ts'],
+    files: ['packages/core-calc/src/rounding.ts'],
     rules: {
       'no-restricted-syntax': 'off',
+    },
+  },
+  // پل فقط از ممنوعیت `Number()` معاف است — گرد کردن آنجا هم ممنوع می‌ماند (CLAUDE.md ۲-۱).
+  {
+    files: ['packages/core-calc/src/number-bridge.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        ...noFloatMath.filter((restriction) => restriction.selector !== NUMBER_CALL_SELECTOR),
+      ],
     },
   },
 

@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  MAX_SAFE_BIGINT,
-  isSafeNumber,
-  measurementToScaled,
-  toSafeNumber,
-} from '../src/number-bridge.js';
+import { MAX_SAFE_BIGINT, isSafeNumber, toSafeNumber } from '../src/number-bridge.js';
 import { CalcError } from '../src/types.js';
 
 describe('toSafeNumber', () => {
@@ -22,19 +17,6 @@ describe('toSafeNumber', () => {
   it('مبلغ ریالی بزرگ که float خرابش می‌کند، اینجا خطا می‌گیرد', () => {
     // این عدد در number به ۹۰۰۷۱۹۹۲۵۴۷۴۰۹۹۲۰۰۰ گرد می‌شود
     expect(() => toSafeNumber(9_007_199_254_740_993_123n)).toThrow(CalcError);
-  });
-});
-
-describe('measurementToScaled', () => {
-  it('اندازه‌گیری اعشاری را به bigint مقیاس‌شده می‌برد', () => {
-    expect(measurementToScaled(83.47, 1)).toBe(835n);
-    expect(measurementToScaled(0, 1)).toBe(0n);
-    expect(measurementToScaled(12.34, 2)).toBe(1234n);
-  });
-
-  it('مقدار نامعتبر خطا می‌دهد', () => {
-    expect(() => measurementToScaled(Number.NaN, 1)).toThrow(CalcError);
-    expect(() => measurementToScaled(Number.POSITIVE_INFINITY, 1)).toThrow(CalcError);
   });
 });
 

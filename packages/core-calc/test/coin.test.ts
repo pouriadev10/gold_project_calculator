@@ -9,7 +9,7 @@ import {
 import type { BullionType, CentralBankMintedCoinType } from '../src/coin.js';
 import { gramRate1000 } from '../src/pricing.js';
 import { mulDivHalfUp } from '../src/rounding.js';
-import { grossMg, grossUg, karat, rial } from '../src/types.js';
+import { CalcError, grossMg, grossUg, karat, rial } from '../src/types.js';
 
 const MAZNEH = 100_000_000n;
 const RATE_1000 = gramRate1000(MAZNEH);
@@ -38,6 +38,10 @@ describe('سکه یک شیء است، نه یک وزن', () => {
 
   it('ارزش موقعیت از ضرب تعداد می‌آید، نه از تبدیل به گرم', () => {
     expect(coinPositionValue(5, rial(1_000_000_000n))).toBe(5_000_000_000n);
+  });
+
+  it('تعداد کسری سکه با CalcError رد می‌شود، نه RangeError خام', () => {
+    expect(() => coinPositionValue(1.5, rial(1_000_000_000n))).toThrow(CalcError);
   });
 });
 

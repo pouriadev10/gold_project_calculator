@@ -18,7 +18,7 @@
 import { toPureMg } from './karat.js';
 import { valueOfPure } from './pricing.js';
 import { mulDivHalfUp } from './rounding.js';
-import { coinDimension, rial } from './types.js';
+import { coinCount, coinDimension, rial } from './types.js';
 import type { AssetDimension, GrossMg, GrossUg, Karat, Rial } from './types.js';
 
 /**
@@ -105,7 +105,10 @@ export function bullionPrice(weightMg: GrossMg, k: Karat, rate1000: Rial): Rial 
 /**
  * ارزش کل یک موقعیت سکه‌ای — تعداد × قیمت بازار هر سکه.
  * ضرب در تعداد، نه تبدیل به گرم.
+ *
+ * تعداد از `coinCount` می‌گذرد تا تعداد کسری با `CalcError` رد شود، نه با
+ * `RangeError` خام `BigInt(1.5)`.
  */
 export function coinPositionValue(count: number, marketPrice: Rial): Rial {
-  return rial(BigInt(count) * marketPrice);
+  return rial(BigInt(coinCount(count)) * marketPrice);
 }

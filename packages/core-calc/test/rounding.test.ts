@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_ROUNDING_UNIT, mulDivHalfUp, roundHalfUp } from '../src/rounding.js';
+import {
+  DEFAULT_ROUNDING_UNIT,
+  measurementToScaled,
+  mulDivHalfUp,
+  roundHalfUp,
+} from '../src/rounding.js';
 import { CalcError } from '../src/types.js';
 
 describe('roundHalfUp', () => {
@@ -72,5 +77,24 @@ describe('mulDivHalfUp', () => {
 
   it('تقسیم بر صفر خطا می‌دهد', () => {
     expect(() => mulDivHalfUp(1n, 1n, 0n)).toThrow('تقسیم بر صفر');
+  });
+});
+
+describe('measurementToScaled', () => {
+  it('اندازه‌گیری اعشاری را به bigint مقیاس‌شده می‌برد', () => {
+    expect(measurementToScaled(83.47, 1)).toBe(835n);
+    expect(measurementToScaled(0, 1)).toBe(0n);
+    expect(measurementToScaled(12.34, 2)).toBe(1234n);
+  });
+
+  it('برای مقادیر منفی متقارن است — همان سیاست نیم‌به‌دور-از-صفر', () => {
+    expect(measurementToScaled(2.5, 0)).toBe(3n);
+    expect(measurementToScaled(-2.5, 0)).toBe(-3n);
+    expect(measurementToScaled(-83.47, 1)).toBe(-835n);
+  });
+
+  it('مقدار نامعتبر خطا می‌دهد', () => {
+    expect(() => measurementToScaled(Number.NaN, 1)).toThrow(CalcError);
+    expect(() => measurementToScaled(Number.POSITIVE_INFINITY, 1)).toThrow(CalcError);
   });
 });

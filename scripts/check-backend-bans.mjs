@@ -44,6 +44,9 @@ const PROBES = [
   // نمونه‌های مجاز — نباید رد شوند.
   { rule: 'allowed', file: API_FILE, code: 'export const a = (x: number, y: number) => Math.max(x, y);', expect: null, watch: FLOAT },
   { rule: 'allowed', file: 'packages/core-calc/src/rounding.ts', code: 'export const a = (x: number) => Math.round(x);', expect: null, watch: FLOAT },
+  // پل bigint→number فقط از Number() معاف است، نه از گرد کردن.
+  { rule: 'allowed', file: 'packages/core-calc/src/number-bridge.ts', code: 'export const a = (x: bigint) => Number(x);', expect: null, watch: FLOAT },
+  { rule: 'no-math-round', file: 'packages/core-calc/src/number-bridge.ts', code: 'export const a = (x: number) => Math.round(x);', expect: [FLOAT, 'rounding.ts'] },
 ];
 
 async function lintProbes() {

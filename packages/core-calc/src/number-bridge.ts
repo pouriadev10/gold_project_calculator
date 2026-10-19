@@ -35,20 +35,3 @@ export function toSafeNumber(value: bigint): number {
 export function isSafeNumber(value: bigint): boolean {
   return value <= MAX_SAFE_BIGINT && value >= -MAX_SAFE_BIGINT;
 }
-
-/**
- * عدد اعشاری **ابزار دقیق** → `bigint` مقیاس‌شده.
- *
- * ⚠️ **فقط برای اندازه‌گیری، هرگز برای پول یا وزن.**
- *
- * بعضی APIهای مرورگر ذاتاً `number` اعشاری می‌دهند (`performance.now`,
- * `IntersectionObserver`) و آن اعداد از اول تقریبی‌اند. تبدیلشان برای
- * نمایش اشکالی ندارد. مبلغ و وزن اما هرگز از این مسیر عبور نمی‌کنند —
- * آن‌ها از ابتدا `bigint`اند و اصلاً `number` نمی‌شوند.
- */
-export function measurementToScaled(value: number, decimals: number): bigint {
-  if (!Number.isFinite(value)) {
-    throw new CalcError('اندازه‌گیری نامعتبر است');
-  }
-  return BigInt(Math.round(value * 10 ** decimals));
-}

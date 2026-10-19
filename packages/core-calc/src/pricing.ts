@@ -10,7 +10,7 @@
  */
 
 import { mulDivHalfUp } from './rounding.js';
-import { KARAT_BASE, rial } from './types.js';
+import { CalcError, KARAT_BASE, rial } from './types.js';
 import type { Karat, PureMg, Rial } from './types.js';
 
 /** عیار پایه‌ی مظنه — قرارداد بازار، نه انتخاب ما. */
@@ -30,8 +30,14 @@ export const RATE_SCALE = 10_000n;
  *
  * `divisor` پارامتر است نه ثابت، چون قاعده‌ی ۲-۶ CLAUDE.md می‌گوید
  * عدد صنفی باید نسخه‌دار و از دیتابیس بیاید. پیش‌فرض فقط برای فاز ۱ است.
+ *
+ * مظنه‌ی منفی یا مخرج غیرمثبت داده‌ی غلط است، نه نرخ: مخرج صفر وگرنه
+ * `RangeError` خام می‌داد (که `instanceof CalcError` فراخوان‌ها نمی‌گیرد) و
+ * مخرج یا مظنه‌ی منفی بی‌صدا نرخ منفی می‌ساخت که تا فاکتور می‌رسید.
  */
 export function gramRate(maznehRial: bigint, k: Karat, divisor: bigint = RATE_DIVISOR): Rial {
+  if (maznehRial < 0n) throw new CalcError('مظنه نمی‌تواند منفی باشد');
+  if (divisor <= 0n) throw new CalcError('مخرج تبدیل مظنه باید مثبت باشد');
   return rial((maznehRial * BigInt(k) * RATE_SCALE) / divisor);
 }
 

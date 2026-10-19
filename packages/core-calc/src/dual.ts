@@ -14,6 +14,7 @@
  */
 
 import { mulDivHalfUp } from './rounding.js';
+import { CalcError } from './types.js';
 
 /** میلی‌گرم در هر گرم. */
 const MG_PER_GRAM = 1000n;
@@ -76,7 +77,7 @@ export function negateDual(amount: DualAmount): DualAmount {
  */
 export function addDual(a: DualAmount, b: DualAmount): DualAmount {
   if (a.rate1000 !== b.rate1000) {
-    throw new Error('جمع دو مبلغ با نرخ قفل‌شده‌ی متفاوت مجاز نیست');
+    throw new CalcError('جمع دو مبلغ با نرخ قفل‌شده‌ی متفاوت مجاز نیست');
   }
   return {
     rial: a.rial + b.rial,

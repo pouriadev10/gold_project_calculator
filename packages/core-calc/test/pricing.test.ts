@@ -7,7 +7,7 @@ import {
   valueOfPure,
 } from '../src/pricing.js';
 import { toSafeNumber } from '../src/number-bridge.js';
-import { karat, pureMg, rial } from '../src/types.js';
+import { CalcError, karat, pureMg, rial } from '../src/types.js';
 
 const MAZNEH = 100_000_000n;
 
@@ -72,6 +72,16 @@ describe('gramRate — خواص', () => {
 
   it('مظنه‌ی صفر نرخ صفر می‌دهد', () => {
     expect(gramRate(0n, karat(750))).toBe(0n);
+  });
+
+  it('مظنه‌ی منفی رد می‌شود — نرخ منفی بی‌صدا ساخته نمی‌شود', () => {
+    expect(() => gramRate(-1n, karat(750))).toThrow(CalcError);
+    expect(() => gramRate1000(-MAZNEH)).toThrow('مظنه نمی‌تواند منفی باشد');
+  });
+
+  it.each([0n, -32_488_515n])('مخرج غیرمثبت (%s) با CalcError رد می‌شود، نه RangeError', (divisor) => {
+    expect(() => gramRate(MAZNEH, karat(750), divisor)).toThrow(CalcError);
+    expect(() => gramRate1000(MAZNEH, divisor)).toThrow('مخرج تبدیل مظنه باید مثبت باشد');
   });
 });
 
