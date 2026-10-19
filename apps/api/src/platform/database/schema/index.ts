@@ -32,6 +32,7 @@ export * from './roles';
 export * from './sales-invoices';
 export * from './second-hand-purchases';
 export * from './settlements';
+export * from './tenant-exports';
 export * from './tenant-memberships';
 export * from './tenants';
 export * from './users';

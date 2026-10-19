@@ -8,6 +8,7 @@ import { DatabaseModule } from './platform/database/database.module';
 import { IdempotencyModule } from './platform/idempotency/idempotency.module';
 import { LoggingModule } from './platform/logging/logging.module';
 import { FilesModule } from './platform/files/files.module';
+import { TenantExportsModule } from './platform/exports/tenant-exports.module';
 import { RequestContextModule } from './platform/request-context/request-context.module';
 import { TenantModule } from './platform/tenant/tenant.module';
 import { UsersModule } from './platform/users/users.module';
@@ -54,6 +55,7 @@ import { TenantInitializationModule } from './tenant-initialization.module';
     IdempotencyModule,
     AuditModule,
     FilesModule,
+    TenantExportsModule,
 
     // دامنه‌ی کسب‌وکار
     PricingModule,

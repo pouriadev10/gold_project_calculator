@@ -420,7 +420,14 @@ function serverRoutes(): string[] {
 const PENDING_BACKEND_ROUTES: readonly string[] = [];
 
 /** مسیرهای سرور که فرانت فاز ۱ هیچ‌جا صدا نمی‌زند، پس mock هم لازم ندارند. */
-const UNUSED_SERVER_ROUTES = ['GET /api/health', 'GET /api/auth/me', 'POST /api/inventory/jewelry-items/:id/deactivate'];
+const UNUSED_SERVER_ROUTES = [
+  'GET /api/health',
+  'GET /api/auth/me',
+  'POST /api/inventory/jewelry-items/:id/deactivate',
+  // BE-069: خروجی کامل مستأجر — هنوز هیچ صفحه‌ای در فرانت ندارد.
+  'POST /api/platform/exports/full',
+  'GET /api/platform/exports/:id',
+];
 
 describe('mock مسیر یا کدی نمی‌سازد که سرور ندارد', () => {
   it('هر مسیر سرور mock دارد و هر مسیر mock یا در سرور هست یا صریحاً «در انتظار بک‌اند» است', () => {

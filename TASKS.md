@@ -2389,7 +2389,7 @@ docs/backup-restore.md
 
 ---
 
-## [ ] BE-069 — Export کامل داده Tenant
+## [x] BE-069 — Export کامل داده Tenant
 
 **هدف** — فراهم کردن خروجی کامل داده‌های مستأجر.
 
