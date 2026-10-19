@@ -36,6 +36,7 @@ function keyHint(key: string | undefined): readonly JsonValue[] {
   if (/email/iu.test(key)) return ['owner@example.com'];
   if (/slug/iu.test(key)) return ['tala-shop'];
   if (/timezone/iu.test(key)) return ['Asia/Tehran'];
+  if (/period/iu.test(key)) return ['1405'];
   if (/displayName|title|name/u.test(key)) return ['علی رضایی'];
   return [];
 }

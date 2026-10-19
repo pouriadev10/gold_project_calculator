@@ -50,6 +50,7 @@ const OUTCOME: SaleSubmitOutcome = {
   sale: {
     invoiceId: INVOICE_ID,
     invoiceNumber: 123,
+    invoicePeriod: '1405',
     payableRial: 1_478_445_000n,
     ledgerTransactionId: 'e1000000-0000-4000-8000-000000000001',
     inventoryMovementId: 'f1000000-0000-4000-8000-000000000001',
@@ -77,6 +78,7 @@ function versionHistory(overrides: Record<string, unknown> = {}) {
   return {
     invoiceId: INVOICE_ID,
     invoiceNumber: 123,
+    invoicePeriod: '1405',
     versions: [
       {
         version: 1,
@@ -252,7 +254,7 @@ describe('SaleReceipt — حالت‌های بارگذاری و خطا', () => {
   });
 
   it('پاسخ بدون هیچ نسخه‌ای، رسید خالی نمی‌سازد', () => {
-    mockQuery({ invoiceId: INVOICE_ID, invoiceNumber: 123, versions: [] });
+    mockQuery({ invoiceId: INVOICE_ID, invoiceNumber: 123, invoicePeriod: '1405', versions: [] });
     render(<SaleReceipt outcome={OUTCOME} />);
 
     expect(screen.getByText(/هنوز نسخه‌ای برایش برنگشته است/)).toBeInTheDocument();
@@ -306,7 +308,7 @@ describe('SaleReceipt — PDF و اشتراک رسید (FE-077/FE-079)', () => {
     expect(getSalesInvoicePdfMock).toHaveBeenCalledWith(INVOICE_ID, expect.any(AbortSignal));
     const text = writeText.mock.calls[0]![0];
     expect(text).toContain('رسید فروش زرگری نمونه');
-    expect(text).toContain('فاکتور شماره ۱۲۳');
+    expect(text).toContain('فاکتور شماره ۱۴۰۵-۱۲۳');
     expect(text).not.toMatch(/https?:|www\./u);
     expect(await screen.findByText('اشتراک در این مرورگر پشتیبانی نمی‌شود؛ PDF ذخیره شد و متن رسید کپی شد.')).toBeInTheDocument();
   });
@@ -323,7 +325,7 @@ describe('SaleReceipt — PDF و اشتراک رسید (FE-077/FE-079)', () => {
     const data = share.mock.calls[0]![0];
     expect(data.url).toBeUndefined();
     expect(data.files).toBeUndefined();
-    expect(data.text).toContain('فاکتور شماره ۱۲۳');
+    expect(data.text).toContain('فاکتور شماره ۱۴۰۵-۱۲۳');
     expect(getSalesInvoicePdfMock).not.toHaveBeenCalled();
   });
 

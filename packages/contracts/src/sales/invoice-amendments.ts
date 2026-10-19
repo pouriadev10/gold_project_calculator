@@ -5,6 +5,7 @@ import {
   positiveBigIntStringSchema,
   uuidSchema,
 } from '../common/index.js';
+import { invoicePeriodSchema } from './invoice-period.js';
 
 export const invoiceAmendmentReasonSchema = z.enum([
   'WEIGHT_ERROR',
@@ -63,6 +64,7 @@ export const amendSalesInvoiceSchema = z
 export const amendedSalesInvoiceSchema = z.object({
   invoiceId: uuidSchema,
   invoiceNumber: z.number().int().positive(),
+  invoicePeriod: invoicePeriodSchema,
   version: z.number().int().positive(),
   payableRial: nonNegativeBigIntStringSchema,
   receivableRial: nonNegativeBigIntStringSchema,

@@ -51,6 +51,7 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
 const DETAIL: SalesInvoiceDetail = {
   id: 'd5000000-0000-4000-8000-000000000001',
   invoiceNumber: 122,
+  invoicePeriod: '1405',
   status: 'FINALIZED',
   currentVersion: 2,
   party: {
@@ -148,6 +149,7 @@ function mockDetail(data: SalesInvoiceDetail = DETAIL): void {
   const history: SalesInvoiceVersionHistory = {
     invoiceId: data.id,
     invoiceNumber: data.invoiceNumber ?? 122,
+    invoicePeriod: data.invoicePeriod ?? '1405',
     versions: data.versions.map((version) => ({
       version: version.version,
       reason: version.reason,
@@ -175,6 +177,7 @@ function mockDetail(data: SalesInvoiceDetail = DETAIL): void {
   const amendments: SalesInvoiceAmendmentHistory = {
     invoiceId: data.id,
     invoiceNumber: data.invoiceNumber ?? 122,
+    invoicePeriod: data.invoicePeriod ?? '1405',
     amendments: data.versions.flatMap((version, index) => {
       const before = data.versions[index - 1];
       if (!before || version.reason === null) return [];
@@ -354,9 +357,9 @@ describe('SalesInvoiceDetailPage — اقدامات', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'پیش‌نمایش' }));
 
-    const panel = await screen.findByRole('region', { name: 'پیش‌نمایش فاکتور ۱۲۲' });
+    const panel = await screen.findByRole('region', { name: 'پیش‌نمایش فاکتور ۱۴۰۵-۱۲۲' });
     expect(panel.querySelector('object')).toHaveAttribute('data', 'blob:invoice');
-    expect(within(panel).getByText('invoice-122.pdf')).toBeInTheDocument();
+    expect(within(panel).getByText('invoice-1405-122.pdf')).toBeInTheDocument();
     expect(within(panel).getByRole('link', { name: /باز کردن در تب جدید/ })).toHaveAttribute('target', '_blank');
     expect(within(panel).getByRole('button', { name: /ذخیره فایل/ })).toBeInTheDocument();
 
@@ -410,7 +413,7 @@ describe('SalesInvoiceDetailPage — اقدامات', () => {
     });
     const { rerender } = render(<SalesInvoiceDetailPage />);
     await userEvent.click(screen.getByRole('button', { name: 'پیش‌نمایش' }));
-    await screen.findByRole('region', { name: 'پیش‌نمایش فاکتور ۱۲۲' });
+    await screen.findByRole('region', { name: 'پیش‌نمایش فاکتور ۱۴۰۵-۱۲۲' });
 
     mockDetail({ ...DETAIL, currentVersion: 3 });
     mockPolicy({ allowed: true, invoiceVersion: 3 });

@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { Link } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, ReceiptText } from 'lucide-react';
-import { dualFromRial, formatCount } from '@gold/core-calc';
+import { dualFromRial, formatCount, formatInvoiceNumber } from '@gold/core-calc';
 import type { SalesInvoiceListItem, SalesInvoiceListQuery } from '@/api/contracts';
 import { useSalesInvoices } from '@/api/queries';
 import { AmountDisplay } from '@/components/common/AmountDisplay';
@@ -60,10 +60,10 @@ function InvoiceAmount({ invoice }: { readonly invoice: SalesInvoiceListItem }) 
 }
 
 function InvoiceNumber({ invoice }: { readonly invoice: SalesInvoiceListItem }) {
-  return invoice.invoiceNumber === null ? (
+  return invoice.invoiceNumber === null || invoice.invoicePeriod === null ? (
     <span>بدون شماره</span>
   ) : (
-    <span className="tabular-nums">{formatCount(invoice.invoiceNumber)}</span>
+    <span className="tabular-nums">{formatInvoiceNumber(invoice.invoicePeriod, invoice.invoiceNumber)}</span>
   );
 }
 
@@ -166,7 +166,7 @@ export const SalesInvoiceList = memo(function SalesInvoiceList({ query, onOffset
               to="/sales/invoices/$invoiceId"
               params={{ invoiceId: invoice.id }}
               className="block cursor-pointer rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              aria-label={`مشاهده فاکتور ${invoice.invoiceNumber ?? 'پیش‌نویس'}`}
+              aria-label={`مشاهده فاکتور ${invoice.invoiceNumber === null || invoice.invoicePeriod === null ? 'پیش‌نویس' : formatInvoiceNumber(invoice.invoicePeriod, invoice.invoiceNumber)}`}
             >
               <Card>
                 <CardContent className="space-y-3 pt-6">

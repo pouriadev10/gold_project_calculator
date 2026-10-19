@@ -52,6 +52,7 @@ export class JewelryCashSalesController {
             body: {
               invoiceId: created.invoiceId,
               invoiceNumber: created.invoiceNumber,
+              invoicePeriod: created.invoicePeriod,
               payableRial: created.payableRial.toString(),
               ledgerTransactionId: created.ledgerTransactionId,
               inventoryMovementId: created.inventoryMovementId,

@@ -178,6 +178,7 @@ function seedReadyDraft(items: SaleDraftItemLine[] = [catalogLine()], paidRial: 
 const SERVER_VERSIONS = {
   invoiceId: 'd1000000-0000-4000-8000-000000000001',
   invoiceNumber: 123,
+  invoicePeriod: '1405',
   versions: [
     {
       version: 1,
@@ -209,6 +210,7 @@ const SERVER_VERSIONS = {
 const SERVER_SALE = {
   invoiceId: 'd1000000-0000-4000-8000-000000000001',
   invoiceNumber: 123,
+  invoicePeriod: '1405',
   payableRial: 1_478_445_000n,
   ledgerTransactionId: 'e1000000-0000-4000-8000-000000000001',
   inventoryMovementId: 'f1000000-0000-4000-8000-000000000001',

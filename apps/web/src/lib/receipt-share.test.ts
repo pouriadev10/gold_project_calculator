@@ -10,6 +10,7 @@ describe('saleReceiptShareText', () => {
     const share = saleReceiptShareText({
       shopName: 'زرگری نمونه',
       invoiceNumber: 123,
+      invoicePeriod: '1405',
       issuedAt: ISSUED,
       customerName: 'حسین مرادی',
       payableRial: 125_000_000n,
@@ -20,7 +21,7 @@ describe('saleReceiptShareText', () => {
     expect(share.title).toBe('رسید فروش زرگری نمونه');
     const lines = share.text.split('\n');
     expect(lines[0]).toBe('رسید فروش زرگری نمونه');
-    expect(lines).toContain('فاکتور شماره ۱۲۳');
+    expect(lines).toContain('فاکتور شماره ۱۴۰۵-۱۲۳');
     expect(lines).toContain('مشتری: حسین مرادی');
     expect(lines).toContain('وزن خالص: ۷٫۴۰۰ گرم');
     expect(lines).toContain('جمع فاکتور: ۱۲۵٬۰۰۰٬۰۰۰ ریال');
@@ -33,6 +34,7 @@ describe('saleReceiptShareText', () => {
     const share = saleReceiptShareText({
       shopName: null,
       invoiceNumber: 5,
+      invoicePeriod: '1405',
       issuedAt: ISSUED,
       customerName: null,
       payableRial: null,
@@ -50,6 +52,7 @@ describe('saleReceiptShareText', () => {
     const share = saleReceiptShareText({
       shopName: 'زرگری https://evil.example/login نمونه',
       invoiceNumber: 1,
+      invoicePeriod: '1405',
       issuedAt: ISSUED,
       customerName: 'www.track.me/x علی',
       payableRial: 1n,
@@ -66,6 +69,7 @@ describe('saleReceiptShareText', () => {
     const share = saleReceiptShareText({
       shopName: 'ز'.repeat(1000),
       invoiceNumber: 1,
+      invoicePeriod: '1405',
       issuedAt: ISSUED,
       customerName: null,
       payableRial: null,

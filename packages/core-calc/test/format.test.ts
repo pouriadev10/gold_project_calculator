@@ -5,12 +5,15 @@ import {
   formatCoinCount,
   formatCount,
   formatGram,
+  formatInvoiceNumber,
   formatKarat,
   formatMesghal,
   formatRial,
   formatScaled,
+  invoiceNumberLabel,
 } from '../src/format.js';
 import { toLatinDigits } from '../src/persian.js';
+import { CalcError } from '../src/types.js';
 
 const DECIMAL_SEPARATOR = String.fromCodePoint(0x066b);
 const MINUS_SIGN = String.fromCodePoint(0x2212);
@@ -84,5 +87,29 @@ describe('formatCoinCount و formatKarat', () => {
     expect(formatKarat(750)).toBe('۷۵۰');
     expect(formatKarat(995)).toBe('۹۹۵');
     expect(formatKarat(1000)).toBe('۱۰۰۰');
+  });
+});
+
+describe('شناسه‌ی فاکتور — سال جلالی + شماره‌ی همان سال (D-02)', () => {
+  it('شکل لاتین برای فایل، PDF و جست‌وجو', () => {
+    expect(invoiceNumberLabel('1405', 12)).toBe('1405-12');
+    expect(invoiceNumberLabel('1406', 1)).toBe('1406-1');
+  });
+
+  it('شکل نمایشی با ارقام فارسی و بدون جداکننده‌ی هزارگان', () => {
+    expect(formatInvoiceNumber('1405', 12)).toBe('۱۴۰۵-۱۲');
+    expect(formatInvoiceNumber('1405', 1234)).toBe('۱۴۰۵-۱۲۳۴');
+  });
+
+  it('شماره‌ی ۱ ِ دو سال متفاوت دو شناسه‌ی متفاوت است', () => {
+    expect(invoiceNumberLabel('1405', 1)).not.toBe(invoiceNumberLabel('1406', 1));
+  });
+
+  it.each(['', '405', '14051', '۱۴۰۵', '14a5'])('دوره‌ی نامعتبر %s رد می‌شود', (period) => {
+    expect(() => invoiceNumberLabel(period, 1)).toThrow(CalcError);
+  });
+
+  it.each([0, -1, 1.5, Number.NaN, 2 ** 53])('شماره‌ی نامعتبر %s رد می‌شود', (invoiceNumber) => {
+    expect(() => formatInvoiceNumber('1405', invoiceNumber)).toThrow(CalcError);
   });
 });

@@ -15,6 +15,8 @@ import { TenantService } from '../src/platform/tenant/tenant.service';
 import type { INestApplicationContext } from '@nestjs/common';
 import type { Database } from '../src/platform/database/connect';
 
+const TEHRAN = 'Asia/Tehran';
+
 /** شماره‌ی بدون شکاف سند — BE-038. Runs against a real PostgreSQL database. */
 describe('شمارنده‌ی بدون شکاف سند (BE-038)', () => {
   let app: INestApplicationContext;
@@ -171,18 +173,28 @@ describe('شمارنده‌ی بدون شکاف سند (BE-038)', () => {
 
   describe('jalaliYearPeriodKey — استراتژی دوره‌ای فاز ۱', () => {
     it('تاریخ‌های یک سال جلالی همان period_key را می‌گیرند', () => {
-      expect(jalaliYearPeriodKey(new Date('2026-08-07T00:00:00.000Z'))).toBe('1405');
-      expect(jalaliYearPeriodKey(new Date('2026-03-21T12:00:00.000Z'))).toBe('1405');
+      expect(jalaliYearPeriodKey(new Date('2026-08-07T00:00:00.000Z'), TEHRAN)).toBe('1405');
+      expect(jalaliYearPeriodKey(new Date('2026-03-21T12:00:00.000Z'), TEHRAN)).toBe('1405');
     });
 
     it('نوروز مرز دو دوره را دقیقاً جدا می‌کند', () => {
       // یک روز پیش از نوروز ۱۴۰۵ هنوز ۱۴۰۴ است؛ خودِ نوروز ۱۴۰۵ می‌شود.
-      expect(jalaliYearPeriodKey(new Date('2026-03-20T12:00:00.000Z'))).toBe('1404');
-      expect(jalaliYearPeriodKey(new Date('2026-03-21T12:00:00.000Z'))).toBe('1405');
+      expect(jalaliYearPeriodKey(new Date('2026-03-20T12:00:00.000Z'), TEHRAN)).toBe('1404');
+      expect(jalaliYearPeriodKey(new Date('2026-03-21T12:00:00.000Z'), TEHRAN)).toBe('1405');
+    });
+
+    it('D-02: مرز سال ۰۰:۰۰ ِ نوروز به وقت مستأجر است، نه منطقه‌ی سرور', () => {
+      // ۰۰:۳۰ بامداد ۱ فروردین ۱۴۰۶ در تهران = ۲۱:۰۰ ِ ۲۰ مارس ۲۰۲۷ در UTC.
+      const justAfterNowruzInTehran = new Date('2027-03-20T21:00:00.000Z');
+      expect(jalaliYearPeriodKey(justAfterNowruzInTehran, TEHRAN)).toBe('1406');
+      // همان لحظه با منطقه‌ی UTC (پیش‌فرض کانتینر) هنوز ۱۴۰۵ بود — باگ پیشین.
+      expect(jalaliYearPeriodKey(justAfterNowruzInTehran, 'UTC')).toBe('1405');
+      // یک دقیقه پیش از نیمه‌شب نوروز در تهران هنوز ۱۴۰۵ است.
+      expect(jalaliYearPeriodKey(new Date('2027-03-20T20:29:00.000Z'), TEHRAN)).toBe('1405');
     });
 
     it('رقم‌ها همیشه لاتین‌اند، نه فارسی', () => {
-      const key = jalaliYearPeriodKey(new Date('2026-08-07T00:00:00.000Z'));
+      const key = jalaliYearPeriodKey(new Date('2026-08-07T00:00:00.000Z'), TEHRAN);
       expect(key).toMatch(/^[0-9]+$/u);
     });
   });

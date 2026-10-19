@@ -1,4 +1,4 @@
-import { formatCoinCount, formatCount, formatGram, formatRial } from '@gold/core-calc';
+import { formatCoinCount, formatGram, formatInvoiceNumber, formatRial } from '@gold/core-calc';
 import { isolateBidi } from './bidi';
 import { formatJalaliDateTime } from '@/lib/date';
 
@@ -41,6 +41,8 @@ function rial(value: bigint): string {
 export interface SaleReceiptShareInput {
   readonly shopName: string | null;
   readonly invoiceNumber: number;
+  /** سال جلالی شماره‌گذاری (D-02) — شماره بدون آن یکتا نیست. */
+  readonly invoicePeriod: string;
   readonly issuedAt: Date;
   readonly customerName: string | null;
   readonly payableRial: bigint | null;
@@ -52,7 +54,7 @@ export interface SaleReceiptShareInput {
 export function saleReceiptShareText(input: SaleReceiptShareInput): ReceiptShareContent {
   const title = `رسید فروش ${isolateBidi(stripUrls(input.shopName ?? ''))}`.trim();
   return build(title, [
-    `فاکتور شماره ${formatCount(input.invoiceNumber)}`,
+    `فاکتور شماره ${formatInvoiceNumber(input.invoicePeriod, input.invoiceNumber)}`,
     `تاریخ: ${formatJalaliDateTime(input.issuedAt)}`,
     input.customerName ? `مشتری: ${isolateBidi(stripUrls(input.customerName))}` : null,
     input.pureWeightMg !== null && input.pureWeightMg > 0n ? `وزن خالص: ${formatGram(input.pureWeightMg)} گرم` : null,

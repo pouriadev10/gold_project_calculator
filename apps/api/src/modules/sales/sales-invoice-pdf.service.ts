@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { and, eq } from 'drizzle-orm';
+import { invoiceNumberLabel } from '@gold/core-calc';
 import { DocumentIssuerService } from '../../platform/files/document-issuer.service';
 import { INVOICE_EXPORTER } from '../../platform/files/invoice-exporter';
 import { DRIZZLE } from '../../platform/database/database.module';
@@ -45,6 +46,7 @@ export class SalesInvoicePdfService {
         invoice === undefined ||
         invoice.status !== 'FINALIZED' ||
         invoice.invoiceNumber === null ||
+        invoice.invoicePeriod === null ||
         invoice.quoteAmountRial === null ||
         invoice.quoteObservedAt === null ||
         invoice.finalizedAt === null
@@ -87,11 +89,13 @@ export class SalesInvoicePdfService {
     });
     const issuer = await this.issuer.getIssuer(tenantId);
     const invoiceNumber = document.invoice.invoiceNumber;
+    const invoicePeriod = document.invoice.invoicePeriod;
     const quoteAmountRial = document.invoice.quoteAmountRial;
     const quoteObservedAt = document.invoice.quoteObservedAt;
     const finalizedAt = document.invoice.finalizedAt;
     if (
       invoiceNumber === null ||
+      invoicePeriod === null ||
       quoteAmountRial === null ||
       quoteObservedAt === null ||
       finalizedAt === null
@@ -101,7 +105,7 @@ export class SalesInvoicePdfService {
 
     return this.exporter.exportInvoice({
       title: 'رسید فروش',
-      documentNumber: invoiceNumber.toString(),
+      documentNumber: invoiceNumberLabel(invoicePeriod, invoiceNumber),
       issuedAt: finalizedAt,
       issuer,
       recipient: document.party,

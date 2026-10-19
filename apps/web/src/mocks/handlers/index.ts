@@ -2,14 +2,15 @@ import {
   bubble,
   calculateB2cBuybackDifference,
   calculateSecondHandGoldPurchase,
-  DEFAULT_ROUNDING_UNIT,
-  RATE_DIVISOR,
   coinPositionValue,
+  DEFAULT_ROUNDING_UNIT,
   gramRate1000,
   grossMg,
   grossUg,
   intrinsicValue,
+  invoiceNumberLabel,
   karat,
+  RATE_DIVISOR,
   rial,
   searchKey,
   toPureMg,
@@ -39,23 +40,24 @@ import type {
   SalesInvoiceVersionHistory,
 } from '@/api/contracts';
 import {
-  MAZNEH_RIAL,
-  FETCHED_AT,
-  MOCK_PROFIT_RATE_BPS,
-  MOCK_TAX_RATE_BPS,
-  priceJewelryFromVersion,
   COIN_BALANCE_ROWS,
   COIN_TYPE_VERSIONS,
   dashboardFor,
+  FETCHED_AT,
   JEWELRY_BALANCE_ROWS,
-  ledgerProfitReportFor,
   jewelryItemVersionRecords,
+  ledgerProfitReportFor,
+  MAZNEH_RIAL,
+  MOCK_INVOICE_PERIOD,
+  MOCK_PROFIT_RATE_BPS,
+  MOCK_TAX_RATE_BPS,
   PARTY_RIAL_BALANCE,
   partyBalanceReportFor,
   partyBalancesFor,
   partyMgById,
   partyRecords,
   partyStatementEntriesFor,
+  priceJewelryFromVersion,
   RECENT_INVENTORY_MOVEMENTS,
   recentTransactions,
   salesInvoiceDetailRecords,
@@ -151,6 +153,7 @@ let salesInvoiceList: SalesInvoiceListItem[] = [...salesInvoiceRecords];
 function recordSalesInvoice(input: {
   readonly id: string;
   readonly invoiceNumber: number;
+  readonly invoicePeriod: string;
   readonly partyId: string;
   readonly payableRial: string;
   readonly quoteAmountRial: string;
@@ -161,6 +164,7 @@ function recordSalesInvoice(input: {
     {
       id: input.id,
       invoiceNumber: input.invoiceNumber,
+      invoicePeriod: input.invoicePeriod,
       status: 'FINALIZED',
       currentVersion: 1,
       party: {
@@ -382,6 +386,7 @@ const result = {
   invoiceId: crypto.randomUUID(),
   // شماره‌ی بدون شکاف — سرور واقعی با جدول شمارنده و SELECT ... FOR UPDATE
   invoiceNumber: invoiceCounter,
+  invoicePeriod: MOCK_INVOICE_PERIOD,
   payableRial: calc.payableRial.toString(),
   ...(mode === 'CREDIT' ? { receivableRial: receivableRial.toString() } : {}),
   ledgerTransactionId: crypto.randomUUID(),
@@ -391,6 +396,7 @@ const result = {
 salesInvoiceVersions.set(result.invoiceId, {
   invoiceId: result.invoiceId,
   invoiceNumber: result.invoiceNumber,
+  invoicePeriod: result.invoicePeriod,
   versions: [
     {
       version: 1,
@@ -436,6 +442,7 @@ if (invoiceParty) {
   salesInvoiceDetails.set(result.invoiceId, {
     id: result.invoiceId,
     invoiceNumber: result.invoiceNumber,
+    invoicePeriod: result.invoicePeriod,
     status: 'FINALIZED',
     currentVersion: 1,
     party: {
@@ -496,6 +503,7 @@ if (invoiceParty) {
 recordSalesInvoice({
   id: result.invoiceId,
   invoiceNumber: result.invoiceNumber,
+  invoicePeriod: result.invoicePeriod,
   partyId: body.partyId,
   payableRial: result.payableRial,
   quoteAmountRial: quote.amountRial,
@@ -572,6 +580,7 @@ async function registerCoinSale(request: Request) {
   const result = {
     invoiceId: crypto.randomUUID(),
     invoiceNumber: invoiceCounter,
+    invoicePeriod: MOCK_INVOICE_PERIOD,
     payableRial: payableRial.toString(),
     receivableRial: receivableRial.toString(),
     intrinsicValueRial: intrinsicValueRial.toString(),
@@ -583,6 +592,7 @@ async function registerCoinSale(request: Request) {
   salesInvoiceVersions.set(result.invoiceId, {
     invoiceId: result.invoiceId,
     invoiceNumber: result.invoiceNumber,
+    invoicePeriod: result.invoicePeriod,
     versions: [
       {
         version: 1,
@@ -627,6 +637,7 @@ async function registerCoinSale(request: Request) {
     salesInvoiceDetails.set(result.invoiceId, {
       id: result.invoiceId,
       invoiceNumber: result.invoiceNumber,
+      invoicePeriod: result.invoicePeriod,
       status: 'FINALIZED',
       currentVersion: 1,
       party: {
@@ -687,6 +698,7 @@ async function registerCoinSale(request: Request) {
   recordSalesInvoice({
     id: result.invoiceId,
     invoiceNumber: result.invoiceNumber,
+    invoicePeriod: result.invoicePeriod,
     partyId: body.partyId,
     payableRial: result.payableRial,
     quoteAmountRial: quote.amountRial,
@@ -1910,7 +1922,9 @@ export const handlers = [
 
     const filtered = salesInvoiceList.filter((invoice) => {
       const numberMatches =
-        !invoiceNumber || String(invoice.invoiceNumber ?? '').includes(invoiceNumber);
+        !invoiceNumber ||
+        (invoice.invoiceNumber !== null &&
+          `${invoice.invoicePeriod}-${invoice.invoiceNumber}`.includes(invoiceNumber));
       const partyMatches = matchesQuery(invoice.party.displayName, partySearch);
       const statusMatches = !status || invoice.status === status;
       const occurredAt = new Date(invoice.occurredAt).getTime();
@@ -1990,18 +2004,18 @@ export const handlers = [
   http.get('/api/sales/invoices/:invoiceId/pdf', async ({ params }) => {
     await delay(READ_DELAY_MS);
     const found = salesInvoiceDetails.get(String(params.invoiceId));
-    if (!found || found.invoiceNumber === null || found.status !== 'FINALIZED') {
+    if (!found || found.invoiceNumber === null || found.invoicePeriod === null || found.status !== 'FINALIZED') {
       return mockError('NOT_FOUND', 'نسخه PDF این فاکتور در دسترس نیست');
     }
     const content = new Blob(
-      [`%PDF-1.4\n% Gold Accounting invoice ${found.invoiceNumber}\n%%EOF`],
+      [`%PDF-1.4\n% Gold Accounting invoice ${invoiceNumberLabel(found.invoicePeriod, found.invoiceNumber)}\n%%EOF`],
       { type: 'application/pdf' },
     );
     return new HttpResponse(content, {
       headers: {
         'Content-Type': 'application/pdf',
         // FE-098: بدون Content-Disposition — مثل سرور (`pdf-response.ts`)
-        'X-File-Name': encodeURIComponent(`invoice-${found.invoiceNumber}.pdf`),
+        'X-File-Name': encodeURIComponent(`invoice-${invoiceNumberLabel(found.invoicePeriod, found.invoiceNumber)}.pdf`),
       },
     });
   }),
@@ -2090,7 +2104,7 @@ export const handlers = [
         inventoryEffects: version.inventoryEffects,
       }];
     });
-    return HttpResponse.json({ invoiceId: found.invoiceId, invoiceNumber: found.invoiceNumber, amendments } satisfies SalesInvoiceAmendmentHistory);
+    return HttpResponse.json({ invoiceId: found.invoiceId, invoiceNumber: found.invoiceNumber, invoicePeriod: found.invoicePeriod, amendments } satisfies SalesInvoiceAmendmentHistory);
   }),
 
   /**
@@ -2178,7 +2192,7 @@ export const handlers = [
     const history = salesInvoiceVersions.get(String(params.invoiceId));
     if (!detail || !history) return mockError('NOT_FOUND', 'فاکتور مورد نظر پیدا نشد');
     const policy = amendmentPolicyFor(detail);
-    if (!policy.allowed || detail.quoteSnapshot === null || detail.invoiceNumber === null) {
+    if (!policy.allowed || detail.quoteSnapshot === null || detail.invoiceNumber === null || detail.invoicePeriod === null) {
       return mockError('BAD_REQUEST', 'این فاکتور در وضعیت فعلی قابل اصلاح نیست');
     }
     const party = partyList.find((candidate) => candidate.id === body.partyId);
@@ -2265,6 +2279,7 @@ export const handlers = [
     const result = {
       invoiceId: detail.id,
       invoiceNumber: detail.invoiceNumber,
+      invoicePeriod: detail.invoicePeriod,
       version,
       payableRial: line.payableRial.toString(),
       receivableRial: receivable.toString(),

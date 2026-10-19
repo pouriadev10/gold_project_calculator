@@ -207,6 +207,7 @@ describe('CoinSaleForm — فرم فروش سکه (FE-048)', () => {
     createCoinSaleMock.mockResolvedValue({
       invoiceId: 'd1000000-0000-4000-8000-000000000001',
       invoiceNumber: 501,
+      invoicePeriod: '1405',
       payableRial: 3_000_000_000n,
       receivableRial: 0n,
       intrinsicValueRial: 900_000_000n,
@@ -234,7 +235,7 @@ describe('CoinSaleForm — فرم فروش سکه (FE-048)', () => {
     });
     expect(typeof input.count).toBe('number');
 
-    await waitFor(() => expect(screen.getByText('فاکتور شماره ۵۰۱ ثبت شد')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('فاکتور شماره ۱۴۰۵-۵۰۱ ثبت شد')).toBeInTheDocument());
   });
 
   it('double tap فقط یک فراخوانی می‌سازد', async () => {
@@ -259,12 +260,13 @@ describe('CoinSaleForm — فرم فروش سکه (FE-048)', () => {
     resolveSale({
       invoiceId: 'd1',
       invoiceNumber: 1,
+      invoicePeriod: '1405',
       payableRial: 3_000_000_000n,
       receivableRial: 0n,
       intrinsicValueRial: 900_000_000n,
       bubbleRial: 100_000_000n,
     });
-    await waitFor(() => expect(screen.getByText('فاکتور شماره ۱ ثبت شد')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('فاکتور شماره ۱۴۰۵-۱ ثبت شد')).toBeInTheDocument());
   });
 
   it('پرداخت بیشتر از مبلغ قابل‌پرداخت ثبت را مسدود می‌کند، نه سرور', async () => {

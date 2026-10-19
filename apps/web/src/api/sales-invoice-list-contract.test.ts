@@ -8,6 +8,7 @@ import {
 const finalizedInvoice = {
   id: 'd5000000-0000-4000-8000-000000000001',
   invoiceNumber: 122,
+  invoicePeriod: '1405',
   status: 'FINALIZED' as const,
   currentVersion: 2,
   party: {
@@ -44,6 +45,7 @@ describe('قرارداد فهرست فاکتورهای فروش — FE-064', () 
         ...finalizedInvoice,
         status: 'DRAFT',
         invoiceNumber: null,
+        invoicePeriod: null,
         currentVersion: 0,
         payableRial: null,
         goldRatePerGramRial: null,
@@ -54,6 +56,7 @@ describe('قرارداد فهرست فاکتورهای فروش — FE-064', () 
         ...finalizedInvoice,
         status: 'DRAFT',
         invoiceNumber: null,
+        invoicePeriod: null,
       }).success,
     ).toBe(false);
   });

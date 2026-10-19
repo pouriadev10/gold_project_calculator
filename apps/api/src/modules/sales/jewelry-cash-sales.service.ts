@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { invoiceNumberLabel } from '@gold/core-calc';
 import { InventoryMovementsService } from '../inventory/inventory-movements.service';
 import { LedgerAccountsService } from '../ledger/ledger-accounts.service';
 import { AssetDimensionsService } from '../ledger/asset-dimensions.service';
@@ -19,6 +20,7 @@ export interface CreateJewelryCashSaleInput {
 export interface CreatedJewelryCashSale {
   readonly invoiceId: string;
   readonly invoiceNumber: number;
+  readonly invoicePeriod: string;
   readonly payableRial: bigint;
   readonly ledgerTransactionId: string;
   readonly inventoryMovementId: string;
@@ -103,7 +105,7 @@ export class JewelryCashSalesService {
     const posting = await this.ledger.postInTransaction(transaction, {
       source: { tenantId: input.tenantId, type: 'SALES_INVOICE', id: finalized.invoice.id },
       effectiveAt: input.effectiveAt,
-      description: `Cash jewelry sale ${finalized.invoice.invoiceNumber!}`,
+      description: `Cash jewelry sale ${invoiceNumberLabel(finalized.invoice.invoicePeriod!, finalized.invoice.invoiceNumber!)}`,
       createdBy: input.createdBy,
       entries: [
         { accountId: cash.id, dimensionId: rial.id, quantity: BigInt(price.payableRial) },
@@ -116,6 +118,7 @@ export class JewelryCashSalesService {
     return {
       invoiceId: finalized.invoice.id,
       invoiceNumber: finalized.invoice.invoiceNumber!,
+      invoicePeriod: finalized.invoice.invoicePeriod!,
       payableRial: BigInt(price.payableRial),
       ledgerTransactionId: posting.transaction.id,
       inventoryMovementId: movement.id,

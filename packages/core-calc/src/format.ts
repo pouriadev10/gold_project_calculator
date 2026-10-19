@@ -10,6 +10,7 @@
  */
 
 import { toPersianDigits } from './persian.js';
+import { CalcError } from './types.js';
 
 /** جداکننده‌ی اعشار فارسی (U+066B) */
 const DECIMAL_SEPARATOR = String.fromCodePoint(0x066b);
@@ -81,4 +82,31 @@ export function formatCoinCount(count: number): string {
 /** عیار — همیشه سه‌رقمی و بدون گروه‌بندی: ۷۵۰، ۹۹۵، ۹۲۵. */
 export function formatKarat(k: number): string {
   return toPersianDigits(String(k));
+}
+
+const INVOICE_PERIOD = /^[0-9]{4}$/u;
+
+/**
+ * شناسه‌ی فاکتور با ارقام لاتین — «1405-12»: سال جلالی دوره، خط تیره، شماره‌ی همان سال.
+ *
+ * شمارنده‌ی فاکتور هر سال از ۱ شروع می‌شود (D-02)، پس شماره بدون سال یکتا نیست و
+ * هیچ‌جا — صفحه، PDF، نام فایل، شرح دفتر کل — نباید تنها بیاید. این تنها سازنده‌ی
+ * این رشته است تا سرور و مرورگر یک شکل بدهند.
+ */
+export function invoiceNumberLabel(period: string, invoiceNumber: number): string {
+  if (!INVOICE_PERIOD.test(period)) {
+    throw new CalcError(`دوره‌ی فاکتور باید سال چهاررقمی باشد — دریافت شد: ${period}`);
+  }
+  if (!Number.isSafeInteger(invoiceNumber) || invoiceNumber <= 0) {
+    throw new CalcError(`شماره‌ی فاکتور باید عدد صحیح مثبت باشد — دریافت شد: ${invoiceNumber}`);
+  }
+  return `${period}-${invoiceNumber}`;
+}
+
+/**
+ * همان شناسه برای نمایش — «۱۴۰۵-۱۲». بدون جداکننده‌ی هزارگان چون شناسه است،
+ * نه مقدار؛ در متن راست‌به‌چپ هم یکجا و چپ‌به‌راست می‌ماند (رقم-خط‌تیره-رقم).
+ */
+export function formatInvoiceNumber(period: string, invoiceNumber: number): string {
+  return toPersianDigits(invoiceNumberLabel(period, invoiceNumber));
 }

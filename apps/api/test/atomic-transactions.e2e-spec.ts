@@ -144,7 +144,8 @@ describe('تراکنش اتمیک End-to-End (BE-064)', () => {
   async function violations(tenantId = tenant.id): Promise<string[]> {
     const { rows } = await pool.query<{ violation: string; ref: string }>(
       `WITH counter AS (
-         SELECT coalesce(sum(current_value), 0)::int AS value
+         -- D-02: شماره هر سال جلالی جدا شمرده می‌شود، پس شکاف هم برای هر دوره جداست.
+         SELECT period_key, current_value AS value
          FROM document_counters WHERE tenant_id = $1 AND document_type = 'SALES_INVOICE'
        )
        SELECT 'finalized invoice without ledger' AS violation, si.id::text AS ref
@@ -231,13 +232,16 @@ describe('تراکنش اتمیک End-to-End (BE-064)', () => {
        SELECT 'pending idempotency claim', r.key
        FROM idempotency_records r WHERE r.tenant_id = $1 AND r.status <> 'COMPLETED'
        UNION ALL
-       SELECT 'invoice number gap', n::text
+       SELECT 'invoice number gap', counter.period_key || '-' || n::text
        FROM counter, generate_series(1, counter.value) AS n
-       WHERE NOT EXISTS (SELECT 1 FROM sales_invoices s WHERE s.tenant_id = $1 AND s.invoice_number = n)
+       WHERE NOT EXISTS (SELECT 1 FROM sales_invoices s
+         WHERE s.tenant_id = $1 AND s.invoice_period = counter.period_key AND s.invoice_number = n)
        UNION ALL
-       SELECT 'invoice number beyond counter', s.invoice_number::text
-       FROM sales_invoices s, counter
-       WHERE s.tenant_id = $1 AND s.invoice_number > counter.value`,
+       SELECT 'invoice number beyond counter', s.invoice_period || '-' || s.invoice_number::text
+       FROM sales_invoices s
+       WHERE s.tenant_id = $1 AND s.invoice_number IS NOT NULL
+         AND s.invoice_number > coalesce(
+           (SELECT counter.value FROM counter WHERE counter.period_key = s.invoice_period), 0)`,
       [tenantId],
     );
     return rows.map((row) => `${row.violation}: ${row.ref}`);
@@ -759,7 +763,7 @@ describe('تراکنش اتمیک End-to-End (BE-064)', () => {
             `ledger without source document: ${orphanLedger}`,
             `inventory without valid source: ${orphanMovement}`,
             'pending idempotency claim: stuck',
-            'invoice number gap: 1',
+            'invoice number gap: checker-1',
           ].sort(),
         );
       } finally {

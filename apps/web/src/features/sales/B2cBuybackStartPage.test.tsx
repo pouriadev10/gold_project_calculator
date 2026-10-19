@@ -119,7 +119,7 @@ beforeEach(() => {
   useKeypadStore.setState({ isOpen: false, fields: [], activeId: null, buffers: {} });
   useParamsMock.mockReturnValue({ invoiceId: INVOICE_ID });
   useInvoiceVersionsMock.mockReturnValue({
-    data: { invoiceId: INVOICE_ID, invoiceNumber: 123, versions: [] },
+    data: { invoiceId: INVOICE_ID, invoiceNumber: 123, invoicePeriod: '1405', versions: [] },
     isLoading: false,
     isError: false,
     error: null,

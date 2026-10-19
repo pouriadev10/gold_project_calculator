@@ -49,6 +49,7 @@ function listRow(overrides: Partial<SalesInvoiceListRow> = {}): SalesInvoiceList
   return {
     id: INVOICE,
     invoiceNumber: 42,
+    invoicePeriod: '1405',
     status: 'FINALIZED',
     currentVersion: 1,
     partyId: PARTY,
@@ -68,6 +69,7 @@ describe('toSalesInvoiceListItem', () => {
     expect(item).toEqual({
       id: INVOICE,
       invoiceNumber: 42,
+      invoicePeriod: '1405',
       status: 'FINALIZED',
       currentVersion: 1,
       party: { id: PARTY, displayName: 'زهرا کریمی' },
@@ -84,6 +86,7 @@ describe('toSalesInvoiceListItem', () => {
       listRow({
         status: 'DRAFT',
         invoiceNumber: null,
+        invoicePeriod: null,
         currentVersion: 0,
         quoteAmountRial: null,
         finalizedAt: null,
@@ -106,6 +109,7 @@ describe('toSalesInvoiceListItem', () => {
 const HEADER: SalesInvoiceDetailHeader = {
   id: INVOICE,
   invoiceNumber: 42,
+  invoicePeriod: '1405',
   status: 'FINALIZED',
   currentVersion: 2,
   finalizedAt: FINALIZED_AT,
@@ -250,7 +254,7 @@ describe('toSalesInvoiceDetail', () => {
 
   it('پیش‌نویس: بدون نسخه و بدون snapshot ِ مظنه', () => {
     const detail = toSalesInvoiceDetail(
-      { ...HEADER, status: 'DRAFT', invoiceNumber: null, currentVersion: 0, finalizedAt: null, quoteAmountRial: null, quoteObservedAt: null },
+      { ...HEADER, status: 'DRAFT', invoiceNumber: null, invoicePeriod: null, currentVersion: 0, finalizedAt: null, quoteAmountRial: null, quoteObservedAt: null },
       [],
       [],
       [],

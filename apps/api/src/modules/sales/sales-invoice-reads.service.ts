@@ -59,6 +59,7 @@ function occurredAt(row: { readonly finalizedAt: Date | null; readonly createdAt
 export interface SalesInvoiceListRow {
   readonly id: string;
   readonly invoiceNumber: number | null;
+  readonly invoicePeriod: string | null;
   readonly status: SalesInvoiceStatus;
   readonly currentVersion: number;
   readonly partyId: string;
@@ -80,6 +81,7 @@ export function toSalesInvoiceListItem(row: SalesInvoiceListRow): SalesInvoiceLi
   const base = {
     id: row.id,
     invoiceNumber: row.invoiceNumber,
+    invoicePeriod: row.invoicePeriod,
     status: row.status,
     currentVersion: row.currentVersion,
     party: { id: row.partyId, displayName: row.partyDisplayName },
@@ -103,6 +105,7 @@ export function toSalesInvoiceListItem(row: SalesInvoiceListRow): SalesInvoiceLi
 export interface SalesInvoiceDetailHeader {
   readonly id: string;
   readonly invoiceNumber: number | null;
+  readonly invoicePeriod: string | null;
   readonly status: SalesInvoiceStatus;
   readonly currentVersion: number;
   readonly finalizedAt: Date | null;
@@ -232,6 +235,7 @@ export function toSalesInvoiceDetail(
   const base = {
     id: header.id,
     invoiceNumber: header.invoiceNumber,
+    invoicePeriod: header.invoicePeriod,
     status: header.status,
     currentVersion: header.currentVersion,
     party: header.party,
@@ -279,8 +283,11 @@ export class SalesInvoiceReadsService {
       const eventAt = sql`coalesce(${salesInvoices.finalizedAt}, ${salesInvoices.createdAt})`;
       const conditions = [eq(salesInvoices.tenantId, tenantId)];
       if (query.invoiceNumber !== undefined) {
-        // فقط رقم است (قرارداد)، پس wildcard ِ ناخواسته‌ای وارد LIKE نمی‌شود
-        conditions.push(sql`${salesInvoices.invoiceNumber}::text like ${`%${query.invoiceNumber}%`}`);
+        // فقط رقم و یک خط تیره است (قرارداد)، پس wildcard ِ ناخواسته‌ای وارد LIKE نمی‌شود.
+        // روی شناسه‌ی کامل «دوره-شماره» (D-02): «12» همه‌ی سال‌ها و «1405-12» فقط همان را می‌یابد.
+        conditions.push(
+          sql`(${salesInvoices.invoicePeriod} || '-' || ${salesInvoices.invoiceNumber}::text) like ${`%${query.invoiceNumber}%`}`,
+        );
       }
       if (query.partySearch !== undefined) {
         conditions.push(ilike(parties.normalizedName, `%${normalizeTextForSearch(query.partySearch)}%`));
@@ -305,6 +312,7 @@ export class SalesInvoiceReadsService {
           .select({
             id: salesInvoices.id,
             invoiceNumber: salesInvoices.invoiceNumber,
+            invoicePeriod: salesInvoices.invoicePeriod,
             status: salesInvoices.status,
             currentVersion: salesInvoices.currentVersion,
             partyId: parties.id,
@@ -347,6 +355,7 @@ export class SalesInvoiceReadsService {
         .select({
           id: salesInvoices.id,
           invoiceNumber: salesInvoices.invoiceNumber,
+          invoicePeriod: salesInvoices.invoicePeriod,
           status: salesInvoices.status,
           currentVersion: salesInvoices.currentVersion,
           finalizedAt: salesInvoices.finalizedAt,

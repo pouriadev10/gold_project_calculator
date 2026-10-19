@@ -21,11 +21,16 @@ export interface NextDocumentNumberInput {
  * جلالی از ICU خود Node می‌آید، بدون وابستگی تازه و بدون ریسک واگرایی
  * دو پیاده‌سازی تقویم از هم. لوکیل پایه عمداً `en-US` است تا رقم همیشه
  * لاتین باشد؛ فقط تقویم (`u-ca-persian`) عوض می‌شود.
+ *
+ * `timeZone` اجباری است (D-02): مرز سال ۰۰:۰۰ ِ ۱ فروردین **در منطقه‌ی مستأجر** است
+ * (`tenants.timezone`)، نه منطقه‌ی پیش‌فرض پروسه‌ی سرور. بدون آن، روی سرور UTC
+ * فروش‌های ۰۰:۰۰ تا ۰۳:۳۰ بامداد نوروز به وقت تهران در سال قبل شماره می‌خوردند.
  */
-export function jalaliYearPeriodKey(date: Date): string {
-  const parts = new Intl.DateTimeFormat('en-US-u-ca-persian', { year: 'numeric' }).formatToParts(
-    date,
-  );
+export function jalaliYearPeriodKey(date: Date, timeZone: string): string {
+  const parts = new Intl.DateTimeFormat('en-US-u-ca-persian', {
+    year: 'numeric',
+    timeZone,
+  }).formatToParts(date);
   const year = parts.find((part) => part.type === 'year')?.value;
 
   if (year === undefined) {

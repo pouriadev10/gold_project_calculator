@@ -87,6 +87,7 @@ const salesInvoiceListExample = {
     {
       id: INVOICE_ID,
       invoiceNumber: 1,
+      invoicePeriod: '1405',
       status: 'FINALIZED',
       currentVersion: 1,
       party: { id: PARTY_ID, displayName: 'علی رضایی' },
@@ -103,6 +104,7 @@ const salesInvoiceListExample = {
 const salesInvoiceDetailExample = {
   id: INVOICE_ID,
   invoiceNumber: 1,
+  invoicePeriod: '1405',
   status: 'FINALIZED',
   currentVersion: 1,
   party: { id: PARTY_ID, displayName: 'علی رضایی', type: 'CONSUMER', status: 'ACTIVE' },

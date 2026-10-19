@@ -6,8 +6,8 @@ import {
   calculateJewelrySale,
   DEFAULT_ROUNDING_UNIT,
   dualFromRial,
-  formatCount,
   formatGram,
+  formatInvoiceNumber,
   formatRial,
   gramRate1000,
   grossMg,
@@ -119,6 +119,7 @@ function createSale(mode: 'CASH' | 'CREDIT', raw: Record<string, unknown>) {
   const response = {
     invoiceId,
     invoiceNumber,
+    invoicePeriod: '1405',
     payableRial: SERVER_PAYABLE_RIAL.toString(),
     ...(mode === 'CREDIT' ? { receivableRial: (SERVER_PAYABLE_RIAL - paid).toString() } : {}),
     ledgerTransactionId: `e9400000-0000-4000-8000-${String(sequence).padStart(12, '0')}`,
@@ -129,6 +130,7 @@ function createSale(mode: 'CASH' | 'CREDIT', raw: Record<string, unknown>) {
     salesInvoiceVersionHistorySchema.parse({
       invoiceId,
       invoiceNumber,
+      invoicePeriod: '1405',
       versions: [
         {
           version: 1,
@@ -314,7 +316,7 @@ describe('FE-094 — فروش زیورآلات از مظنه تا رسید، ر�
       ledger.responses()[0],
     );
     expect(api.requests().some((request) => request.method === 'GET' && request.path === `/api/sales/invoices/${serverSale.invoiceId}/versions`)).toBe(true);
-    expect(within(within(page).getByText('شماره فاکتور').parentElement!).getByText(formatCount(serverSale.invoiceNumber))).toBeInTheDocument();
+    expect(within(within(page).getByText('شماره فاکتور').parentElement!).getByText(formatInvoiceNumber('1405', serverSale.invoiceNumber))).toBeInTheDocument();
     expect(within(page).getByText('زمان ثبت').parentElement).toHaveTextContent(formatJalaliDateTime(new Date(SERVER_CREATED_AT)));
     expect(rawAmount('جمع فاکتور', page)).toEqual({ raw: SERVER_PAYABLE_RIAL.toString(), unit: 'rial' });
     expect(rawAmount('پرداخت‌شده (نقدی)', page).raw).toBe(SERVER_PAYABLE_RIAL.toString());
@@ -405,7 +407,7 @@ describe('FE-094 — فروش زیورآلات از مظنه تا رسید، ر�
     expect(await second!.body).toBe(await first!.body);
     expect(invoices.size).toBe(1);
     const [invoice] = invoices.values();
-    expect(within(within(page).getByText('شماره فاکتور').parentElement!).getByText(formatCount(invoice!.invoiceNumber))).toBeInTheDocument();
+    expect(within(within(page).getByText('شماره فاکتور').parentElement!).getByText(formatInvoiceNumber(invoice!.invoicePeriod, invoice!.invoiceNumber))).toBeInTheDocument();
   }, 30_000);
 
   it('FE-100: پاسخ گم‌شده و بارگذاری دوباره‌ی صفحه — جادوگر قفل برمی‌گردد و همان فروش را بررسی می‌کند', async () => {

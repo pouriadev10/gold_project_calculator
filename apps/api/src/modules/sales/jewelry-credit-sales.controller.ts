@@ -25,7 +25,7 @@ export class JewelryCreditSalesController {
       const tenantId = this.context.getTenantId();
       const result = await this.idempotency.execute({ tenantId, key, request: { method: 'POST', path: '/sales/invoices/jewelry/credit', body }, execute: async (transaction) => {
         const created = await this.sales.createInTransaction(transaction, { tenantId, partyId: body.partyId, jewelryItemId: body.jewelryItemId, quoteId: body.quoteId, effectiveAt: new Date(body.effectiveAt), paidRial: BigInt(body.paidRial), createdBy: auth.sub });
-        return { status: HttpStatus.CREATED, body: { invoiceId: created.invoiceId, invoiceNumber: created.invoiceNumber, payableRial: created.payableRial.toString(), receivableRial: created.receivableRial.toString(), ledgerTransactionId: created.ledgerTransactionId, inventoryMovementId: created.inventoryMovementId } };
+        return { status: HttpStatus.CREATED, body: { invoiceId: created.invoiceId, invoiceNumber: created.invoiceNumber, invoicePeriod: created.invoicePeriod, payableRial: created.payableRial.toString(), receivableRial: created.receivableRial.toString(), ledgerTransactionId: created.ledgerTransactionId, inventoryMovementId: created.inventoryMovementId } };
       }});
       return result.response.body;
     } catch (error) { if (error instanceof IdempotencyKeyConflictError) throw new ConflictException(error.message); throw error; }

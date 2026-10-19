@@ -5,6 +5,7 @@ import { salesInvoiceDetailSchema } from './contracts';
 const finalizedDetail = {
   id: 'd5000000-0000-4000-8000-000000000001',
   invoiceNumber: 122,
+  invoicePeriod: '1405',
   status: 'FINALIZED' as const,
   currentVersion: 1,
   party: {
@@ -84,6 +85,7 @@ describe('قرارداد جزئیات فاکتور فروش — FE-065', () => {
     const draft = {
       ...finalizedDetail,
       invoiceNumber: null,
+      invoicePeriod: null,
       status: 'DRAFT' as const,
       currentVersion: 0,
       quoteSnapshot: null,

@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { AuditService } from '../../platform/audit/audit.service';
 import { DRIZZLE } from '../../platform/database/database.module';
 import {
@@ -100,6 +100,24 @@ function assertFinalizeInput(input: FinalizeSalesInvoiceInput): void {
       );
     }
   }
+}
+
+/**
+ * منطقه‌ی زمانی مستأجرِ همین تراکنش — مرز سال شماره‌گذاری (D-02).
+ *
+ * نقش `gold_app` به جدول سراسری `tenants` دسترسی ندارد؛ تابع دیتابیسی
+ * `current_tenant_timezone()` (مهاجرت 0037) فقط timezone ِ مستأجری را می‌دهد که
+ * RLS برایش تنظیم شده.
+ */
+async function currentTenantTimeZone(transaction: TenantTransaction): Promise<string> {
+  const result = await transaction.execute<{ timezone: string | null }>(
+    sql`SELECT current_tenant_timezone() AS timezone`,
+  );
+  const timeZone = result.rows[0]?.timezone;
+  if (typeof timeZone !== 'string' || timeZone === '') {
+    throw new Error('Tenant time zone is not available inside the tenant transaction');
+  }
+  return timeZone;
 }
 
 /**
@@ -215,16 +233,21 @@ export class SalesInvoicesService {
       throw new SalesInvoiceQuoteNotFoundError();
     }
 
+    const invoicePeriod = jalaliYearPeriodKey(
+      input.effectiveAt,
+      await currentTenantTimeZone(transaction),
+    );
     const invoiceNumber = await this.counters.getNextNumberInTransaction(transaction, {
       tenantId: input.tenantId,
       documentType: 'SALES_INVOICE',
-      periodKey: jalaliYearPeriodKey(input.effectiveAt),
+      periodKey: invoicePeriod,
     });
 
     const [updatedInvoice] = await transaction
       .update(salesInvoices)
       .set({
         invoiceNumber,
+        invoicePeriod,
         currentVersion: 1,
         status: 'FINALIZED',
         quoteId: input.quoteId,
@@ -274,6 +297,7 @@ export class SalesInvoicesService {
       entityId: invoice.id,
       afterData: {
         invoiceNumber: invoiceNumber.toString(),
+        invoicePeriod,
         version: '1',
         itemCount: createdItems.length.toString(),
       },

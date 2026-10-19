@@ -121,6 +121,7 @@ describe('versioned sales invoices (BE-039)', () => {
 
     expect(finalized.invoice).toMatchObject({ status: 'FINALIZED', currentVersion: 1 });
     expect(finalized.invoice.invoiceNumber).toBe(1);
+    expect(finalized.invoice.invoicePeriod).toBe('1405');
     expect(finalized.version).toMatchObject({
       version: 1,
       totalsSnapshot: { goldMg: '7500', payableRial: '1234567890' },
@@ -219,5 +220,35 @@ describe('versioned sales invoices (BE-039)', () => {
           .where(eq(salesInvoiceVersions.id, version!.id)),
       ),
     ).rejects.toThrow();
+  });
+
+  it('D-02: اولین فروش سال تازه شماره‌ی ۱ ِ همان سال را می‌گیرد، با مرز نوروز به وقت مستأجر', async () => {
+    const latestQuote = (await quotes.latest(tenant.id, 'MAZNEH'))!;
+    const finalizeAt = async (at: Date) => {
+      const draft = await invoices.createDraft({ tenantId: tenant.id, partyId, createdBy: actorUserId });
+      const { invoice } = await invoices.finalize({
+        tenantId: tenant.id,
+        salesInvoiceId: draft.id,
+        effectiveAt: at,
+        quoteId,
+        quoteAmountRial: latestQuote.amountRial,
+        quoteObservedAt: latestQuote.observedAt,
+        totalsSnapshot: { payableRial: '1000' },
+        settingsSnapshot: { roundingUnitRial: '1000' },
+        items: [{ itemType: 'JEWELRY', itemId: jewelryItemId, quantity: 1, lineSnapshot: { finalRial: '1000' } }],
+        createdBy: actorUserId,
+      });
+      return { period: invoice.invoicePeriod, number: invoice.invoiceNumber };
+    };
+
+    // ۲۳:۵۰ ِ ۲۹ اسفند ۱۴۰۵ و ۰۰:۳۰ ِ ۱ فروردین ۱۴۰۶ به وقت تهران (مستأجر پیش‌فرض Asia/Tehran).
+    const lastOf1405 = await finalizeAt(new Date('2027-03-20T20:20:00.000Z'));
+    const firstOf1406 = await finalizeAt(new Date('2027-03-20T21:00:00.000Z'));
+    const secondOf1406 = await finalizeAt(new Date('2027-03-21T09:00:00.000Z'));
+
+    expect(lastOf1405.period).toBe('1405');
+    expect(firstOf1406).toEqual({ period: '1406', number: 1 });
+    expect(secondOf1406).toEqual({ period: '1406', number: 2 });
+    // شماره‌ی ۱ ِ ۱۴۰۵ (آزمون اول) و ۱ ِ ۱۴۰۶ کنار هم وجود دارند — پیش‌تر 23505 بود.
   });
 });

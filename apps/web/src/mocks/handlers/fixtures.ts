@@ -29,6 +29,9 @@ import type {
 
 // TODO(real-data): از فید مظنه یا ورود دستی کاربر
 export const MAZNEH_RIAL = 480_000_000n;
+/** دوره‌ی شماره‌گذاری فاکتورهای mock — سال جلالی، مثل `invoicePeriod` ِ سرور (D-02). */
+export const MOCK_INVOICE_PERIOD = '1405';
+
 export const RATE_1000 = gramRate1000(MAZNEH_RIAL);
 export const FETCHED_AT = new Date('2026-07-30T09:12:00Z');
 export const MOCK_PROFIT_RATE_BPS = 700n;
@@ -137,6 +140,7 @@ export const salesInvoiceRecords: SalesInvoiceListItem[] = Array.from(
     return {
       id: `d5000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`,
       invoiceNumber: isDraft ? null : 122 - index,
+      invoicePeriod: isDraft ? null : MOCK_INVOICE_PERIOD,
       status: isDraft ? 'DRAFT' : 'FINALIZED',
       currentVersion: isDraft ? 0 : index % 5 === 0 ? 2 : 1,
       party: { id: party.id, displayName: party.displayName },
@@ -226,6 +230,7 @@ export const salesInvoiceDetailRecords: SalesInvoiceDetail[] = salesInvoiceRecor
     return {
       id: invoice.id,
       invoiceNumber: invoice.invoiceNumber,
+      invoicePeriod: invoice.invoicePeriod,
       status: invoice.status,
       currentVersion: invoice.currentVersion,
       party: {
@@ -251,12 +256,13 @@ export const salesInvoiceDetailRecords: SalesInvoiceDetail[] = salesInvoiceRecor
 /** پاسخ قرارداد واقعی `/versions` برای فاکتورهای قدیمی فهرست. */
 export const salesInvoiceVersionRecords: SalesInvoiceVersionHistory[] =
   salesInvoiceDetailRecords.flatMap((detail) =>
-    detail.invoiceNumber === null
+    detail.invoiceNumber === null || detail.invoicePeriod === null
       ? []
       : [
           {
             invoiceId: detail.id,
             invoiceNumber: detail.invoiceNumber,
+            invoicePeriod: detail.invoicePeriod,
             versions: detail.versions.map((version) => ({
               version: version.version,
               reason: version.reason,

@@ -2,7 +2,7 @@ import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { dualFromRial, formatCount, formatGram } from '@gold/core-calc';
+import { dualFromRial, formatCount, formatGram, formatInvoiceNumber } from '@gold/core-calc';
 import {
   amendedSalesInvoiceSchema,
   amendSalesInvoiceSchema,
@@ -154,6 +154,7 @@ function amendInvoice(raw: Record<string, unknown>) {
     body: {
       invoiceId: detail.id,
       invoiceNumber: detail.invoiceNumber!,
+      invoicePeriod: detail.invoicePeriod!,
       version,
       payableRial: calc.payableRial.toString(),
       receivableRial: receivable.toString(),
@@ -171,6 +172,7 @@ function amendments(): SalesInvoiceAmendmentHistory {
   return salesInvoiceAmendmentHistorySchema.parse({
     invoiceId: history.invoiceId,
     invoiceNumber: history.invoiceNumber,
+    invoicePeriod: history.invoicePeriod,
     amendments: history.versions.flatMap((version, index) => {
       const before = history.versions[index - 1];
       if (!before || version.reason === null) return [];
@@ -296,7 +298,7 @@ async function prepareAmendment(user: User) {
   const amendLink = await screen.findByRole('link', { name: /اصلاح فاکتور/ }, { timeout: 10_000 });
   expect(requestsTo(`/api/sales/invoices/${INVOICE_ID}/amendment-policy`)).toBeGreaterThanOrEqual(1);
   await user.click(amendLink);
-  await screen.findByText(`اصلاح فاکتور ${formatCount(detail.invoiceNumber!)}`, {}, { timeout: 10_000 });
+  await screen.findByText(`اصلاح فاکتور ${formatInvoiceNumber(detail.invoicePeriod!, detail.invoiceNumber!)}`, {}, { timeout: 10_000 });
   expect(screen.getByText(`نسخهٔ جاری: ${formatCount(1)}. شمارهٔ فاکتور تغییر نمی‌کند.`)).toBeInTheDocument();
 
   // مشخصات قلم فعلی از نسخه‌ی مؤثر در تاریخ صدور
@@ -352,7 +354,7 @@ describe('FE-097 — اصلاح فاکتور از صفحه‌ی فاکتور ت�
     // ── مرور اختلاف — همه از پاسخ و تاریخچه‌ی سرور
     const server = amendedSalesInvoiceSchema.parse(ledger.responses()[0]);
     expect(server.payableRial).toBe(EXPECTED.payableRial.toString());
-    expect(within(result).getByText(`فاکتور ${formatCount(ORIGINAL_DETAIL.invoiceNumber!)} · نسخهٔ ${formatCount(2)}`)).toBeInTheDocument();
+    expect(within(result).getByText(`فاکتور ${formatInvoiceNumber(ORIGINAL_DETAIL.invoicePeriod!, ORIGINAL_DETAIL.invoiceNumber!)} · نسخهٔ ${formatCount(2)}`)).toBeInTheDocument();
     expect(within(result).getByText(/نسخهٔ قبلی و سندهای آن تغییر نکرده‌اند/)).toBeInTheDocument();
 
     const beforeCard = screen.getByText(`قبل · نسخهٔ ${formatCount(1)}`).parentElement!.parentElement!;

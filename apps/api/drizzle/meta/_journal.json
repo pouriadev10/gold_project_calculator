@@ -260,6 +260,13 @@
       "when": 1792428152289,
       "tag": "0036_m03_header_and_setting_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1792433923678,
+      "tag": "0037_d02_invoice_period",
+      "breakpoints": true
     }
   ]
 }

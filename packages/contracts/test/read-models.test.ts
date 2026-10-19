@@ -32,6 +32,13 @@ describe('salesInvoiceListQuerySchema', () => {
       status: 'FINALIZED',
     });
     expect(salesInvoiceListQuerySchema.safeParse({ invoiceNumber: '4_' }).success).toBe(false);
+    // D-02: شناسه‌ی «سال-شماره» با یک خط تیره هم جست‌وجو می‌شود؛ بیش از یکی یا بدون رقم نه.
+    for (const valid of ['1405-42', '1405-', '-42']) {
+      expect(salesInvoiceListQuerySchema.safeParse({ invoiceNumber: valid }).success).toBe(true);
+    }
+    for (const invalid of ['1405-4-2', '-', '1405%', '1405_42']) {
+      expect(salesInvoiceListQuerySchema.safeParse({ invoiceNumber: invalid }).success).toBe(false);
+    }
     expect(salesInvoiceListQuerySchema.safeParse({ from: AT, to: '2026-08-01T00:00:00.000Z' }).success).toBe(false);
   });
 });
@@ -40,6 +47,7 @@ describe('salesInvoiceListItemSchema', () => {
   const finalized = {
     id: ID,
     invoiceNumber: 42,
+    invoicePeriod: '1405',
     status: 'FINALIZED',
     currentVersion: 1,
     party: { id: ID, displayName: 'زهرا' },
@@ -52,10 +60,14 @@ describe('salesInvoiceListItemSchema', () => {
     expect(salesInvoiceListItemSchema.safeParse(finalized).success).toBe(true);
     expect(salesInvoiceListItemSchema.safeParse({ ...finalized, goldRatePerGramRial: '0' }).success).toBe(false);
     expect(salesInvoiceListItemSchema.safeParse({ ...finalized, payableRial: 125000000 }).success).toBe(false);
+    // D-02: شماره‌ی نهایی بدون سال یکتا نیست.
+    expect(salesInvoiceListItemSchema.safeParse({ ...finalized, invoicePeriod: null }).success).toBe(false);
+    expect(salesInvoiceListItemSchema.safeParse({ ...finalized, invoicePeriod: '۱۴۰۵' }).success).toBe(false);
+    expect(salesInvoiceListItemSchema.safeParse({ ...finalized, invoicePeriod: '405' }).success).toBe(false);
   });
 
   it('پیش‌نویس هیچ snapshot مالی ندارد', () => {
-    const draft = { ...finalized, status: 'DRAFT', invoiceNumber: null, currentVersion: 0, payableRial: null, goldRatePerGramRial: null };
+    const draft = { ...finalized, status: 'DRAFT', invoiceNumber: null, invoicePeriod: null, currentVersion: 0, payableRial: null, goldRatePerGramRial: null };
     expect(salesInvoiceListItemSchema.safeParse(draft).success).toBe(true);
     expect(salesInvoiceListItemSchema.safeParse({ ...draft, payableRial: '1' }).success).toBe(false);
   });
@@ -67,6 +79,7 @@ describe('salesInvoiceDetailSchema', () => {
       salesInvoiceDetailSchema.safeParse({
         id: ID,
         invoiceNumber: 42,
+        invoicePeriod: '1405',
         status: 'FINALIZED',
         currentVersion: 1,
         party: { id: ID, displayName: 'زهرا', type: 'CONSUMER', status: 'ACTIVE' },

@@ -7,6 +7,7 @@ import {
   positiveBigIntStringSchema,
   uuidSchema,
 } from '../common/index.js';
+import { invoicePeriodSchema } from './invoice-period.js';
 
 /**
  * فروش سکه — BE-043. تعداد سکه `integer` است (قاعده‌ی ۲-۱)، نه رشته‌ی BigInt؛
@@ -28,6 +29,7 @@ export const createCoinSaleSchema = z
 export const coinSaleSchema = z.object({
   invoiceId: uuidSchema,
   invoiceNumber: z.number().int().positive(),
+  invoicePeriod: invoicePeriodSchema,
   payableRial: nonNegativeBigIntStringSchema,
   receivableRial: nonNegativeBigIntStringSchema,
   intrinsicValueRial: nonNegativeBigIntStringSchema,

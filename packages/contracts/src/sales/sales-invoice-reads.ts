@@ -7,6 +7,7 @@ import {
   positiveBigIntStringSchema,
   uuidSchema,
 } from '../common/index.js';
+import { invoicePeriodSchema } from './invoice-period.js';
 
 /**
  * فهرست و جزئیات فاکتور فروش — فقط‌خواندنی، FE-106b.
@@ -23,7 +24,15 @@ export const salesInvoiceStatusSchema = z.enum(['DRAFT', 'FINALIZED']);
 /** `to` **شامل** است (`<=`): فرانت آخرین میلی‌ثانیه‌ی روز آخر را می‌فرستد. */
 export const salesInvoiceListQuerySchema = paginationQuerySchema
   .extend({
-    invoiceNumber: z.string().regex(/^\d+$/u).max(20).optional(),
+    /**
+     * بخشی از شناسه‌ی فاکتور: «12»، «1405-12» یا «1405-» (D-02). سرور روی شکل کامل
+     * `دوره-شماره` جست‌وجو می‌کند، پس شماره‌ی تنها همه‌ی سال‌ها را پیدا می‌کند.
+     */
+    invoiceNumber: z
+      .string()
+      .max(20)
+      .regex(/^(?=.*\d)\d*-?\d*$/u, 'شماره‌ی فاکتور فقط رقم و یک خط تیره بین سال و شماره است')
+      .optional(),
     partySearch: z.string().trim().min(1).max(200).optional(),
     status: salesInvoiceStatusSchema.optional(),
     from: isoDateTimeSchema.optional(),
@@ -48,6 +57,7 @@ export const salesInvoiceListItemSchema = z
   .object({
     id: uuidSchema,
     invoiceNumber: z.number().int().positive().nullable(),
+    invoicePeriod: invoicePeriodSchema.nullable(),
     status: salesInvoiceStatusSchema,
     currentVersion: z.number().int().nonnegative(),
     party: z.object({
@@ -62,12 +72,14 @@ export const salesInvoiceListItemSchema = z
     const draftShape =
       value.status === 'DRAFT' &&
       value.invoiceNumber === null &&
+      value.invoicePeriod === null &&
       value.currentVersion === 0 &&
       value.payableRial === null &&
       value.goldRatePerGramRial === null;
     const finalizedShape =
       value.status === 'FINALIZED' &&
       value.invoiceNumber !== null &&
+      value.invoicePeriod !== null &&
       value.currentVersion >= 1 &&
       value.payableRial !== null &&
       value.goldRatePerGramRial !== null &&
@@ -131,6 +143,7 @@ export const salesInvoiceDetailSchema = z
   .object({
     id: uuidSchema,
     invoiceNumber: z.number().int().positive().nullable(),
+    invoicePeriod: invoicePeriodSchema.nullable(),
     status: salesInvoiceStatusSchema,
     currentVersion: z.number().int().nonnegative(),
     party: z.object({
@@ -156,12 +169,14 @@ export const salesInvoiceDetailSchema = z
     const draftShape =
       value.status === 'DRAFT' &&
       value.invoiceNumber === null &&
+      value.invoicePeriod === null &&
       value.currentVersion === 0 &&
       value.quoteSnapshot === null &&
       value.versions.length === 0;
     const finalizedShape =
       value.status === 'FINALIZED' &&
       value.invoiceNumber !== null &&
+      value.invoicePeriod !== null &&
       value.currentVersion > 0 &&
       value.quoteSnapshot !== null &&
       currentVersions.length === 1;

@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { Link } from '@tanstack/react-router';
 import { AlertTriangle, Loader2, RotateCcw } from 'lucide-react';
-import { dualFromRial, formatCount, formatGram, gramRate1000, toSafeNumber } from '@gold/core-calc';
+import { dualFromRial, formatCount, formatGram, formatInvoiceNumber, gramRate1000, invoiceNumberLabel, toSafeNumber } from '@gold/core-calc';
 import type { SalesInvoiceVersionHistory } from '@/api/contracts';
 import { useInvoiceVersions } from '@/api/queries';
 import { getSalesInvoicePdf } from '@/api/sales';
@@ -101,6 +101,7 @@ function currentVersion(history: SalesInvoiceVersionHistory) {
 function SaleReceiptPdf({
   invoiceId,
   invoiceNumber,
+  invoicePeriod,
   version,
   customerName,
   paidRial,
@@ -108,6 +109,7 @@ function SaleReceiptPdf({
 }: {
   readonly invoiceId: string;
   readonly invoiceNumber: number;
+  readonly invoicePeriod: string;
   readonly version: SalesInvoiceVersionHistory['versions'][number];
   readonly customerName: string | null;
   readonly paidRial: bigint;
@@ -118,6 +120,7 @@ function SaleReceiptPdf({
   const share = saleReceiptShareText({
     shopName,
     invoiceNumber,
+    invoicePeriod,
     issuedAt: new Date(version.createdAt),
     customerName,
     payableRial: version.payableRial === null ? null : BigInt(version.payableRial),
@@ -130,11 +133,11 @@ function SaleReceiptPdf({
     <PdfDocumentActions
       idPrefix="sale-receipt"
       fetchFile={fetchFile}
-      fallbackFileName={`invoice-${invoiceNumber}`}
+      fallbackFileName={`invoice-${invoiceNumberLabel(invoicePeriod, invoiceNumber)}`}
       shareTitle={share.title}
       shareText={share.text}
       resetKey={`${invoiceId}:${version.version}`}
-      previewTitle={`پیش‌نمایش فاکتور ${formatCount(invoiceNumber)}`}
+      previewTitle={`پیش‌نمایش فاکتور ${formatInvoiceNumber(invoicePeriod, invoiceNumber)}`}
       description="رسید را به‌صورت PDF بگیرید یا برای مشتری بفرستید؛ متن ارسالی لینک ندارد."
     />
   );
@@ -176,7 +179,7 @@ export function SaleReceipt({ outcome }: { readonly outcome: SaleSubmitOutcome }
         </CardHeader>
         <CardContent className="space-y-2">
           <ReceiptRow label="شماره فاکتور">
-            <span className="tabular-nums text-lg font-bold">{formatCount(history.data.invoiceNumber)}</span>
+            <span className="tabular-nums text-lg font-bold">{formatInvoiceNumber(history.data.invoicePeriod, history.data.invoiceNumber)}</span>
           </ReceiptRow>
           <ReceiptRow label="نسخه">
             <span className="tabular-nums text-sm font-medium">{formatCount(version.version)}</span>
@@ -297,6 +300,7 @@ export function SaleReceipt({ outcome }: { readonly outcome: SaleSubmitOutcome }
       <SaleReceiptPdf
         invoiceId={outcome.sale.invoiceId}
         invoiceNumber={history.data.invoiceNumber}
+        invoicePeriod={history.data.invoicePeriod}
         version={version}
         customerName={partyMatches ? outcome.party.displayName : null}
         paidRial={outcome.paidRial}

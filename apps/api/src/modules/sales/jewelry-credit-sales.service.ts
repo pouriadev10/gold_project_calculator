@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { invoiceNumberLabel } from '@gold/core-calc';
 import { InventoryMovementsService } from '../inventory/inventory-movements.service';
 import { AssetDimensionsService } from '../ledger/asset-dimensions.service';
 import { LedgerAccountsService } from '../ledger/ledger-accounts.service';
@@ -12,7 +13,7 @@ export interface CreateJewelryCreditSaleInput {
   readonly effectiveAt: Date; readonly paidRial: bigint; readonly createdBy: string;
 }
 export interface CreatedJewelryCreditSale {
-  readonly invoiceId: string; readonly invoiceNumber: number; readonly payableRial: bigint; readonly receivableRial: bigint;
+  readonly invoiceId: string; readonly invoiceNumber: number; readonly invoicePeriod: string; readonly payableRial: bigint; readonly receivableRial: bigint;
   readonly ledgerTransactionId: string; readonly inventoryMovementId: string;
 }
 
@@ -53,7 +54,7 @@ export class JewelryCreditSalesService {
       { accountId: cogs.id, dimensionId: movement.dimensionId, quantity: BigInt(price.pureWeightMg) },
       { accountId: inventory.id, dimensionId: movement.dimensionId, quantity: -BigInt(price.pureWeightMg) },
     ];
-    const posting = await this.ledger.postInTransaction(transaction, { source: { tenantId: input.tenantId, type: 'SALES_INVOICE', id: finalized.invoice.id }, effectiveAt: input.effectiveAt, description: `Credit jewelry sale ${finalized.invoice.invoiceNumber!}`, createdBy: input.createdBy, entries });
-    return { invoiceId: finalized.invoice.id, invoiceNumber: finalized.invoice.invoiceNumber!, payableRial, receivableRial, ledgerTransactionId: posting.transaction.id, inventoryMovementId: movement.id };
+    const posting = await this.ledger.postInTransaction(transaction, { source: { tenantId: input.tenantId, type: 'SALES_INVOICE', id: finalized.invoice.id }, effectiveAt: input.effectiveAt, description: `Credit jewelry sale ${invoiceNumberLabel(finalized.invoice.invoicePeriod!, finalized.invoice.invoiceNumber!)}`, createdBy: input.createdBy, entries });
+    return { invoiceId: finalized.invoice.id, invoiceNumber: finalized.invoice.invoiceNumber!, invoicePeriod: finalized.invoice.invoicePeriod!, payableRial, receivableRial, ledgerTransactionId: posting.transaction.id, inventoryMovementId: movement.id };
   }
 }

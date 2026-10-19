@@ -104,6 +104,7 @@ export class InvoiceAmendmentsController {
             body: {
               invoiceId: amended.invoiceId,
               invoiceNumber: amended.invoiceNumber,
+              invoicePeriod: amended.invoicePeriod,
               version: amended.version,
               payableRial: amended.payableRial.toString(),
               receivableRial: amended.receivableRial.toString(),

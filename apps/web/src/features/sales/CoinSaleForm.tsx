@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   coinPositionValue,
-  formatCount,
+  formatInvoiceNumber,
   formatRial,
   rial,
   toSafeNumber,
@@ -93,6 +93,7 @@ const BLOCK_MESSAGE: Record<SubmitBlockReason, string> = {
 interface CoinSaleResult {
   readonly invoiceId: string;
   readonly invoiceNumber: number;
+  readonly invoicePeriod: string;
   readonly payableRial: bigint;
   readonly receivableRial: bigint;
   readonly intrinsicValueRial: bigint;
@@ -195,6 +196,7 @@ export default function CoinSaleForm() {
       setResult({
         invoiceId: sale.invoiceId,
         invoiceNumber: sale.invoiceNumber,
+        invoicePeriod: sale.invoicePeriod,
         payableRial: sale.payableRial,
         receivableRial: sale.receivableRial,
         intrinsicValueRial: sale.intrinsicValueRial,
@@ -225,7 +227,7 @@ export default function CoinSaleForm() {
         <div className="flex-1 space-y-4 p-4 pb-nav">
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">فاکتور شماره {formatCount(result.invoiceNumber)} ثبت شد</CardTitle>
+              <CardTitle className="text-sm">فاکتور شماره {formatInvoiceNumber(result.invoicePeriod, result.invoiceNumber)} ثبت شد</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between text-sm">

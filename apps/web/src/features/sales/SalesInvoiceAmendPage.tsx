@@ -11,6 +11,7 @@ import {
   dualFromRial,
   formatCount,
   formatGram,
+  formatInvoiceNumber,
   formatKarat,
   formatScaled,
   toSafeNumber,
@@ -113,7 +114,7 @@ function AmendmentResult({
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <p className="tabular-nums">
-            فاکتور {formatCount(result.invoiceNumber)} · نسخهٔ {formatCount(result.version)}
+            فاکتور {formatInvoiceNumber(result.invoicePeriod, result.invoiceNumber)} · نسخهٔ {formatCount(result.version)}
           </p>
           <p className="leading-6 text-muted-foreground">
             شمارهٔ فاکتور ثابت ماند. نسخهٔ قبلی و سندهای آن تغییر نکرده‌اند؛ فقط نسخهٔ جدید و اثر
@@ -364,7 +365,7 @@ function AmendmentForm({
         <CardHeader className="flex-row items-center gap-2 space-y-0">
           <FilePenLine className="size-5 text-primary" aria-hidden="true" />
           <CardTitle className="text-base">
-            اصلاح فاکتور {formatCount(detail.invoiceNumber!)}
+            اصلاح فاکتور {formatInvoiceNumber(detail.invoicePeriod!, detail.invoiceNumber!)}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm leading-6">

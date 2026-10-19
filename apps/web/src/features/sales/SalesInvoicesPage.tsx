@@ -16,6 +16,22 @@ import { SalesInvoiceList } from './SalesInvoiceList';
 const PAGE_SIZE = 10;
 const SEARCH_DEBOUNCE_MS = 300;
 
+/**
+ * متن جست‌وجوی شماره‌ی فاکتور → شکل قرارداد: «۱۲۲» → «122» و «۱۴۰۵-۱۲۲» یا «۱۴۰۵/۱۲۲» → «1405-122».
+ *
+ * شناسه‌ی فاکتور «سال-شماره» است (D-02)، پس خط تیره نگه داشته می‌شود؛ هر جداکننده‌ی
+ * دیگری (اسلش، خط تیره‌های تایپوگرافیک) همان خط تیره است و بیش از یکی ادغام می‌شود.
+ * بدون هیچ رقمی خالی برمی‌گردد تا فیلتری ساخته نشود.
+ */
+export function normalizeInvoiceSearch(raw: string): string {
+  const latin = toLatinDigits(raw)
+    .replace(/[/‐-―−]/gu, '-')
+    .replace(/[^0-9-]/gu, '');
+  const [head = '', ...rest] = latin.split('-');
+  const value = rest.length > 0 ? `${head}-${rest.join('')}` : head;
+  return /[0-9]/u.test(value) ? value : '';
+}
+
 const STATUS_LABEL: Record<SalesInvoiceStatus, string> = {
   DRAFT: 'پیش‌نویس',
   FINALIZED: 'نهایی',
@@ -39,7 +55,7 @@ export default function SalesInvoicesPage() {
 
   const debouncedInvoiceNumber = useDebouncedValue(invoiceNumber, SEARCH_DEBOUNCE_MS).trim();
   const debouncedPartySearch = useDebouncedValue(partySearch, SEARCH_DEBOUNCE_MS).trim();
-  const normalizedInvoiceNumber = toLatinDigits(debouncedInvoiceNumber).replace(/[^0-9]/gu, '');
+  const normalizedInvoiceNumber = normalizeInvoiceSearch(debouncedInvoiceNumber);
   const isoRange = jalaliRangeToIso(dateRange, timeZone);
   const rangeFrom = isoRange?.from;
   const rangeTo = isoRange?.to;

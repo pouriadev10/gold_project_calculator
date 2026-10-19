@@ -364,7 +364,7 @@ describe('sales invoice amendments (BE-054)', () => {
     const versions = await history.getVersions(tenant.id, invoiceId);
     const amendmentsHistory = await history.getAmendments(tenant.id, invoiceId);
 
-    expect(versions).toMatchObject({ invoiceId, invoiceNumber: 1 });
+    expect(versions).toMatchObject({ invoiceId, invoiceNumber: 1, invoicePeriod: expect.stringMatching(/^[0-9]{4}$/u) });
     expect(versions.versions).toHaveLength(2);
     expect(versions.versions[0]).toMatchObject({
       version: 1,

@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { and, eq, gt } from 'drizzle-orm';
+import { invoiceNumberLabel } from '@gold/core-calc';
 import { AuditService } from '../../platform/audit/audit.service';
 import { DRIZZLE } from '../../platform/database/database.module';
 import {
@@ -48,6 +49,7 @@ interface AmendSalesInvoiceCommand {
 export interface AmendedSalesInvoiceResult {
   readonly invoiceId: string;
   readonly invoiceNumber: number;
+  readonly invoicePeriod: string;
   readonly version: number;
   readonly payableRial: bigint;
   readonly receivableRial: bigint;
@@ -215,6 +217,7 @@ export class InvoiceAmendmentsService {
       if (
         invoice.status !== 'FINALIZED' ||
         invoice.invoiceNumber === null ||
+        invoice.invoicePeriod === null ||
         invoice.quoteId === null ||
         invoice.finalizedAt === null
       ) {
@@ -313,6 +316,7 @@ export class InvoiceAmendmentsService {
     if (
       invoice.status !== 'FINALIZED' ||
       invoice.invoiceNumber === null ||
+      invoice.invoicePeriod === null ||
       invoice.quoteId === null ||
       invoice.finalizedAt === null
     ) {
@@ -451,7 +455,7 @@ export class InvoiceAmendmentsService {
     const ledgerTransactionId = await this.postLedgerDifference(
       transaction,
       command,
-      invoice.invoiceNumber,
+      invoiceNumberLabel(invoice.invoicePeriod, invoice.invoiceNumber),
       version.id,
       currentVersion,
       currentPayableRial,
@@ -485,6 +489,7 @@ export class InvoiceAmendmentsService {
     return {
       invoiceId: invoice.id,
       invoiceNumber: invoice.invoiceNumber,
+      invoicePeriod: invoice.invoicePeriod,
       version: version.version,
       payableRial: calculated.payableRial,
       receivableRial: calculated.receivableRial,
@@ -645,7 +650,7 @@ export class InvoiceAmendmentsService {
   private async postLedgerDifference(
     transaction: TenantTransaction,
     command: AmendSalesInvoiceCommand,
-    invoiceNumber: number,
+    invoiceLabel: string,
     versionId: string,
     currentVersion: SalesInvoiceVersion,
     currentPayableRial: bigint,
@@ -725,7 +730,7 @@ export class InvoiceAmendmentsService {
     const posted = await this.ledger.postInTransaction(transaction, {
       source: { tenantId: command.tenantId, type: 'SALES_INVOICE_AMENDMENT', id: versionId },
       effectiveAt: command.amendedAt,
-      description: `Sales invoice amendment ${invoiceNumber}`,
+      description: `Sales invoice amendment ${invoiceLabel}`,
       createdBy: command.actorUserId,
       entries: [...entries.values()],
     });

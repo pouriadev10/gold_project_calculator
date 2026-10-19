@@ -69,11 +69,15 @@ export class InvoiceHistoryService {
   async getVersions(tenantId: string, invoiceId: string): Promise<SalesInvoiceVersionHistory> {
     return withTenantTransaction(this.db, tenantId, async (transaction) => {
       const [invoice] = await transaction
-        .select({ id: salesInvoices.id, invoiceNumber: salesInvoices.invoiceNumber })
+        .select({
+          id: salesInvoices.id,
+          invoiceNumber: salesInvoices.invoiceNumber,
+          invoicePeriod: salesInvoices.invoicePeriod,
+        })
         .from(salesInvoices)
         .where(and(eq(salesInvoices.tenantId, tenantId), eq(salesInvoices.id, invoiceId)))
         .limit(1);
-      if (invoice === undefined || invoice.invoiceNumber === null) {
+      if (invoice === undefined || invoice.invoiceNumber === null || invoice.invoicePeriod === null) {
         throw new SalesInvoiceNotFoundError(invoiceId);
       }
 
@@ -241,6 +245,7 @@ export class InvoiceHistoryService {
       return {
         invoiceId: invoice.id,
         invoiceNumber: invoice.invoiceNumber,
+        invoicePeriod: invoice.invoicePeriod,
         versions: versionsWithActors.map(({ version, actorId, actorDisplayName }) => {
           const versionItems = itemsByVersion.get(version.id) ?? [];
           const itemHistory = versionItems.map((item) => {
@@ -313,6 +318,11 @@ export class InvoiceHistoryService {
         inventoryEffects: after.inventoryEffects,
       });
     }
-    return { invoiceId: history.invoiceId, invoiceNumber: history.invoiceNumber, amendments };
+    return {
+      invoiceId: history.invoiceId,
+      invoiceNumber: history.invoiceNumber,
+      invoicePeriod: history.invoicePeriod,
+      amendments,
+    };
   }
 }

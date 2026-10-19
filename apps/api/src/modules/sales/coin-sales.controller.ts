@@ -67,6 +67,7 @@ export class CoinSalesController {
             body: {
               invoiceId: created.invoiceId,
               invoiceNumber: created.invoiceNumber,
+              invoicePeriod: created.invoicePeriod,
               payableRial: created.payableRial.toString(),
               receivableRial: created.receivableRial.toString(),
               intrinsicValueRial: created.intrinsicValueRial.toString(),

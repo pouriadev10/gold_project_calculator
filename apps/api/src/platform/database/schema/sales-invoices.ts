@@ -68,6 +68,14 @@ export const salesInvoices = pgTable(
       .notNull()
       .references(() => tenants.id, { onDelete: 'cascade' }),
     invoiceNumber: integer(),
+    /**
+     * دوره‌ی شماره‌گذاری — سال جلالی (`'1405'`) در منطقه‌ی زمانی مستأجر (D-02).
+     *
+     * شمارنده هر سال از ۱ شروع می‌شود (`jalaliYearPeriodKey`)، پس `invoice_number`
+     * به‌تنهایی یکتا نیست: یکتایی و شناسه‌ی نمایشی («1405-12») هر دو با همین دوره‌اند.
+     * بدون این ستون، اولین فروش سال تازه شماره‌ی ۱ ِ پارسال را می‌گرفت و رد می‌شد.
+     */
+    invoicePeriod: text(),
     currentVersion: integer().notNull().default(0),
     status: salesInvoiceStatusEnum().notNull().default('DRAFT'),
     partyId: uuid().notNull(),
@@ -117,10 +125,22 @@ export const salesInvoices = pgTable(
       'sales_invoices_number_positive_check',
       sql`${table.invoiceNumber} IS NULL OR ${table.invoiceNumber} > 0`,
     ),
+    check(
+      'sales_invoices_period_with_number_check',
+      sql`(${table.invoicePeriod} IS NULL) = (${table.invoiceNumber} IS NULL)`,
+    ),
+    check(
+      'sales_invoices_period_format_check',
+      sql`${table.invoicePeriod} IS NULL OR ${table.invoicePeriod} ~ '^[0-9]{4}$'`,
+    ),
 
     /* کلید مرکب برای FK هم‌مستأجرِ نسخه‌ها و ردیف‌های فاکتور. */
     unique('sales_invoices_tenant_id_id_unique').on(table.tenantId, table.id),
-    uniqueIndex('sales_invoices_tenant_number_unique').on(table.tenantId, table.invoiceNumber),
+    uniqueIndex('sales_invoices_tenant_period_number_unique').on(
+      table.tenantId,
+      table.invoicePeriod,
+      table.invoiceNumber,
+    ),
     index('sales_invoices_tenant_party_idx').on(table.tenantId, table.partyId),
     index('sales_invoices_tenant_status_idx').on(table.tenantId, table.status),
     /*

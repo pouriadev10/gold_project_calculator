@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { bigIntStringSchema, isoDateTimeSchema, nonNegativeBigIntStringSchema, uuidSchema } from '../common/index.js';
+import { invoicePeriodSchema } from './invoice-period.js';
 
 const invoiceHistoryActorSchema = z.object({
   id: uuidSchema,
@@ -38,6 +39,7 @@ const invoiceHistoryInventoryEffectSchema = z.object({
 export const salesInvoiceVersionHistorySchema = z.object({
   invoiceId: uuidSchema,
   invoiceNumber: z.number().int().positive(),
+  invoicePeriod: invoicePeriodSchema,
   versions: z.array(
     z.object({
       version: z.number().int().positive(),
@@ -61,6 +63,7 @@ export const salesInvoiceVersionHistorySchema = z.object({
 export const salesInvoiceAmendmentHistorySchema = z.object({
   invoiceId: uuidSchema,
   invoiceNumber: z.number().int().positive(),
+  invoicePeriod: invoicePeriodSchema,
   amendments: z.array(
     z.object({
       version: z.number().int().min(2),

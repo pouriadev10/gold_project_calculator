@@ -393,6 +393,7 @@ describe('B2C buyback (BE-052)', () => {
         .values({
           tenantId: tenant.id,
           invoiceNumber: 9_999,
+          invoicePeriod: '1405',
           currentVersion: 1,
           status: 'FINALIZED',
           partyId: businessPartyId,

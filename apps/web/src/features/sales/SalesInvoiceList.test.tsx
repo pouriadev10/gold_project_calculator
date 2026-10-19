@@ -36,6 +36,7 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
 const FINALIZED: SalesInvoiceListItem = {
   id: 'd5000000-0000-4000-8000-000000000001',
   invoiceNumber: 122,
+  invoicePeriod: '1405',
   status: 'FINALIZED',
   currentVersion: 2,
   party: {
@@ -51,6 +52,7 @@ const DRAFT: SalesInvoiceListItem = {
   ...FINALIZED,
   id: 'd5000000-0000-4000-8000-000000000002',
   invoiceNumber: null,
+  invoicePeriod: null,
   status: 'DRAFT',
   currentVersion: 0,
   payableRial: null,
@@ -137,7 +139,7 @@ describe('SalesInvoiceList — نمای موبایل زیر ۶۴۰px', () => {
     render(<SalesInvoiceList query={query} onOffsetChange={vi.fn()} />);
 
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /مشاهده فاکتور 122/ })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /مشاهده فاکتور ۱۴۰۵-۱۲۲/ })).toHaveAttribute(
       'href',
       '/sales/invoices/$invoiceId/d5000000-0000-4000-8000-000000000001',
     );

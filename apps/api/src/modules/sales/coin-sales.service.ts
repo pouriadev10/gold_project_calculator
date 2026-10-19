@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { invoiceNumberLabel } from '@gold/core-calc';
 import { InventoryMovementsService } from '../inventory/inventory-movements.service';
 import { AssetDimensionsService } from '../ledger/asset-dimensions.service';
 import { LedgerAccountsService } from '../ledger/ledger-accounts.service';
@@ -25,6 +26,7 @@ export interface CreateCoinSaleInput {
 export interface CreatedCoinSale {
   readonly invoiceId: string;
   readonly invoiceNumber: number;
+  readonly invoicePeriod: string;
   readonly payableRial: bigint;
   readonly receivableRial: bigint;
   readonly intrinsicValueRial: bigint;
@@ -140,7 +142,7 @@ export class CoinSalesService {
     const posting = await this.ledger.postInTransaction(transaction, {
       source: { tenantId: input.tenantId, type: 'SALES_INVOICE', id: finalized.invoice.id },
       effectiveAt: input.effectiveAt,
-      description: `Coin sale ${finalized.invoice.invoiceNumber!}`,
+      description: `Coin sale ${invoiceNumberLabel(finalized.invoice.invoicePeriod!, finalized.invoice.invoiceNumber!)}`,
       createdBy: input.createdBy,
       entries,
     });
@@ -148,6 +150,7 @@ export class CoinSalesService {
     return {
       invoiceId: finalized.invoice.id,
       invoiceNumber: finalized.invoice.invoiceNumber!,
+      invoicePeriod: finalized.invoice.invoicePeriod!,
       payableRial,
       receivableRial,
       intrinsicValueRial: BigInt(price.intrinsicValueRial),

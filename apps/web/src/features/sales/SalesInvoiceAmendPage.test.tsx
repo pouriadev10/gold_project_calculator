@@ -85,6 +85,7 @@ vi.mock('@/components/keypad/CountInput', () => ({
 const DETAIL: SalesInvoiceDetail = {
   id: invoiceId,
   invoiceNumber: 122,
+  invoicePeriod: '1405',
   status: 'FINALIZED',
   currentVersion: 1,
   party: { id: partyId, displayName: 'مشتری نمونه', type: 'CONSUMER', status: 'ACTIVE' },
@@ -212,6 +213,7 @@ describe('SalesInvoiceAmendPage', () => {
     amendMock.mockResolvedValue({
       invoiceId,
       invoiceNumber: 122,
+      invoicePeriod: '1405',
       version: 2,
       payableRial: '120000000',
       receivableRial: '45000000',
@@ -237,7 +239,7 @@ describe('SalesInvoiceAmendPage', () => {
     });
     expect(typeof amendMock.mock.calls[0]?.[2]).toBe('string');
     expect(await screen.findByText('نسخهٔ جدید ثبت شد')).toBeInTheDocument();
-    expect(screen.getByText(/فاکتور ۱۲۲ · نسخهٔ ۲/)).toBeInTheDocument();
+    expect(screen.getByText(/فاکتور ۱۴۰۵-۱۲۲ · نسخهٔ ۲/)).toBeInTheDocument();
     expect(screen.getByText(/اختلاف وزن خالص/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('radio', { name: 'ریال' }));
     expect(
@@ -313,6 +315,7 @@ describe('SalesInvoiceAmendPage', () => {
     amendMock.mockResolvedValue({
       invoiceId,
       invoiceNumber: 122,
+      invoicePeriod: '1405',
       version: 2,
       payableRial: '120000000',
       receivableRial: '45000000',

@@ -14,8 +14,10 @@ import {
   dualFromRial,
   formatCount,
   formatGram,
+  formatInvoiceNumber,
   formatKarat,
   formatScaled,
+  invoiceNumberLabel,
   toSafeNumber,
 } from '@gold/core-calc';
 import type { SalesInvoiceDetail } from '@/api/contracts';
@@ -93,7 +95,9 @@ function InvoiceOverview({
         <dl className="divide-y divide-border">
           <DetailRow label="شماره فاکتور">
             <span className="tabular-nums text-lg font-bold">
-              {detail.invoiceNumber === null ? 'هنوز صادر نشده' : formatCount(detail.invoiceNumber)}
+              {detail.invoiceNumber === null || detail.invoicePeriod === null
+                ? 'هنوز صادر نشده'
+                : formatInvoiceNumber(detail.invoicePeriod, detail.invoiceNumber)}
             </span>
           </DetailRow>
           <DetailRow label="مشتری">
@@ -342,10 +346,11 @@ function InvoicePdf({ detail }: { detail: SalesInvoiceDetail }) {
   const shopName = useSessionStore((state) => state.session?.tenant.name ?? null);
   const version = currentVersion(detail);
   const share =
-    detail.invoiceNumber !== null && version
+    detail.invoiceNumber !== null && detail.invoicePeriod !== null && version
       ? saleReceiptShareText({
           shopName,
           invoiceNumber: detail.invoiceNumber,
+          invoicePeriod: detail.invoicePeriod,
           issuedAt: new Date(version.createdAt),
           customerName: detail.party.displayName,
           payableRial: BigInt(version.payableRial),
@@ -353,6 +358,14 @@ function InvoicePdf({ detail }: { detail: SalesInvoiceDetail }) {
           receivableRial: BigInt(version.receivableRial),
           pureWeightMg: version.pureWeightMg === null ? null : BigInt(version.pureWeightMg),
         })
+      : null;
+  const label =
+    detail.invoiceNumber !== null && detail.invoicePeriod !== null
+      ? invoiceNumberLabel(detail.invoicePeriod, detail.invoiceNumber)
+      : null;
+  const displayLabel =
+    detail.invoiceNumber !== null && detail.invoicePeriod !== null
+      ? formatInvoiceNumber(detail.invoicePeriod, detail.invoiceNumber)
       : null;
   const fetchFile = useCallback(
     (signal: AbortSignal) => getSalesInvoicePdf(detail.id, signal),
@@ -362,11 +375,11 @@ function InvoicePdf({ detail }: { detail: SalesInvoiceDetail }) {
     <PdfDocumentActions
       idPrefix="invoice"
       fetchFile={fetchFile}
-      fallbackFileName={`invoice-${detail.invoiceNumber ?? detail.id}`}
-      shareTitle={share?.title ?? `فاکتور ${formatCount(detail.invoiceNumber ?? 0)}`}
+      fallbackFileName={`invoice-${label ?? detail.id}`}
+      shareTitle={share?.title ?? `فاکتور ${displayLabel ?? ''}`}
       {...(share ? { shareText: share.text } : {})}
       resetKey={`${detail.id}:${detail.currentVersion}`}
-      previewTitle={`پیش‌نمایش فاکتور ${formatCount(detail.invoiceNumber ?? 0)}`}
+      previewTitle={`پیش‌نمایش فاکتور ${displayLabel ?? ''}`}
       available={detail.status === 'FINALIZED' && detail.invoiceNumber !== null}
       unavailableReason="PDF فقط برای فاکتور نهایی‌شده‌ی شماره‌دار صادر می‌شود."
       description={`PDF نسخه‌ی جاری (نسخه ${formatCount(detail.currentVersion)}) از snapshot تغییرناپذیر سرور ساخته می‌شود.`}

@@ -231,9 +231,9 @@ describe('محدودیت‌های دیتابیس با SQL مستقیم (BE-063)'
       [tenant.id, T0],
     );
     const invoiceId = await insertId(
-      `INSERT INTO sales_invoices (tenant_id, invoice_number, current_version, status, party_id,
+      `INSERT INTO sales_invoices (tenant_id, invoice_period, invoice_number, current_version, status, party_id,
                                    quote_id, quote_amount_rial, quote_observed_at, finalized_at)
-       VALUES ($1, 1, 1, 'FINALIZED', $2, $3, 150000000, $4, $4) RETURNING id`,
+       VALUES ($1, '1405', 1, 1, 'FINALIZED', $2, $3, 150000000, $4, $4) RETURNING id`,
       [tenant.id, partyId, quoteId, T0],
     );
     const invoiceVersionId = await insertId(
@@ -440,9 +440,9 @@ describe('محدودیت‌های دیتابیس با SQL مستقیم (BE-063)'
     it('شماره‌ی فاکتور صفر و مبلغ مظنه‌ی قفل‌شده‌ی بی‌شناسه یا صفر را رد می‌کند', async () => {
       await expect(
         pool.query(
-          `INSERT INTO sales_invoices (tenant_id, invoice_number, current_version, status, party_id,
+          `INSERT INTO sales_invoices (tenant_id, invoice_period, invoice_number, current_version, status, party_id,
                                        quote_id, quote_amount_rial, quote_observed_at, finalized_at)
-           VALUES ($1, 0, 1, 'FINALIZED', $2, $3, 150000000, $4, $4)`,
+           VALUES ($1, '1405', 0, 1, 'FINALIZED', $2, $3, 150000000, $4, $4)`,
           [a.id, partyId, quoteId, T0],
         ),
       ).rejects.toMatchObject(rejected('23514', 'sales_invoices_number_positive_check'));
@@ -628,12 +628,39 @@ describe('محدودیت‌های دیتابیس با SQL مستقیم (BE-063)'
     it('شماره‌ی فاکتور، کلید idempotency و منبع تراکنش دفتر کل در هر مستأجر یکتا هستند', async () => {
       await expect(
         pool.query(
-          `INSERT INTO sales_invoices (tenant_id, invoice_number, current_version, status, party_id,
+          `INSERT INTO sales_invoices (tenant_id, invoice_period, invoice_number, current_version, status, party_id,
                                        quote_id, quote_amount_rial, quote_observed_at, finalized_at)
-           VALUES ($1, 1, 1, 'FINALIZED', $2, $3, 150000000, $4, $4)`,
+           VALUES ($1, '1405', 1, 1, 'FINALIZED', $2, $3, 150000000, $4, $4)`,
           [a.id, partyId, quoteId, T0],
         ),
-      ).rejects.toMatchObject(rejected('23505', 'sales_invoices_tenant_number_unique'));
+      ).rejects.toMatchObject(rejected('23505', 'sales_invoices_tenant_period_number_unique'));
+
+      // D-02: شمارنده هر سال از ۱ شروع می‌شود؛ شماره‌ی ۱ ِ سال بعد مجاز است، نه تکرار همان سال.
+      await expect(
+        pool.query(
+          `INSERT INTO sales_invoices (tenant_id, invoice_period, invoice_number, current_version, status, party_id,
+                                       quote_id, quote_amount_rial, quote_observed_at, finalized_at)
+           VALUES ($1, '1406', 1, 1, 'FINALIZED', $2, $3, 150000000, $4, $4)`,
+          [a.id, partyId, quoteId, T0],
+        ),
+      ).resolves.toMatchObject({ rowCount: 1 });
+      // شماره بدون دوره (یا دوره بدون شماره) و دوره‌ی بدشکل رد می‌شوند.
+      await expect(
+        pool.query(
+          `INSERT INTO sales_invoices (tenant_id, invoice_number, current_version, status, party_id,
+                                       quote_id, quote_amount_rial, quote_observed_at, finalized_at)
+           VALUES ($1, 77, 1, 'FINALIZED', $2, $3, 150000000, $4, $4)`,
+          [a.id, partyId, quoteId, T0],
+        ),
+      ).rejects.toMatchObject(rejected('23514', 'sales_invoices_period_with_number_check'));
+      await expect(
+        pool.query(
+          `INSERT INTO sales_invoices (tenant_id, invoice_period, invoice_number, current_version, status, party_id,
+                                       quote_id, quote_amount_rial, quote_observed_at, finalized_at)
+           VALUES ($1, '۱۴۰۵', 78, 1, 'FINALIZED', $2, $3, 150000000, $4, $4)`,
+          [a.id, partyId, quoteId, T0],
+        ),
+      ).rejects.toMatchObject(rejected('23514', 'sales_invoices_period_format_check'));
 
       const key = `be063-${randomUUID()}`;
       const idempotency = (tenantId: string) =>
@@ -986,15 +1013,16 @@ describe('محدودیت‌های دیتابیس با SQL مستقیم (BE-063)'
       const userId = await createUser('صادرکننده‌ی فاکتور');
       const otherPartyId = await createParty(a.id);
       const invoiceId = await insertId(
-        `INSERT INTO sales_invoices (tenant_id, invoice_number, current_version, status, party_id,
+        `INSERT INTO sales_invoices (tenant_id, invoice_period, invoice_number, current_version, status, party_id,
                                      quote_id, quote_amount_rial, quote_observed_at, finalized_at, created_by)
-         VALUES ($1, 9301, 1, 'FINALIZED', $2, $3, 150000000, $4, $4, $5) RETURNING id`,
+         VALUES ($1, '1405', 9301, 1, 'FINALIZED', $2, $3, 150000000, $4, $4, $5) RETURNING id`,
         [a.id, partyId, quoteId, T0, userId],
       );
 
       for (const assignment of [
         'quote_amount_rial = 1',
         'quote_observed_at = now()',
+        "invoice_period = '1406'",
         'finalized_at = now()',
         "status = 'DRAFT', invoice_number = NULL, current_version = 0",
         'current_version = 0',
@@ -1028,7 +1056,7 @@ describe('محدودیت‌های دیتابیس با SQL مستقیم (BE-063)'
       );
       await pool.query(
         `UPDATE sales_invoices
-         SET invoice_number = 9302, current_version = 1, status = 'FINALIZED', quote_id = $2,
+         SET invoice_period = '1405', invoice_number = 9302, current_version = 1, status = 'FINALIZED', quote_id = $2,
              quote_amount_rial = 150000000, quote_observed_at = $3, finalized_at = $3
          WHERE id = $1`,
         [draftId, quoteId, T0],

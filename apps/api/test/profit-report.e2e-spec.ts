@@ -106,6 +106,7 @@ describe('profit report (BE-060)', () => {
         .values({
           tenantId: tenant.id,
           invoiceNumber: input.invoiceNumber,
+          invoicePeriod: '1405',
           currentVersion: 1,
           status: 'FINALIZED',
           partyId,

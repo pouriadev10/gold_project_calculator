@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams } from '@tanstack/react-router';
 import { FileText, Info, Loader2, RotateCcw } from 'lucide-react';
-import { dualFromRial, formatCount, toSafeNumber } from '@gold/core-calc';
+import { dualFromRial, formatInvoiceNumber, toSafeNumber } from '@gold/core-calc';
 import type { B2cBuybackPreview, PreviewB2cBuybackInput } from '@gold/contracts';
 import { previewB2cBuyback } from '@/api/purchase';
 import { useInvoiceVersions } from '@/api/queries';
@@ -142,7 +142,9 @@ export default function B2cBuybackStartPage() {
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-muted-foreground">شماره فاکتور</span>
                     <span className="tabular-nums font-semibold">
-                      {formatCount(invoice.data.invoiceNumber)}
+                      {invoice.data.invoiceNumber === null || invoice.data.invoicePeriod === null
+                        ? '—'
+                        : formatInvoiceNumber(invoice.data.invoicePeriod, invoice.data.invoiceNumber)}
                     </span>
                   </div>
                 ) : (

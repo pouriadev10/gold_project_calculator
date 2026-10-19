@@ -7,7 +7,7 @@ import type { SessionResponse } from '@/api/contracts';
 import type * as Queries from '@/api/queries';
 import { useSessionStore } from '@/stores/session-store';
 import { useUnitStore } from '@/stores/unit-store';
-import SalesInvoicesPage from './SalesInvoicesPage';
+import SalesInvoicesPage, { normalizeInvoiceSearch } from './SalesInvoicesPage';
 
 const useSalesInvoicesMock = vi.fn();
 vi.mock('@/api/queries', async (importOriginal) => ({
@@ -52,6 +52,7 @@ beforeEach(() => {
         {
           id: 'd5000000-0000-4000-8000-000000000001',
           invoiceNumber: 122,
+          invoicePeriod: '1405',
           status: 'FINALIZED',
           currentVersion: 1,
           party: {
@@ -98,6 +99,29 @@ describe('SalesInvoicesPage — FE-064', () => {
     await waitFor(() =>
       expect(lastQuery()).toEqual({ limit: 10, offset: 0, invoiceNumber: '122' }),
     );
+  });
+
+  it('D-02: شناسه‌ی «سال-شماره» با خط تیره به query می‌رود، نه چسبیده', async () => {
+    const user = userEvent.setup();
+    render(<SalesInvoicesPage />);
+
+    await user.type(screen.getByLabelText('جست‌وجوی شماره فاکتور'), '۱۴۰۵-۱۲۲');
+    await waitFor(() =>
+      expect(lastQuery()).toEqual({ limit: 10, offset: 0, invoiceNumber: '1405-122' }),
+    );
+  });
+
+  it.each([
+    ['۱۲۲', '122'],
+    ['۱۴۰۵-۱۲۲', '1405-122'],
+    ['۱۴۰۵/۱۲۲', '1405-122'],
+    ['1405–122', '1405-122'],
+    ['1405--12-2', '1405-122'],
+    ['۱۴۰۵-', '1405-'],
+    ['-', ''],
+    ['abc', ''],
+  ])('normalizeInvoiceSearch(%s) → %s', (raw, expected) => {
+    expect(normalizeInvoiceSearch(raw)).toBe(expected);
   });
 
   it('فیلتر شخص، وضعیت و بازه‌ی شمسی را با مرز روز منطقه‌ی مستأجر به query می‌فرستد', async () => {

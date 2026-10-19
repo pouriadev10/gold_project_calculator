@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { isoDateTimeSchema, nonNegativeBigIntStringSchema, uuidSchema } from '../common/index.js';
+import { invoicePeriodSchema } from './invoice-period.js';
 
 export const createJewelryCreditSaleSchema = z.object({
   partyId: uuidSchema,
@@ -12,6 +13,7 @@ export const createJewelryCreditSaleSchema = z.object({
 export const jewelryCreditSaleSchema = z.object({
   invoiceId: uuidSchema,
   invoiceNumber: z.number().int().positive(),
+  invoicePeriod: invoicePeriodSchema,
   payableRial: nonNegativeBigIntStringSchema,
   receivableRial: nonNegativeBigIntStringSchema,
   ledgerTransactionId: uuidSchema,
