@@ -636,9 +636,9 @@
     "semantic_hash": ""
   },
   "apps/api/package.json": {
-    "mtime": 1792406440.5481856,
-    "seen": 1792407703.131927,
-    "ast_hash": "8dc1dc1a86a4c36355904a5e2346b7e6",
+    "mtime": 1792411368.1472166,
+    "seen": 1792411890.8846912,
+    "ast_hash": "9f1686e1555096799b3060c5be882114",
     "semantic_hash": ""
   },
   "apps/api/scripts/migrate.mjs": {
@@ -660,9 +660,9 @@
     "semantic_hash": ""
   },
   "apps/api/src/app.module.ts": {
-    "mtime": 1792409296.0823114,
-    "seen": 1792410149.6774204,
-    "ast_hash": "6785625154b6580a85487c9af9b6f1d5",
+    "mtime": 1792411307.1756399,
+    "seen": 1792411890.8847082,
+    "ast_hash": "c751a0229b31d8ff4b555531c518c351",
     "semantic_hash": ""
   },
   "apps/api/src/main.ts": {
@@ -1698,15 +1698,15 @@
     "semantic_hash": ""
   },
   "apps/api/src/platform/request-context/request-path.spec.ts": {
-    "mtime": 1785920903.9934554,
-    "seen": 1789132525.944836,
-    "ast_hash": "64426c613610ccd3258e51cc04ff9558",
+    "mtime": 1792411307.1780443,
+    "seen": 1792411890.885256,
+    "ast_hash": "d9c565049e3914e7c8a9111f0e53546a",
     "semantic_hash": ""
   },
   "apps/api/src/platform/request-context/request-path.ts": {
-    "mtime": 1785920903.9934554,
-    "seen": 1789132525.9448369,
-    "ast_hash": "93176d8599fceaf205033a0fe98f2ff0",
+    "mtime": 1792411307.1764228,
+    "seen": 1792411890.885258,
+    "ast_hash": "e77d769fbbfb0490130f960890997aa1",
     "semantic_hash": ""
   },
   "apps/api/src/platform/request-context/tenant-context.middleware.ts": {
@@ -1860,9 +1860,9 @@
     "semantic_hash": ""
   },
   "apps/api/src/shared/validation/zod-validation.pipe.ts": {
-    "mtime": 1785921229.807527,
-    "seen": 1789132525.9448552,
-    "ast_hash": "a6e14b91fc96892ef3aca60a92750523",
+    "mtime": 1792410623.3645449,
+    "seen": 1792411890.8853135,
+    "ast_hash": "7e148489e18485cc13bebffe68023525",
     "semantic_hash": ""
   },
   "apps/api/src/tenant-initialization.module.ts": {
@@ -5046,9 +5046,9 @@
     "semantic_hash": ""
   },
   "TASKS.md": {
-    "mtime": 1792410042.9314313,
-    "seen": 1792410149.6800983,
-    "ast_hash": "17039cbde33f0ad064bef60c4f6143d4",
+    "mtime": 1792411742.4497414,
+    "seen": 1792411890.8870223,
+    "ast_hash": "152984698b52d6aa19ac6af57f4f74ef",
     "semantic_hash": ""
   },
   "TECH-A~1.MD": {
@@ -5112,9 +5112,9 @@
     "semantic_hash": ""
   },
   "pnpm-workspace.yaml": {
-    "mtime": 1792258238.4099674,
-    "seen": 1792260094.0656488,
-    "ast_hash": "adbe6d614563e133557144f490da9290",
+    "mtime": 1792410556.7840216,
+    "seen": 1792411890.887066,
+    "ast_hash": "e3678820c8289197e46ccf958f076fe5",
     "semantic_hash": ""
   },
   "apps/web/public/icons/icon-192.png": {
@@ -6126,9 +6126,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/mocks/contract-conformance.test.tsx": {
-    "mtime": 1792409893.913651,
-    "seen": 1792410149.679374,
-    "ast_hash": "b69a569b8f6bcc9d0672bd32df273163",
+    "mtime": 1792411463.851626,
+    "seen": 1792411890.8863487,
+    "ast_hash": "0cc7c3bc7b97092872ce12c704d0b3c5",
     "semantic_hash": ""
   },
   "apps/web/src/mocks/handlers/contract-gate.ts": {
@@ -6657,6 +6657,78 @@
     "mtime": 1792410032.537239,
     "seen": 1792410149.6801617,
     "ast_hash": "d693672cd562c04ecd6cd6dd972fe327",
+    "semantic_hash": ""
+  },
+  "apps/api/src/platform/openapi/json-examples.ts": {
+    "mtime": 1792411027.3513885,
+    "seen": 1792411890.8852224,
+    "ast_hash": "c89d97f68a7c50388f4801e413914312",
+    "semantic_hash": ""
+  },
+  "apps/api/src/platform/openapi/openapi-description.ts": {
+    "mtime": 1792410847.9917734,
+    "seen": 1792411890.8852248,
+    "ast_hash": "be7bd3a7386eb5266833cdd4d690a79e",
+    "semantic_hash": ""
+  },
+  "apps/api/src/platform/openapi/openapi-document.ts": {
+    "mtime": 1792411092.2105398,
+    "seen": 1792411890.8852267,
+    "ast_hash": "cd6d62acc3b9dfd0f6618122b70af9c0",
+    "semantic_hash": ""
+  },
+  "apps/api/src/platform/openapi/openapi.controller.ts": {
+    "mtime": 1792411295.369169,
+    "seen": 1792411890.8852286,
+    "ast_hash": "a59a7169a342402de3460f1a666fb6cd",
+    "semantic_hash": ""
+  },
+  "apps/api/src/platform/openapi/openapi.module.ts": {
+    "mtime": 1792411295.4506607,
+    "seen": 1792411890.88523,
+    "ast_hash": "382e87c2691020bb6cc5bdda9af86ff0",
+    "semantic_hash": ""
+  },
+  "apps/api/src/platform/openapi/openapi.spec.ts": {
+    "mtime": 1792411392.8047628,
+    "seen": 1792411890.885232,
+    "ast_hash": "ee5923894bb17c4bf483a3a3de6d2f7c",
+    "semantic_hash": ""
+  },
+  "apps/api/src/platform/openapi/route-discovery.ts": {
+    "mtime": 1792411294.2873354,
+    "seen": 1792411890.8852336,
+    "ast_hash": "a4c2b213c25096e03a5ec12b76e61700",
+    "semantic_hash": ""
+  },
+  "apps/api/src/platform/openapi/route-docs.ts": {
+    "mtime": 1792411168.3845775,
+    "seen": 1792411890.885236,
+    "ast_hash": "b4d2dbfb1d818a5f6745257a3bc1e881",
+    "semantic_hash": ""
+  },
+  "apps/api/src/platform/openapi/swagger-ui-dist.d.ts": {
+    "mtime": 1792411294.3682919,
+    "seen": 1792411890.8852377,
+    "ast_hash": "260c8b9a998cea778db76a0897b95b0f",
+    "semantic_hash": ""
+  },
+  "apps/api/test/openapi.e2e-spec.ts": {
+    "mtime": 1792411432.1984303,
+    "seen": 1792411890.885397,
+    "ast_hash": "500edf373f6fd267b7472a9d3be5e040",
+    "semantic_hash": ""
+  },
+  "docs/openapi.json": {
+    "mtime": 1792411383.9679353,
+    "seen": 1792411890.88642,
+    "ast_hash": "c305cae69b767d6a00409a147a099a88",
+    "semantic_hash": ""
+  },
+  "docs/api.md": {
+    "mtime": 1792411512.5416617,
+    "seen": 1792411890.8870456,
+    "ast_hash": "129ddb82aaf14fcf78df0a990363485a",
     "semantic_hash": ""
   }
 }
