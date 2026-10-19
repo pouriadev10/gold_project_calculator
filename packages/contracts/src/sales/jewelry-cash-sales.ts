@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { isoDateTimeSchema, uuidSchema } from '../common/index.js';
+import { isoDateTimeSchema, nonNegativeBigIntStringSchema, uuidSchema } from '../common/index.js';
 
 export const createJewelryCashSaleSchema = z
   .object({
@@ -13,7 +13,7 @@ export const createJewelryCashSaleSchema = z
 export const jewelryCashSaleSchema = z.object({
   invoiceId: uuidSchema,
   invoiceNumber: z.number().int().positive(),
-  payableRial: z.string().regex(/^\d+$/u),
+  payableRial: nonNegativeBigIntStringSchema,
   ledgerTransactionId: uuidSchema,
   inventoryMovementId: uuidSchema,
 });

@@ -153,7 +153,7 @@ export const partyStatementQuerySchema = paginationQuerySchema
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['to'],
-        message: 'End of statement range must not be before its start',
+        message: 'پایان بازه نباید پیش از شروع آن باشد',
       });
     }
   });

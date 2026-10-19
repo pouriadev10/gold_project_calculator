@@ -7,16 +7,12 @@ export const priceQuoteTypeSchema = z.enum(['MAZNEH']);
 /** The source is server-owned; callers of the manual endpoint cannot set it. */
 export const priceQuoteSourceSchema = z.enum(['MANUAL', 'FEED']);
 
-/** PostgreSQL bigint's upper limit, expressed as an integer rather than a JS number. */
-const POSTGRES_BIGINT_MAX = 9_223_372_036_854_775_807n;
-
-/** A positive rial amount that can be stored exactly by the database bigint column. */
-export const priceQuoteAmountRialSchema = positiveBigIntStringSchema.pipe(
-  z.string().refine(
-    (value) => BigInt(value) <= POSTGRES_BIGINT_MAX,
-    'مبلغ از بیشینه‌ی قابل ذخیره‌سازی بیشتر است',
-  ),
-);
+/**
+ * A positive rial amount that can be stored exactly by the database bigint
+ * column. The bigint bound now lives in `bigIntStringSchema` itself, for every
+ * money and weight field, not only this one.
+ */
+export const priceQuoteAmountRialSchema = positiveBigIntStringSchema;
 
 /** Input for `POST /pricing/quotes/manual`. Monetary input is always an integer string. */
 export const createManualPriceQuoteSchema = z

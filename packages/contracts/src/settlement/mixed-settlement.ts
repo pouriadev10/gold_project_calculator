@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   bigIntStringSchema,
+  coinCountSchema,
   isoDateTimeSchema,
   positiveBigIntStringSchema,
   uuidSchema,
@@ -23,7 +24,7 @@ const mixedCoinSettlementLineSchema = z
   .object({
     type: z.literal('COIN'),
     coinTypeId: uuidSchema,
-    count: z.number().int().positive(),
+    count: coinCountSchema,
     marketUnitPriceRial: positiveBigIntStringSchema,
     quoteId: uuidSchema,
   })
@@ -69,7 +70,7 @@ const mixedCoinSettlementResultLineSchema = z.object({
   type: z.literal('COIN'),
   inventoryMovementId: uuidSchema,
   coinTypeId: uuidSchema,
-  count: z.number().int().positive(),
+  count: coinCountSchema,
   settledRial: positiveBigIntStringSchema,
   intrinsicValueRial: positiveBigIntStringSchema,
   bubbleRial: bigIntStringSchema.nullable(),

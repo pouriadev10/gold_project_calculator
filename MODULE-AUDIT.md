@@ -18,7 +18,7 @@
 - **نکات بررسی:** فرمول نرخ با عیار پایه‌ی ۷۰۵ (نه فرمول غلط ÷۷۵۰) · همه‌ی گرد کردن‌ها فقط در `rounding.ts` با `roundHalfUp` · امضای `bubble()` فقط `CoinType` بپذیرد · هیچ `number` برای پول/وزن · هیچ عدد صنفی هاردکد · پوشش ۱۰۰٪ خطوط
 - **اثر روی:** تقریباً همه‌چیز — sales، purchase، pricing، settlement، reporting، و پیش‌نمایش‌های فرانت
 
-### [ ] M-02 · قراردادهای API — `packages/contracts`
+### [x] M-02 · قراردادهای API — `packages/contracts`
 - **محتوا:** `common` (bigint-string، date-time، pagination، api-error) · `auth` · `inventory` · `ledger` · `parties` · `platform` · `pricing` · `purchase` · `reporting` · `sales` · `settlement`
 - **نکات بررسی:** همه‌ی مقادیر پولی/وزنی در JSON رشته باشند · تطابق اسکیمای zod با پاسخ واقعی بک‌اند · عنوان سکه در قراردادهای گزارش
 - **اثر روی:** همه‌ی کنترلرهای بک‌اند + `apps/web/src/api` + MSW mocks
@@ -306,3 +306,25 @@
 
 - **مقدار پیش‌فرض در امضای توابع → M-02، M-13، M-34، M-35:** `gramRate`، `gramRate1000` و `roundHalfUp` مقدار پیش‌فرض هاردکد دارند (`RATE_DIVISOR` و `DEFAULT_ROUNDING_UNIT`). API همیشه مقدار نسخه‌دار را پاس می‌دهد، اما حدود ۱۰ جا در فرانت (رسید و خلاصه‌ی فروش، `SalePaymentInput`، `useMazneh`، `purchase-pricing`، `sale-line-pricing`) پیش‌فرض را بی‌صدا استفاده می‌کنند. این ریشه‌ی مسائل شناخته‌شده‌ی #34 و #35 است. رفع واقعی‌اش نیاز دارد که تنظیمات بازار از API و contracts به فرانت برسد.
 - **ثابت تکراری مثقال → M-24:** `apps/web/src/components/keypad/shortcuts.ts` ثابت مثقال (`46_083n`) را دوباره تعریف کرده و از `core-calc` نمی‌گیرد.
+
+### M-02 · `packages/contracts` — بررسی‌شده (۱۴۰۵/۰۷/۲۷)
+
+#### ایرادهای رفع‌شده
+
+| # | ایراد | اصلاح |
+|---|---|---|
+| 1 | رشته‌ی پول/وزن تا ۴۰ رقم پذیرفته می‌شد، ولی همه‌ی ستون‌ها `bigint` (۱۹ رقم) هستند. مقدار ۲۰ رقمی به INSERT می‌رسید و خطای `22003` پستگرس (بدون نگاشت) پاسخ **۵۰۰** می‌داد، نه ۴۰۰. | `bigIntStringSchema` به بازه‌ی int8 محدود شد (`DB_BIGINT_MIN/MAX`). سقف تکراری مظنه حذف شد. برای حساب درون فرانت، `canonicalIntegerStringSchema` (فقط شکل) جدا شد و `apps/web/src/lib/bigint.ts` از آن استفاده می‌کند. |
+| 2 | تعداد سکه (`z.number().int()`) سقف نداشت؛ حتی `1e20` قبول بود و ستون int4 (`sales_invoice_lines.quantity`، `second_hand_purchases.coin_count`) را با ۵۰۰ می‌شکست. | `coinCountSchema` مشترک با سقف int4 در ۵ قرارداد (فروش سکه، اصلاحیه، خرید سکه، تسویه‌ی سکه، تسویه‌ی ترکیبی). |
+| 3 | چند پاسخ با regex دستی و نامتعارف (`^-?\d+$` می‌پذیرفت `"-0"`/`"007"`). | با `bigIntStringSchema`/`positiveBigIntStringSchema`/`nonNegativeBigIntStringSchema` یکدست شد (فروش نقدی، تاریخچه، جزئیات فاکتور). |
+| 4 | سطرهای اصلاحیه `strict` نبودند؛ کلید غلط بی‌صدا حذف می‌شد. `reasonDetail` سقف طول نداشت. | `strict()` و سقف ۲۰۰۰. |
+| 5 | سه پیام خطای سفارشی انگلیسی بودند و به کاربر می‌رسیدند. | فارسی شدند. |
+
+**تأیید:** contracts ۲۳۰ تست · API unit ۲۷۶ · **API integration روی PostgreSQL ۵۰۴/۵۰۴** (شامل سناریوی پایلوت) · web ۱۳۳۳ · typecheck · lint · `docs/openapi.json` بازتولید شد.
+
+#### موکول به ماژول‌های دیگر
+
+- **M-09:** خطای `22003` پستگرس هنوز نگاشت ندارد؛ حاصل‌ضرب دو ورودی مجاز (تعداد × قیمت) هنوز می‌تواند int8 را بشکند → ۵۰۰. شبکه‌ی ایمنی: نگاشت به ۴۰۰/۴۲۲.
+- **M-04:** `ZodValidationPipe` فقط `fieldErrors` سطح اول را برمی‌گرداند؛ خطاهای ریشه (مثل «حداقل یک فیلد») حذف می‌شوند و پیام‌های پیش‌فرض zod انگلیسی‌اند (نبود errorMap فارسی).
+- **M-16:** پیام انگلیسی `reasonDetail is required…` در `invoice-amendment-policy.service.ts`.
+- **M-13/M-34:** کلیدهای `pricing.base_quote_karat` و `pricing.mithqal_grams` و نرخ سود/مالیات در قرارداد تنظیمات عمومی نیستند (#35).
+- `createMixedSettlementSchema.lines` سقف تعداد ندارد (اختیار محصولی).

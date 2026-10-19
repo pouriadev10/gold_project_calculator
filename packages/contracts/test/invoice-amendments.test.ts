@@ -48,6 +48,45 @@ describe('invoice amendment contract (BE-054)', () => {
       }).success,
     ).toBe(false);
   });
+
+  it('shows the OTHER-explanation error in Persian, on the reasonDetail field', () => {
+    const result = amendSalesInvoiceSchema.safeParse({
+      reason: 'OTHER',
+      partyId: PARTY_ID,
+      item: { itemType: 'JEWELRY', jewelryItemId: ITEM_ID, paidRial: '0' },
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.flatten().fieldErrors.reasonDetail).toEqual([
+      'برای دلیل «سایر» توضیح لازم است',
+    ]);
+  });
+
+  it('rejects unknown keys inside an item instead of silently dropping them', () => {
+    expect(
+      amendSalesInvoiceSchema.safeParse({
+        reason: 'WAGE_ERROR',
+        partyId: PARTY_ID,
+        item: { itemType: 'JEWELRY', jewelryItemId: ITEM_ID, paidRial: '0', payableRial: '1' },
+      }).success,
+    ).toBe(false);
+  });
+
+  it('rejects a coin count the int4 invoice line cannot store', () => {
+    expect(
+      amendSalesInvoiceSchema.safeParse({
+        reason: 'PAYMENT_ERROR',
+        partyId: PARTY_ID,
+        item: {
+          itemType: 'COIN',
+          coinTypeId: ITEM_ID,
+          count: 3_000_000_000,
+          marketUnitPriceRial: '1',
+          paidRial: '0',
+        },
+      }).success,
+    ).toBe(false);
+  });
 });
 
 describe('invoice amendment preflight contract (FE-066)', () => {

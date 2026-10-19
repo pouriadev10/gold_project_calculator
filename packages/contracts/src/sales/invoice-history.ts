@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { isoDateTimeSchema, nonNegativeBigIntStringSchema, uuidSchema } from '../common/index.js';
+import { bigIntStringSchema, isoDateTimeSchema, nonNegativeBigIntStringSchema, uuidSchema } from '../common/index.js';
 
 const invoiceHistoryActorSchema = z.object({
   id: uuidSchema,
@@ -17,7 +17,7 @@ const invoiceHistoryItemSchema = z.object({
 const invoiceHistoryLedgerEntrySchema = z.object({
   accountId: uuidSchema,
   dimensionId: uuidSchema,
-  quantity: z.string().regex(/^-?\d+$/u),
+  quantity: bigIntStringSchema,
 });
 
 const invoiceHistoryLedgerEffectSchema = z.object({
@@ -31,7 +31,7 @@ const invoiceHistoryInventoryEffectSchema = z.object({
   itemType: z.enum(['JEWELRY', 'MELTED_GOLD', 'COIN']),
   itemId: uuidSchema.nullable(),
   dimensionId: uuidSchema,
-  quantity: z.string().regex(/^-?\d+$/u),
+  quantity: bigIntStringSchema,
   occurredAt: isoDateTimeSchema,
 });
 
@@ -72,18 +72,12 @@ export const salesInvoiceAmendmentHistorySchema = z.object({
         pureWeightMg: z.object({
           before: nonNegativeBigIntStringSchema.nullable(),
           after: nonNegativeBigIntStringSchema.nullable(),
-          delta: z
-            .string()
-            .regex(/^-?\d+$/u)
-            .nullable(),
+          delta: bigIntStringSchema.nullable(),
         }),
         payableRial: z.object({
           before: nonNegativeBigIntStringSchema.nullable(),
           after: nonNegativeBigIntStringSchema.nullable(),
-          delta: z
-            .string()
-            .regex(/^-?\d+$/u)
-            .nullable(),
+          delta: bigIntStringSchema.nullable(),
         }),
         karat: z.object({
           before: z.number().int().nullable(),

@@ -5556,13 +5556,13 @@
           },
           "payableRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "receivableRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "ledgerTransactionId": {
             "type": "string",
@@ -5603,7 +5603,8 @@
           },
           "reasonDetail": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 2000
           },
           "partyId": {
             "type": "string",
@@ -5626,8 +5627,8 @@
                   },
                   "paidRial": {
                     "type": "string",
-                    "maxLength": 41,
-                    "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                    "maxLength": 20,
+                    "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                   }
                 },
                 "required": [
@@ -5653,17 +5654,18 @@
                   "count": {
                     "type": "integer",
                     "exclusiveMinimum": true,
-                    "minimum": 0
+                    "minimum": 0,
+                    "maximum": 2147483647
                   },
                   "marketUnitPriceRial": {
                     "type": "string",
-                    "maxLength": 41,
-                    "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                    "maxLength": 20,
+                    "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                   },
                   "paidRial": {
                     "type": "string",
-                    "maxLength": 41,
-                    "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                    "maxLength": 20,
+                    "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                   }
                 },
                 "required": [
@@ -5748,61 +5750,61 @@
           },
           "pureWeightMg": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "goldRatePerGramRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "paidRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "payableRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "breakdown": {
             "type": "object",
             "properties": {
               "originalPurchaseAmountRial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "todayPurchaseAmountRial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "differenceRial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "wageBurnedRial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "karatDifferenceRial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "marketPriceDifferenceRial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "otherCalculationDifferenceRial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               }
             },
             "required": [
@@ -5846,8 +5848,8 @@
               },
               "quoteAmountRial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "quoteObservedAt": {
                 "type": "string",
@@ -5855,13 +5857,13 @@
               },
               "goldRatePerGramRial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "purchaseAmountRial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               }
             },
             "required": [
@@ -5882,8 +5884,8 @@
               },
               "quoteAmountRial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "quoteObservedAt": {
                 "type": "string",
@@ -5891,13 +5893,13 @@
               },
               "goldRatePerGramRial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "purchaseAmountRial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               }
             },
             "required": [
@@ -5914,38 +5916,38 @@
             "properties": {
               "originalPurchaseAmountRial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "todayPurchaseAmountRial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "differenceRial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "wageBurnedRial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "karatDifferenceRial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "marketPriceDifferenceRial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "otherCalculationDifferenceRial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               }
             },
             "required": [
@@ -5982,23 +5984,23 @@
           },
           "payableRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "receivableRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "intrinsicValueRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "bubbleRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$",
             "nullable": true
           },
           "ledgerTransactionId": {
@@ -6044,22 +6046,23 @@
           "count": {
             "type": "integer",
             "exclusiveMinimum": true,
-            "minimum": 0
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "settledRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "intrinsicValueRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "bubbleRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$",
             "nullable": true
           }
         },
@@ -6116,8 +6119,8 @@
                           },
                           "grossWeightUg": {
                             "type": "string",
-                            "maxLength": 41,
-                            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                            "maxLength": 20,
+                            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                           },
                           "karat": {
                             "type": "integer",
@@ -6191,8 +6194,8 @@
                           },
                           "grossWeightUg": {
                             "type": "string",
-                            "maxLength": 41,
-                            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                            "maxLength": 20,
+                            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                           },
                           "karat": {
                             "type": "integer",
@@ -6288,8 +6291,8 @@
               },
               "grossWeightUg": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "karat": {
                 "type": "integer",
@@ -6363,8 +6366,8 @@
               },
               "grossWeightUg": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "karat": {
                 "type": "integer",
@@ -6425,19 +6428,19 @@
         "properties": {
           "grossWeightMg": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "stoneWeightMg": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$",
             "default": "0"
           },
           "otherDeductionWeightMg": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$",
             "default": "0"
           },
           "purchaseKarat": {
@@ -6451,8 +6454,8 @@
           },
           "paidRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$",
             "default": "0"
           },
           "effectiveAt": {
@@ -6481,12 +6484,13 @@
           "count": {
             "type": "integer",
             "exclusiveMinimum": true,
-            "minimum": 0
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "marketUnitPriceRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "quoteId": {
             "type": "string",
@@ -6498,8 +6502,8 @@
           },
           "paidRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           }
         },
         "required": [
@@ -6523,12 +6527,13 @@
           "count": {
             "type": "integer",
             "exclusiveMinimum": true,
-            "minimum": 0
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "marketUnitPriceRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "quoteId": {
             "type": "string",
@@ -6571,8 +6576,8 @@
           },
           "grossWeightUg": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "karat": {
             "type": "integer",
@@ -6611,8 +6616,8 @@
           },
           "grossWeightUg": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "karat": {
             "type": "integer",
@@ -6637,8 +6642,8 @@
         "properties": {
           "grossWeightMg": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "karat": {
             "type": "integer",
@@ -6711,8 +6716,8 @@
           },
           "paidRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$",
             "default": "0"
           }
         },
@@ -6739,8 +6744,8 @@
           },
           "grossWeightMg": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "karat": {
             "type": "integer",
@@ -6749,14 +6754,14 @@
           },
           "stoneWeightMg": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$",
             "default": "0"
           },
           "otherDeductionWeightMg": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$",
             "default": "0"
           },
           "wageType": {
@@ -6769,8 +6774,8 @@
           },
           "wageValue": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "validFrom": {
             "type": "string",
@@ -6797,16 +6802,9 @@
             ]
           },
           "amountRial": {
-            "allOf": [
-              {
-                "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "type": "string",
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           }
         },
         "required": [
@@ -6833,8 +6831,8 @@
                     },
                     "amountRial": {
                       "type": "string",
-                      "maxLength": 41,
-                      "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                      "maxLength": 20,
+                      "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                     }
                   },
                   "required": [
@@ -6854,8 +6852,8 @@
                     },
                     "grossWeightMg": {
                       "type": "string",
-                      "maxLength": 41,
-                      "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                      "maxLength": 20,
+                      "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                     },
                     "karat": {
                       "type": "integer",
@@ -6891,12 +6889,13 @@
                     "count": {
                       "type": "integer",
                       "exclusiveMinimum": true,
-                      "minimum": 0
+                      "minimum": 0,
+                      "maximum": 2147483647
                     },
                     "marketUnitPriceRial": {
                       "type": "string",
-                      "maxLength": 41,
-                      "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                      "maxLength": 20,
+                      "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                     },
                     "quoteId": {
                       "type": "string",
@@ -6923,8 +6922,8 @@
                     },
                     "amountRial": {
                       "type": "string",
-                      "maxLength": 41,
-                      "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                      "maxLength": 20,
+                      "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                     }
                   },
                   "required": [
@@ -6979,8 +6978,8 @@
                     },
                     "quantity": {
                       "type": "string",
-                      "maxLength": 41,
-                      "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                      "maxLength": 20,
+                      "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                     }
                   },
                   "required": [
@@ -7001,8 +7000,8 @@
                     },
                     "quantity": {
                       "type": "string",
-                      "maxLength": 41,
-                      "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                      "maxLength": 20,
+                      "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                     }
                   },
                   "required": [
@@ -7026,8 +7025,8 @@
                     },
                     "quantity": {
                       "type": "string",
-                      "maxLength": 41,
-                      "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                      "maxLength": 20,
+                      "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                     }
                   },
                   "required": [
@@ -7091,8 +7090,8 @@
         "properties": {
           "amountRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "effectiveAt": {
             "type": "string",
@@ -7119,12 +7118,13 @@
           "count": {
             "type": "integer",
             "exclusiveMinimum": true,
-            "minimum": 0
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "purchaseUnitPriceRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "quoteId": {
             "type": "string",
@@ -7132,8 +7132,8 @@
           },
           "paidRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$",
             "default": "0"
           },
           "effectiveAt": {
@@ -7160,19 +7160,19 @@
           },
           "grossWeightMg": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "stoneWeightMg": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$",
             "default": "0"
           },
           "otherDeductionWeightMg": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$",
             "default": "0"
           },
           "purchaseKarat": {
@@ -7186,14 +7186,14 @@
           },
           "feeRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$",
             "default": "0"
           },
           "paidRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$",
             "default": "0"
           },
           "effectiveAt": {
@@ -7240,8 +7240,8 @@
               },
               "amountRial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "observedAt": {
                 "type": "string",
@@ -7249,8 +7249,8 @@
               },
               "goldRatePerGramRial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               }
             },
             "required": [
@@ -7273,13 +7273,13 @@
                     "properties": {
                       "rial": {
                         "type": "string",
-                        "maxLength": 41,
-                        "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                        "maxLength": 20,
+                        "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                       },
                       "pureGoldMg": {
                         "type": "string",
-                        "maxLength": 41,
-                        "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                        "maxLength": 20,
+                        "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                       }
                     },
                     "required": [
@@ -7290,8 +7290,8 @@
                   },
                   "displayAmount": {
                     "type": "string",
-                    "maxLength": 41,
-                    "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+                    "maxLength": 20,
+                    "pattern": "^(0|-?[1-9][0-9]{0,18})$",
                     "nullable": true
                   }
                 },
@@ -7309,13 +7309,13 @@
                     "properties": {
                       "rial": {
                         "type": "string",
-                        "maxLength": 41,
-                        "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                        "maxLength": 20,
+                        "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                       },
                       "pureGoldMg": {
                         "type": "string",
-                        "maxLength": 41,
-                        "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                        "maxLength": 20,
+                        "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                       }
                     },
                     "required": [
@@ -7326,8 +7326,8 @@
                   },
                   "displayAmount": {
                     "type": "string",
-                    "maxLength": 41,
-                    "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+                    "maxLength": 20,
+                    "pattern": "^(0|-?[1-9][0-9]{0,18})$",
                     "nullable": true
                   }
                 },
@@ -7345,13 +7345,13 @@
                     "properties": {
                       "rial": {
                         "type": "string",
-                        "maxLength": 41,
-                        "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                        "maxLength": 20,
+                        "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                       },
                       "pureGoldMg": {
                         "type": "string",
-                        "maxLength": 41,
-                        "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                        "maxLength": 20,
+                        "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                       }
                     },
                     "required": [
@@ -7362,8 +7362,8 @@
                   },
                   "displayAmount": {
                     "type": "string",
-                    "maxLength": 41,
-                    "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+                    "maxLength": 20,
+                    "pattern": "^(0|-?[1-9][0-9]{0,18})$",
                     "nullable": true
                   }
                 },
@@ -7381,13 +7381,13 @@
                     "properties": {
                       "rial": {
                         "type": "string",
-                        "maxLength": 41,
-                        "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                        "maxLength": 20,
+                        "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                       },
                       "pureGoldMg": {
                         "type": "string",
-                        "maxLength": 41,
-                        "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                        "maxLength": 20,
+                        "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                       }
                     },
                     "required": [
@@ -7398,8 +7398,8 @@
                   },
                   "displayAmount": {
                     "type": "string",
-                    "maxLength": 41,
-                    "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+                    "maxLength": 20,
+                    "pattern": "^(0|-?[1-9][0-9]{0,18})$",
                     "nullable": true
                   }
                 },
@@ -7434,13 +7434,13 @@
                     "properties": {
                       "rial": {
                         "type": "string",
-                        "maxLength": 41,
-                        "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                        "maxLength": 20,
+                        "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                       },
                       "pureGoldMg": {
                         "type": "string",
-                        "maxLength": 41,
-                        "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                        "maxLength": 20,
+                        "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                       }
                     },
                     "required": [
@@ -7451,8 +7451,8 @@
                   },
                   "displayAmount": {
                     "type": "string",
-                    "maxLength": 41,
-                    "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+                    "maxLength": 20,
+                    "pattern": "^(0|-?[1-9][0-9]{0,18})$",
                     "nullable": true
                   }
                 },
@@ -7470,13 +7470,13 @@
                     "properties": {
                       "rial": {
                         "type": "string",
-                        "maxLength": 41,
-                        "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                        "maxLength": 20,
+                        "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                       },
                       "pureGoldMg": {
                         "type": "string",
-                        "maxLength": 41,
-                        "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                        "maxLength": 20,
+                        "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                       }
                     },
                     "required": [
@@ -7487,8 +7487,8 @@
                   },
                   "displayAmount": {
                     "type": "string",
-                    "maxLength": 41,
-                    "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+                    "maxLength": 20,
+                    "pattern": "^(0|-?[1-9][0-9]{0,18})$",
                     "nullable": true
                   }
                 },
@@ -7518,8 +7518,8 @@
             "properties": {
               "meltedGoldPureMg": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "coins": {
                 "type": "array",
@@ -7677,18 +7677,18 @@
           },
           "pureWeightMg": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "settledRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "goldRatePerGramRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           }
         },
         "required": [
@@ -7721,8 +7721,8 @@
             },
             "quantity": {
               "type": "string",
-              "maxLength": 41,
-              "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+              "maxLength": 20,
+              "pattern": "^(0|-?[1-9][0-9]{0,18})$"
             }
           },
           "required": [
@@ -7793,7 +7793,8 @@
           },
           "payableRial": {
             "type": "string",
-            "pattern": "^\\d+$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "ledgerTransactionId": {
             "type": "string",
@@ -7827,13 +7828,13 @@
           },
           "payableRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "receivableRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "ledgerTransactionId": {
             "type": "string",
@@ -7880,8 +7881,8 @@
                 },
                 "grossWeightMg": {
                   "type": "string",
-                  "maxLength": 41,
-                  "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                  "maxLength": 20,
+                  "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                 },
                 "karat": {
                   "type": "integer",
@@ -7890,13 +7891,13 @@
                 },
                 "stoneWeightMg": {
                   "type": "string",
-                  "maxLength": 41,
-                  "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                  "maxLength": 20,
+                  "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                 },
                 "otherDeductionWeightMg": {
                   "type": "string",
-                  "maxLength": 41,
-                  "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                  "maxLength": 20,
+                  "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                 },
                 "wageType": {
                   "type": "string",
@@ -7908,8 +7909,8 @@
                 },
                 "wageValue": {
                   "type": "string",
-                  "maxLength": 41,
-                  "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                  "maxLength": 20,
+                  "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                 },
                 "validFrom": {
                   "type": "string",
@@ -7991,8 +7992,8 @@
           },
           "grossWeightMg": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "karat": {
             "type": "integer",
@@ -8001,13 +8002,13 @@
           },
           "stoneWeightMg": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "otherDeductionWeightMg": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "wageType": {
             "type": "string",
@@ -8019,8 +8020,8 @@
           },
           "wageValue": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "validFrom": {
             "type": "string",
@@ -8071,8 +8072,8 @@
           },
           "totalSettledRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "lines": {
             "type": "array",
@@ -8089,8 +8090,8 @@
                     },
                     "settledRial": {
                       "type": "string",
-                      "maxLength": 41,
-                      "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                      "maxLength": 20,
+                      "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                     }
                   },
                   "required": [
@@ -8114,18 +8115,18 @@
                     },
                     "pureWeightMg": {
                       "type": "string",
-                      "maxLength": 41,
-                      "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                      "maxLength": 20,
+                      "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                     },
                     "settledRial": {
                       "type": "string",
-                      "maxLength": 41,
-                      "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                      "maxLength": 20,
+                      "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                     },
                     "goldRatePerGramRial": {
                       "type": "string",
-                      "maxLength": 41,
-                      "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                      "maxLength": 20,
+                      "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                     }
                   },
                   "required": [
@@ -8157,22 +8158,23 @@
                     "count": {
                       "type": "integer",
                       "exclusiveMinimum": true,
-                      "minimum": 0
+                      "minimum": 0,
+                      "maximum": 2147483647
                     },
                     "settledRial": {
                       "type": "string",
-                      "maxLength": 41,
-                      "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                      "maxLength": 20,
+                      "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                     },
                     "intrinsicValueRial": {
                       "type": "string",
-                      "maxLength": 41,
-                      "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                      "maxLength": 20,
+                      "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                     },
                     "bubbleRial": {
                       "type": "string",
-                      "maxLength": 41,
-                      "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+                      "maxLength": 20,
+                      "pattern": "^(0|-?[1-9][0-9]{0,18})$",
                       "nullable": true
                     }
                   },
@@ -8198,8 +8200,8 @@
                     },
                     "settledRial": {
                       "type": "string",
-                      "maxLength": 41,
-                      "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                      "maxLength": 20,
+                      "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                     }
                   },
                   "required": [
@@ -8368,13 +8370,13 @@
                   "properties": {
                     "rial": {
                       "type": "string",
-                      "maxLength": 41,
-                      "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                      "maxLength": 20,
+                      "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                     },
                     "pureGoldMg": {
                       "type": "string",
-                      "maxLength": 41,
-                      "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                      "maxLength": 20,
+                      "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                     },
                     "coins": {
                       "type": "array",
@@ -8411,8 +8413,8 @@
                 },
                 "displayBalance": {
                   "type": "string",
-                  "maxLength": 41,
-                  "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                  "maxLength": 20,
+                  "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                 },
                 "convertibleDirection": {
                   "type": "string",
@@ -8475,8 +8477,8 @@
               },
               "amountRial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "observedAt": {
                 "type": "string",
@@ -8484,8 +8486,8 @@
               },
               "goldRatePerGramRial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               }
             },
             "required": [
@@ -8530,13 +8532,13 @@
             "properties": {
               "rial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "pureGoldMg": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "coins": {
                 "type": "array",
@@ -8589,8 +8591,8 @@
                   },
                   "amountRial": {
                     "type": "string",
-                    "maxLength": 41,
-                    "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                    "maxLength": 20,
+                    "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                   },
                   "observedAt": {
                     "type": "string",
@@ -8598,8 +8600,8 @@
                   },
                   "goldRatePerGramRial": {
                     "type": "string",
-                    "maxLength": 41,
-                    "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                    "maxLength": 20,
+                    "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                   }
                 },
                 "required": [
@@ -8612,13 +8614,13 @@
               },
               "rialEquivalentPureGoldMg": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "totalGoldDisplayPureMg": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "coinsRemainSeparate": {
                 "type": "boolean",
@@ -8825,13 +8827,13 @@
                 },
                 "quantity": {
                   "type": "string",
-                  "maxLength": 41,
-                  "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                  "maxLength": 20,
+                  "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                 },
                 "runningBalance": {
                   "type": "string",
-                  "maxLength": 41,
-                  "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                  "maxLength": 20,
+                  "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                 },
                 "documentRateSnapshots": {
                   "type": "array",
@@ -8845,8 +8847,8 @@
                       },
                       "quoteAmountRial": {
                         "type": "string",
-                        "maxLength": 41,
-                        "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+                        "maxLength": 20,
+                        "pattern": "^(0|-?[1-9][0-9]{0,18})$",
                         "nullable": true
                       },
                       "quoteObservedAt": {
@@ -8906,8 +8908,8 @@
               },
               "amountRial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "observedAt": {
                 "type": "string",
@@ -8938,19 +8940,19 @@
         "properties": {
           "grossWeightMg": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "stoneWeightMg": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$",
             "default": "0"
           },
           "otherDeductionWeightMg": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$",
             "default": "0"
           },
           "purchaseKarat": {
@@ -9005,16 +9007,9 @@
                     ]
                   },
                   "amountRial": {
-                    "allOf": [
-                      {
-                        "type": "string",
-                        "maxLength": 41,
-                        "pattern": "^(0|-?[1-9][0-9]{0,39})$"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "type": "string",
+                    "maxLength": 20,
+                    "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                   },
                   "source": {
                     "type": "string",
@@ -9087,16 +9082,9 @@
                     ]
                   },
                   "amountRial": {
-                    "allOf": [
-                      {
-                        "type": "string",
-                        "maxLength": 41,
-                        "pattern": "^(0|-?[1-9][0-9]{0,39})$"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "type": "string",
+                    "maxLength": 20,
+                    "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                   },
                   "source": {
                     "type": "string",
@@ -9197,16 +9185,9 @@
                 ]
               },
               "amountRial": {
-                "allOf": [
-                  {
-                    "type": "string",
-                    "maxLength": 41,
-                    "pattern": "^(0|-?[1-9][0-9]{0,39})$"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "type": "string",
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "source": {
                 "type": "string",
@@ -9255,16 +9236,9 @@
                 ]
               },
               "amountRial": {
-                "allOf": [
-                  {
-                    "type": "string",
-                    "maxLength": 41,
-                    "pattern": "^(0|-?[1-9][0-9]{0,39})$"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "type": "string",
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "source": {
                 "type": "string",
@@ -9313,16 +9287,9 @@
                 ]
               },
               "amountRial": {
-                "allOf": [
-                  {
-                    "type": "string",
-                    "maxLength": 41,
-                    "pattern": "^(0|-?[1-9][0-9]{0,39})$"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "type": "string",
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "source": {
                 "type": "string",
@@ -9386,16 +9353,9 @@
             ]
           },
           "amountRial": {
-            "allOf": [
-              {
-                "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "type": "string",
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "source": {
             "type": "string",
@@ -9447,13 +9407,13 @@
             "properties": {
               "rial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "goldEquivalentMg": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               }
             },
             "required": [
@@ -9467,13 +9427,13 @@
             "properties": {
               "rial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "goldEquivalentMg": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               }
             },
             "required": [
@@ -9487,13 +9447,13 @@
             "properties": {
               "rial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "goldEquivalentMg": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               }
             },
             "required": [
@@ -9507,13 +9467,13 @@
             "properties": {
               "rial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "goldEquivalentMg": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               }
             },
             "required": [
@@ -9527,13 +9487,13 @@
             "properties": {
               "rial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "goldEquivalentMg": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               }
             },
             "required": [
@@ -9547,13 +9507,13 @@
             "properties": {
               "rial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "goldEquivalentMg": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               }
             },
             "required": [
@@ -9567,13 +9527,13 @@
             "properties": {
               "rial": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "goldEquivalentMg": {
                 "type": "string",
-                "maxLength": 41,
-                "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               }
             },
             "required": [
@@ -9630,8 +9590,8 @@
             },
             "quantity": {
               "type": "string",
-              "maxLength": 41,
-              "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+              "maxLength": 20,
+              "pattern": "^(0|-?[1-9][0-9]{0,18})$"
             },
             "occurredAt": {
               "type": "string",
@@ -9683,18 +9643,18 @@
                   "properties": {
                     "rial": {
                       "type": "string",
-                      "maxLength": 41,
-                      "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                      "maxLength": 20,
+                      "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                     },
                     "pureMg": {
                       "type": "string",
-                      "maxLength": 41,
-                      "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                      "maxLength": 20,
+                      "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                     },
                     "rate1000": {
                       "type": "string",
-                      "maxLength": 41,
-                      "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                      "maxLength": 20,
+                      "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                     }
                   },
                   "required": [
@@ -9754,8 +9714,8 @@
           },
           "amountRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           }
         },
         "required": [
@@ -9823,19 +9783,20 @@
                       "properties": {
                         "before": {
                           "type": "string",
-                          "maxLength": 41,
-                          "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+                          "maxLength": 20,
+                          "pattern": "^(0|-?[1-9][0-9]{0,18})$",
                           "nullable": true
                         },
                         "after": {
                           "type": "string",
-                          "maxLength": 41,
-                          "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+                          "maxLength": 20,
+                          "pattern": "^(0|-?[1-9][0-9]{0,18})$",
                           "nullable": true
                         },
                         "delta": {
                           "type": "string",
-                          "pattern": "^-?\\d+$",
+                          "maxLength": 20,
+                          "pattern": "^(0|-?[1-9][0-9]{0,18})$",
                           "nullable": true
                         }
                       },
@@ -9851,19 +9812,20 @@
                       "properties": {
                         "before": {
                           "type": "string",
-                          "maxLength": 41,
-                          "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+                          "maxLength": 20,
+                          "pattern": "^(0|-?[1-9][0-9]{0,18})$",
                           "nullable": true
                         },
                         "after": {
                           "type": "string",
-                          "maxLength": 41,
-                          "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+                          "maxLength": 20,
+                          "pattern": "^(0|-?[1-9][0-9]{0,18})$",
                           "nullable": true
                         },
                         "delta": {
                           "type": "string",
-                          "pattern": "^-?\\d+$",
+                          "maxLength": 20,
+                          "pattern": "^(0|-?[1-9][0-9]{0,18})$",
                           "nullable": true
                         }
                       },
@@ -9928,7 +9890,8 @@
                             },
                             "quantity": {
                               "type": "string",
-                              "pattern": "^-?\\d+$"
+                              "maxLength": 20,
+                              "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                             }
                           },
                           "required": [
@@ -9976,7 +9939,8 @@
                       },
                       "quantity": {
                         "type": "string",
-                        "pattern": "^-?\\d+$"
+                        "maxLength": 20,
+                        "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                       },
                       "occurredAt": {
                         "type": "string",
@@ -10083,11 +10047,13 @@
             "properties": {
               "amountRial": {
                 "type": "string",
-                "pattern": "^[1-9]\\d*$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "goldRatePerGramRial": {
                 "type": "string",
-                "pattern": "^[1-9]\\d*$"
+                "maxLength": 20,
+                "pattern": "^(0|-?[1-9][0-9]{0,18})$"
               },
               "observedAt": {
                 "type": "string",
@@ -10145,23 +10111,23 @@
                 },
                 "payableRial": {
                   "type": "string",
-                  "maxLength": 41,
-                  "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                  "maxLength": 20,
+                  "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                 },
                 "paidRial": {
                   "type": "string",
-                  "maxLength": 41,
-                  "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                  "maxLength": 20,
+                  "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                 },
                 "receivableRial": {
                   "type": "string",
-                  "maxLength": 41,
-                  "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                  "maxLength": 20,
+                  "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                 },
                 "pureWeightMg": {
                   "type": "string",
-                  "maxLength": 41,
-                  "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+                  "maxLength": 20,
+                  "pattern": "^(0|-?[1-9][0-9]{0,18})$",
                   "nullable": true
                 },
                 "items": {
@@ -10186,12 +10152,13 @@
                       },
                       "quantity": {
                         "type": "string",
-                        "pattern": "^[1-9]\\d*$"
+                        "maxLength": 20,
+                        "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                       },
                       "pureWeightMg": {
                         "type": "string",
-                        "maxLength": 41,
-                        "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+                        "maxLength": 20,
+                        "pattern": "^(0|-?[1-9][0-9]{0,18})$",
                         "nullable": true
                       },
                       "karat": {
@@ -10202,8 +10169,8 @@
                       },
                       "payableRial": {
                         "type": "string",
-                        "maxLength": 41,
-                        "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                        "maxLength": 20,
+                        "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                       }
                     },
                     "required": [
@@ -10223,20 +10190,20 @@
                   "properties": {
                     "baseQuoteKarat": {
                       "type": "string",
-                      "maxLength": 41,
-                      "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+                      "maxLength": 20,
+                      "pattern": "^(0|-?[1-9][0-9]{0,18})$",
                       "nullable": true
                     },
                     "mithqalGramsX10k": {
                       "type": "string",
-                      "maxLength": 41,
-                      "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+                      "maxLength": 20,
+                      "pattern": "^(0|-?[1-9][0-9]{0,18})$",
                       "nullable": true
                     },
                     "roundingUnitRial": {
                       "type": "string",
-                      "maxLength": 41,
-                      "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+                      "maxLength": 20,
+                      "pattern": "^(0|-?[1-9][0-9]{0,18})$",
                       "nullable": true
                     },
                     "roundingPolicy": {
@@ -10246,14 +10213,14 @@
                     },
                     "profitRateBps": {
                       "type": "string",
-                      "maxLength": 41,
-                      "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+                      "maxLength": 20,
+                      "pattern": "^(0|-?[1-9][0-9]{0,18})$",
                       "nullable": true
                     },
                     "taxRateBps": {
                       "type": "string",
-                      "maxLength": 41,
-                      "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+                      "maxLength": 20,
+                      "pattern": "^(0|-?[1-9][0-9]{0,18})$",
                       "nullable": true
                     }
                   },
@@ -10369,14 +10336,14 @@
                 },
                 "payableRial": {
                   "type": "string",
-                  "maxLength": 41,
-                  "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+                  "maxLength": 20,
+                  "pattern": "^(0|-?[1-9][0-9]{0,18})$",
                   "nullable": true
                 },
                 "goldRatePerGramRial": {
                   "type": "string",
-                  "maxLength": 41,
-                  "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+                  "maxLength": 20,
+                  "pattern": "^(0|-?[1-9][0-9]{0,18})$",
                   "nullable": true
                 },
                 "occurredAt": {
@@ -10477,14 +10444,14 @@
                 },
                 "payableRial": {
                   "type": "string",
-                  "maxLength": 41,
-                  "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+                  "maxLength": 20,
+                  "pattern": "^(0|-?[1-9][0-9]{0,18})$",
                   "nullable": true
                 },
                 "pureWeightMg": {
                   "type": "string",
-                  "maxLength": 41,
-                  "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+                  "maxLength": 20,
+                  "pattern": "^(0|-?[1-9][0-9]{0,18})$",
                   "nullable": true
                 },
                 "karat": {
@@ -10511,13 +10478,13 @@
                       },
                       "quantity": {
                         "type": "string",
-                        "maxLength": 41,
-                        "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+                        "maxLength": 20,
+                        "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                       },
                       "pureWeightMg": {
                         "type": "string",
-                        "maxLength": 41,
-                        "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+                        "maxLength": 20,
+                        "pattern": "^(0|-?[1-9][0-9]{0,18})$",
                         "nullable": true
                       },
                       "karat": {
@@ -10567,7 +10534,8 @@
                             },
                             "quantity": {
                               "type": "string",
-                              "pattern": "^-?\\d+$"
+                              "maxLength": 20,
+                              "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                             }
                           },
                           "required": [
@@ -10615,7 +10583,8 @@
                       },
                       "quantity": {
                         "type": "string",
-                        "pattern": "^-?\\d+$"
+                        "maxLength": 20,
+                        "pattern": "^(0|-?[1-9][0-9]{0,18})$"
                       },
                       "occurredAt": {
                         "type": "string",
@@ -10681,37 +10650,38 @@
           "count": {
             "type": "integer",
             "exclusiveMinimum": true,
-            "minimum": 0
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "purchaseUnitPriceRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "purchaseAmountRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "paidRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "payableRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "intrinsicValueRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "bubbleRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$",
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$",
             "nullable": true
           }
         },
@@ -10747,38 +10717,38 @@
           },
           "pureWeightMg": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "goldRatePerGramRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "grossPurchaseAmountRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "feeRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "finalAmountRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "paidRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "payableRial": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           }
         },
         "required": [
@@ -11065,8 +11035,8 @@
           },
           "grossWeightMg": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "karat": {
             "type": "integer",
@@ -11075,13 +11045,13 @@
           },
           "stoneWeightMg": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "otherDeductionWeightMg": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "wageType": {
             "type": "string",
@@ -11093,8 +11063,8 @@
           },
           "wageValue": {
             "type": "string",
-            "maxLength": 41,
-            "pattern": "^(0|-?[1-9][0-9]{0,39})$"
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
           },
           "validFrom": {
             "type": "string",

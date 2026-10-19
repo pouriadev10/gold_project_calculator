@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  coinCountSchema,
   nonNegativeBigIntStringSchema,
   positiveBigIntStringSchema,
   uuidSchema,
@@ -14,19 +15,28 @@ export const invoiceAmendmentReasonSchema = z.enum([
   'OTHER',
 ]);
 
-const amendedJewelryItemSchema = z.object({
-  itemType: z.literal('JEWELRY'),
-  jewelryItemId: uuidSchema,
-  paidRial: nonNegativeBigIntStringSchema,
-});
+/*
+ * سطرها هم مثل خود سند `strict`اند (مثل سطرهای تسویه‌ی ترکیبی): کلید ناشناخته‌ی
+ * سطر قبلاً بی‌صدا حذف می‌شد، پس فیلدی با نام غلط (مثلاً `payableRial`) بدون
+ * هیچ خطایی نادیده می‌ماند.
+ */
+const amendedJewelryItemSchema = z
+  .object({
+    itemType: z.literal('JEWELRY'),
+    jewelryItemId: uuidSchema,
+    paidRial: nonNegativeBigIntStringSchema,
+  })
+  .strict();
 
-const amendedCoinItemSchema = z.object({
-  itemType: z.literal('COIN'),
-  coinTypeId: uuidSchema,
-  count: z.number().int().positive(),
-  marketUnitPriceRial: positiveBigIntStringSchema,
-  paidRial: nonNegativeBigIntStringSchema,
-});
+const amendedCoinItemSchema = z
+  .object({
+    itemType: z.literal('COIN'),
+    coinTypeId: uuidSchema,
+    count: coinCountSchema,
+    marketUnitPriceRial: positiveBigIntStringSchema,
+    paidRial: nonNegativeBigIntStringSchema,
+  })
+  .strict();
 
 /**
  * A correction supplies source facts only. Payable, receivable, pure gold
@@ -35,7 +45,7 @@ const amendedCoinItemSchema = z.object({
 export const amendSalesInvoiceSchema = z
   .object({
     reason: invoiceAmendmentReasonSchema,
-    reasonDetail: z.string().trim().min(1).optional(),
+    reasonDetail: z.string().trim().min(1).max(2_000).optional(),
     partyId: uuidSchema,
     item: z.discriminatedUnion('itemType', [amendedJewelryItemSchema, amendedCoinItemSchema]),
   })
@@ -45,7 +55,7 @@ export const amendSalesInvoiceSchema = z
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['reasonDetail'],
-        message: 'reasonDetail is required when reason is OTHER',
+        message: 'برای دلیل «سایر» توضیح لازم است',
       });
     }
   });

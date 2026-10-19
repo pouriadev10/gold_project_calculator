@@ -4,7 +4,7 @@ import {
   formatScaled,
   toLatinDigits,
 } from '@gold/core-calc';
-import { bigIntStringSchema } from '@gold/contracts';
+import { canonicalIntegerStringSchema } from '@gold/contracts';
 
 /**
  * Parses a user-entered integer after converting Persian and Arabic digits to
@@ -12,7 +12,7 @@ import { bigIntStringSchema } from '@gold/contracts';
  * original numeric value as a string; use this only at calculation boundaries.
  */
 export function parseBigIntString(value: string): bigint {
-  return BigInt(bigIntStringSchema.parse(toLatinDigits(value)));
+  return BigInt(canonicalIntegerStringSchema.parse(toLatinDigits(value)));
 }
 
 /** Formats a rial string for Persian display without passing through Number. */

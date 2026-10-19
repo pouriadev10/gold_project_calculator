@@ -145,7 +145,7 @@ export const profitReportQuerySchema = z
     ) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
-        message: '"from" must be before "to"',
+        message: 'شروع بازه باید پیش از پایان آن باشد',
         path: ['to'],
       });
     }

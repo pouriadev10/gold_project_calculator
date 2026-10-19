@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   bigIntStringSchema,
+  coinCountSchema,
   isoDateTimeSchema,
   nonNegativeBigIntStringSchema,
   positiveBigIntStringSchema,
@@ -16,7 +17,7 @@ export const createCoinSaleSchema = z
   .object({
     partyId: uuidSchema,
     coinTypeId: uuidSchema,
-    count: z.number().int().positive(),
+    count: coinCountSchema,
     marketUnitPriceRial: positiveBigIntStringSchema,
     quoteId: uuidSchema,
     effectiveAt: isoDateTimeSchema,

@@ -4,6 +4,7 @@ import {
   nonNegativeBigIntStringSchema,
   paginatedSchema,
   paginationQuerySchema,
+  positiveBigIntStringSchema,
   uuidSchema,
 } from '../common/index.js';
 
@@ -86,7 +87,7 @@ const salesInvoiceDetailItemSchema = z.object({
   itemType: z.enum(['JEWELRY', 'COIN']),
   itemId: uuidSchema,
   title: z.string().trim().min(1),
-  quantity: z.string().regex(/^[1-9]\d*$/u),
+  quantity: positiveBigIntStringSchema,
   pureWeightMg: nonNegativeBigIntStringSchema.nullable(),
   karat: z.number().int().min(1).max(1000).nullable(),
   payableRial: nonNegativeBigIntStringSchema,
@@ -141,8 +142,8 @@ export const salesInvoiceDetailSchema = z
     occurredAt: isoDateTimeSchema,
     quoteSnapshot: z
       .object({
-        amountRial: z.string().regex(/^[1-9]\d*$/u),
-        goldRatePerGramRial: z.string().regex(/^[1-9]\d*$/u),
+        amountRial: positiveBigIntStringSchema,
+        goldRatePerGramRial: positiveBigIntStringSchema,
         observedAt: isoDateTimeSchema,
       })
       .nullable(),
