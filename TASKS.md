@@ -2368,7 +2368,7 @@ error code · source document ID
 
 ---
 
-## [ ] BE-068 — Backup و Restore مستند
+## [x] BE-068 — Backup و Restore مستند
 
 **هدف** — مستندسازی و تست اولیه بازیابی PostgreSQL.
 
