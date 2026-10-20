@@ -13,7 +13,7 @@ import {
   users,
 } from '../../platform/database/schema';
 import { withTenantTransaction } from '../../platform/database/tenant-transaction';
-import { normalizeTextForSearch } from '../../shared/validation';
+import { likeContainsPattern, normalizeTextForSearch } from '../../shared/validation';
 import {
   LockedSnapshotInvalidError,
   lockedGoldRate1000,
@@ -290,7 +290,7 @@ export class SalesInvoiceReadsService {
         );
       }
       if (query.partySearch !== undefined) {
-        conditions.push(ilike(parties.normalizedName, `%${normalizeTextForSearch(query.partySearch)}%`));
+        conditions.push(ilike(parties.normalizedName, likeContainsPattern(normalizeTextForSearch(query.partySearch))));
       }
       if (query.status !== undefined) {
         conditions.push(eq(salesInvoices.status, query.status));

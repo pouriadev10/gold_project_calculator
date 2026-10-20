@@ -223,6 +223,33 @@ describe('parties API (requires real PostgreSQL)', () => {
     ]);
   });
 
+  it('M-04: «%»، «_» و «-» در جست‌وجو wildcard نیستند و همه را برنمی‌گردانند', async () => {
+    const search = async (term: string) => {
+      const response = await adapter.getInstance().inject({
+        method: 'GET',
+        url: `/parties?search=${encodeURIComponent(term)}`,
+        headers: headers(ownerA, tenantA),
+      });
+      expect(response.statusCode).toBe(200);
+      return response.json<PartyPageResponse>();
+    };
+
+    expect((await createParty(ownerA, tenantA, { type: 'CONSUMER', displayName: 'مریم تستی' })).statusCode).toBe(201);
+    const literal = await createParty(ownerA, tenantA, { type: 'CONSUMER', displayName: 'تست_زیرخط ۱۰۰%' });
+    expect(literal.statusCode).toBe(201);
+    const all = await search('ی');
+    expect(all.total).toBeGreaterThan(1);
+
+    // نام ذخیره‌شده ارقام لاتین دارد (نرمال‌سازی). «_» دیگر «هر نویسه» نیست.
+    expect((await search('تست_زیرخط')).items.map((item) => item.displayName)).toEqual(['تست_زیرخط 100%']);
+    expect((await search('تستxزیرخط')).total).toBe(0);
+    expect((await search('ت_ت')).total).toBe(0); // پیش‌تر «_» هر نویسه بود و «تست» را می‌یافت
+    // «%» فقط خودِ درصد است، نه «همه‌چیز».
+    expect((await search('%')).items.map((item) => item.displayName)).toEqual(['تست_زیرخط 100%']);
+    // فقط جداکننده: پیش‌تر کلید موبایل خالی می‌شد و «%%» همه‌ی اشخاص را می‌داد.
+    expect((await search('-')).total).toBe(0);
+  });
+
   it('enforces tenant isolation for list and direct identifier access', async () => {
     const create = await createParty(ownerB, tenantB, {
       type: 'CONSUMER',

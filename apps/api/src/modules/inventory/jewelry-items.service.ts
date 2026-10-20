@@ -19,7 +19,11 @@ import { DRIZZLE } from '../../platform/database/database.module';
 import { isUniqueViolation } from '../../platform/database/pg-errors';
 import { jewelryItemVersions, jewelryItems } from '../../platform/database/schema';
 import { withTenantTransaction } from '../../platform/database/tenant-transaction';
-import { normalizeTextForSearch, normalizeTextForStorage } from '../../shared/validation';
+import {
+  likeContainsPattern,
+  normalizeTextForSearch,
+  normalizeTextForStorage,
+} from '../../shared/validation';
 import {
   InactiveJewelryItemError,
   InvalidJewelryItemVersionDateError,
@@ -144,15 +148,6 @@ function financialSpecificationChanged(
     current.wageType !== next.wageType ||
     current.wageValue !== next.wageValue
   );
-}
-
-/**
- * `%` و `_` در ورودی کاربر معنای wildcard دارند و باید خنثی شوند، وگرنه
- * جست‌وجوی «٪» کل کاتالوگ را برمی‌گرداند. کاراکتر فرار پیش‌فرض LIKE در
- * PostgreSQL همان backslash است، پس نیازی به `ESCAPE` صریح نیست.
- */
-function containsPattern(value: string): string {
-  return `%${value.replace(/[\\%_]/gu, (character) => `\\${character}`)}%`;
 }
 
 /**
@@ -703,11 +698,11 @@ export class JewelryItemsService {
        * شناسه است و نرمال‌سازی فارسی روی شناسه ممنوع است. عنوان با کلید
        * نرمال‌شده تطبیق می‌شود تا «انگشتر» با یای عربی هم پیدا شود.
        */
-      const matches: SQL[] = [ilike(jewelryItems.code, containsPattern(search))];
+      const matches: SQL[] = [ilike(jewelryItems.code, likeContainsPattern(search))];
       const titleKey = normalizeTextForSearch(search);
 
       if (titleKey !== '') {
-        matches.push(like(jewelryItemVersions.normalizedTitle, containsPattern(titleKey)));
+        matches.push(like(jewelryItemVersions.normalizedTitle, likeContainsPattern(titleKey)));
       }
 
       conditions.push(or(...matches) as SQL);

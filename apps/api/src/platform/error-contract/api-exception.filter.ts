@@ -142,7 +142,7 @@ function mapException(exception: unknown): ErrorMapping {
     return {
       status: HttpStatus.BAD_REQUEST,
       code: 'VALIDATION_ERROR',
-      message: 'ورودی نامعتبر است',
+      message: exception.summary,
       fields: copyFields(exception.fields),
     };
   }

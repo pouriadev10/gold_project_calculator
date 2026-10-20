@@ -1,6 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { and, asc, count, eq, ilike, or } from 'drizzle-orm';
-import { normalizeTextForSearch, normalizeTextForStorage } from '../../shared/validation';
+import {
+  likeContainsPattern,
+  normalizeTextForSearch,
+  normalizeTextForStorage,
+} from '../../shared/validation';
 import { AuditService } from '../../platform/audit/audit.service';
 import { DRIZZLE } from '../../platform/database/database.module';
 import { parties } from '../../platform/database/schema';
@@ -131,11 +135,14 @@ export class PartiesService {
       if (query.search !== undefined) {
         const search = normalizeTextForSearch(query.search);
         const mobileSearch = normalizeMobile(query.search);
+        // جست‌وجوی تنها از جداکننده‌ها («-») کلید موبایل خالی می‌سازد و «%%» همه را می‌یافت.
         conditions.push(
-          or(
-            ilike(parties.normalizedName, `%${search}%`),
-            ilike(parties.normalizedMobile, `%${mobileSearch}%`),
-          )!,
+          mobileSearch === ''
+            ? ilike(parties.normalizedName, likeContainsPattern(search))
+            : or(
+                ilike(parties.normalizedName, likeContainsPattern(search)),
+                ilike(parties.normalizedMobile, likeContainsPattern(mobileSearch)),
+              )!,
         );
       }
       const where = and(...conditions);

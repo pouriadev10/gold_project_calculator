@@ -6,7 +6,7 @@ import {
   toSafeNumber,
 } from '@gold/core-calc';
 import { and, asc, eq, ilike } from 'drizzle-orm';
-import { normalizeTextForSearch } from '../../shared/validation';
+import { likeContainsPattern, normalizeTextForSearch } from '../../shared/validation';
 import { DRIZZLE } from '../../platform/database/database.module';
 import {
   assetDimensions,
@@ -163,7 +163,7 @@ export class PartyBalanceReportService {
           eq(parties.tenantId, tenantId),
           search === undefined
             ? undefined
-            : ilike(parties.normalizedName, `%${normalizeTextForSearch(search)}%`),
+            : ilike(parties.normalizedName, likeContainsPattern(normalizeTextForSearch(search))),
         ),
       )
       .orderBy(asc(parties.normalizedName), asc(parties.id));
