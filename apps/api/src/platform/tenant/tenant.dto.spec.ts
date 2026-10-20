@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createTenantSchema } from './tenant.dto';
+import { canonicalTimeZone, createTenantSchema } from './tenant.dto';
 
 const valid = { name: 'طلافروشی نمونه', slug: 'gold-shop' };
 
@@ -64,5 +64,32 @@ describe('createTenantSchema — سایر خطاها', () => {
     const parsed = createTenantSchema.parse({ ...valid, status: 'SUSPENDED' });
 
     expect(parsed).toEqual(valid);
+  });
+});
+
+describe('canonicalTimeZone (M-06)', () => {
+  it.each([
+    ['Asia/Tehran', 'Asia/Tehran'],
+    ['asia/tehran', 'Asia/Tehran'],
+    ['Iran', 'Asia/Tehran'],
+    ['UTC', 'UTC'],
+    ['Etc/GMT-3', 'Etc/GMT-3'],
+    ['America/Port-au-Prince', 'America/Port-au-Prince'],
+  ])('%s → %s', (input, expected) => {
+    expect(canonicalTimeZone(input)).toBe(expected);
+  });
+
+  it.each(['+03:30', '-05', '+0330', 'UTC+3', 'gmt-3:30', '03:30', 'Asia/Nowhere', ''])(
+    'آفست خام یا نام نامعتبر %s رد می‌شود',
+    (input) => {
+      expect(canonicalTimeZone(input)).toBeUndefined();
+    },
+  );
+
+  it('DTO شکل متعارف را برمی‌گرداند و آفست را با پیام فارسی رد می‌کند', () => {
+    expect(createTenantSchema.parse({ ...valid, timezone: ' asia/tehran ' }).timezone).toBe('Asia/Tehran');
+    const result = createTenantSchema.safeParse({ ...valid, timezone: '+03:30' });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toContain('IANA');
   });
 });

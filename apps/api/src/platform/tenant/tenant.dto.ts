@@ -20,6 +20,8 @@ const MAX_NAME_LENGTH = 200;
 const MAX_SLUG_LENGTH = 64;
 const MAX_TIMEZONE_LENGTH = 64;
 
+export const TIME_ZONE_MESSAGE = 'منطقه‌ی زمانی باید نام IANA معتبر باشد (مثل Asia/Tehran)، نه آفست';
+
 /**
  * منطقه‌ی زمانی باید واقعاً یک شناسه‌ی IANA معتبر باشد.
  *
@@ -27,12 +29,20 @@ const MAX_TIMEZONE_LENGTH = 64;
  * تقویم جلالی یا تعیین «روز کاری» یک فاکتور می‌ترکد — جایی که تشخیص
  * علتش خیلی سخت‌تر است. `Intl` تنها منبع حقیقتی است که خودِ runtime دارد.
  */
-function isValidTimeZone(value: string): boolean {
+export function canonicalTimeZone(value: string): string | undefined {
+  /*
+   * آفست خام («+03:30»، «-05»، «UTC+3») رد می‌شود (M-06): V8 آن را می‌پذیرد و شرق UTC
+   * می‌خواند، ولی `AT TIME ZONE` ِ PostgreSQL همان رشته را POSIX و **غرب** UTC می‌خواند —
+   * مرز روز و سال جلالی در JS و SQL هفت ساعت از هم فاصله می‌گرفت.
+   */
+  if (/^[+-]|:|^(?:utc|gmt)[+-]/iu.test(value)) {
+    return undefined;
+  }
   try {
-    new Intl.DateTimeFormat('en-US', { timeZone: value });
-    return true;
+    // شکل متعارف ICU: «asia/tehran» و «Iran» هر دو «Asia/Tehran» ذخیره می‌شوند.
+    return new Intl.DateTimeFormat('en-US', { timeZone: value }).resolvedOptions().timeZone;
   } catch {
-    return false;
+    return undefined;
   }
 }
 
@@ -55,7 +65,14 @@ export const createTenantSchema = z.object({
     .string()
     .trim()
     .max(MAX_TIMEZONE_LENGTH)
-    .refine(isValidTimeZone, 'منطقه‌ی زمانی معتبر نیست')
+    .transform((value, context) => {
+      const canonical = canonicalTimeZone(value);
+      if (canonical === undefined) {
+        context.addIssue({ code: z.ZodIssueCode.custom, message: TIME_ZONE_MESSAGE });
+        return z.NEVER;
+      }
+      return canonical;
+    })
     .optional(),
 });
 

@@ -5,7 +5,8 @@ import { isUniqueViolation } from '../database/pg-errors';
 import { tenants } from '../database/schema';
 import { configureTenantTransaction } from '../database/tenant-transaction';
 import { normalizeTextForStorage } from '../../shared/validation';
-import { TenantSlugConflictError } from './tenant.errors';
+import { canonicalTimeZone } from './tenant.dto';
+import { TenantInvalidTimeZoneError, TenantSlugConflictError } from './tenant.errors';
 import { TENANT_INITIALIZER } from './tenant-initializer';
 import type { Database } from '../database/connect';
 import type { Tenant } from '../database/schema';
@@ -29,6 +30,14 @@ export class TenantService {
    */
   async create(input: CreateTenantInput): Promise<Tenant> {
     const name = normalizeTextForStorage(input.name);
+    /*
+     * ساخت مستأجر فعلاً از سرویس هم صدا زده می‌شود (اسکریپت راه‌اندازی، تست)، نه فقط از
+     * DTO؛ پس همان قاعده‌ی منطقه‌ی زمانی اینجا هم اعمال می‌شود (M-06).
+     */
+    const timezone = input.timezone === undefined ? undefined : canonicalTimeZone(input.timezone);
+    if (input.timezone !== undefined && timezone === undefined) {
+      throw new TenantInvalidTimeZoneError(input.timezone);
+    }
 
     try {
       /*
@@ -40,9 +49,9 @@ export class TenantService {
         const [tenant] = await transaction
           .insert(tenants)
           .values(
-            input.timezone === undefined
+            timezone === undefined
               ? { name, slug: input.slug }
-              : { name, slug: input.slug, timezone: input.timezone },
+              : { name, slug: input.slug, timezone },
           )
           .returning();
 

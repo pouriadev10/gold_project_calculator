@@ -4,6 +4,8 @@ import { Test } from '@nestjs/testing';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { AppModule } from '../src/app.module';
+import { TenantInvalidTimeZoneError } from '../src/platform/tenant/tenant.errors';
+import { TenantService } from '../src/platform/tenant/tenant.service';
 import { DEFAULT_TENANT_TIMEZONE } from '../src/platform/database/schema';
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 
@@ -67,6 +69,31 @@ describe('endpointهای توسعه‌ی مستأجر (نیازمند PostgreSQL
     });
 
     expect(response.json<{ timezone: string }>().timezone).toBe('UTC');
+  });
+
+  it('M-06: آفست خام رد و نام IANA به شکل متعارف ذخیره می‌شود', async () => {
+    const create = (timezone: string) =>
+      adapter.getInstance().inject({
+        method: 'POST',
+        url: '/internal/dev/tenants',
+        payload: { name: 'منطقه‌ی زمانی', slug: uniqueSlug(), timezone },
+      });
+
+    // V8 «+03:30» را شرق UTC و PostgreSQL ِ POSIX غرب UTC می‌خواند.
+    for (const offset of ['+03:30', '-05', 'UTC+3']) {
+      expect((await create(offset)).statusCode).toBe(400);
+    }
+    expect((await create('asia/tehran')).json<{ timezone: string }>().timezone).toBe('Asia/Tehran');
+    expect((await create('Iran')).json<{ timezone: string }>().timezone).toBe('Asia/Tehran');
+  });
+
+  it('M-06: همان قاعده در سرویس، برای سازنده‌هایی که از DTO رد نمی‌شوند', async () => {
+    const service = app.get(TenantService);
+    await expect(
+      service.create({ name: 'سرویس', slug: uniqueSlug(), timezone: '+03:30' }),
+    ).rejects.toBeInstanceOf(TenantInvalidTimeZoneError);
+    const created = await service.create({ name: 'سرویس', slug: uniqueSlug(), timezone: 'asia/tehran' });
+    expect(created.timezone).toBe('Asia/Tehran');
   });
 
   it('مستأجر ساخته‌شده با شناسه خوانده می‌شود', async () => {

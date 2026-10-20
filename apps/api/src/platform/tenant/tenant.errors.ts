@@ -17,6 +17,14 @@ export class TenantSlugConflictError extends Error {
   }
 }
 
+/** منطقه‌ی زمانی که نام IANA معتبر نیست، یا آفست خام است — M-06. */
+export class TenantInvalidTimeZoneError extends Error {
+  constructor(readonly timezone: string) {
+    super('منطقه‌ی زمانی باید نام IANA معتبر باشد (مثل Asia/Tehran)، نه آفست');
+    this.name = 'TenantInvalidTimeZoneError';
+  }
+}
+
 /**
  * تلاش برای عملیات نوشتنی روی مستأجر غیرفعال.
  *
