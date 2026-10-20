@@ -30,7 +30,16 @@ const secretString = (minLength: number, message: string) =>
     .min(minLength, message)
     .transform((value) => new Secret(value));
 
-export const envSchema = z.object({
+/**
+ * مقدارهای نمونه‌ای که در مخزن منتشر شده‌اند (`docker-compose.yml`). هرکس مخزن را
+ * دیده آن‌ها را می‌داند؛ توکنی که با آن‌ها امضا شود قابل جعل است — با هر نقشی و
+ * برای هر مستأجری. در production پذیرفته نمی‌شوند (M-05).
+ */
+const PUBLISHED_PLACEHOLDER_SECRET = /dev-only|change-in-production/iu;
+
+const SIGNING_SECRET_KEYS = ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'] as const;
+
+const envObjectSchema = z.object({
   NODE_ENV: z.enum(NODE_ENVS).default('development'),
 
   PORT: z.coerce.number().int().min(1).max(MAX_PORT).default(3000),
@@ -55,6 +64,23 @@ export const envSchema = z.object({
     MIN_SECRET_LENGTH,
     `باید حداقل ${MIN_SECRET_LENGTH} کاراکتر باشد — با «openssl rand -base64 48» تولید کن`,
   ),
+});
+
+export const envSchema = envObjectSchema.superRefine((env, context) => {
+  if (env.NODE_ENV !== 'production') return;
+  for (const key of SIGNING_SECRET_KEYS) {
+    // superRefine روی ورودی «dirty» هم اجرا می‌شود؛ اگر کلید کوتاه بود، transform به
+    // Secret انجام نشده و مقدار هنوز رشته است.
+    const value: unknown = env[key];
+    const raw = value instanceof Secret ? value.reveal() : String(value);
+    if (PUBLISHED_PLACEHOLDER_SECRET.test(raw)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [key],
+        message: 'مقدار نمونه‌ی منتشرشده در مخزن است و در production پذیرفته نیست — با «openssl rand -base64 48» کلید تازه بساز',
+      });
+    }
+  }
 });
 
 type ParsedEnv = z.infer<typeof envSchema>;

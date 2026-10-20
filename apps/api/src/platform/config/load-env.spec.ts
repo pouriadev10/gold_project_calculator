@@ -119,3 +119,39 @@ describe('loadEnv — نشت نکردن secret', () => {
     expect(JSON.stringify(config)).not.toContain('hunter2');
   });
 });
+
+describe('loadEnv — کلید نمونه‌ی منتشرشده در production (M-05)', () => {
+  const COMPOSE_ACCESS = 'dev-only-access-secret-change-in-production';
+  const COMPOSE_REFRESH = 'dev-only-refresh-secret-change-in-production';
+
+  it('کلیدهای پیش‌فرض docker-compose در production راه‌اندازی را متوقف می‌کنند', () => {
+    try {
+      loadEnv(
+        validEnv({ NODE_ENV: 'production', JWT_ACCESS_SECRET: COMPOSE_ACCESS, JWT_REFRESH_SECRET: COMPOSE_REFRESH }),
+      );
+      expect.unreachable('باید خطا می‌داد');
+    } catch (error) {
+      expect(error).toBeInstanceOf(EnvValidationError);
+      expect((error as EnvValidationError).names).toEqual(['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET']);
+      expect((error as EnvValidationError).message).not.toContain(COMPOSE_ACCESS);
+    }
+  });
+
+  it('همان کلیدها بیرون از production مجازند (توسعه با docker compose up)', () => {
+    for (const nodeEnv of ['development', 'test']) {
+      expect(() =>
+        loadEnv(validEnv({ NODE_ENV: nodeEnv, JWT_ACCESS_SECRET: COMPOSE_ACCESS, JWT_REFRESH_SECRET: COMPOSE_REFRESH })),
+      ).not.toThrow();
+    }
+  });
+
+  it('کلید واقعی در production پذیرفته است', () => {
+    expect(loadEnv(validEnv({ NODE_ENV: 'production' })).nodeEnv).toBe('production');
+  });
+
+  it('کلید کوتاه در production خطای طول می‌دهد، نه TypeError', () => {
+    expect(() => loadEnv(validEnv({ NODE_ENV: 'production', JWT_ACCESS_SECRET: 'dev-only' }))).toThrow(
+      EnvValidationError,
+    );
+  });
+});
