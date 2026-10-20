@@ -5,6 +5,7 @@ import {
   profitReportQuerySchema,
 } from '@gold/contracts';
 import { JwtAuthGuard } from '../../platform/auth/jwt-auth.guard';
+import { Roles } from '../../platform/auth/roles.decorator';
 import { RolesGuard } from '../../platform/auth/roles.guard';
 import { RequestContextService } from '../../platform/request-context/request-context.service';
 import { ZodValidationPipe } from '../../shared/validation';
@@ -53,7 +54,12 @@ export class ReportingController {
     return this.dashboard.getDashboard(this.context.getTenantId(), query);
   }
 
+  /**
+   * سود فقط برای مالک و مدیر — همان `PROFIT_REPORT_ROLES` ِ فرانت (FE-028). پیش‌تر فقط رابط
+   * کاربری آن را پنهان می‌کرد و صندوق‌دار با درخواست مستقیم گزارش را می‌گرفت (#5، M-07).
+   */
   @Get('profit')
+  @Roles('OWNER', 'MANAGER')
   async getProfit(
     @Query(new ZodValidationPipe(profitReportQuerySchema)) query: ProfitReportQuery,
   ): Promise<ProfitReport> {

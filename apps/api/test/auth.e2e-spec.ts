@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { randomUUID } from 'node:crypto';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { Test } from '@nestjs/testing';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -243,6 +243,28 @@ describe('احراز هویت (نیازمند PostgreSQL واقعی)', () => {
       });
 
       expect(response.statusCode).toBe(401);
+    });
+
+    it('M-07: تمدید هم‌زمان با یک توکن فقط یک نشست تازه می‌سازد', async () => {
+      const first = (await login(member.email, PASSWORD, tenantActive.slug)).json<SessionBody>();
+
+      /*
+       * pool ِ اتصال باید گرم باشد: با pool ِ سرد، درخواست اول روی تنها اتصال آزاد کامل
+       * می‌شود و بقیه پشت handshake ِ اتصال تازه می‌مانند — مسابقه دیده نمی‌شد و تست الکی
+       * سبز بود. روی سرور شلوغ اتصال‌ها همیشه گرم‌اند.
+       */
+      await Promise.all(Array.from({ length: 10 }, () => db.execute(sql`SELECT pg_sleep(0.05)`)));
+
+      // توکن دزدیده‌شده‌ای که هم‌زمان با کاربر واقعی مصرف می‌شود نباید نشست دوم بسازد.
+      const attempts = await Promise.all(
+        Array.from({ length: 4 }, () =>
+          request('POST', '/auth/refresh', { payload: { refreshToken: first.refreshToken } }),
+        ),
+      );
+      const statuses = attempts.map((response) => response.statusCode).sort();
+
+      expect(statuses.filter((status) => status === 200)).toHaveLength(1);
+      expect(statuses.filter((status) => status === 401)).toHaveLength(3);
     });
   });
 

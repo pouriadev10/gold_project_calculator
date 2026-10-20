@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, gt, isNull } from 'drizzle-orm';
 import { DRIZZLE } from '../database/database.module';
 import { refreshTokens } from '../database/schema';
 import { MembershipService } from '../users/membership.service';
@@ -14,6 +14,7 @@ import {
 import { PasswordService } from './password.service';
 import { TokenService } from './token.service';
 import type { Database } from '../database/connect';
+import type { TenantTransaction } from '../database/tenant-transaction';
 import type { RoleCode, Tenant, User } from '../database/schema';
 import type { LoginInput } from './auth.dto';
 
@@ -95,32 +96,46 @@ export class AuthService {
   async refresh(rawToken: string): Promise<AuthSession> {
     const tokenHash = this.tokens.hashRefreshToken(rawToken);
 
-    const [stored] = await this.db
-      .select()
-      .from(refreshTokens)
-      .where(and(eq(refreshTokens.tokenHash, tokenHash), isNull(refreshTokens.revokedAt)))
-      .limit(1);
+    /*
+     * مصرف توکن **اتمی** است (M-07): پیش‌تر SELECT ِ «باطل‌نشده» جدا از UPDATE ِ باطل‌سازی
+     * بود و نتیجه‌ی UPDATE بررسی نمی‌شد؛ چند تمدید هم‌زمان با یک توکن — مثلاً توکن
+     * دزدیده‌شده کنار کاربر واقعی — همه موفق می‌شدند و هر کدام نشست مستقل می‌گرفتند.
+     * حالا UPDATE ... RETURNING قفل ردیف می‌گیرد؛ درخواست هم‌زمان پس از commit ِ اولی
+     * شرط `revoked_at IS NULL` را دوباره می‌سنجد و هیچ ردیفی برنمی‌گرداند. صدور توکن
+     * تازه در همان تراکنش است: اگر بررسی بعدی شکست بخورد، باطل‌سازی هم برمی‌گردد.
+     */
+    return this.db.transaction(async (transaction) => {
+      const [claimed] = await transaction
+        .update(refreshTokens)
+        .set({ revokedAt: new Date() })
+        .where(
+          and(
+            eq(refreshTokens.tokenHash, tokenHash),
+            isNull(refreshTokens.revokedAt),
+            gt(refreshTokens.expiresAt, new Date()),
+          ),
+        )
+        .returning({ userId: refreshTokens.userId, tenantId: refreshTokens.tenantId });
 
-    if (!stored || stored.expiresAt.getTime() <= Date.now()) {
-      throw new InvalidRefreshTokenError();
-    }
+      if (!claimed) {
+        throw new InvalidRefreshTokenError();
+      }
 
-    const user = await this.users.findById(stored.userId);
-    const tenant = await this.tenants.findById(stored.tenantId);
+      const user = await this.users.findById(claimed.userId);
+      const tenant = await this.tenants.findById(claimed.tenantId);
 
-    if (!user || user.status !== 'ACTIVE' || !tenant || tenant.status !== 'ACTIVE') {
-      throw new InvalidRefreshTokenError();
-    }
+      if (!user || user.status !== 'ACTIVE' || !tenant || tenant.status !== 'ACTIVE') {
+        throw new InvalidRefreshTokenError();
+      }
 
-    const role = await this.memberships.findRole(tenant.id, user.id);
+      const role = await this.memberships.findRole(tenant.id, user.id);
 
-    if (!role) {
-      throw new InvalidRefreshTokenError();
-    }
+      if (!role) {
+        throw new InvalidRefreshTokenError();
+      }
 
-    await this.#revoke(tokenHash);
-
-    return this.#issueSession(user, tenant, role);
+      return this.#issueSession(user, tenant, role, transaction);
+    });
   }
 
   /**
@@ -151,7 +166,12 @@ export class AuthService {
     return role ? { user, tenant, role } : undefined;
   }
 
-  async #issueSession(user: User, tenant: Tenant, role: RoleCode): Promise<AuthSession> {
+  async #issueSession(
+    user: User,
+    tenant: Tenant,
+    role: RoleCode,
+    executor: Database | TenantTransaction = this.db,
+  ): Promise<AuthSession> {
     const accessToken = await this.tokens.signAccessToken({
       sub: user.id,
       tid: tenant.id,
@@ -160,7 +180,7 @@ export class AuthService {
 
     const { token, tokenHash } = this.tokens.generateRefreshToken();
 
-    await this.db.insert(refreshTokens).values({
+    await executor.insert(refreshTokens).values({
       userId: user.id,
       tenantId: tenant.id,
       tokenHash,

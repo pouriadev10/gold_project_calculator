@@ -75,13 +75,14 @@ describe('profit report (BE-060)', () => {
     users: UserService,
     passwords: PasswordService,
     memberships: MembershipService,
+    roleCode: 'OWNER' | 'MANAGER' | 'CASHIER' = 'OWNER',
   ): Promise<Member> {
     const user = await users.create({
       email: `${randomUUID().slice(0, 12)}@example.com`,
       displayName: 'Profit report owner',
     });
     await users.setPasswordHash(user.id, await passwords.hash(PASSWORD));
-    await memberships.add(tenant.id, { userId: user.id, roleCode: 'OWNER' });
+    await memberships.add(tenant.id, { userId: user.id, roleCode });
     const login = await adapter.getInstance().inject({
       method: 'POST',
       url: '/auth/login',
@@ -351,6 +352,23 @@ describe('profit report (BE-060)', () => {
     });
     expect(after.statusCode).toBe(200);
     expect(after.json<ProfitReport>()).toEqual(before.json<ProfitReport>());
+  });
+
+  it('M-07: گزارش سود فقط برای مالک و مدیر — صندوق‌دار با درخواست مستقیم هم ۴۰۳ می‌گیرد (#5)', async () => {
+    const url = `/reporting/profit?from=${encodeURIComponent(FROM)}&to=${encodeURIComponent(TO)}`;
+    const as = async (roleCode: 'MANAGER' | 'CASHIER') => {
+      const member = await makeOwner(app.get(UserService), app.get(PasswordService), app.get(MembershipService), roleCode);
+      return adapter.getInstance().inject({
+        method: 'GET',
+        url,
+        headers: { authorization: `Bearer ${member.token}`, 'x-tenant-id': tenant.id },
+      });
+    };
+
+    expect((await as('MANAGER')).statusCode).toBe(200);
+    const cashier = await as('CASHIER');
+    expect(cashier.statusCode).toBe(403);
+    expect(cashier.body).not.toContain('totalProfit');
   });
 
   it('rejects an invalid time range before reading any tenant data', async () => {

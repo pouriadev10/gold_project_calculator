@@ -3835,12 +3835,16 @@
           "گزارش"
         ],
         "summary": "گزارش سود دومقیاسه (طلا و ریال)",
-        "description": "همه‌ی نقش‌های عضو مستأجر.",
+        "description": "نقش‌های مجاز: `OWNER`، `MANAGER`.",
         "operationId": "ReportingController_getProfit",
         "security": [
           {
             "bearerAuth": []
           }
+        ],
+        "x-roles": [
+          "OWNER",
+          "MANAGER"
         ],
         "parameters": [
           {
