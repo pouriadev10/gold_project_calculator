@@ -23,11 +23,22 @@ export interface InvoiceExportLine {
   readonly amountRial: string | null;
 }
 
+/** صادرکننده‌ی سند (مستأجر) به‌اضافه‌ی منطقه‌ی زمانی‌اش برای تاریخ‌های چاپی — M-10. */
+export interface DocumentIssuer extends InvoiceExportParty {
+  readonly timeZone: string;
+}
+
 export interface InvoiceExportInput {
   readonly title: string;
   readonly documentNumber: string;
+  /**
+   * نام فایل بدون پسوند، وقتی سند فاکتور نیست (M-10، #16). پیش‌تر رسید خرید و صورت‌حساب هم
+   * `invoice-<uuid>.pdf` نام می‌گرفتند. نبودنش یعنی `invoice-<documentNumber>`.
+   */
+  readonly fileNameStem?: string;
   readonly issuedAt: Date;
-  readonly issuer: InvoiceExportParty;
+  /** تاریخ‌های چاپی در منطقه‌ی زمانی مستأجر (`tenants.timezone`)، نه یک تهران ِ ثابت. */
+  readonly issuer: DocumentIssuer;
   readonly recipient: InvoiceExportParty;
   readonly lockedQuote:
     | {

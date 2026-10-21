@@ -43,6 +43,7 @@ export class PartyStatementPdfService {
     return this.exporter.exportInvoice({
       title: 'صورت‌حساب شخص',
       documentNumber: party.id,
+      fileNameStem: `statement-${party.id.slice(0, 8)}`,
       issuedAt: issuedAt === undefined ? new Date() : new Date(issuedAt),
       issuer,
       recipient: { displayName: party.displayName, mobile: party.mobile },

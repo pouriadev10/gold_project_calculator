@@ -46,11 +46,10 @@ function pdfCoordinate(hundredths: number): string {
   return `${(hundredths - fraction) / 100}.${fraction.toString().padStart(2, '0')}`;
 }
 const PERSIAN_INTEGER_FORMATTER = new Intl.NumberFormat('fa-IR');
-const PERSIAN_DATE_FORMATTER = new Intl.DateTimeFormat('fa-IR', {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-  timeZone: 'Asia/Tehran',
-});
+/** منطقه‌ی زمانی همان مستأجر صادرکننده؛ پیش‌تر «Asia/Tehran» ِ ثابت بود (M-10). */
+function persianDateFormatter(timeZone: string): Intl.DateTimeFormat {
+  return new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium', timeStyle: 'short', timeZone });
+}
 
 /**
  * Arabic presentation forms. The renderer emits visual-order glyphs because
@@ -58,8 +57,17 @@ const PERSIAN_DATE_FORMATTER = new Intl.DateTimeFormat('fa-IR', {
  */
 const ARABIC_FORMS = new Map<number, readonly number[]>([
   [0x0622, [0xfe81, 0xfe82]],
+  /*
+   * M-10: «أ إ ؤ ئ ة» پیش‌تر در جدول نبودند و جدا از حروف کناری چاپ می‌شدند — «رئیسی»
+   * به‌صورت «ر ئ یسی» می‌آمد. «ئ» در نام‌های رایج (رئیسی، رئوفی، مسئول) فراوان است.
+   */
+  [0x0623, [0xfe83, 0xfe84]],
+  [0x0624, [0xfe85, 0xfe86]],
+  [0x0625, [0xfe87, 0xfe88]],
+  [0x0626, [0xfe89, 0xfe8a, 0xfe8b, 0xfe8c]],
   [0x0627, [0xfe8d, 0xfe8e]],
   [0x0628, [0xfe8f, 0xfe90, 0xfe91, 0xfe92]],
+  [0x0629, [0xfe93, 0xfe94]],
   [0x062a, [0xfe95, 0xfe96, 0xfe97, 0xfe98]],
   [0x062b, [0xfe99, 0xfe9a, 0xfe9b, 0xfe9c]],
   [0x062c, [0xfe9d, 0xfe9e, 0xfe9f, 0xfea0]],
@@ -272,8 +280,8 @@ function formatRial(value: string | null): string {
   return value === null ? '-' : `${formatInteger(value)} ریال`;
 }
 
-function formatDate(value: Date): string {
-  return PERSIAN_DATE_FORMATTER.format(value);
+function formatDate(value: Date, timeZone: string): string {
+  return persianDateFormatter(timeZone).format(value);
 }
 
 function paginate<T>(items: readonly T[]): readonly (readonly T[])[] {
@@ -338,14 +346,14 @@ function toPdf(input: InvoiceExportInput, font: ParsedFont): Buffer {
   const details = [
     input.title,
     `شماره سند: ${input.documentNumber}`,
-    `تاریخ صدور: ${formatDate(input.issuedAt)}`,
+    `تاریخ صدور: ${formatDate(input.issuedAt, input.issuer.timeZone)}`,
     `فروشنده: ${input.issuer.displayName}`,
     `خریدار: ${input.recipient.displayName}`,
     ...(input.lockedQuote === null
       ? []
       : [
           `مظنه قفل‌شده: ${formatRial(input.lockedQuote.amountRial)}`,
-          `زمان مظنه: ${formatDate(input.lockedQuote.observedAt)}`,
+          `زمان مظنه: ${formatDate(input.lockedQuote.observedAt, input.issuer.timeZone)}`,
         ]),
     'اقلام:',
     ...input.lines.map(
@@ -456,7 +464,7 @@ export class PdfInvoiceExporter implements InvoiceExporter {
   async exportInvoice(input: InvoiceExportInput): Promise<ExportedFile> {
     const content = toPdf(input, parseVazirmatn());
     return {
-      fileName: `invoice-${input.documentNumber}.pdf`,
+      fileName: `${input.fileNameStem ?? `invoice-${input.documentNumber}`}.pdf`,
       contentType: 'application/pdf',
       content,
     };

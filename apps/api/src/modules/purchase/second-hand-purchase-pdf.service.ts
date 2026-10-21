@@ -82,6 +82,8 @@ export class SecondHandPurchasePdfService {
     return this.exporter.exportInvoice({
       title: 'رسید خرید دست‌دوم',
       documentNumber: document.purchase.id,
+      // همان نامی که فرانت می‌سازد (`PurchaseReceiptPdf`)، تا کلاینت‌های دیگر هم نام درست بگیرند.
+      fileNameStem: `purchase-receipt-${document.purchase.id.slice(0, 8)}`,
       issuedAt: document.purchase.effectiveAt,
       issuer,
       recipient: {

@@ -22,7 +22,7 @@ describe('PdfInvoiceExporter', () => {
       title: 'فاکتور فروش',
       documentNumber: 'S-1405-00001',
       issuedAt: new Date('2026-08-16T08:30:00.000Z'),
-      issuer: { displayName: 'طلافروشی آزمون', mobile: '09120000000' },
+      issuer: { displayName: 'طلافروشی آزمون', mobile: '09120000000', timeZone: 'Asia/Tehran' },
       recipient: { displayName: 'مشتری آزمون', mobile: null },
       lockedQuote: {
         amountRial: '125000000',
@@ -62,8 +62,9 @@ describe('PdfInvoiceExporter', () => {
     const exported = await new PdfInvoiceExporter().exportInvoice({
       title: 'صورت‌حساب شخص',
       documentNumber: 'statement-1',
+      fileNameStem: 'statement-ab12cd34',
       issuedAt: new Date('2026-08-16T08:30:00.000Z'),
-      issuer: { displayName: 'فروشگاه آزمون', mobile: null },
+      issuer: { displayName: 'فروشگاه آزمون', mobile: null, timeZone: 'Asia/Tehran' },
       recipient: { displayName: 'مشتری آزمون', mobile: null },
       lockedQuote: null,
       lines: Array.from({ length: 36 }, (_, index) => ({
@@ -76,8 +77,62 @@ describe('PdfInvoiceExporter', () => {
 
     const rawPdf = exported.content.toString('ascii');
     expect(rawPdf).toContain('/Count 2');
+    expect(exported.fileName).toBe('statement-ab12cd34.pdf'); // #16: نه invoice-…
     const renderedSnapshot = unicodeFromCMap(exported.content);
     expect(renderedSnapshot).toContain('statement');
     expect(renderedSnapshot).toContain('history');
+  });
+});
+
+describe('PdfInvoiceExporter — شکل حروف فارسی (M-10)', () => {
+  async function renderedGlyphs(recipient: string, timeZone = 'Asia/Tehran'): Promise<string> {
+    const exported = await new PdfInvoiceExporter().exportInvoice({
+      title: 'رسید',
+      documentNumber: '1405-1',
+      issuedAt: new Date('2026-08-16T08:30:00.000Z'),
+      issuer: { displayName: 'فروشگاه', mobile: null, timeZone },
+      recipient: { displayName: recipient, mobile: null },
+      lockedQuote: null,
+      lines: [],
+      historicalSnapshot: {},
+    });
+    return unicodeFromCMap(exported.content);
+  }
+
+  it('«ئ» با حروف کناری وصل می‌شود: میانی در «مسئول»، آغازین پس از «ر» در «رئیسی»', async () => {
+    const medial = await renderedGlyphs('مسئول');
+    expect(medial).toContain('ﺌ'); // ئ میانی
+    expect(medial).not.toContain('ئ'); // ئ ِ بی‌شکل
+    // «ر» به چپ وصل نمی‌شود، پس «ئ» بعد از آن آغازین است — نه میانی.
+    const initial = await renderedGlyphs('رئیسی');
+    expect(initial).toContain('ﺋ');
+    expect(initial).not.toContain('ئ');
+  });
+
+  it('«أ ؤ إ ة» شکل پایانی خود را می‌گیرند', async () => {
+    const glyphs = await renderedGlyphs('سأل مؤمن بإذن فاطمة');
+    for (const finalForm of ['ﺄ', 'ﺆ', 'ﺈ', 'ﺔ']) expect(glyphs).toContain(finalForm);
+    for (const bare of ['أ', 'ؤ', 'إ', 'ة']) expect(glyphs).not.toContain(bare);
+  });
+});
+
+describe('PdfInvoiceExporter — تاریخ در منطقه‌ی مستأجر (M-10)', () => {
+  it('همان لحظه برای مستأجر UTC و تهران دو تاریخ متفاوت چاپ می‌کند', async () => {
+    const render = async (timeZone: string) => {
+      const exported = await new PdfInvoiceExporter().exportInvoice({
+        title: 'رسید',
+        documentNumber: '1405-1',
+        // ۲۲:۳۰ UTC ِ ۲۵ مرداد = ۰۳:۰۰ بامداد ۲۶ مرداد به وقت تهران
+        issuedAt: new Date('2026-08-16T22:30:00.000Z'),
+        issuer: { displayName: 'فروشگاه', mobile: null, timeZone },
+        recipient: { displayName: 'مشتری', mobile: null },
+        lockedQuote: null,
+        lines: [],
+        historicalSnapshot: {},
+      });
+      return exported.content.toString('latin1');
+    };
+    expect(await render('UTC')).toEqual(await render('UTC')); // خروجی قطعی است، پس تفاوت پایین فقط از تاریخ است
+    expect(await render('UTC')).not.toEqual(await render('Asia/Tehran'));
   });
 });

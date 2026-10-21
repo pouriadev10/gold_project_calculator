@@ -503,6 +503,12 @@ describe('party statements (BE-057)', () => {
       expect(Buffer.from(response.body, 'binary').subarray(0, 5).toString('ascii')).toBe('%PDF-');
       expect(Buffer.from(response.body, 'binary').toString('ascii')).toContain('/ToUnicode');
     }
+    // #16 (M-10): هر سند نام خودش را دارد — پیش‌تر رسید خرید و صورت‌حساب هم invoice-<uuid>.pdf بودند.
+    const fileName = (response: { headers: Record<string, unknown> }) =>
+      decodeURIComponent(String(response.headers['x-file-name']));
+    expect(fileName(salesPdf)).toMatch(/^invoice-\d{4}-\d+\.pdf$/u);
+    expect(fileName(purchasePdf)).toMatch(/^purchase-receipt-[0-9a-f]{8}\.pdf$/u);
+    expect(fileName(statementPdf)).toMatch(/^statement-[0-9a-f]{8}\.pdf$/u);
     expect(renderedPdfText(salesPdf.body)).toContain('307801100');
     expect(renderedPdfText(purchasePdf.body)).toContain('۰۰۰٬۰۰۰٬۹۰');
     expect(renderedPdfText(statementPdf.body)).toContain('100000000');
