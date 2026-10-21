@@ -4,6 +4,7 @@ import type {
   ExportedFile,
   InvoiceExporter,
   InvoiceExportInput,
+  InvoiceExportLine,
   InvoiceSnapshotValue,
 } from './invoice-exporter';
 
@@ -342,6 +343,24 @@ class GlyphRegistry {
   }
 }
 
+/**
+ * متن یک خط سند. فاکتور و رسید همان شکل قبلی را دارند («عنوان | مقدار: … | مبلغ: …»)؛
+ * صورت‌حساب تاریخ، برچسب «تغییر» و «مانده» می‌گیرد (M-15).
+ */
+export function formatExportLine(line: InvoiceExportLine, timeZone: string): string {
+  const parts = [
+    line.occurredAt === undefined ? line.title : `${formatDate(line.occurredAt, timeZone)} | ${line.title}`,
+    `${line.quantityLabel ?? 'مقدار'}: ${formatInteger(line.quantity)}`,
+  ];
+  if (line.amountRial !== null || line.balance === undefined) {
+    parts.push(`مبلغ: ${formatRial(line.amountRial)}`);
+  }
+  if (line.balance !== undefined) {
+    parts.push(`مانده: ${formatInteger(line.balance)}`);
+  }
+  return parts.join(' | ');
+}
+
 function toPdf(input: InvoiceExportInput, font: ParsedFont): Buffer {
   const details = [
     input.title,
@@ -356,10 +375,7 @@ function toPdf(input: InvoiceExportInput, font: ParsedFont): Buffer {
           `زمان مظنه: ${formatDate(input.lockedQuote.observedAt, input.issuer.timeZone)}`,
         ]),
     'اقلام:',
-    ...input.lines.map(
-      (line) =>
-        `${line.title} | مقدار: ${formatInteger(line.quantity)} | مبلغ: ${formatRial(line.amountRial)}`,
-    ),
+    ...input.lines.map((line) => formatExportLine(line, input.issuer.timeZone)),
     'اطلاعات تاریخی قفل‌شده:',
     ...flattenSnapshot(input.historicalSnapshot).map((entry) => `${entry.key}: ${entry.value}`),
   ];

@@ -29,6 +29,8 @@ type StatementRateSnapshot = StatementEntry['documentRateSnapshots'][number];
 export interface PartyStatementExport {
   readonly partyId: string;
   readonly items: readonly StatementEntry[];
+  /** عنوان فارسی هر بُعد (`asset_dimensions.title`، برای سکه همان عنوان نوع سکه) — PDF (M-15). */
+  readonly dimensionTitles: ReadonlyMap<string, string>;
 }
 
 interface StatementEvent {
@@ -39,6 +41,7 @@ interface StatementEvent {
   readonly createdAt: Date;
   readonly description: string;
   readonly dimension: StatementDimension;
+  readonly dimensionTitle: string;
   quantity: bigint;
   runningBalance: bigint;
 }
@@ -120,7 +123,9 @@ export class PartyStatementsService {
         }
         return query.sourceType === undefined || event.sourceType === query.sourceType;
       });
-      const page = visible.slice(query.offset, query.offset + query.limit);
+      // `desc` فقط ترتیب نمایش است؛ مانده‌ی جاری بالاتر به ترتیب زمانی حساب شده (M-15).
+      const ordered = query.order === 'desc' ? [...visible].reverse() : visible;
+      const page = ordered.slice(query.offset, query.offset + query.limit);
       const rateSnapshots = await this.loadDocumentRateSnapshotsInTransaction(
         transaction,
         tenantId,
@@ -131,10 +136,12 @@ export class PartyStatementsService {
         tenantId,
         query.referenceQuoteId,
       );
+      const dimensions = await this.loadDimensionsInTransaction(transaction, tenantId, partyId);
 
       return {
         partyId: party.id,
         displayReferenceMazneh,
+        dimensions,
         items: page.map((event) => ({
           ledgerTransactionId: event.ledgerTransactionId,
           source: { type: event.sourceType, id: event.sourceId },
@@ -180,6 +187,7 @@ export class PartyStatementsService {
 
       return {
         partyId: party.id,
+        dimensionTitles: new Map(events.map((event) => [event.dimension.id, event.dimensionTitle])),
         items: events.map((event) => ({
           ledgerTransactionId: event.ledgerTransactionId,
           source: { type: event.sourceType, id: event.sourceId },
@@ -196,6 +204,47 @@ export class PartyStatementsService {
         })),
       };
     });
+  }
+
+  /**
+   * هر بُعدی که شخص در کل دفترش دارد، مستقل از فیلتر و صفحه (M-15، مسئله‌ی #7). پیش‌تر فرانت
+   * فهرست را از ۲۰۰ ردیف اول صورت‌حساب می‌ساخت و بُعدی که بعدتر آمده بود در فیلتر نبود.
+   * ترتیب: ریال، طلا، نقره، سپس سکه‌ها به ترتیب کد.
+   */
+  private async loadDimensionsInTransaction(
+    transaction: TenantTransaction,
+    tenantId: string,
+    partyId: string,
+  ): Promise<StatementDimension[]> {
+    const rows = await transaction
+      .selectDistinct({
+        id: assetDimensions.id,
+        code: assetDimensions.code,
+        kind: assetDimensions.kind,
+        coinTypeId: assetDimensions.coinTypeId,
+        coinCode: coinTypes.code,
+      })
+      .from(ledgerEntries)
+      .innerJoin(
+        ledgerAccounts,
+        and(eq(ledgerEntries.tenantId, ledgerAccounts.tenantId), eq(ledgerEntries.accountId, ledgerAccounts.id)),
+      )
+      .innerJoin(
+        assetDimensions,
+        and(eq(ledgerEntries.tenantId, assetDimensions.tenantId), eq(ledgerEntries.dimensionId, assetDimensions.id)),
+      )
+      .leftJoin(
+        coinTypes,
+        and(eq(assetDimensions.tenantId, coinTypes.tenantId), eq(assetDimensions.coinTypeId, coinTypes.id)),
+      )
+      .where(and(eq(ledgerEntries.tenantId, tenantId), eq(ledgerAccounts.partyId, partyId)));
+
+    const kindRank: Record<StatementDimension['kind'], number> = { RIAL: 0, GOLD: 1, SILVER: 2, COIN: 3 };
+    return rows.sort(
+      (left, right) =>
+        kindRank[left.kind] - kindRank[right.kind] ||
+        (left.coinCode ?? left.code).localeCompare(right.coinCode ?? right.code),
+    );
   }
 
   private async loadEventsInTransaction(
@@ -216,6 +265,7 @@ export class PartyStatementsService {
         dimensionId: assetDimensions.id,
         dimensionCode: assetDimensions.code,
         dimensionKind: assetDimensions.kind,
+        dimensionTitle: assetDimensions.title,
         coinTypeId: assetDimensions.coinTypeId,
         coinCode: coinTypes.code,
       })
@@ -287,6 +337,7 @@ export class PartyStatementsService {
           coinTypeId: row.coinTypeId,
           coinCode: row.coinCode,
         },
+        dimensionTitle: row.dimensionTitle,
         quantity: row.quantity,
         runningBalance: 0n,
       });

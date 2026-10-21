@@ -48,8 +48,8 @@ export function dimensionLabel(dimension: PartyStatementDimension): string {
 }
 
 /**
- * فهرست یکتای بُعدها به ترتیب اولین دیده‌شدن. API فهرست جدای بُعد ندارد،
- * پس گزینه‌های فیلتر از خود ردیف‌های صورت‌حساب ساخته می‌شوند.
+ * فهرست یکتای بُعدها به ترتیب اولین دیده‌شدن — گزینه‌های فیلتر از `dimensions` ِ پاسخ
+ * صورت‌حساب (کل دفتر شخص) به‌علاوه‌ی بُعد انتخاب‌شده ساخته می‌شوند.
  */
 export function collectDimensions(
   ...groups: ReadonlyArray<ReadonlyArray<PartyStatementDimension | null | undefined>>

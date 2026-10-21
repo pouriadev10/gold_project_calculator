@@ -255,7 +255,12 @@ function PartyBalanceCardBody({
 }
 
 function RecentActivityCard({ partyId }: { partyId: string }) {
-  const { data, isLoading, isError, refetch } = usePartyStatement(partyId, { limit: 5, offset: 0 });
+  // تازه‌ترین‌ها اول (M-15): صورت‌حساب پیش‌فرض قدیمی‌ترین‌ها را اول می‌دهد.
+  const { data, isLoading, isError, refetch } = usePartyStatement(partyId, {
+    limit: 5,
+    offset: 0,
+    order: 'desc',
+  });
 
   return (
     <Card>

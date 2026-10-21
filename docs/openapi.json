@@ -2101,6 +2101,18 @@
             }
           },
           {
+            "name": "order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
             "$ref": "#/components/parameters/TenantId"
           }
         ],
@@ -2149,7 +2161,16 @@
                     "id": "3f9b2c1e-7a4d-4e8b-9c2f-5d6a7b8c9d0e",
                     "amountRial": "125000000",
                     "observedAt": "2026-03-21T07:00:00.000Z"
-                  }
+                  },
+                  "dimensions": [
+                    {
+                      "id": "3f9b2c1e-7a4d-4e8b-9c2f-5d6a7b8c9d0e",
+                      "code": "125000000",
+                      "kind": "RIAL",
+                      "coinTypeId": "3f9b2c1e-7a4d-4e8b-9c2f-5d6a7b8c9d0e",
+                      "coinCode": "125000000"
+                    }
+                  ]
                 }
               }
             }
@@ -8966,6 +8987,49 @@
             ],
             "additionalProperties": false,
             "nullable": true
+          },
+          "dimensions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "code": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "RIAL",
+                    "GOLD",
+                    "SILVER",
+                    "COIN"
+                  ]
+                },
+                "coinTypeId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "nullable": true
+                },
+                "coinCode": {
+                  "type": "string",
+                  "minLength": 1,
+                  "nullable": true
+                }
+              },
+              "required": [
+                "id",
+                "code",
+                "kind",
+                "coinTypeId",
+                "coinCode"
+              ],
+              "additionalProperties": false
+            }
           }
         },
         "required": [
@@ -8974,7 +9038,8 @@
           "limit",
           "offset",
           "partyId",
-          "displayReferenceMazneh"
+          "displayReferenceMazneh",
+          "dimensions"
         ],
         "additionalProperties": false
       },

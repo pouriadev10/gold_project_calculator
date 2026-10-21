@@ -517,6 +517,43 @@ describe('party statements (BE-057)', () => {
     expect(foreignStatement.statusCode).toBe(404);
   });
 
+  it('M-15: order=desc gives the newest rows first with chronological balances, and dimensions cover the whole ledger', async () => {
+    const [newest, filtered, invalid] = await Promise.all([
+      adapter.getInstance().inject({
+        method: 'GET',
+        url: `/parties/${partyAId}/statement?order=desc&limit=2`,
+        headers: headers(ownerA, tenantA),
+      }),
+      adapter.getInstance().inject({
+        method: 'GET',
+        url: `/parties/${partyAId}/statement?dimensionId=${rialDimensionId}&limit=1`,
+        headers: headers(ownerA, tenantA),
+      }),
+      adapter.getInstance().inject({
+        method: 'GET',
+        url: `/parties/${partyAId}/statement?order=newest`,
+        headers: headers(ownerA, tenantA),
+      }),
+    ]);
+
+    // «آخرین معاملات»: تازه‌ترین دو رویداد، با همان مانده‌ی جاری ِ ترتیب زمانی.
+    expect(newest.statusCode).toBe(200);
+    const newestBody = newest.json<PartyStatement>();
+    expect(newestBody.total).toBe(5);
+    expect(newestBody.items.map((item) => [item.dimension.kind, item.runningBalance])).toEqual([
+      ['COIN', '3'],
+      ['GOLD', '5000'],
+    ]);
+
+    // فهرست بُعدها از کل دفتر شخص است، نه از صفحه یا فیلتر جاری.
+    expect(filtered.statusCode).toBe(200);
+    const filteredBody = filtered.json<PartyStatement>();
+    expect(filteredBody.items).toHaveLength(1);
+    expect(filteredBody.dimensions.map((dimension) => dimension.kind)).toEqual(['RIAL', 'GOLD', 'COIN']);
+
+    expect(invalid.statusCode).toBe(400);
+  });
+
   it('computes balances before applying range, source, dimension, and pagination filters', async () => {
     const [historical, settlementOnly, rialOnly, secondPage, foreign] = await Promise.all([
       adapter.getInstance().inject({

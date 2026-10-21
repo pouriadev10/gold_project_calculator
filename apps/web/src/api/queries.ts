@@ -259,6 +259,7 @@ export function usePartyStatement(id: string, query: PartyStatementQuery, enable
       if (query.dimensionId) params.set('dimensionId', query.dimensionId);
       if (query.sourceType) params.set('sourceType', query.sourceType);
       if (query.referenceQuoteId) params.set('referenceQuoteId', query.referenceQuoteId);
+      if (query.order) params.set('order', query.order);
       return apiGet(`/parties/${id}/statement?${params.toString()}`, partyStatementSchema, signal);
     },
     staleTime: MINUTE,

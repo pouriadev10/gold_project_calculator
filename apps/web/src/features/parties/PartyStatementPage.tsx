@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Link, useParams } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, FilterX, ReceiptText } from 'lucide-react';
-import { MAX_PAGE_SIZE } from '@gold/contracts';
 import { formatCount } from '@gold/core-calc';
 import { getPartyStatementPdf } from '@/api/parties';
 import { useParty, usePartyStatement } from '@/api/queries';
@@ -330,6 +329,9 @@ function StatementPdf({ partyId, displayName }: { partyId: string; displayName: 
   );
 }
 
+/** فقط برای فهرست بُعدها؛ سرور آن را مستقل از صفحه می‌دهد، پس یک ردیف کافی است. */
+const DIMENSION_SOURCE_QUERY: PartyStatementQuery = { limit: 1, offset: 0 };
+
 export default function PartyStatementPage() {
   const { partyId } = useParams({ from: '/app-shell/parties/$partyId/statement' });
   const party = useParty(partyId);
@@ -340,13 +342,11 @@ export default function PartyStatementPage() {
   const [dimension, setDimension] = useState<PartyStatementDimension | null>(null);
   const [offset, setOffset] = useState(0);
 
-  // API فهرست جدای بُعد ندارد؛ گزینه‌ها از بزرگ‌ترین صفحه‌ی بدون فیلتر
-  // دفتر همین شخص ساخته می‌شوند، به‌علاوه‌ی بُعدِ انتخاب‌شده.
-  const dimensionSource = usePartyStatement(partyId, { limit: MAX_PAGE_SIZE, offset: 0 });
+  // گزینه‌ها از `dimensions` ِ پاسخ‌اند که سرور از کل دفتر شخص می‌سازد (M-15)؛ پیش‌تر از
+  // ۲۰۰ ردیف اول ساخته می‌شدند و بُعدی که بعدتر آمده بود در فیلتر نبود. بُعد انتخاب‌شده هم می‌ماند.
+  const dimensionSource = usePartyStatement(partyId, DIMENSION_SOURCE_QUERY);
   const dimensionOptions = collectDimensions(
-    dimensionSource.data?.partyId === partyId
-      ? dimensionSource.data.items.map((entry) => entry.dimension)
-      : [],
+    dimensionSource.data?.partyId === partyId ? dimensionSource.data.dimensions : [],
     [dimension],
   );
 

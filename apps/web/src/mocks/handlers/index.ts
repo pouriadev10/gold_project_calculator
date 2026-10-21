@@ -1232,20 +1232,28 @@ export const handlers = [
     const to = searchParams.get('to');
     const sourceType = searchParams.get('sourceType');
     const dimensionId = searchParams.get('dimensionId');
-    const entries = partyStatementEntriesFor({ id, mg: partyMgById[id] ?? 0 })
+    const all = partyStatementEntriesFor({ id, mg: partyMgById[id] ?? 0 });
+    const entries = all
       .filter((entry) => !from || entry.effectiveAt >= new Date(from).toISOString())
       .filter((entry) => !to || entry.effectiveAt <= new Date(to).toISOString())
       .filter((entry) => !sourceType || entry.source.type === sourceType)
       .filter((entry) => !dimensionId || entry.dimension.id === dimensionId)
       .sort((a, b) => a.effectiveAt.localeCompare(b.effectiveAt));
+    // M-15: `order=desc` فقط ترتیب است؛ `dimensions` از کل دفتر شخص، مستقل از فیلتر و صفحه.
+    const ordered = searchParams.get('order') === 'desc' ? [...entries].reverse() : entries;
+    const kindRank = { RIAL: 0, GOLD: 1, SILVER: 2, COIN: 3 } as const;
+    const dimensions = [...new Map(all.map((entry) => [entry.dimension.id, entry.dimension])).values()].sort(
+      (left, right) => kindRank[left.kind] - kindRank[right.kind],
+    );
 
     return HttpResponse.json({
-      items: entries.slice(offset, offset + limit),
+      items: ordered.slice(offset, offset + limit),
       total: entries.length,
       limit,
       offset,
       partyId: id,
       displayReferenceMazneh: null,
+      dimensions,
     });
   }),
 

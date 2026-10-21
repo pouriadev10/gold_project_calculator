@@ -142,6 +142,11 @@ export const partyStatementQuerySchema = paginationQuerySchema
     sourceType: partyStatementSourceTypeSchema.optional(),
     /** A display-only mazneh. It never replaces a source document's locked snapshot. */
     referenceQuoteId: uuidSchema.optional(),
+    /**
+     * ترتیب ردیف‌ها؛ پیش‌فرض `asc` (قدیمی‌ترین اول). `desc` برای «آخرین معاملات» است (M-15).
+     * مانده‌ی جاری در هر دو ترتیب همان مانده‌ی زمانی بعد از آن ردیف است.
+     */
+    order: z.enum(['asc', 'desc']).optional(),
   })
   .strict()
   .superRefine((value, context) => {
@@ -201,6 +206,11 @@ const partyStatementDisplayReferenceMaznehSchema = z.object({
 export const partyStatementSchema = paginatedSchema(partyStatementEntrySchema).extend({
   partyId: uuidSchema,
   displayReferenceMazneh: partyStatementDisplayReferenceMaznehSchema.nullable(),
+  /**
+   * هر بُعدی که در کل دفتر این شخص ردیف دارد — مستقل از فیلتر و صفحه (M-15). فیلتر بُعد
+   * صفحه‌ی صورت‌حساب از همین ساخته می‌شود، نه از چند صد ردیف اول.
+   */
+  dimensions: z.array(partyStatementDimensionSchema),
 });
 
 export type CreatePartyInput = z.infer<typeof createPartySchema>;
@@ -213,3 +223,4 @@ export type PartyBalances = z.infer<typeof partyBalancesSchema>;
 export type PartyStatementSourceType = z.infer<typeof partyStatementSourceTypeSchema>;
 export type PartyStatementQuery = z.infer<typeof partyStatementQuerySchema>;
 export type PartyStatement = z.infer<typeof partyStatementSchema>;
+export type PartyStatementDimension = z.infer<typeof partyStatementDimensionSchema>;

@@ -1,6 +1,5 @@
 import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MAX_PAGE_SIZE } from '@gold/contracts';
 import { dualFromPure, gramRate1000 } from '@gold/core-calc';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
@@ -16,8 +15,8 @@ import PartyStatementPage from './PartyStatementPage';
  * FE-070 — صورت‌حساب کامل شخص.
  *
  * `useParty` و `usePartyStatement` مستقیم mock می‌شوند. صفحه دو بار
- * `usePartyStatement` را صدا می‌زند: یک صفحه‌ی بزرگ بدون فیلتر برای
- * گزینه‌های بُعد (`limit = MAX_PAGE_SIZE`) و خود نتایج فیلترشده.
+ * `usePartyStatement` را صدا می‌زند: یک درخواست یک‌ردیفی برای `dimensions` ِ کل دفتر
+ * (`limit = 1`، M-15) و خود نتایج فیلترشده.
  */
 const PARTY_ID = 'a1000000-0000-4000-8000-000000000001';
 const MAZNEH = 480_000_000n;
@@ -132,7 +131,7 @@ const ITEMS: PartyStatement['items'] = [
 
 function statement(
   items: PartyStatement['items'] = ITEMS,
-  page: Partial<Pick<PartyStatement, 'total' | 'limit' | 'offset' | 'partyId'>> = {},
+  page: Partial<Pick<PartyStatement, 'total' | 'limit' | 'offset' | 'partyId' | 'dimensions'>> = {},
 ): PartyStatement {
   return {
     items,
@@ -141,6 +140,7 @@ function statement(
     offset: 0,
     partyId: PARTY_ID,
     displayReferenceMazneh: null,
+    dimensions: [RIAL, GOLD, COIN],
     ...page,
   };
 }
@@ -156,12 +156,16 @@ function result(data: PartyStatement | undefined, overrides: Record<string, unkn
   };
 }
 
+/** درخواست فهرست بُعدها — همان `DIMENSION_SOURCE_QUERY` ِ صفحه. */
+const DIMENSION_SOURCE_LIMIT = 1;
+
 let resultsResponse: ReturnType<typeof result>;
+let dimensionResponse: ReturnType<typeof result>;
 
 function resultQueries(): PartyStatementQuery[] {
   return useQueryMocks.usePartyStatement.mock.calls
     .map((call) => call[1] as PartyStatementQuery)
-    .filter((query) => query.limit !== MAX_PAGE_SIZE);
+    .filter((query) => query.limit !== DIMENSION_SOURCE_LIMIT);
 }
 
 function lastResultQuery(): PartyStatementQuery | undefined {
@@ -187,6 +191,7 @@ function stubViewport(desktop: boolean) {
 beforeEach(() => {
   useUnitStore.setState({ unit: 'gold' });
   resultsResponse = result(statement());
+  dimensionResponse = result(statement(ITEMS.slice(0, 1), { limit: DIMENSION_SOURCE_LIMIT }));
   useQueryMocks.useParty.mockReset();
   useQueryMocks.useParty.mockReturnValue(
     result(undefined, {
@@ -195,7 +200,7 @@ beforeEach(() => {
   );
   useQueryMocks.usePartyStatement.mockReset();
   useQueryMocks.usePartyStatement.mockImplementation((_id: string, query: PartyStatementQuery) =>
-    query.limit === MAX_PAGE_SIZE ? result(statement(ITEMS, { limit: MAX_PAGE_SIZE })) : resultsResponse,
+    query.limit === DIMENSION_SOURCE_LIMIT ? dimensionResponse : resultsResponse,
   );
 });
 
@@ -234,7 +239,7 @@ describe('PartyStatementPage — FE-070', () => {
     expect(screen.getByRole('radiogroup', { name: 'واحد نمایش اعداد' })).toBeInTheDocument();
     expect(lastResultQuery()).toEqual({ limit: 20, offset: 0 });
     expect(useQueryMocks.usePartyStatement).toHaveBeenCalledWith(PARTY_ID, {
-      limit: MAX_PAGE_SIZE,
+      limit: DIMENSION_SOURCE_LIMIT,
       offset: 0,
     });
     expect(screen.getByRole('link', { name: /بازگشت به جزئیات شخص/ })).toHaveAttribute(
@@ -314,6 +319,23 @@ describe('PartyStatementPage — FE-070', () => {
     expect(within(table).getAllByText('بدون نرخ سند')).toHaveLength(2);
   });
 
+  it('M-15: offers every dimension of the whole ledger, even one missing from the loaded rows', () => {
+    const SILVER = {
+      id: 'd2000000-0000-4000-8000-000000000004',
+      code: 'SILVER',
+      kind: 'SILVER' as const,
+      coinTypeId: null,
+      coinCode: null,
+    };
+    dimensionResponse = result(
+      statement(ITEMS.slice(0, 1), { limit: DIMENSION_SOURCE_LIMIT, dimensions: [RIAL, GOLD, SILVER, COIN] }),
+    );
+    render(<PartyStatementPage />);
+
+    const options = within(screen.getByLabelText('بُعد')).getAllByRole('option');
+    expect(options.map((option) => option.getAttribute('value'))).toEqual(['', RIAL.id, GOLD.id, SILVER.id, COIN.id]);
+  });
+
   it('sends source type and dimension filters to the server and resets the page', async () => {
     const user = userEvent.setup();
     resultsResponse = result(statement(ITEMS, { total: 45, offset: 0 }));
@@ -328,8 +350,8 @@ describe('PartyStatementPage — FE-070', () => {
     const dimensionSelect = screen.getByLabelText('بُعد');
     expect(within(dimensionSelect).getAllByRole('option').map((option) => option.textContent)).toEqual([
       'همه‌ی بُعدها',
-      'طلای خالص',
       'ریال',
+      'طلای خالص',
       'سکه BAHAR',
     ]);
     await user.selectOptions(dimensionSelect, COIN.id);

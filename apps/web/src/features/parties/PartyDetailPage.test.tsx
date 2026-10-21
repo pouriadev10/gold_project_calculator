@@ -104,7 +104,15 @@ function balances(overrides: Partial<PartyBalances> = {}): PartyBalances {
 }
 
 function statement(items: PartyStatement['items'] = []): PartyStatement {
-  return { items, total: items.length, limit: 5, offset: 0, partyId: TEST_PARTY_ID, displayReferenceMazneh: null };
+  return {
+    items,
+    total: items.length,
+    limit: 5,
+    offset: 0,
+    partyId: TEST_PARTY_ID,
+    displayReferenceMazneh: null,
+    dimensions: [],
+  };
 }
 
 function mockDesktopViewport() {
@@ -325,6 +333,15 @@ describe('PartyDetailPage — مانده چندواحدی', () => {
 });
 
 describe('PartyDetailPage — آخرین معاملات', () => {
+  it('M-15: تازه‌ترین پنج رویداد را می‌خواهد، نه قدیمی‌ترین‌ها', () => {
+    renderPage();
+    expect(useQueryMocks.usePartyStatement).toHaveBeenCalledWith(TEST_PARTY_ID, {
+      limit: 5,
+      offset: 0,
+      order: 'desc',
+    });
+  });
+
   it('فهرست خالی: پیام مناسب نشان می‌دهد', () => {
     useQueryMocks.usePartyStatement.mockReturnValue({ ...idleQuery, data: statement([]) });
     renderPage();

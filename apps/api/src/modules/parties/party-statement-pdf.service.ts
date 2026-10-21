@@ -8,6 +8,35 @@ import type {
   InvoiceExporter,
   InvoiceSnapshotValue,
 } from '../../platform/files/invoice-exporter';
+import type { PartyStatementExport } from './party-statements.service';
+
+type StatementItem = PartyStatementExport['items'][number];
+
+/**
+ * نوع سند به فارسی — همان برچسب‌های صفحه‌ی صورت‌حساب (`SOURCE_LABEL` ِ فرانت). پیش از M-15
+ * PDF ِ مشتری شرح فنی انگلیسی دفتر کل («Second-hand coin purchase <uuid>») را چاپ می‌کرد.
+ */
+const SOURCE_LABEL: Record<StatementItem['source']['type'], string> = {
+  OPENING_BALANCE: 'مانده افتتاحیه',
+  SALES_INVOICE: 'فاکتور فروش',
+  SECOND_HAND_PURCHASE: 'خرید دست‌دوم',
+  SETTLEMENT: 'تسویه',
+  SALES_INVOICE_AMENDMENT: 'اصلاح فاکتور',
+  LEDGER_REVERSAL: 'برگشت سند',
+};
+
+/** واحد عددهای هر بُعد؛ ریال خودش واحد است. */
+const UNIT_SUFFIX: Record<StatementItem['dimension']['kind'], string> = {
+  RIAL: '',
+  GOLD: ' (میلی‌گرم)',
+  SILVER: ' (میلی‌گرم)',
+  COIN: ' (عدد)',
+};
+
+function lineTitle(item: StatementItem, titles: ReadonlyMap<string, string>): string {
+  const dimension = titles.get(item.dimension.id) ?? item.dimension.coinCode ?? item.dimension.code;
+  return `${SOURCE_LABEL[item.source.type]} · ${dimension}${UNIT_SUFFIX[item.dimension.kind]}`;
+}
 
 function snapshotValue(value: unknown): InvoiceSnapshotValue {
   if (value === null || typeof value === 'string' || typeof value === 'boolean') return value;
@@ -49,9 +78,12 @@ export class PartyStatementPdfService {
       recipient: { displayName: party.displayName, mobile: party.mobile },
       lockedQuote: null,
       lines: statement.items.map((item) => ({
-        title: `${item.description} | ${item.dimension.code}`,
-        quantity: item.runningBalance,
-        amountRial: item.dimension.kind === 'RIAL' ? item.quantity : null,
+        occurredAt: new Date(item.effectiveAt),
+        title: lineTitle(item, statement.dimensionTitles),
+        quantityLabel: 'تغییر',
+        quantity: item.quantity,
+        amountRial: null,
+        balance: item.runningBalance,
       })),
       historicalSnapshot: {
         entries: statement.items.map((item) => ({

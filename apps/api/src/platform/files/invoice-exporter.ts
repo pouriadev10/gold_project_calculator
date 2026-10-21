@@ -21,6 +21,15 @@ export interface InvoiceExportLine {
   /** Counts, Rial, and weights remain canonical integer strings. */
   readonly quantity: string;
   readonly amountRial: string | null;
+  /** تاریخ رویداد ِ همان خط، به منطقه‌ی زمانی مستأجر چاپ می‌شود — صورت‌حساب شخص (M-15). */
+  readonly occurredAt?: Date;
+  /** برچسب ستون مقدار؛ نبودنش یعنی «مقدار». */
+  readonly quantityLabel?: string;
+  /**
+   * مانده‌ی بعد از خط، عدد صحیح (صورت‌حساب). وقتی هست و `amountRial` تهی است، ستون «مبلغ»
+   * چاپ نمی‌شود و «مانده» جایش می‌نشیند.
+   */
+  readonly balance?: string;
 }
 
 /** صادرکننده‌ی سند (مستأجر) به‌اضافه‌ی منطقه‌ی زمانی‌اش برای تاریخ‌های چاپی — M-10. */
