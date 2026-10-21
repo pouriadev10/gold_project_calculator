@@ -292,6 +292,48 @@ describe('coin settlement on a party rial balance (BE-047)', () => {
     );
   });
 
+  it('M-16: تسویه و فروش هم‌زمان برای یک شخص و یک نوع سکه بن‌بست نمی‌سازند', async () => {
+    const accounts = app.get(LedgerAccountsService);
+    let saleHoldsCoin!: () => void;
+    const coinHeld = new Promise<void>((resolve) => (saleHoldsCoin = resolve));
+    let settlementStarted!: () => void;
+    const settlementWaiting = new Promise<void>((resolve) => (settlementStarted = resolve));
+
+    // مثل فروش سکه یا خرید دست‌دوم: اول قفل موجودی سکه، بعد قفل شخص.
+    const sale = withTenantTransaction(db, tenant.id, async (transaction) => {
+      await movements.recordInTransaction(transaction, tenant.id, {
+        sourceType: 'OPENING_BALANCE',
+        sourceId: randomUUID(),
+        itemType: 'COIN',
+        itemId: centralBankCoinTypeId,
+        quantity: 1n,
+        occurredAt: effectiveAt,
+      });
+      saleHoldsCoin();
+      await settlementWaiting;
+      await accounts.ensurePartyAccountsInTransaction(transaction, { tenantId: tenant.id, partyId });
+    });
+    await coinHeld;
+    // تسویه‌ی سکه‌ای همان شخص و همان نوع سکه. پیش‌تر اول قفل شخص را می‌گرفت و روی سکه می‌ماند.
+    const settlement = withTenantTransaction(db, tenant.id, (transaction) =>
+      settlementService.createInTransaction(transaction, {
+        tenantId: tenant.id,
+        partyId,
+        coinTypeId: centralBankCoinTypeId,
+        count: 1,
+        marketUnitPriceRial: 250_000_000n,
+        quoteId,
+        effectiveAt,
+        createdBy: actorId,
+      }),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    settlementStarted();
+
+    const results = await Promise.allSettled([sale, settlement]);
+    expect(results.map((result) => result.status)).toEqual(['fulfilled', 'fulfilled']);
+  });
+
   it('rolls back the settlement, movement, ledger posting, and idempotency claim when the coin type is unavailable', async () => {
     const before = await withTenantTransaction(db, tenant.id, async (transaction) => ({
       settlements: await transaction

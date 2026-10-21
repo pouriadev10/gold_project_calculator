@@ -210,6 +210,18 @@ export class MixedSettlementsService {
       input.lines.map((line) => this.valueLineInTransaction(transaction, input, line)),
     );
     const totalSettledRial = valuedLines.reduce((total, line) => total + line.settledRial, 0n);
+    // اول قفل موجودی، بعد قفل شخص — ترتیب سراسری (M-16، `lockItemsInTransaction`).
+    await this.movements.lockItemsInTransaction(
+      transaction,
+      input.tenantId,
+      valuedLines.flatMap((line): { itemType: 'MELTED_GOLD' | 'COIN'; itemId?: string }[] =>
+        line.type === 'GOLD'
+          ? [{ itemType: 'MELTED_GOLD' as const }]
+          : line.type === 'COIN'
+            ? [{ itemType: 'COIN' as const, itemId: line.coinTypeId }]
+            : [],
+      ),
+    );
     const draft = await this.settlements.createDraftInTransaction(transaction, input);
 
     const [partyAccounts, cash, meltedGold, clearing, rialDimension, goldDimension] =

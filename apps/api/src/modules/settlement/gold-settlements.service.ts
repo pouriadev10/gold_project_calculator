@@ -149,6 +149,8 @@ export class GoldSettlementsService {
     const goldRatePerGramRial = gramRate1000(quote.amountRial, rateDivisor);
     const settledRial = valueOfPure(pureWeightMg, goldRatePerGramRial);
 
+    // اول قفل موجودی، بعد قفل شخص — ترتیب سراسری (M-16، `lockItemsInTransaction`).
+    await this.movements.lockItemsInTransaction(transaction, input.tenantId, [{ itemType: 'MELTED_GOLD' }]);
     const draft = await this.settlements.createDraftInTransaction(transaction, input);
     const [inventoryMeltedGold, clearing, receivable, gold, rial] = await Promise.all([
       this.accounts.getRequiredSystemAccountInTransaction(

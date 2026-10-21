@@ -126,22 +126,7 @@ export class InventoryMovementsService {
       }
     }
 
-    /*
-     * قفل مشورتی روی «مستأجر + نوع + کالا». بدون آن، دو فروش هم‌زمان
-     * هر دو موجودی قبلی را می‌خوانند، هر دو مجاز تشخیص داده می‌شوند و
-     * جمعشان موجودی را منفی می‌کند — همان حالتی که فقط زیر بار واقعی
-     * خودش را نشان می‌دهد.
-     *
-     * همه‌ی قفل‌های سند پیش از هر بررسی و به ترتیب ثابت کلید گرفته می‌شوند (M-14): اگر هر خط
-     * قفل خودش را به ترتیب سند می‌گرفت، دو سندی که همان کالاها را به ترتیب مخالف برمی‌دارند
-     * (اصلاحیه‌ی A→B و B→A، تسویه‌ی چندسکه‌ای) بن‌بست می‌ساختند و یکی ۵۰۰ می‌گرفت.
-     */
-    const lockKeys = [
-      ...new Set(inputs.map((input) => `${tenantId}:${input.itemType}:${input.itemId ?? ''}`)),
-    ].sort();
-    for (const key of lockKeys) {
-      await transaction.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${key}, 0))`);
-    }
+    await this.lockItemsInTransaction(transaction, tenantId, inputs);
 
     const allowNegative = await this.allowsNegativeStock(transaction, tenantId);
     const recorded: InventoryMovement[] = [];
@@ -187,6 +172,32 @@ export class InventoryMovementsService {
     }
 
     return recorded;
+  }
+
+  /**
+   * قفل مشورتی روی «مستأجر + نوع + کالا» تا پایان تراکنش. بدون آن، دو فروش هم‌زمان
+   * هر دو موجودی قبلی را می‌خوانند، هر دو مجاز تشخیص داده می‌شوند و
+   * جمعشان موجودی را منفی می‌کند — همان حالتی که فقط زیر بار واقعی
+   * خودش را نشان می‌دهد.
+   *
+   * قفل‌ها به ترتیب ثابت کلید گرفته می‌شوند (M-14): دو سندی که همان کالاها را به ترتیب
+   * مخالف برمی‌دارند بن‌بست نمی‌سازند. قفل دوباره در همان تراکنش بی‌اثر است.
+   *
+   * **ترتیب سراسری قفل‌ها (M-16): اول موجودی، بعد شخص.** فروش، خرید و اصلاحیه حرکت موجودی را
+   * پیش از `ensurePartyAccountsInTransaction` ثبت می‌کنند. سندی که قفل شخص را زودتر لازم دارد
+   * (تسویه) باید کالاهایش را اول با همین متد قفل کند، وگرنه با فروش هم‌زمان همان شخص بن‌بست می‌سازد.
+   */
+  async lockItemsInTransaction(
+    transaction: TenantTransaction,
+    tenantId: string,
+    items: readonly Pick<RecordInventoryMovementInput, 'itemType' | 'itemId'>[],
+  ): Promise<void> {
+    const lockKeys = [
+      ...new Set(items.map((item) => `${tenantId}:${item.itemType}:${item.itemId ?? ''}`)),
+    ].sort();
+    for (const key of lockKeys) {
+      await transaction.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${key}, 0))`);
+    }
   }
 
   /** موجودی جاری یک کالا — همیشه از مجموع حرکات، هرگز از ستون cache. */

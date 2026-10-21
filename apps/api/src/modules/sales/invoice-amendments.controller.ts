@@ -75,7 +75,8 @@ export class InvoiceAmendmentsController {
   @Post(':invoiceId/amend')
   @HttpCode(HttpStatus.CREATED)
   async amend(
-    @Param('invoiceId') invoiceId: string,
+    // همان اعتبارسنجی ِ مسیر preflight (M-16): پیش‌تر شناسه‌ی ناسالم تا کوئری دیتابیس می‌رسید.
+    @Param('invoiceId', new ZodValidationPipe(uuidSchema)) invoiceId: string,
     @Body(new ZodValidationPipe(amendSalesInvoiceSchema)) body: AmendSalesInvoiceInput,
     @CurrentAuth() auth: AccessTokenPayload | undefined,
     @Headers(IDEMPOTENCY_KEY_HEADER) key: string | undefined,

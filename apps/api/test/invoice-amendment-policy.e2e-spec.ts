@@ -108,6 +108,24 @@ describe('invoice amendment policy (BE-053)', () => {
     ).resolves.toBeUndefined();
   });
 
+  it('M-16: ساعت جلوتر ِ دستگاه صندوق اصلاح بلافاصله پس از فروش را نمی‌شکند', async () => {
+    // زمان فاکتور از دستگاه صندوق می‌آید و ۳۰ ثانیه از ساعت سرور جلوتر است.
+    const requestedAt = new Date();
+    const skewedFinalizedAt = new Date(requestedAt.getTime() + 30_000);
+
+    await expect(
+      policy.evaluate(input({ finalizedAt: skewedFinalizedAt, requestedAt })),
+    ).resolves.toEqual({
+      allowed: true,
+      requiresManagerAuthorization: false,
+      withinCorrectionWindow: true,
+      restrictions: [],
+    });
+    await expect(
+      policy.assertPermitted(input({ finalizedAt: skewedFinalizedAt, requestedAt })),
+    ).resolves.toBeUndefined();
+  });
+
   it('requires a written reason when OTHER is selected', async () => {
     await expect(policy.evaluate(input({ reason: '' }))).rejects.toBeInstanceOf(
       InvoiceAmendmentPolicyInvalidInputError,

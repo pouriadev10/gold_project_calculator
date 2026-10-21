@@ -194,6 +194,10 @@ export class CoinSettlementsService {
       : null;
     const settledRial = coinPositionValue(input.count, marketUnitPriceRial);
 
+    // اول قفل موجودی، بعد قفل شخص — ترتیب سراسری (M-16، `lockItemsInTransaction`).
+    await this.movements.lockItemsInTransaction(transaction, input.tenantId, [
+      { itemType: 'COIN', itemId: input.coinTypeId },
+    ]);
     const draft = await this.settlements.createDraftInTransaction(transaction, input);
     const [coinInventory, clearing, receivable, coinDimension, rialDimension] = await Promise.all([
       this.accounts.getRequiredSystemAccountInTransaction(

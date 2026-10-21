@@ -143,9 +143,6 @@ export class InvoiceAmendmentPolicyService {
   ): Promise<InvoiceAmendmentPolicyDecision> {
     requireValidDate(input.finalizedAt, 'finalizedAt');
     requireValidDate(input.requestedAt, 'requestedAt');
-    if (input.requestedAt.getTime() < input.finalizedAt.getTime()) {
-      throw new InvoiceAmendmentPolicyInvalidInputError('requestedAt cannot be before finalizedAt');
-    }
     return this.evaluateFactsInTransaction(transaction, { ...input, varianceRial: 0n });
   }
 
@@ -223,10 +220,11 @@ export class InvoiceAmendmentPolicyService {
   private validateInput(input: EvaluateInvoiceAmendmentPolicyInput): void {
     requireValidDate(input.finalizedAt, 'finalizedAt');
     requireValidDate(input.requestedAt, 'requestedAt');
-
-    if (input.requestedAt.getTime() < input.finalizedAt.getTime()) {
-      throw new InvoiceAmendmentPolicyInvalidInputError('requestedAt cannot be before finalizedAt');
-    }
+    /*
+     * `requestedAt` (ساعت سرور) می‌تواند پیش از `finalizedAt` باشد: زمان فاکتور از دستگاه صندوق
+     * می‌آید و ساعت دستگاه چند ثانیه جلوتر است. پیش‌تر این «ورودی نامعتبر» و ۵۰۰ بود (M-16)؛
+     * حالا یعنی هنوز زمانی نگذشته — داخل پنجره‌ی اصلاح.
+     */
     if (input.varianceRial < 0n) {
       throw new InvoiceAmendmentPolicyInvalidInputError('varianceRial must be non-negative');
     }
