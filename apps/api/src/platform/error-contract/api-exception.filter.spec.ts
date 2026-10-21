@@ -6,6 +6,8 @@ import { createAppLogger } from '../logging/app-logger';
 import { createRequestLog, runWithRequestLog } from '../logging/request-log';
 import { RequestContextService } from '../request-context/request-context.service';
 import { ApiExceptionFilter } from './api-exception.filter';
+import { BusinessRuleError } from './business-rule.error';
+import { ResourceNotFoundError } from './resource-not-found.error';
 import type { ArgumentsHost } from '@nestjs/common';
 import type { AppConfig, NodeEnv } from '../config/env.schema';
 
@@ -20,7 +22,7 @@ function setup(nodeEnv: NodeEnv) {
     jwtRefreshSecret: new Secret('b'.repeat(32)),
   };
   const filter = new ApiExceptionFilter(config, new RequestContextService(), createAppLogger(config, capture));
-  const sent: { status?: number } = {};
+  const sent: { status?: number; payload?: { error: { code: string; message: string } } } = {};
   const reply = {
     status(code: number) {
       sent.status = code;
@@ -29,7 +31,8 @@ function setup(nodeEnv: NodeEnv) {
     header() {
       return reply;
     },
-    send() {
+    send(payload: { error: { code: string; message: string } }) {
+      sent.payload = payload;
       return undefined;
     },
   };
@@ -84,5 +87,49 @@ describe('ApiExceptionFilter — log', () => {
     expect(sent.status).toBe(404);
     expect(record.errorCode).toBe('NOT_FOUND');
     expect(capture.lines).toEqual([]);
+  });
+});
+
+class StockRule extends BusinessRuleError {
+  constructor() {
+    super('Inventory for JEWELRY "1234" would go negative: available 0, requested 1', 'موجودی کافی نیست');
+  }
+}
+
+class MissingThing extends ResourceNotFoundError {}
+
+describe('ApiExceptionFilter — نگاشت خطای دامنه (M-09)', () => {
+  it('قاعده‌ی کسب‌وکار ۴۲۲ با کد پایدار و پیام فارسی است، بی‌آنکه پیام فنی یا شناسه نشت کند', () => {
+    const { capture, filter, host, sent } = setup('production');
+
+    filter.catch(new StockRule(), host);
+
+    expect(sent.status).toBe(422);
+    expect(sent.payload?.error).toMatchObject({ code: 'BUSINESS_RULE_VIOLATION', message: 'موجودی کافی نیست' });
+    expect(JSON.stringify(sent.payload)).not.toContain('1234');
+    expect(capture.lines).toEqual([]); // ۴xx خط request_failed نمی‌سازد
+  });
+
+  it('سرریز bigint ِ پستگرس (22003) ورودی نامعقول است، نه ۵۰۰', () => {
+    const { capture, filter, host, sent } = setup('production');
+    const overflow = Object.assign(new Error('Failed query'), {
+      cause: Object.assign(new Error('value "9223372036854775808" is out of range for type bigint'), { code: '22003' }),
+    });
+
+    filter.catch(overflow, host);
+
+    expect(sent.status).toBe(400);
+    expect(sent.payload?.error).toMatchObject({ code: 'BAD_REQUEST', message: 'مقدار از بازه‌ی قابل ذخیره‌سازی بیرون است' });
+    expect(capture.lines).toEqual([]);
+  });
+
+  it('ارجاع ناموجود همچنان ۴۰۴ و خطای ناشناخته همچنان ۵۰۰ است', () => {
+    const notFound = setup('production');
+    notFound.filter.catch(new MissingThing('x'), notFound.host);
+    expect(notFound.sent.status).toBe(404);
+
+    const unknown = setup('production');
+    unknown.filter.catch(new Error('boom'), unknown.host);
+    expect(unknown.sent.status).toBe(500);
   });
 });

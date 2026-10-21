@@ -1,4 +1,5 @@
 import type { InventoryItemType } from '../../platform/database/schema';
+import { BusinessRuleError } from '../../platform/error-contract/business-rule.error';
 
 /**
  * حرکت، موجودی را منفی می‌کرد و سیاست مستأجر اجازه نمی‌دهد.
@@ -7,7 +8,7 @@ import type { InventoryItemType } from '../../platform/database/schema';
  * «نشد». واحدشان به `itemType` بستگی دارد: تعداد برای زیورآلات و سکه،
  * میلی‌گرم خالص برای آبشده.
  */
-export class NegativeInventoryError extends Error {
+export class NegativeInventoryError extends BusinessRuleError {
   readonly itemType: InventoryItemType;
   readonly itemId: string | null;
   readonly available: bigint;
@@ -22,6 +23,7 @@ export class NegativeInventoryError extends Error {
     super(
       `Inventory for ${itemType}${itemId === null ? '' : ` "${itemId}"`} would go negative: ` +
         `available ${available.toString()}, requested ${requested.toString()}`,
+      'موجودی کافی نیست: این کالا یا سکه در انبار نیست یا کمتر از مقدار لازم است',
     );
     this.name = 'NegativeInventoryError';
     this.itemType = itemType;

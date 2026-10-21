@@ -20,6 +20,7 @@ import { InvoiceAmendmentPolicyService } from './invoice-amendment-policy.servic
 import { SalesInvoiceNotFoundError } from './sales-invoices.errors';
 import { SalesPricingService } from './sales-pricing.service';
 import {
+  SalesInvoiceAmendmentNoFinancialChangeError,
   SalesInvoiceAmendmentNotFinalizedError,
   SalesInvoiceAmendmentPaidRialExceedsPayableError,
   SalesInvoiceAmendmentSnapshotInvalidError,
@@ -726,6 +727,15 @@ export class InvoiceAmendmentsService {
       cogsJewelry.id,
       inventoryJewelry.id,
     );
+
+    /*
+     * #46 — جابه‌جایی کالا با کالایی با همان وزن، عیار و اجرت هیچ اثر دفتر کلی ندارد و
+     * سند خالی پیش‌تر با `InvalidLedgerPostingError` ِ «حداقل یک ردیف» ۵۰۰ می‌داد. تا تصمیم
+     * D-06 (ثبت اصلاحیه‌ی بی‌اثر مالی بدون سند دفتر کل)، رد صریح با پیام روشن (M-09).
+     */
+    if (entries.size === 0) {
+      throw new SalesInvoiceAmendmentNoFinancialChangeError();
+    }
 
     const posted = await this.ledger.postInTransaction(transaction, {
       source: { tenantId: command.tenantId, type: 'SALES_INVOICE_AMENDMENT', id: versionId },

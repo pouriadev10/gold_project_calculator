@@ -1,4 +1,5 @@
 import { ResourceNotFoundError } from '../../platform/error-contract/resource-not-found.error';
+import { BusinessRuleError } from '../../platform/error-contract/business-rule.error';
 
 export class CoinSettlementQuoteNotFoundError extends ResourceNotFoundError {
   constructor() {
@@ -17,9 +18,9 @@ export class CoinSettlementPricingSettingInvalidError extends Error {
   }
 }
 
-export class CoinSettlementInvalidInputError extends Error {
+export class CoinSettlementInvalidInputError extends BusinessRuleError {
   constructor(message: string) {
-    super(message);
+    super(message, 'اطلاعات تسویه با سکه معتبر نیست');
     this.name = 'CoinSettlementInvalidInputError';
   }
 }

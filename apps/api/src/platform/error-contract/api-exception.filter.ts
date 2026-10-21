@@ -8,6 +8,7 @@ import { annotateRequestLog } from '../logging/request-log';
 import { RequestContextService } from '../request-context/request-context.service';
 import { readRequestId, REQUEST_ID_HEADER } from '../request-context/request-id';
 import { ZodValidationException } from '../../shared/validation';
+import { BUSINESS_RULE_ERROR_CODE, BusinessRuleError } from './business-rule.error';
 import { ResourceNotFoundError } from './resource-not-found.error';
 import type { ArgumentsHost, ExceptionFilter } from '@nestjs/common';
 import type { ApiError, ApiErrorCode } from '@gold/contracts';
@@ -99,6 +100,18 @@ function mapPostgresError(error: unknown): ErrorMapping | undefined {
         message: 'مقدار ارسالی معتبر نیست',
         fields: EMPTY_FIELDS,
       };
+    /*
+     * numeric_value_out_of_range — قرارداد هر ورودی را به بازه‌ی ستونش محدود می‌کند (M-02)،
+     * ولی حاصل‌ضرب دو ورودی مجاز (تعداد × قیمت واحد) هنوز می‌تواند از bigint بگذرد. این
+     * ورودی نامعقول کاربر است، نه خرابی سرور (M-09).
+     */
+    case '22003':
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        code: 'BAD_REQUEST',
+        message: 'مقدار از بازه‌ی قابل ذخیره‌سازی بیرون است',
+        fields: EMPTY_FIELDS,
+      };
     default:
       return undefined;
   }
@@ -153,6 +166,14 @@ function mapException(exception: unknown): ErrorMapping {
   }
   if (exception instanceof HttpException) {
     return mapHttpException(exception);
+  }
+  if (exception instanceof BusinessRuleError) {
+    return {
+      status: HttpStatus.UNPROCESSABLE_ENTITY,
+      code: BUSINESS_RULE_ERROR_CODE,
+      message: exception.userMessage,
+      fields: EMPTY_FIELDS,
+    };
   }
   if (exception instanceof ResourceNotFoundError) {
     return {

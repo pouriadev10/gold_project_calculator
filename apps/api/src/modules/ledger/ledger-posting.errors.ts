@@ -1,3 +1,5 @@
+import { BusinessRuleError } from '../../platform/error-contract/business-rule.error';
+
 /** ورودی posting پیش از رسیدن به هر جدول مالی نامعتبر است. */
 export class InvalidLedgerPostingError extends Error {
   constructor(reason: string) {
@@ -40,11 +42,11 @@ export class InactiveLedgerPostingAccountError extends Error {
 }
 
 /** بُعد غیرفعال (برای نمونه سکه‌ی از رده خارج) entry عملیاتی جدید نمی‌پذیرد. */
-export class InactiveLedgerPostingDimensionError extends Error {
+export class InactiveLedgerPostingDimensionError extends BusinessRuleError {
   readonly dimensionId: string;
 
   constructor(dimensionId: string) {
-    super(`Asset dimension "${dimensionId}" is inactive`);
+    super(`Asset dimension "${dimensionId}" is inactive`, 'این نوع سکه یا دارایی غیرفعال است و برایش سندی ثبت نمی‌شود');
     this.name = 'InactiveLedgerPostingDimensionError';
     this.dimensionId = dimensionId;
   }

@@ -1,4 +1,5 @@
 import { ResourceNotFoundError } from '../../platform/error-contract/resource-not-found.error';
+import { BusinessRuleError } from '../../platform/error-contract/business-rule.error';
 
 export class SalesPricingQuoteNotFoundError extends ResourceNotFoundError {
   constructor() {
@@ -18,9 +19,9 @@ export class SalesPricingSettingInvalidError extends Error {
 }
 
 /** دفاع در برابر فراخوان داخلی که از Zod عبور نکرده — نه پاسخ به ورودی HTTP معمول. */
-export class SalesPricingInvalidCoinInputError extends Error {
+export class SalesPricingInvalidCoinInputError extends BusinessRuleError {
   constructor(message: string) {
-    super(message);
+    super(message, 'اطلاعات فروش سکه معتبر نیست');
     this.name = 'SalesPricingInvalidCoinInputError';
   }
 }

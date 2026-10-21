@@ -47,3 +47,30 @@ describe('FE-090 — آفلاین', () => {
     expect(result.message).toContain('چیزی برای ارسال بعدی نگه داشته نمی‌شود');
   });
 });
+
+describe('M-09 — قاعده‌ی کسب‌وکار سرور', () => {
+  it('پیام فارسی سرور را نشان می‌دهد، نه «تغییر هم‌زمان» یا «فیلدها را اصلاح کنید»', () => {
+    const presented = presentApiError(
+      new ApiError(422, 'BUSINESS_RULE_VIOLATION', 'موجودی کافی نیست: این کالا در انبار نیست', {}, 'req-1'),
+    );
+
+    expect(presented).toMatchObject({
+      kind: 'business-rule',
+      title: 'این عملیات انجام نشد',
+      message: 'موجودی کافی نیست: این کالا در انبار نیست',
+      requestId: 'req-1',
+    });
+  });
+
+  it('پیام ناامن، خالی یا بلند جایش را به متن عمومی می‌دهد', () => {
+    for (const message of ['syntax error at or near SELECT', '   ', 'x'.repeat(201)]) {
+      expect(presentApiError(new ApiError(422, 'BUSINESS_RULE_VIOLATION', message)).message).toBe(
+        'این عملیات با قواعد ثبت سازگار نیست. اطلاعات را بررسی کنید.',
+      );
+    }
+  });
+
+  it('۴۰۹ ِ واقعی همچنان «تغییر هم‌زمان» است', () => {
+    expect(presentApiError(new ApiError(409, 'CONFLICT', 'x')).kind).toBe('conflict');
+  });
+});

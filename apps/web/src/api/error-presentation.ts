@@ -10,6 +10,7 @@ import { ApiError, NetworkError, OfflineError } from './api-error';
  */
 export type ApiErrorKind =
   | 'validation'
+  | 'business-rule'
   | 'conflict'
   | 'retry-after-refresh'
   | 'session-expired'
@@ -44,6 +45,24 @@ function safeFields(
     .filter(([, messages]) => messages.length > 0);
 
   return Object.fromEntries(safeEntries);
+}
+
+/** کد خطای قاعده‌ی کسب‌وکار سرور (M-09) — همان `BUSINESS_RULE_ERROR_CODE` ِ API. */
+const BUSINESS_RULE_CODE = 'BUSINESS_RULE_VIOLATION';
+/** سقف طول پیام سرور که نمایش داده می‌شود؛ مرز نمایشی، نه عدد صنفی. */
+const MAX_SERVER_MESSAGE_LENGTH = 200;
+const BUSINESS_RULE_FALLBACK = 'این عملیات با قواعد ثبت سازگار نیست. اطلاعات را بررسی کنید.';
+
+/**
+ * پیام فارسی ِ قاعده‌ی کسب‌وکار از سرور — تنها جایی که پیام سرور مستقیم نمایش داده می‌شود،
+ * چون خود پیام همان علت است («موجودی کافی نیست»). همان صافی ِ پیام ناامن روی آن اعمال
+ * می‌شود؛ اگر رد شد یا خالی/بلند بود، متن عمومی جایش می‌نشیند.
+ */
+function businessRuleMessage(message: string): string {
+  const trimmed = message.trim();
+  return trimmed === '' || trimmed.length > MAX_SERVER_MESSAGE_LENGTH || UNSAFE_MESSAGE_PATTERN.test(trimmed)
+    ? BUSINESS_RULE_FALLBACK
+    : trimmed;
 }
 
 function presentation(
@@ -119,6 +138,17 @@ export function presentApiError(error: unknown): ApiErrorPresentation {
       'forbidden',
       'اجازه انجام این عملیات را ندارید',
       'اگر فکر می‌کنید این دسترسی باید برای شما فعال باشد، با مدیر سامانه تماس بگیرید.',
+      EMPTY_FIELDS,
+      error.requestId,
+    );
+  }
+
+  // M-09: پیش از ۴۰۹/۴۰۰ — «موجودی کافی نیست» نه تغییر هم‌زمان داده است نه خطای فرم.
+  if (error.code === BUSINESS_RULE_CODE) {
+    return presentation(
+      'business-rule',
+      'این عملیات انجام نشد',
+      businessRuleMessage(error.message),
       EMPTY_FIELDS,
       error.requestId,
     );

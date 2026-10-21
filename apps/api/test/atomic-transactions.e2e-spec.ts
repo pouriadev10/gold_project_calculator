@@ -419,7 +419,9 @@ describe('تراکنش اتمیک End-to-End (BE-064)', () => {
 
       const failed = await cashSale('A');
 
-      expect(failed.statusCode).toBeGreaterThanOrEqual(400);
+      // #45 (M-09): کالای ناموجود رد قاعده‌ی کسب‌وکار است — ۴۲۲ با پیام فارسی، نه ۵۰۰.
+      expect(failed.statusCode).toBe(422);
+      expect(failed.body).toMatchObject({ error: { code: 'BUSINESS_RULE_VIOLATION', message: expect.stringContaining('موجودی کافی نیست') } });
       expect(await footprint()).toEqual(before);
     });
 
@@ -526,7 +528,7 @@ describe('تراکنش اتمیک End-to-End (BE-064)', () => {
       const losers = results.filter((result) => result.statusCode !== 201);
       expect(winners).toHaveLength(1);
       expect(losers).toHaveLength(1);
-      expect(losers[0]!.statusCode).toBeGreaterThanOrEqual(400);
+      expect(losers[0]!.statusCode).toBe(422);
       expect(await stock('E')).toBe(0n);
       expect(await invoiceNumbers()).toEqual([1, 2, 3, 4, 5, 6]);
     });
@@ -576,7 +578,8 @@ describe('تراکنش اتمیک End-to-End (BE-064)', () => {
 
       const failed = await amend('Z');
 
-      expect(failed.statusCode).toBeGreaterThanOrEqual(400);
+      expect(failed.statusCode).toBe(422);
+      expect(failed.body).toMatchObject({ error: { code: 'BUSINESS_RULE_VIOLATION' } });
       expect(await footprint()).toEqual(before);
       expect(await stock('I')).toBe(0n);
     });
