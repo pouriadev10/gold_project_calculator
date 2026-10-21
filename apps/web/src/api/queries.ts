@@ -66,8 +66,8 @@ export function useLatestPriceQuote(quoteType: PriceQuoteType = 'MAZNEH') {
 
 /**
  * تاریخچه‌ی مظنه — `GET /pricing/quotes` (BE-021، FE-031).
- * کل فهرست tenant را می‌دهد (بدون صفحه‌بندی سمت سرور)؛ صفحه‌بندی روی
- * همین آرایه سمت کلاینت در `QuoteHistoryList` انجام می‌شود.
+ * تازه‌ترین `MAX_PAGE_SIZE` مظنه را می‌دهد، نه کل تاریخچه (M-13)؛ صفحه‌بندی
+ * روی همین آرایه سمت کلاینت در `QuoteHistoryList` انجام می‌شود.
  */
 export function usePriceQuoteHistory(quoteType: PriceQuoteType = 'MAZNEH') {
   return useQuery({

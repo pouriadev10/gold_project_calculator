@@ -6,7 +6,7 @@ import { ROLES_METADATA_KEY } from '../../platform/auth/roles.decorator';
 import { IdempotencyKeyConflictError } from '../../platform/idempotency/idempotency.errors';
 import { PriceFeedController } from './price-feed.controller';
 import { UnavailablePriceFeedProvider } from './price-feed.provider';
-import { PriceFeedService } from './price-feed.service';
+import { MAX_FEED_CLOCK_SKEW_MS, PriceFeedService } from './price-feed.service';
 import type { IdempotencyService } from '../../platform/idempotency/idempotency.service';
 import type { RequestContextService } from '../../platform/request-context/request-context.service';
 import type { PriceQuote } from '../../platform/database/schema';
@@ -79,6 +79,25 @@ describe('PriceFeedService.attemptFeed — never throws, never touches the datab
       ok: false,
       failure: 'PROVIDER_TIMEOUT',
     });
+  });
+
+  it('M-13: rejects a quote stamped in the future, which would shadow every newer manual quote', async () => {
+    const now = Date.now();
+    const at = (offsetMs: number) => ({
+      quoteType: 'MAZNEH' as const,
+      amountRial: 415_000_000n,
+      observedAt: new Date(now + offsetMs),
+    });
+    // ساعت تهران بی‌منطقه‌ی زمانی، به‌عنوان UTC خوانده‌شده: ۳.۵ ساعت جلوتر.
+    expect(await service(provider(async () => at(3.5 * 60 * 60 * 1000))).attemptFeed('MAZNEH')).toEqual({
+      ok: false,
+      failure: 'PROVIDER_ERROR',
+    });
+    expect(
+      await service(provider(async () => at(MAX_FEED_CLOCK_SKEW_MS + 60_000))).attemptFeed('MAZNEH'),
+    ).toEqual({ ok: false, failure: 'PROVIDER_ERROR' });
+    // اختلاف ساعت کوچک پذیرفته می‌شود.
+    expect((await service(provider(async () => at(30_000))).attemptFeed('MAZNEH')).ok).toBe(true);
   });
 });
 

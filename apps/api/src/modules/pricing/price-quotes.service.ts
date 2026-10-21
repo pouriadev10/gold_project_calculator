@@ -140,16 +140,22 @@ export class PriceQuotesService {
     return quote;
   }
 
-  async list(tenantId: string, quoteType?: PriceQuoteType): Promise<readonly PriceQuote[]> {
+  /** تازه‌ترین `limit` مظنه، نه کل تاریخچه (M-13). */
+  async list(
+    tenantId: string,
+    quoteType: PriceQuoteType | undefined,
+    limit: number,
+  ): Promise<readonly PriceQuote[]> {
     return withTenantTransaction(this.db, tenantId, (transaction) =>
-      this.listInTransaction(transaction, tenantId, quoteType),
+      this.listInTransaction(transaction, tenantId, quoteType, limit),
     );
   }
 
   async listInTransaction(
     transaction: TenantTransaction,
     tenantId: string,
-    quoteType?: PriceQuoteType,
+    quoteType: PriceQuoteType | undefined,
+    limit: number,
   ): Promise<readonly PriceQuote[]> {
     return transaction
       .select()
@@ -159,7 +165,8 @@ export class PriceQuotesService {
           ? eq(priceQuotes.tenantId, tenantId)
           : and(eq(priceQuotes.tenantId, tenantId), eq(priceQuotes.quoteType, quoteType)),
       )
-      .orderBy(desc(priceQuotes.observedAt), desc(priceQuotes.createdAt), desc(priceQuotes.id));
+      .orderBy(desc(priceQuotes.observedAt), desc(priceQuotes.createdAt), desc(priceQuotes.id))
+      .limit(limit);
   }
 
   async latest(

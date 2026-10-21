@@ -243,6 +243,28 @@ describe('manual price quotes (requires real PostgreSQL)', () => {
     );
   });
 
+  it('M-13: returns only the newest quotes up to the requested limit, never the unbounded history', async () => {
+    for (const amountRial of ['300000001', '300000002', '300000003']) {
+      expect((await createManualQuote(ownerA, tenantA, amountRial)).statusCode).toBe(201);
+    }
+    const get = (query: string) =>
+      adapter.getInstance().inject({
+        method: 'GET',
+        url: `/pricing/quotes?quoteType=MAZNEH${query}`,
+        headers: headers(ownerA, tenantA),
+      });
+
+    const all = await get('');
+    const firstTwo = await get('&limit=2');
+    expect(firstTwo.statusCode).toBe(200);
+    expect(firstTwo.json<PriceQuoteResponse[]>()).toEqual(all.json<PriceQuoteResponse[]>().slice(0, 2));
+    expect(firstTwo.json<PriceQuoteResponse[]>()).toHaveLength(2);
+
+    for (const invalid of ['&limit=0', '&limit=201', '&limit=abc', '&offset=5']) {
+      expect({ invalid, status: (await get(invalid)).statusCode }).toEqual({ invalid, status: 400 });
+    }
+  });
+
   it('rejects decimal, zero, out-of-range, and unauthorized manual values before they reach the database', async () => {
     const decimal = await createManualQuote(ownerA, tenantA, '123.45');
     const zero = await createManualQuote(ownerA, tenantA, '0');

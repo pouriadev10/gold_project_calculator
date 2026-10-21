@@ -27,6 +27,7 @@ import {
   createCoinTypeVersionSchema,
   DEFAULT_PAGE_SIZE,
   MAX_PAGE_SIZE,
+  priceQuoteHistoryQuerySchema,
   profitReportQuerySchema,
   updateGeneralSettingSchema,
 } from '@gold/contracts';
@@ -978,18 +979,19 @@ export const handlers = [
   }),
 
   /**
-   * `GET /pricing/quotes` — قرارداد نهایی BE-021 (`priceQuoteQuerySchema`):
-   * فقط `quoteType` اختیاری، بدون صفحه‌بندی سرور-محور — همان چیزی که
-   * `list()` واقعی می‌دهد. صفحه‌بندی سمت کلاینت در `QuoteHistoryList`
-   * (FE-031) روی همین آرایه‌ی کامل انجام می‌شود.
+   * `GET /pricing/quotes` — قرارداد `priceQuoteHistoryQuerySchema`: `quoteType` اختیاری و
+   * `limit` (پیش‌فرض و سقف `MAX_PAGE_SIZE`)؛ مثل `list()` واقعی فقط تازه‌ترین‌ها (M-13).
+   * صفحه‌بندی سمت کلاینت در `QuoteHistoryList` (FE-031) روی همین آرایه انجام می‌شود.
    */
   http.get('/api/pricing/quotes', async ({ request }) => {
     await delay(READ_DELAY_MS);
-    const quoteType = new URL(request.url).searchParams.get('quoteType');
+    const query = priceQuoteHistoryQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
+    if (!query.success) return mockValidationError(query.error);
+    const { quoteType, limit } = query.data;
     const filtered =
-      quoteType === null ? maznehQuoteHistory : maznehQuoteHistory.filter((q) => q.quoteType === quoteType);
+      quoteType === undefined ? maznehQuoteHistory : maznehQuoteHistory.filter((q) => q.quoteType === quoteType);
 
-    return HttpResponse.json(filtered);
+    return HttpResponse.json(filtered.slice(0, limit));
   }),
 
   /**

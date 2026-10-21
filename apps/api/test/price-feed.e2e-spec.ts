@@ -97,7 +97,8 @@ describe('price feed fallback (requires real PostgreSQL)', () => {
   });
 
   it('stores a successful provider result as a FEED quote with audit evidence', async () => {
-    const observedAt = new Date('2030-01-01T00:00:00.000Z');
+    // زمان گذشته: مظنه‌ی فید با زمان آینده از M-13 نامعتبر است.
+    const observedAt = new Date('2026-01-01T00:00:00.000Z');
     provider.calls = 0;
     provider.response = async () => ({
       quoteType: 'MAZNEH',

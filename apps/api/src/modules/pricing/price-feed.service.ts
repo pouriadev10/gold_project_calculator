@@ -56,13 +56,21 @@ export interface PriceFeedStatusRecord {
   readonly latestManualQuote: PriceQuote | undefined;
 }
 
-function isValidFeedResult(value: PriceFeedResult): boolean {
+/**
+ * اختلاف ساعت مجاز provider با سرور. مرز فنی است، نه عدد صنفی (قاعده‌ی ۲-۶).
+ * مظنه‌ای که زمانش در آینده باشد «آخرین مظنه» می‌شد و تا رسیدن آن زمان روی هر مظنه‌ی دستی تازه‌تر
+ * می‌ایستاد — مثلاً provider ای که ساعت تهران را بی‌منطقه‌ی زمانی بفرستد، ۳.۵ ساعت (M-13).
+ */
+export const MAX_FEED_CLOCK_SKEW_MS = 5 * 60 * 1000;
+
+function isValidFeedResult(value: PriceFeedResult, now: Date): boolean {
   return (
     priceQuoteTypeSchema.safeParse(value.quoteType).success &&
     typeof value.amountRial === 'bigint' &&
     priceQuoteAmountRialSchema.safeParse(value.amountRial.toString()).success &&
     value.observedAt instanceof Date &&
-    !Number.isNaN(value.observedAt.getTime())
+    !Number.isNaN(value.observedAt.getTime()) &&
+    value.observedAt.getTime() <= now.getTime() + MAX_FEED_CLOCK_SKEW_MS
   );
 }
 
@@ -184,7 +192,7 @@ export class PriceFeedService {
 
   private async fetchFromProvider(quoteType: PriceQuoteType): Promise<PriceFeedResult> {
     const result = await withTimeout(this.provider.fetchLatest(), this.timeoutMs);
-    if (!isValidFeedResult(result) || result.quoteType !== quoteType) {
+    if (!isValidFeedResult(result, new Date()) || result.quoteType !== quoteType) {
       throw new InvalidPriceFeedResultError();
     }
     return result;

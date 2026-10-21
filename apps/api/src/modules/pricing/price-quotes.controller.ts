@@ -15,6 +15,7 @@ import {
 } from '@nestjs/common';
 import {
   createManualPriceQuoteSchema,
+  priceQuoteHistoryQuerySchema,
   priceQuoteQuerySchema,
 } from '@gold/contracts';
 import { ZodValidationPipe } from '../../shared/validation';
@@ -30,6 +31,7 @@ import { PriceQuotesService } from './price-quotes.service';
 import type {
   CreateManualPriceQuoteInput,
   PriceQuote as PriceQuoteResponse,
+  PriceQuoteHistoryQuery,
   PriceQuoteQuery,
 } from '@gold/contracts';
 import type { AccessTokenPayload } from '../../platform/auth/token.service';
@@ -135,9 +137,9 @@ export class PriceQuotesController {
 
   @Get()
   async list(
-    @Query(new ZodValidationPipe(priceQuoteQuerySchema)) query: PriceQuoteQuery,
+    @Query(new ZodValidationPipe(priceQuoteHistoryQuerySchema)) query: PriceQuoteHistoryQuery,
   ): Promise<readonly PriceQuoteResponse[]> {
-    const quotes = await this.quotes.list(this.context.getTenantId(), query.quoteType);
+    const quotes = await this.quotes.list(this.context.getTenantId(), query.quoteType, query.limit);
 
     return quotes.map(toPriceQuoteResponse);
   }

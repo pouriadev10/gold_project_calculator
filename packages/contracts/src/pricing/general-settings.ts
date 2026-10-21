@@ -73,6 +73,15 @@ export const generalSettingsSchema = z.object({
   settings: z.array(generalSettingSchema),
 });
 
+/**
+ * مقدار عددی به شکل متعارف ذخیره می‌شود: «01000» ← «1000» (M-13). فروش و خرید همین رشته را در
+ * snapshot ِ سند قفل می‌کنند و خواندن snapshot فقط شکل متعارف را می‌پذیرد؛ بدون این، فاکتور
+ * درست قیمت می‌خورد ولی جزئیاتش واحد گرد کردن را «نامعلوم» نشان می‌داد.
+ */
+function canonicalGeneralSettingValue(key: GeneralSettingKey, value: string): string {
+  return key !== 'pricing.rounding_policy' && DIGITS.test(value) ? BigInt(value).toString() : value;
+}
+
 /** ساخت نسخه‌ی تازه‌ی یک کلید؛ زمان شروع اعتبار را سرور تعیین می‌کند (اکنون). */
 export const updateGeneralSettingSchema = z
   .object({
@@ -83,7 +92,8 @@ export const updateGeneralSettingSchema = z
   .superRefine((input, context) => {
     const error = generalSettingValueError(input.key, input.value);
     if (error !== null) context.addIssue({ code: z.ZodIssueCode.custom, path: ['value'], message: error });
-  });
+  })
+  .transform((input) => ({ ...input, value: canonicalGeneralSettingValue(input.key, input.value) }));
 
 export type GeneralSetting = z.infer<typeof generalSettingSchema>;
 export type GeneralSettings = z.infer<typeof generalSettingsSchema>;

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { positiveBigIntStringSchema, uuidSchema } from '../common/index.js';
+import { MAX_PAGE_SIZE, positiveBigIntStringSchema, uuidSchema } from '../common/index.js';
 
 /** The market rate used by phase 1 pricing. More types may be added explicitly later. */
 export const priceQuoteTypeSchema = z.enum(['MAZNEH']);
@@ -29,6 +29,17 @@ export const priceQuoteQuerySchema = z
   })
   .strict();
 
+/**
+ * `GET /pricing/quotes` — تاریخچه، تازه‌ترین اول. پیش‌تر کل تاریخچه‌ی مستأجر را بی‌سقف برمی‌گرداند،
+ * که با چند مظنه در روز (یا یک فید) پس از چند ماه هزاران ردیف می‌شد (M-13). پیش‌فرض و سقف همان
+ * `MAX_PAGE_SIZE` است؛ پاسخ همچنان یک آرایه است.
+ */
+export const priceQuoteHistoryQuerySchema = priceQuoteQuerySchema
+  .extend({
+    limit: z.coerce.number().int().min(1).max(MAX_PAGE_SIZE).default(MAX_PAGE_SIZE),
+  })
+  .strict();
+
 /** JSON representation of an immutable price quote. */
 export const priceQuoteSchema = z.object({
   id: uuidSchema,
@@ -42,5 +53,6 @@ export const priceQuoteSchema = z.object({
 
 export type CreateManualPriceQuoteInput = z.infer<typeof createManualPriceQuoteSchema>;
 export type PriceQuoteQuery = z.infer<typeof priceQuoteQuerySchema>;
+export type PriceQuoteHistoryQuery = z.infer<typeof priceQuoteHistoryQuerySchema>;
 export type PriceQuote = z.infer<typeof priceQuoteSchema>;
 export type PriceQuoteType = z.infer<typeof priceQuoteTypeSchema>;

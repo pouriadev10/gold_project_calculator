@@ -249,11 +249,9 @@ export type PriceQuoteSource = PriceQuote['source'];
 /* ── GET /api/pricing/quotes — FE-031/BE-021 ─────────────────── */
 
 /**
- * تاریخچه‌ی مظنه. بک‌اند صفحه‌بندی سرور-محور ندارد
- * (`priceQuoteQuerySchema` فقط `quoteType` اختیاری دارد؛ `list()` در
- * `price-quotes.service.ts` کل فهرست tenant را برمی‌گرداند، مرتب بر
- * اساس `observedAt` نزولی) — pagination در `QuoteHistoryList` سمت
- * کلاینت روی همین آرایه انجام می‌شود.
+ * تاریخچه‌ی مظنه: تازه‌ترین مظنه‌ها مرتب بر اساس `observedAt` نزولی، حداکثر `limit`
+ * (`priceQuoteHistoryQuerySchema`، پیش‌فرض و سقف `MAX_PAGE_SIZE`؛ M-13) — نه کل تاریخچه.
+ * pagination در `QuoteHistoryList` سمت کلاینت روی همین آرایه انجام می‌شود.
  */
 export const priceQuoteListSchema = z.array(priceQuoteSchema);
 export type PriceQuoteList = z.infer<typeof priceQuoteListSchema>;
