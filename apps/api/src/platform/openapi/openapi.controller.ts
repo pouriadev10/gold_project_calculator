@@ -64,7 +64,8 @@ export class OpenApiController {
 
   @Get('assets/:file')
   async asset(@Param('file') file: string): Promise<StreamableFile> {
-    const type = ASSETS[file];
+    // فقط کلیدهای خود فهرست؛ «constructor» یا «toString» ِ موروثی Object نباید ۵۰۰ بدهد (M-11).
+    const type = Object.hasOwn(ASSETS, file) ? ASSETS[file] : undefined;
     if (type === undefined) {
       throw new NotFoundException();
     }

@@ -56,7 +56,7 @@ describe('Swagger UI (BE-070)', () => {
     expect(js.headers['content-type']).toMatch(/^application\/javascript/u);
   });
 
-  it.each(['package.json', 'index.js', '..%2F..%2Fpackage.json', 'absolute-path.js'])(
+  it.each(['package.json', 'index.js', '..%2F..%2Fpackage.json', 'absolute-path.js', 'constructor', 'toString', '__proto__'])(
     'فقط فایل‌های فهرست‌شده — %s ۴۰۴ است',
     async (file) => {
       const response = await adapter.getInstance().inject({ method: 'GET', url: `/docs/assets/${file}` });

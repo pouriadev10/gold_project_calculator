@@ -7,7 +7,6 @@ import {
   HttpStatus,
   Inject,
   Param,
-  ParseUUIDPipe,
   Post,
   Res,
   StreamableFile,
@@ -24,7 +23,9 @@ import { IDEMPOTENCY_KEY_HEADER } from '../idempotency/idempotency-key';
 import { IdempotencyService } from '../idempotency/idempotency.service';
 import { RequestContextService } from '../request-context/request-context.service';
 import { TenantExportsService } from './tenant-exports.service';
+import { uuidSchema } from '@gold/contracts';
 import type { TenantExport } from '@gold/contracts';
+import { ZodValidationPipe } from '../../shared/validation';
 import type { AccessTokenPayload } from '../auth/token.service';
 import type { HeaderWriter } from '../files/pdf-response';
 
@@ -83,7 +84,7 @@ export class TenantExportsController {
   @Get(':id')
   @Roles('OWNER')
   async download(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', new ZodValidationPipe(uuidSchema)) id: string,
     @CurrentAuth() auth: AccessTokenPayload | undefined,
     @Res({ passthrough: true }) reply: HeaderWriter,
   ): Promise<StreamableFile> {

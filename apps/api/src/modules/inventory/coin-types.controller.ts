@@ -10,12 +10,11 @@ import {
   Inject,
   NotFoundException,
   Param,
-  ParseUUIDPipe,
   Post,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import { createCoinTypeSchema, createCoinTypeVersionSchema } from '@gold/contracts';
+import { createCoinTypeSchema, createCoinTypeVersionSchema, uuidSchema } from '@gold/contracts';
 import { CurrentAuth } from '../../platform/auth/current-user.decorator';
 import { JwtAuthGuard } from '../../platform/auth/jwt-auth.guard';
 import { Roles } from '../../platform/auth/roles.decorator';
@@ -173,7 +172,7 @@ export class CoinTypesController {
   @HttpCode(HttpStatus.CREATED)
   @Roles('OWNER', 'MANAGER')
   async createVersion(
-    @Param('coinTypeId', ParseUUIDPipe) coinTypeId: string,
+    @Param('coinTypeId', new ZodValidationPipe(uuidSchema)) coinTypeId: string,
     @Body(new ZodValidationPipe(createCoinTypeVersionSchema)) body: CreateCoinTypeVersionBody,
     @CurrentAuth() auth: AccessTokenPayload | undefined,
     @Headers(IDEMPOTENCY_KEY_HEADER) key: string | undefined,

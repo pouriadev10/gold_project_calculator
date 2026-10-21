@@ -10,7 +10,6 @@ import {
   Inject,
   NotFoundException,
   Param,
-  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -22,6 +21,7 @@ import {
   jewelryItemDetailQuerySchema,
   jewelryItemQuerySchema,
   updateJewelryItemSchema,
+  uuidSchema,
 } from '@gold/contracts';
 import { CurrentAuth } from '../../platform/auth/current-user.decorator';
 import { JwtAuthGuard } from '../../platform/auth/jwt-auth.guard';
@@ -200,7 +200,7 @@ export class JewelryItemsController {
    */
   @Get(':id')
   async findOne(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', new ZodValidationPipe(uuidSchema)) id: string,
     @Query(new ZodValidationPipe(jewelryItemDetailQuerySchema)) query: JewelryItemDetailQuery,
   ): Promise<JewelryItemVersionResponse> {
     const tenantId = this.context.getTenantId();
@@ -220,7 +220,7 @@ export class JewelryItemsController {
   @Patch(':id')
   @Roles('OWNER', 'MANAGER')
   async update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', new ZodValidationPipe(uuidSchema)) id: string,
     @Body(new ZodValidationPipe(updateJewelryItemSchema)) body: UpdateJewelryItemBody,
     @CurrentAuth() auth: AccessTokenPayload | undefined,
     @Headers(IDEMPOTENCY_KEY_HEADER) key: string | undefined,
@@ -270,7 +270,7 @@ export class JewelryItemsController {
   @HttpCode(HttpStatus.OK)
   @Roles('OWNER', 'MANAGER')
   async deactivate(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', new ZodValidationPipe(uuidSchema)) id: string,
     @CurrentAuth() auth: AccessTokenPayload | undefined,
     @Headers(IDEMPOTENCY_KEY_HEADER) key: string | undefined,
   ): Promise<JewelryItemVersionResponse> {

@@ -573,6 +573,8 @@ describe('API کالای زیورآلات (نیازمند PostgreSQL واقعی)
       });
 
       expect(response.statusCode).toBe(400);
+      // M-11: همان اعتبارسنجی فارسی بقیه‌ی مسیرها، نه «Validation failed (uuid is expected)» ِ Nest.
+      expect(response.json<{ error: { message: string } }>().error.message).toBe('شناسه باید UUID معتبر باشد');
     });
   });
 
