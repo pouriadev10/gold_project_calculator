@@ -346,7 +346,8 @@ describe('opening inventory API (real PostgreSQL required)', () => {
     });
 
     const response = await createOpening(owner, payload({ description: 'باید rollback شود' }));
-    expect(response.statusCode).toBe(500);
+    // حساب غیرفعال از M-12 رد ِ کسب‌وکار (۴۲۲) است؛ آنچه اینجا سنجیده می‌شود rollback است.
+    expect(response.statusCode).toBe(422);
 
     const after = await withTenantTransaction(db, tenant.id, async (transaction) => {
       const sources = await transaction.select({ id: openingBalances.id }).from(openingBalances);

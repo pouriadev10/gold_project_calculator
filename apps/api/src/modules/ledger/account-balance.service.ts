@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { toSafeNumber } from '@gold/core-calc';
-import { and, eq, lte } from 'drizzle-orm';
+import { and, eq, lte, sql } from 'drizzle-orm';
 import { DRIZZLE } from '../../platform/database/database.module';
 import {
   assetDimensions,
@@ -70,10 +70,14 @@ export class AccountBalanceService {
      * تاریخ گذشته با `ledger_transactions.effective_at` سنجیده می‌شود، نه
      * `created_at` — قاعده‌ی ۲-۸: مبلغ/رویداد به لحظه‌ی مؤثر بودنش قفل
      * است، نه به لحظه‌ی فیزیکیِ درج ردیف.
+     *
+     * جمع در خود دیتابیس و به‌ازای هر بُعد (M-12، مسئله‌ی #47-الف): حساب یک شخص قدیمی
+     * هزاران ردیف دارد و هر تسویه‌ی اعتباری آن را می‌خواند. SUM روی bigint ‏numeric
+     * برمی‌گرداند و به‌صورت متن می‌آید، پس بدون سرریز و بدون گردکردن به bigint می‌رسد.
      */
     const rows = await transaction
       .select({
-        quantity: ledgerEntries.quantity,
+        quantity: sql<string>`sum(${ledgerEntries.quantity})::text`,
         dimensionKind: assetDimensions.kind,
         coinCode: coinTypes.code,
       })
@@ -105,7 +109,8 @@ export class AccountBalanceService {
           eq(ledgerEntries.accountId, accountId),
           at === undefined ? undefined : lte(ledgerTransactions.effectiveAt, at),
         ),
-      );
+      )
+      .groupBy(assetDimensions.kind, coinTypes.code);
 
     let rial: bigint | undefined;
     let gold: bigint | undefined;
@@ -113,20 +118,21 @@ export class AccountBalanceService {
     const coins = new Map<string, bigint>();
 
     for (const row of rows) {
+      const quantity = BigInt(row.quantity);
       switch (row.dimensionKind) {
         case 'RIAL':
-          rial = (rial ?? 0n) + row.quantity;
+          rial = (rial ?? 0n) + quantity;
           break;
         case 'GOLD':
-          gold = (gold ?? 0n) + row.quantity;
+          gold = (gold ?? 0n) + quantity;
           break;
         case 'SILVER':
-          silver = (silver ?? 0n) + row.quantity;
+          silver = (silver ?? 0n) + quantity;
           break;
         case 'COIN': {
           // `coinCode` فقط برای FK ناسازگار (که ساختار داده اجازه نمی‌دهد) خالی می‌ماند.
           const key = row.coinCode ?? 'UNKNOWN_COIN_TYPE';
-          coins.set(key, (coins.get(key) ?? 0n) + row.quantity);
+          coins.set(key, (coins.get(key) ?? 0n) + quantity);
           break;
         }
         default:

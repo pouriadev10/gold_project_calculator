@@ -13,6 +13,7 @@ import { withTenantTransaction } from '../../platform/database/tenant-transactio
 import { AssetDimensionsService } from '../ledger/asset-dimensions.service';
 import { LedgerAccountsService } from '../ledger/ledger-accounts.service';
 import { LedgerPostingService } from '../ledger/ledger-posting.service';
+import type { PartyLedgerAccounts } from '../ledger/ledger-accounts.service';
 import type { LedgerPostingEntryInput } from '../ledger/ledger-posting.service';
 import { InventoryMovementsService } from '../inventory/inventory-movements.service';
 import { PartiesService, PartyNotFoundError } from '../parties/parties.service';
@@ -660,15 +661,23 @@ export class InvoiceAmendmentsService {
     currentAsset: InventoryAsset,
     replacement: CalculatedAmendment,
   ): Promise<string> {
-    const [
-      cash,
-      salesRevenue,
-      cogsJewelry,
-      inventoryJewelry,
-      rial,
-      currentParty,
-      replacementParty,
-    ] = await Promise.all([
+    /*
+     * `ensurePartyAccountsInTransaction` قفل هر شخص را تا commit نگه می‌دارد (M-12). دو اصلاحیه‌ی
+     * هم‌زمان A→B و B→A اگر قفل‌ها را به ترتیب سند بگیرند بن‌بست می‌سازند، پس ترتیب ثابت است.
+     */
+    const partyAccounts = new Map<string, PartyLedgerAccounts>();
+    for (const partyId of [...new Set([currentVersion.partyId, command.input.partyId])].sort()) {
+      partyAccounts.set(
+        partyId,
+        await this.accounts.ensurePartyAccountsInTransaction(transaction, {
+          tenantId: command.tenantId,
+          partyId,
+        }),
+      );
+    }
+    const currentParty = partyAccounts.get(currentVersion.partyId)!;
+    const replacementParty = partyAccounts.get(command.input.partyId)!;
+    const [cash, salesRevenue, cogsJewelry, inventoryJewelry, rial] = await Promise.all([
       this.accounts.getRequiredSystemAccountInTransaction(transaction, command.tenantId, 'CASH'),
       this.accounts.getRequiredSystemAccountInTransaction(
         transaction,
@@ -686,14 +695,6 @@ export class InvoiceAmendmentsService {
         'INVENTORY_JEWELRY',
       ),
       this.dimensions.getRequiredBaseDimensionInTransaction(transaction, command.tenantId, 'RIAL'),
-      this.accounts.ensurePartyAccountsInTransaction(transaction, {
-        tenantId: command.tenantId,
-        partyId: currentVersion.partyId,
-      }),
-      this.accounts.ensurePartyAccountsInTransaction(transaction, {
-        tenantId: command.tenantId,
-        partyId: command.input.partyId,
-      }),
     ]);
     const entries = new Map<string, LedgerPostingEntryInput>();
     const addRialDifference = (accountId: string, quantity: bigint) => {

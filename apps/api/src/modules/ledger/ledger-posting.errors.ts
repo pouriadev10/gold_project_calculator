@@ -30,12 +30,18 @@ export class LedgerPostingDimensionNotFoundError extends Error {
   }
 }
 
-/** حساب غیرفعال فقط برای تاریخچه باقی می‌ماند و entry جدید نمی‌پذیرد. */
-export class InactiveLedgerPostingAccountError extends Error {
+/**
+ * حساب غیرفعال فقط برای تاریخچه باقی می‌ماند و entry جدید نمی‌پذیرد. حساب شخص غیرفعال و حساب
+ * موجودی نوع سکه‌ی غیرفعال هر دو به اینجا می‌رسند؛ پیش از M-12 این رد ۵۰۰ «خطای غیرمنتظره» می‌داد.
+ */
+export class InactiveLedgerPostingAccountError extends BusinessRuleError {
   readonly accountId: string;
 
   constructor(accountId: string) {
-    super(`Ledger account "${accountId}" is inactive`);
+    super(
+      `Ledger account "${accountId}" is inactive`,
+      'حساب این سند غیرفعال است (شخص یا نوع سکه‌ی غیرفعال) و سندی برایش ثبت نمی‌شود',
+    );
     this.name = 'InactiveLedgerPostingAccountError';
     this.accountId = accountId;
   }

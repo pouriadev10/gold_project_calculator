@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { AuditService } from '../../platform/audit/audit.service';
 import { DRIZZLE } from '../../platform/database/database.module';
 import { ledgerAccounts, parties } from '../../platform/database/schema';
@@ -123,6 +123,11 @@ export interface PartyLedgerAccounts {
   readonly payable: LedgerAccount;
 }
 
+/** عنوان حساب دریافتنی/پرداختنی یک شخص — یک تعریف برای ساخت و برای «تغییری نکرده؟». */
+function partyAccountTitle(accountType: 'ASSET' | 'LIABILITY', partyName: string): string {
+  return `${accountType === 'ASSET' ? 'حساب دریافتنی' : 'حساب پرداختنی'} ${partyName}`;
+}
+
 /** Chart of accounts and party subledgers. No update/delete API is exposed. */
 @Injectable()
 export class LedgerAccountsService {
@@ -203,6 +208,17 @@ export class LedgerAccountsService {
     transaction: TenantTransaction,
     input: EnsurePartyLedgerAccountsInput,
   ): Promise<PartyLedgerAccounts> {
+    /*
+     * هر سندی که به حساب یک شخص می‌نویسد (فروش، خرید، تسویه، اصلاحیه) از اینجا رد می‌شود و
+     * این قفل همه‌ی آن سندها را برای همان شخص تا commit سری می‌کند (M-12). بررسی اعتبار
+     * ریالی در تسویه‌ی ترکیبی روی همین تکیه دارد: بدون آن دو تسویه‌ی هم‌زمان یک اعتبار را دو
+     * بار خرج می‌کردند. پیش‌تر همین سری‌سازی پنهانی از UPDATE ِ بی‌اثر ِ هر بار ِ حساب‌ها
+     * می‌آمد — که در هر سند دو ردیف audit ِ «همگام‌سازی» هم می‌نوشت.
+     */
+    await transaction.execute(
+      sql`SELECT pg_advisory_xact_lock(hashtextextended(${`${input.tenantId}:party:${input.partyId}`}, 0))`,
+    );
+
     const [party] = await transaction
       .select({ id: parties.id, displayName: parties.displayName, status: parties.status })
       .from(parties)
@@ -214,6 +230,25 @@ export class LedgerAccountsService {
     }
 
     const active = party.status === 'ACTIVE';
+
+    // حساب‌ها از قبل هستند و نام و وضعیتشان همان است؟ هیچ نوشتن و audit ای لازم نیست.
+    const existing = await transaction
+      .select()
+      .from(ledgerAccounts)
+      .where(and(eq(ledgerAccounts.tenantId, input.tenantId), eq(ledgerAccounts.partyId, party.id)));
+    const current = (accountType: 'ASSET' | 'LIABILITY') =>
+      existing.find(
+        (account) =>
+          account.accountType === accountType &&
+          account.active === active &&
+          account.title === partyAccountTitle(accountType, party.displayName),
+      );
+    const unchangedReceivable = current('ASSET');
+    const unchangedPayable = current('LIABILITY');
+    if (unchangedReceivable !== undefined && unchangedPayable !== undefined) {
+      return { receivable: unchangedReceivable, payable: unchangedPayable };
+    }
+
     const receivable = await this.upsertPartyAccountInTransaction(
       transaction,
       input.tenantId,
@@ -266,21 +301,21 @@ export class LedgerAccountsService {
     active: boolean,
   ): Promise<LedgerAccount> {
     const key = accountType === 'ASSET' ? 'PARTY_RECEIVABLE' : 'PARTY_PAYABLE';
-    const titlePrefix = accountType === 'ASSET' ? 'حساب دریافتنی' : 'حساب پرداختنی';
+    const title = partyAccountTitle(accountType, partyName);
     const [account] = await transaction
       .insert(ledgerAccounts)
       .values({
         tenantId,
         partyId,
         code: `${key}:${partyId}`,
-        title: `${titlePrefix} ${partyName}`,
+        title,
         accountType,
         active,
       })
       .onConflictDoUpdate({
         target: [ledgerAccounts.tenantId, ledgerAccounts.partyId, ledgerAccounts.accountType],
         // party identity و account type تغییر نمی‌کنند؛ نام و انتخاب‌پذیری sync می‌شوند.
-        set: { title: `${titlePrefix} ${partyName}`, active },
+        set: { title, active },
       })
       .returning();
 

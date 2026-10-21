@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { randomUUID } from 'node:crypto';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { grossMg, karat, toPureMg } from '@gold/core-calc';
 import { Test } from '@nestjs/testing';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -11,6 +11,7 @@ import { LedgerAccountsService } from '../src/modules/ledger/ledger-accounts.ser
 import { LedgerPostingService } from '../src/modules/ledger/ledger-posting.service';
 import { PartiesService } from '../src/modules/parties/parties.service';
 import { PriceQuotesService } from '../src/modules/pricing/price-quotes.service';
+import { MixedSettlementInsufficientCreditError } from '../src/modules/settlement/mixed-settlements.errors';
 import { MixedSettlementsService } from '../src/modules/settlement/mixed-settlements.service';
 import { DRIZZLE } from '../src/platform/database/database.module';
 import {
@@ -465,5 +466,52 @@ describe('mixed settlement (BE-048)', () => {
     expect(after.movements).toHaveLength(before.movements.length);
     expect(after.transactions).toHaveLength(before.transactions.length);
     expect(after.keys).toHaveLength(0);
+  });
+
+  it('M-12: دو تسویه‌ی هم‌زمان نمی‌توانند یک اعتبار ریالی را دوبار خرج کنند', async () => {
+    const accounts = app.get(LedgerAccountsService);
+    const posting = app.get(LedgerPostingService);
+    const parties = app.get(PartiesService);
+    const credit = 10_000_000n;
+    const creditor = (
+      await withTenantTransaction(db, tenant.id, (transaction) =>
+        parties.createInTransaction(transaction, {
+          tenantId: tenant.id,
+          actorUserId: actorId,
+          input: { type: 'CONSUMER', displayName: 'Concurrent credit' },
+        }),
+      )
+    ).id;
+    const { payable } = await accounts.ensurePartyAccounts({ tenantId: tenant.id, partyId: creditor });
+    await posting.post({
+      source: { tenantId: tenant.id, type: 'OPENING_BALANCE', id: randomUUID() },
+      effectiveAt,
+      description: 'Concurrent credit opening balance',
+      createdBy: actorId,
+      entries: [
+        { accountId: cashAccountId, dimensionId: rialDimensionId, quantity: credit },
+        { accountId: payable.id, dimensionId: rialDimensionId, quantity: -credit },
+      ],
+    });
+
+    // pool ِ گرم تا دو تراکنش واقعاً هم‌پوشانی داشته باشند (درس M-07).
+    await Promise.all(Array.from({ length: 10 }, () => db.execute(sql`SELECT pg_sleep(0.05)`)));
+    const spendAll = () =>
+      withTenantTransaction(db, tenant.id, (transaction) =>
+        settlementService.createInTransaction(transaction, {
+          tenantId: tenant.id,
+          partyId: creditor,
+          effectiveAt,
+          createdBy: actorId,
+          lines: [{ type: 'CREDIT', amountRial: credit }],
+        }),
+      );
+    const results = await Promise.allSettled([spendAll(), spendAll()]);
+
+    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+    const rejected = results.find((result) => result.status === 'rejected');
+    expect(rejected?.status === 'rejected' && rejected.reason).toBeInstanceOf(MixedSettlementInsufficientCreditError);
+    const remaining = await balances.getAccountBalances(tenant.id, payable.id);
+    expect(remaining.rial ?? '0').toBe('0');
   });
 });

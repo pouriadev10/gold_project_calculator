@@ -8,14 +8,19 @@ import {
   LedgerAccountPartyNotFoundError,
 } from '../src/modules/ledger/ledger-accounts.errors';
 import { LedgerAccountsService } from '../src/modules/ledger/ledger-accounts.service';
+import { InactiveLedgerPostingAccountError } from '../src/modules/ledger/ledger-posting.errors';
+import { LedgerPostingService } from '../src/modules/ledger/ledger-posting.service';
 import { DRIZZLE } from '../src/platform/database/database.module';
 import {
+  assetDimensions,
+  auditLogs,
   coinTypes,
   ledgerAccounts,
   parties,
   tenants,
 } from '../src/platform/database/schema';
 import { withTenantTransaction } from '../src/platform/database/tenant-transaction';
+import { BusinessRuleError } from '../src/platform/error-contract/business-rule.error';
 import { TenantService } from '../src/platform/tenant/tenant.service';
 import type { INestApplicationContext } from '@nestjs/common';
 import type { Database } from '../src/platform/database/connect';
@@ -159,6 +164,85 @@ describe('حساب‌های دفتر کل (BE-031)', () => {
     });
     expect(retried.receivable.id).toBe(first.receivable.id);
     expect(retried.payable.id).toBe(first.payable.id);
+  });
+
+  it('M-12: فراخوانی تکراری چیزی نمی‌نویسد، ولی تغییر نام و غیرفعال‌شدن شخص همگام می‌شود', async () => {
+    const tenant = await createTenant();
+    const party = await createParty(tenant.id);
+    const syncAudits = () =>
+      withTenantTransaction(db, tenant.id, (transaction) =>
+        transaction
+          .select({ entityId: auditLogs.entityId })
+          .from(auditLogs)
+          .where(
+            and(
+              eq(auditLogs.tenantId, tenant.id),
+              eq(auditLogs.action, 'LEDGER_PARTY_ACCOUNT_SYNCED'),
+            ),
+          ),
+      );
+    const setParty = (values: { displayName?: string; status?: 'INACTIVE' }) =>
+      withTenantTransaction(db, tenant.id, (transaction) =>
+        transaction.update(parties).set(values).where(eq(parties.id, party.id)),
+      );
+
+    const created = await accountsService.ensurePartyAccounts({ tenantId: tenant.id, partyId: party.id });
+    expect(await syncAudits()).toHaveLength(2);
+
+    // هر فروش و تسویه همین را صدا می‌زند؛ پیش‌تر هر بار دو UPDATE ِ بی‌اثر و دو ردیف audit می‌نوشت.
+    const again = await accountsService.ensurePartyAccounts({ tenantId: tenant.id, partyId: party.id });
+    await accountsService.ensurePartyAccounts({ tenantId: tenant.id, partyId: party.id });
+    expect(again).toEqual(created);
+    expect(await syncAudits()).toHaveLength(2);
+
+    await setParty({ displayName: 'نام تازه' });
+    const renamed = await accountsService.ensurePartyAccounts({ tenantId: tenant.id, partyId: party.id });
+    expect(renamed.receivable).toMatchObject({ id: created.receivable.id, title: 'حساب دریافتنی نام تازه' });
+    expect(renamed.payable).toMatchObject({ id: created.payable.id, title: 'حساب پرداختنی نام تازه' });
+    expect(await syncAudits()).toHaveLength(4);
+
+    await setParty({ status: 'INACTIVE' });
+    const deactivated = await accountsService.ensurePartyAccounts({ tenantId: tenant.id, partyId: party.id });
+    expect(deactivated.receivable.active).toBe(false);
+    expect(deactivated.payable.active).toBe(false);
+    expect(await syncAudits()).toHaveLength(6);
+  });
+
+  it('M-12: سند روی حساب شخص غیرفعال رد ِ کسب‌وکار (۴۲۲) است، نه خطای غیرمنتظره', async () => {
+    const tenant = await createTenant();
+    const party = await createParty(tenant.id);
+    await withTenantTransaction(db, tenant.id, (transaction) =>
+      transaction.update(parties).set({ status: 'INACTIVE' }).where(eq(parties.id, party.id)),
+    );
+    const { receivable } = await accountsService.ensurePartyAccounts({
+      tenantId: tenant.id,
+      partyId: party.id,
+    });
+    const [cash] = await withTenantTransaction(db, tenant.id, (transaction) =>
+      transaction
+        .select({ id: ledgerAccounts.id })
+        .from(ledgerAccounts)
+        .where(and(eq(ledgerAccounts.tenantId, tenant.id), eq(ledgerAccounts.systemKey, 'CASH'))),
+    );
+    const [rial] = await withTenantTransaction(db, tenant.id, (transaction) =>
+      transaction
+        .select({ id: assetDimensions.id })
+        .from(assetDimensions)
+        .where(and(eq(assetDimensions.tenantId, tenant.id), eq(assetDimensions.code, 'RIAL'))),
+    );
+
+    const attempt = app.get(LedgerPostingService).post({
+      source: { tenantId: tenant.id, type: 'SETTLEMENT', id: randomUUID() },
+      effectiveAt: new Date(),
+      description: 'دریافت از شخص غیرفعال',
+      entries: [
+        { accountId: cash!.id, dimensionId: rial!.id, quantity: 1_000n },
+        { accountId: receivable.id, dimensionId: rial!.id, quantity: -1_000n },
+      ],
+    });
+
+    await expect(attempt).rejects.toBeInstanceOf(InactiveLedgerPostingAccountError);
+    await expect(attempt).rejects.toBeInstanceOf(BusinessRuleError);
   });
 
   it('Party مستأجر دیگر را به subledger tenant جاری وصل نمی‌کند', async () => {
