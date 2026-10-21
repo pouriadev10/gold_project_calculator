@@ -4,6 +4,7 @@ import { and, eq } from 'drizzle-orm';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
 import { Test } from '@nestjs/testing';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { toPersianDigits } from '@gold/core-calc';
 import { AppModule } from '../src/app.module';
 import { PasswordService } from '../src/platform/auth/password.service';
 import { DRIZZLE } from '../src/platform/database/database.module';
@@ -329,6 +330,20 @@ describe('API کالای زیورآلات (نیازمند PostgreSQL واقعی)
 
       expect(duplicate.statusCode).toBe(409);
       expect(otherTenant.statusCode).toBe(201);
+    });
+
+    it('M-14: کد با ارقام فارسی همان کد با ارقام لاتین است — در ذخیره، تکراری و جست‌وجو', async () => {
+      const digits = String(Date.now()).slice(-8);
+      const persian = toPersianDigits(digits);
+
+      const created = await createItem(ownerA, tenantA, { code: `  ر-${persian} ` });
+      expect(created.statusCode).toBe(201);
+      expect(created.json<JewelryItemResponse>().code).toBe(`ر-${digits}`);
+
+      expect((await createItem(ownerA, tenantA, { code: `ر-${digits}` })).statusCode).toBe(409);
+
+      const page = await listItems(ownerA, tenantA, `?search=${encodeURIComponent(persian)}`);
+      expect(page.items.map((row) => row.code)).toEqual([`ر-${digits}`]);
     });
 
     it('صندوق‌دار اجازه‌ی ساخت کالا ندارد', async () => {
@@ -751,6 +766,33 @@ describe('API کالای زیورآلات (نیازمند PostgreSQL واقعی)
           new Date('2026-06-01T00:00:00Z'),
         ),
       ).rejects.toBeInstanceOf(InactiveJewelryItemError);
+    });
+
+    it('M-14: فروش کالای غیرفعال از HTTP رد ِ کسب‌وکار (۴۲۲) است، نه خطای غیرمنتظره', async () => {
+      const item = await createdItem(ownerA, tenantA, { validFrom: '2026-01-01T00:00:00Z' });
+      await deactivateItem(ownerA, tenantA, item.jewelryItemId);
+      const party = await adapter.getInstance().inject({
+        method: 'POST',
+        url: '/parties',
+        headers: writeHeaders(ownerA, tenantA),
+        payload: { type: 'CONSUMER', displayName: 'خریدار کالای غیرفعال' },
+      });
+      expect(party.statusCode).toBe(201);
+
+      const sale = await adapter.getInstance().inject({
+        method: 'POST',
+        url: '/sales/invoices/jewelry',
+        headers: writeHeaders(ownerA, tenantA),
+        payload: {
+          partyId: party.json<{ id: string }>().id,
+          jewelryItemId: item.jewelryItemId,
+          quoteId: randomUUID(),
+          effectiveAt: '2026-06-01T00:00:00.000Z',
+        },
+      });
+
+      expect(sale.statusCode).toBe(422);
+      expect(sale.json<{ error: { code: string } }>().error.code).toBe('BUSINESS_RULE_VIOLATION');
     });
 
     it('کالای ناموجود برای فروش هم رد می‌شود', async () => {

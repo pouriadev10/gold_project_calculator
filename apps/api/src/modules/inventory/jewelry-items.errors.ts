@@ -1,3 +1,4 @@
+import { BusinessRuleError } from '../../platform/error-contract/business-rule.error';
 import { ResourceNotFoundError } from '../../platform/error-contract/resource-not-found.error';
 
 export class InvalidJewelryItemVersionDateError extends Error {
@@ -60,13 +61,18 @@ export class JewelryItemNotFoundError extends ResourceNotFoundError {
  * کالای غیرفعال در معامله‌ی جدید انتخاب شده است — معیار BE-026.
  *
  * غیرفعال‌سازی رکورد را پاک نمی‌کند، چون فاکتورهای قدیمی هنوز به آن
- * ارجاع می‌دهند؛ فقط جلوی انتخاب شدنش در سند **جدید** را می‌گیرد.
+ * ارجاع می‌دهند؛ فقط جلوی انتخاب شدنش در سند **جدید** را می‌گیرد. فروش و اصلاحیه آن را
+ * ترجمه نمی‌کردند و ۵۰۰ می‌دادند؛ از M-14 قاعده‌ی کسب‌وکار است (۴۲۲). صفحه‌ی کالا و
+ * افتتاحیه همچنان آن را صریحاً ۴۰۹ می‌کنند.
  */
-export class InactiveJewelryItemError extends Error {
+export class InactiveJewelryItemError extends BusinessRuleError {
   readonly jewelryItemId: string;
 
   constructor(jewelryItemId: string) {
-    super(`Jewelry item "${jewelryItemId}" is inactive and cannot be used in a new transaction`);
+    super(
+      `Jewelry item "${jewelryItemId}" is inactive and cannot be used in a new transaction`,
+      'این کالا غیرفعال است و در فروش تازه انتخاب نمی‌شود',
+    );
     this.name = 'InactiveJewelryItemError';
     this.jewelryItemId = jewelryItemId;
   }

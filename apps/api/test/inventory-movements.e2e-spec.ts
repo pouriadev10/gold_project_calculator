@@ -298,6 +298,39 @@ describe('حرکات موجودی (نیازمند PostgreSQL واقعی)', () =>
     });
   });
 
+  describe('هم‌زمانی (M-14)', () => {
+    it('دو سند که همان کالاها را به ترتیب مخالف برمی‌دارند بن‌بست نمی‌سازند', async () => {
+      const ids = [await newJewelryItemId(tenantA.id), await newJewelryItemId(tenantA.id)];
+      // قفل‌ها به ترتیب کلید گرفته می‌شوند؛ «اول» کالایی است که کلیدش زودتر می‌آید.
+      const [first, second] = [...ids].sort();
+      const line = (itemId: string) => movement({ itemType: 'JEWELRY', itemId, quantity: 1n });
+      let holderHasFirst!: () => void;
+      const firstHeld = new Promise<void>((resolve) => (holderHasFirst = resolve));
+      let otherStarted!: () => void;
+      const otherWaiting = new Promise<void>((resolve) => (otherStarted = resolve));
+
+      // سند ۱: کالای اول را می‌گیرد، صبر می‌کند تا سند ۲ شروع شود، بعد کالای دوم را می‌خواهد.
+      const holder = withTenantTransaction(db, tenantA.id, async (transaction) => {
+        await movements.recordManyInTransaction(transaction, tenantA.id, [line(first!)]);
+        holderHasFirst();
+        await otherWaiting;
+        await movements.recordManyInTransaction(transaction, tenantA.id, [line(second!)]);
+      });
+      await firstHeld;
+      // سند ۲: همان دو کالا به ترتیب مخالف. بدون ترتیب ثابت، دومی را می‌گرفت و روی اولی می‌ماند.
+      const other = withTenantTransaction(db, tenantA.id, (transaction) =>
+        movements.recordManyInTransaction(transaction, tenantA.id, [line(second!), line(first!)]),
+      );
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      otherStarted();
+
+      const results = await Promise.allSettled([holder, other]);
+      expect(results.map((result) => result.status)).toEqual(['fulfilled', 'fulfilled']);
+      expect(await movements.balance(tenantA.id, 'JEWELRY', first!)).toBe(2n);
+      expect(await movements.balance(tenantA.id, 'JEWELRY', second!)).toBe(2n);
+    });
+  });
+
   describe('سیاست موجودی منفی', () => {
     it('خروجی بیشتر از موجودی رد می‌شود', async () => {
       const itemId = await newJewelryItemId(tenantA.id);

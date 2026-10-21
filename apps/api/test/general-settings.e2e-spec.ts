@@ -79,7 +79,12 @@ describe('general settings API (requires real PostgreSQL)', () => {
     adapter.getInstance().inject({ method: 'GET', url: URL, headers: headers(who, tenant) });
 
   /** `key: null` یعنی درخواست بدون Idempotency-Key. */
-  const update = (who: Member, tenant: TenantFixture, payload: unknown, key: string | null = randomUUID()) =>
+  const update = (
+    who: Member,
+    tenant: TenantFixture,
+    payload: Record<string, unknown>,
+    key: string | null = randomUUID(),
+  ) =>
     adapter
       .getInstance()
       .inject({ method: 'POST', url: URL, headers: headers(who, tenant, key ?? undefined), payload });

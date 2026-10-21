@@ -199,6 +199,12 @@ export class JewelryItemsService {
     input: CreateJewelryItemInput,
   ): Promise<JewelryItemVersion> {
     this.assertSpecification(input);
+    /*
+     * کد همان نرمال‌سازی ِ نوع سکه را می‌گیرد (M-14): ارقام لاتین، ی/ک فارسی، بی‌فاصله‌ی اضافه.
+     * بزرگی حروف دست نمی‌خورد. بدون آن «ر-۱۲۳» و «ر-123» دو کالای جدا می‌شدند و جست‌وجوی
+     * یکی دیگری را پیدا نمی‌کرد.
+     */
+    const code = normalizeTextForStorage(input.code);
 
     /*
      * قفل مشورتی روی «مستأجر + کد»، همان الگوی BE-020: دو درخواست
@@ -206,7 +212,7 @@ export class JewelryItemsService {
      * درج پیش بروند.
      */
     await transaction.execute(
-      sql`SELECT pg_advisory_xact_lock(hashtextextended(${`${input.tenantId}:${input.code}`}, 0))`,
+      sql`SELECT pg_advisory_xact_lock(hashtextextended(${`${input.tenantId}:${code}`}, 0))`,
     );
 
     let createdItem;
@@ -214,12 +220,12 @@ export class JewelryItemsService {
     try {
       const [item] = await transaction
         .insert(jewelryItems)
-        .values({ tenantId: input.tenantId, code: input.code })
+        .values({ tenantId: input.tenantId, code })
         .returning();
       createdItem = item!;
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new JewelryItemCodeConflictError(input.code);
+        throw new JewelryItemCodeConflictError(code);
       }
       throw error;
     }
@@ -694,11 +700,10 @@ export class JewelryItemsService {
 
     if (search !== '') {
       /*
-       * کد با متن خام و بدون حساسیت به بزرگی حروف تطبیق می‌شود، چون
-       * شناسه است و نرمال‌سازی فارسی روی شناسه ممنوع است. عنوان با کلید
-       * نرمال‌شده تطبیق می‌شود تا «انگشتر» با یای عربی هم پیدا شود.
+       * کد با همان نرمال‌سازی ِ ذخیره (ارقام لاتین، ی/ک) و بدون حساسیت به بزرگی حروف تطبیق
+       * می‌شود (M-14). عنوان با کلید جست‌وجو تطبیق می‌شود تا «انگشتر» با یای عربی هم پیدا شود.
        */
-      const matches: SQL[] = [ilike(jewelryItems.code, likeContainsPattern(search))];
+      const matches: SQL[] = [ilike(jewelryItems.code, likeContainsPattern(normalizeTextForStorage(search)))];
       const titleKey = normalizeTextForSearch(search);
 
       if (titleKey !== '') {

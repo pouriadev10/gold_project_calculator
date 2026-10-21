@@ -117,34 +117,43 @@ export class InventoryMovementsService {
       return [];
     }
 
+    for (const input of inputs) {
+      if (input.quantity === 0n) {
+        throw new ZeroInventoryMovementError();
+      }
+      if ((input.itemType === 'MELTED_GOLD') !== ((input.itemId ?? null) === null)) {
+        throw new InvalidInventoryItemIdentityError(input.itemType);
+      }
+    }
+
+    /*
+     * قفل مشورتی روی «مستأجر + نوع + کالا». بدون آن، دو فروش هم‌زمان
+     * هر دو موجودی قبلی را می‌خوانند، هر دو مجاز تشخیص داده می‌شوند و
+     * جمعشان موجودی را منفی می‌کند — همان حالتی که فقط زیر بار واقعی
+     * خودش را نشان می‌دهد.
+     *
+     * همه‌ی قفل‌های سند پیش از هر بررسی و به ترتیب ثابت کلید گرفته می‌شوند (M-14): اگر هر خط
+     * قفل خودش را به ترتیب سند می‌گرفت، دو سندی که همان کالاها را به ترتیب مخالف برمی‌دارند
+     * (اصلاحیه‌ی A→B و B→A، تسویه‌ی چندسکه‌ای) بن‌بست می‌ساختند و یکی ۵۰۰ می‌گرفت.
+     */
+    const lockKeys = [
+      ...new Set(inputs.map((input) => `${tenantId}:${input.itemType}:${input.itemId ?? ''}`)),
+    ].sort();
+    for (const key of lockKeys) {
+      await transaction.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${key}, 0))`);
+    }
+
     const allowNegative = await this.allowsNegativeStock(transaction, tenantId);
     const recorded: InventoryMovement[] = [];
 
     for (const input of inputs) {
       const itemId = input.itemId ?? null;
 
-      if (input.quantity === 0n) {
-        throw new ZeroInventoryMovementError();
-      }
-      if ((input.itemType === 'MELTED_GOLD') !== (itemId === null)) {
-        throw new InvalidInventoryItemIdentityError(input.itemType);
-      }
-
       const dimension = await this.dimensions.resolveInventoryDimensionInTransaction(
         transaction,
         tenantId,
         input.itemType,
         itemId,
-      );
-
-      /*
-       * قفل مشورتی روی «مستأجر + نوع + کالا». بدون آن، دو فروش هم‌زمان
-       * هر دو موجودی قبلی را می‌خوانند، هر دو مجاز تشخیص داده می‌شوند و
-       * جمعشان موجودی را منفی می‌کند — همان حالتی که فقط زیر بار واقعی
-       * خودش را نشان می‌دهد.
-       */
-      await transaction.execute(
-        sql`SELECT pg_advisory_xact_lock(hashtextextended(${`${tenantId}:${input.itemType}:${itemId ?? ''}`}, 0))`,
       );
 
       if (!allowNegative && input.quantity < 0n) {

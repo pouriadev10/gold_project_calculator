@@ -160,9 +160,11 @@ export class JewelryItemsController {
             actorUserId: auth.sub,
           });
 
+          // کد ذخیره‌شده (نرمال‌شده)، نه متن خام درخواست (M-14).
+          const created = await this.items.getLatestInTransaction(transaction, tenantId, version.jewelryItemId);
           return {
             status: HttpStatus.CREATED,
-            body: toResponse({ code: body.code, version }),
+            body: toResponse({ code: created.code, version }),
           };
         },
       });

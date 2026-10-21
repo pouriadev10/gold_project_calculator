@@ -1,3 +1,4 @@
+import { BusinessRuleError } from '../../platform/error-contract/business-rule.error';
 import { ResourceNotFoundError } from '../../platform/error-contract/resource-not-found.error';
 
 export class InvalidCoinTypeVersionDateError extends Error {
@@ -33,13 +34,17 @@ export class CoinTypeNotFoundError extends ResourceNotFoundError {
 
 /**
  * نسخه‌ی غیرفعال سکه در معامله‌ی جدید انتخاب شده است — همان معیار BE-026
- * برای کالای زیورآلات، برای سکه.
+ * برای کالای زیورآلات، برای سکه. فروش سکه و تسویه‌ی سکه‌ای/ترکیبی آن را ترجمه نمی‌کردند و
+ * ۵۰۰ می‌دادند؛ از M-14 قاعده‌ی کسب‌وکار است (۴۲۲).
  */
-export class InactiveCoinTypeError extends Error {
+export class InactiveCoinTypeError extends BusinessRuleError {
   readonly coinTypeId: string;
 
   constructor(coinTypeId: string) {
-    super(`Coin type "${coinTypeId}" is inactive and cannot be used in a new transaction`);
+    super(
+      `Coin type "${coinTypeId}" is inactive and cannot be used in a new transaction`,
+      'این نوع سکه غیرفعال است و در معامله‌ی تازه انتخاب نمی‌شود',
+    );
     this.name = 'InactiveCoinTypeError';
     this.coinTypeId = coinTypeId;
   }
