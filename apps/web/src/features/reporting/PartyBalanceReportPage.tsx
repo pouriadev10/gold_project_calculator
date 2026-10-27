@@ -5,6 +5,7 @@ import { formatCoinCount, formatCount } from '@gold/core-calc';
 import { useLatestPriceQuote, usePartyBalanceReport } from '@/api/queries';
 import type { PartyBalanceReport, PartyBalanceReportQuery, PartyReportDirection } from '@/api/contracts';
 import { AmountDisplay, RateDisplay } from '@/components/common/AmountDisplay';
+import { CoinName } from '@/components/common/CoinName';
 import { CardSkeleton } from '@/components/common/CardSkeleton';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorState } from '@/components/common/ErrorState';
@@ -125,7 +126,7 @@ function CoinPositions({ item }: { item: PartyBalanceReportItem }) {
           key={coin.coinTypeId}
           className="inline-flex items-baseline gap-1 rounded-md border border-border px-2 py-1 text-xs"
         >
-          <bdi className="font-medium">{coin.code}</bdi>
+          <CoinName coinTypeId={coin.coinTypeId} code={coin.code} className="font-medium" />
           <span className="tabular-nums font-semibold" data-raw={String(coin.count)}>
             {formatCoinCount(coin.count < 0 ? -coin.count : coin.count)}
           </span>

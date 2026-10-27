@@ -26,6 +26,8 @@ vi.mock('@/api/queries', async (importOriginal) => ({
   ...(await importOriginal<typeof Queries>()),
   useLatestPriceQuote: (...args: unknown[]) => useQueryMocks.useLatestPriceQuote(...args),
   usePartyBalanceReport: (...args: unknown[]) => useQueryMocks.usePartyBalanceReport(...args),
+  // نام فارسی سکه‌ها (M-28) از فهرست انواع می‌آید؛ اینجا فهرست خالی است و کد نمایش داده می‌شود.
+  useCoinTypes: () => ({ data: [] }),
 }));
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {

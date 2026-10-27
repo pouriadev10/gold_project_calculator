@@ -18,6 +18,10 @@ const useDashboardMock = vi.fn();
 vi.mock('@/api/queries', async (importOriginal) => ({
   ...(await importOriginal<typeof Queries>()),
   useDashboard: (...args: unknown[]) => useDashboardMock(...args),
+  // نام فارسی انواع سکه (M-28، #27) — همان فهرست `GET /inventory/coin-types`
+  useCoinTypes: () => ({
+    data: [{ coinTypeId: 'c3000000-0000-4000-8000-000000000001', code: 'BAHAR', title: 'تمام بهار آزادی' }],
+  }),
 }));
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
@@ -168,7 +172,9 @@ describe('DashboardOverview — FE-074', () => {
 
     const coins = within(screen.getByRole('list', { name: 'موجودی انواع سکه' })).getAllByRole('listitem');
     expect(coins).toHaveLength(2);
-    expect(coins[0]).toHaveTextContent('BAHAR');
+    // M-28 (#27): عنوان فارسی به‌جای کد؛ نوعی که در فهرست انواع نیست کدش را نشان می‌دهد.
+    expect(coins[0]).toHaveTextContent('تمام بهار آزادی');
+    expect(coins[0]).not.toHaveTextContent('BAHAR');
     expect(coins[0]).toHaveTextContent('۱۲');
     expect(coins[1]).toHaveTextContent('NIM');
     expect(screen.queryByText(/نقره|شمش/)).not.toBeInTheDocument();

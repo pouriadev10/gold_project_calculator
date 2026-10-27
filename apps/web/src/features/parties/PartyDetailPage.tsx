@@ -9,6 +9,7 @@ import { queryKeys } from '@/api/query-keys';
 import { useLatestPriceQuote, useParty, usePartyBalances, usePartyStatement } from '@/api/queries';
 import type { Party, PartyBalances, PartyBalancesQuery } from '@/api/contracts';
 import { AmountDisplay } from '@/components/common/AmountDisplay';
+import { CoinName } from '@/components/common/CoinName';
 import type { RawAmount } from '@/components/common/AmountDisplay';
 import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
 import { CardSkeleton } from '@/components/common/CardSkeleton';
@@ -226,7 +227,7 @@ function PartyBalanceCardBody({
               className="flex flex-wrap items-start justify-between gap-2 rounded-lg border border-border p-3"
             >
               <span className="min-w-0 text-sm">
-                <bdi className="block break-all font-medium">{coin.code}</bdi>
+                <CoinName coinTypeId={coin.coinTypeId} code={coin.code} className="block break-all font-medium" />
                 <span className="text-xs text-muted-foreground">
                   {debtorCreditorLabel(BigInt(coin.count))}
                 </span>

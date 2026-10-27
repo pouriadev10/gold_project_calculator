@@ -5,6 +5,7 @@ import { dualFromPure, formatCoinCount, formatCount } from '@gold/core-calc';
 import type { Dashboard } from '@/api/contracts';
 import { useDashboard } from '@/api/queries';
 import { AmountDisplay, RateDisplay } from '@/components/common/AmountDisplay';
+import { CoinName } from '@/components/common/CoinName';
 import { RetryPanel } from '@/components/common/RetryPanel';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatJalaliDateTime } from '@/lib/date';
@@ -209,7 +210,7 @@ export function DashboardOverview() {
               <ul className="space-y-1" aria-label="موجودی انواع سکه">
                 {data.inventory.coins.map((coin) => (
                   <li key={coin.coinTypeId} className="flex items-baseline justify-between gap-2 text-sm">
-                    <bdi className="truncate">{coin.code}</bdi>
+                    <CoinName coinTypeId={coin.coinTypeId} code={coin.code} className="truncate" />
                     <span className="shrink-0 font-semibold tabular-nums">
                       {formatCoinCount(coin.count)}
                       <span className="ms-1 text-xs font-normal text-muted-foreground">عدد</span>
