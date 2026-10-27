@@ -85,3 +85,22 @@ describe('Toaster', () => {
     expect(title.parentElement?.children).toHaveLength(1);
   });
 });
+
+describe('Toaster — جای ناحیه‌ی اعلان (M-25، #39)', () => {
+  it('ناحیه‌ی اعلان بالای صفحه است و خودش ضربه نمی‌گیرد؛ فقط کارت toast می‌گیرد', async () => {
+    render(<Toaster />);
+    act(() => {
+      toast.success('شخص ثبت شد');
+    });
+    const card = (await screen.findByText('شخص ثبت شد')).closest('li');
+    const viewport = card?.closest('ol');
+    expect(viewport).not.toBeNull();
+    // پایین صفحه منطقه‌ی شست و نوار اقدام اصلی است (بخش ۶ CLAUDE.md)؛ اعلان آن را نمی‌پوشاند.
+    expect(viewport!.classList.contains('top-0')).toBe(true);
+    expect(viewport!.classList.contains('bottom-0')).toBe(false);
+    // padding ِ خالی ناحیه نباید ضربه‌ی دکمه‌ی پشتش را بگیرد.
+    expect(viewport!.classList.contains('pointer-events-none')).toBe(true);
+    expect(card!.classList.contains('pointer-events-auto')).toBe(true);
+  });
+});
+

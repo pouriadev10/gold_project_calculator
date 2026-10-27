@@ -85,6 +85,19 @@ describe('ResponsiveDialog — از ۶۴۰px به بالا', () => {
     expect(screen.queryByTestId('bottom-sheet-handle')).not.toBeInTheDocument();
     expect(screen.getByText('عنوان آزمایشی')).toBeInTheDocument();
   });
+
+  it('M-25 (#10): محتوا و پرده‌ی Dialog در حالت بسته ضربه نمی‌گیرند، حتی اگر انیمیشن خروج تمام نشود', async () => {
+    mockViewport(true);
+    const user = userEvent.setup();
+    renderDialog();
+
+    await user.click(screen.getByRole('button', { name: 'باز کردن' }));
+    const dialog = await screen.findByRole('dialog');
+    // Radix محتوای بسته را تا animationend نگه می‌دارد؛ jsdom انیمیشن ندارد، پس کلاس را می‌سنجیم.
+    expect(dialog.classList.contains('data-[state=closed]:pointer-events-none')).toBe(true);
+    const overlay = document.querySelector('[data-state="open"].fixed.inset-0');
+    expect(overlay?.classList.contains('data-[state=closed]:pointer-events-none')).toBe(true);
+  });
 });
 
 describe.each([

@@ -19,7 +19,8 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-overlay/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      // data-[state=closed]:pointer-events-none — M-25، #10: پایین را ببین.
+      "fixed inset-0 z-50 bg-overlay/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:pointer-events-none",
       className
     )}
     {...props}
@@ -37,7 +38,12 @@ const DialogContent = React.forwardRef<
       ref={ref}
       className={cn(
         // وسط‌چین با mx-auto، نه با آفست ۵۰٪ جهت‌دار — تا در RTL هم درست بنشیند
-        "fixed inset-x-0 top-[50%] z-50 mx-auto grid w-full max-w-lg translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+        /*
+         * M-25، #10: Radix محتوای بسته را تا `animationend` ِ انیمیشن خروج نگه می‌دارد. اگر انیمیشن
+         * اجرا نشود (تب پنهان، ابزار خودکار) مودال با `data-state="closed"` روی صفحه می‌ماند و
+         * ضربه‌ی دکمه‌های پشتش را می‌گرفت. بسته یعنی بی‌ضربه — انیمیشن خروج همچنان دیده می‌شود.
+         */
+        "data-[state=closed]:pointer-events-none fixed inset-x-0 top-[50%] z-50 mx-auto grid w-full max-w-lg translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
         className
       )}
       {...props}
@@ -72,7 +78,7 @@ const DialogFooter = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+      "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
       className
     )}
     {...props}

@@ -15,9 +15,13 @@ const ToastViewport = React.forwardRef<
     ref={ref}
     label={label}
     className={cn(
-      // پایین‌وسط روی موبایل — دور از هم انگشت شست و نوار پایین ناوبری؛
-      // از sm به بالا گوشه‌ی پایین (end در RTL یعنی چپ)
-      "fixed inset-x-0 bottom-0 z-[100] flex max-h-screen w-full flex-col-reverse gap-2 p-4 pb-[calc(var(--app-nav-h)+1rem)] sm:inset-x-auto sm:bottom-4 sm:end-4 sm:max-w-sm sm:pb-4",
+      /*
+       * بالای صفحه، نه پایین (M-25، #39): پایینِ صفحه منطقه‌ی شست و نوار اقدام اصلی هر صفحه است
+       * (بخش ۶ CLAUDE.md) و toast دقیقاً روی «بعدی»/«ثبت» می‌نشست. خود ناحیه ضربه نمی‌گیرد —
+       * padding ِ خالی‌اش پیش‌تر ضربه‌ی دکمه‌ی پشتش را می‌خورد؛ فقط کارت toast می‌گیرد.
+       * از sm به بالا گوشه‌ی بالا (end در RTL یعنی چپ).
+       */
+      "pointer-events-none fixed inset-x-0 top-0 z-[100] flex max-h-screen w-full flex-col gap-2 p-4 pt-[calc(env(safe-area-inset-top,0px)+1rem)] sm:inset-x-auto sm:top-4 sm:end-4 sm:max-w-sm sm:pt-4",
       className
     )}
     {...props}
@@ -27,7 +31,7 @@ ToastViewport.displayName = ToastPrimitive.Viewport.displayName
 
 const toastVariants = cva(
   // مدت انیمیشن (duration-200) باید با REMOVE_DELAY_MS در toast-store.ts هماهنگ بماند
-  "pointer-events-auto relative flex w-full items-start gap-3 overflow-hidden rounded-xl border p-4 shadow-lg transition-all duration-200 data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=open]:slide-in-from-bottom-full data-[state=closed]:slide-out-to-bottom-full sm:data-[state=open]:slide-in-from-bottom-4",
+  "pointer-events-auto relative flex w-full items-start gap-3 overflow-hidden rounded-xl border p-4 shadow-lg transition-all duration-200 data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=open]:slide-in-from-top-full data-[state=closed]:slide-out-to-top-full sm:data-[state=open]:slide-in-from-top-4",
   {
     variants: {
       variant: {
