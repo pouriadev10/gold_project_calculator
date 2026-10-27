@@ -144,9 +144,24 @@ export function NumericField({
     setFieldDisabled(id, disabled === true);
   }, [id, kind, label, disabled, setFieldDisabled]);
 
-  /** مقدار اولیه‌ی کنترل‌شده از بیرون */
+  /**
+   * مقدارهایی که این فیلد به والد گزارش کرده و پژواکشان (`value` ِ برگشتی) هنوز نرسیده، به ترتیب.
+   * #40 (M-24): در تایپ خیلی سریع، پژواک مقدار قبلی (مثلاً ۴۰) می‌تواند در همان رندری برسد که
+   * کلید بعدی بافر را ۴۰۰ کرده؛ بدون این صف، فیلد آن را «تغییر بیرونی» می‌خواند، بافر را به ۴۰
+   * برمی‌گرداند و گزارش ۴۰۰ هم دیگر فرستاده نمی‌شد — یک رقم برای همیشه گم می‌شد.
+   */
+  const pendingEchoes = useRef<bigint[]>([]);
+
+  /** مقدار کنترل‌شده از بیرون */
   useEffect(() => {
     if (value === undefined) return;
+    const echoIndex = pendingEchoes.current.indexOf(value);
+    if (echoIndex !== -1) {
+      // پژواک گزارش خود فیلد است، نه تغییر بیرونی؛ بافر جلوتر است و دست نمی‌خورد.
+      pendingEchoes.current.splice(0, echoIndex + 1);
+      return;
+    }
+    pendingEchoes.current = [];
     const current = digitsToBigInt(useKeypadStore.getState().buffers[id] ?? '', spec);
     if (current !== value) setBuffer(id, bigIntToDigits(value, spec));
     // فقط وقتی مقدار بیرونی عوض شود؛ تایپ کاربر نباید بازنویسی گردد
@@ -236,7 +251,10 @@ export function NumericField({
     // StrictMode replays mount effects; never report that stale render back to the form.
     const latest = digitsToBigInt(useKeypadStore.getState().buffers[id] ?? '', spec);
     if (latest !== currentValue || value === currentValue) return;
-    onChange?.(currentValue);
+    if (onChange) {
+      pendingEchoes.current.push(currentValue);
+      onChange(currentValue);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- onChange پایدار نیست و حلقه می‌سازد
   }, [currentValue]);
 
