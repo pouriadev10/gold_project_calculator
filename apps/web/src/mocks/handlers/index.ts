@@ -65,7 +65,7 @@ import {
   salesInvoiceRecords,
   salesInvoiceVersionRecords,
 } from './fixtures';
-import { contractGate } from './contract-gate';
+import { commitIdempotentRequest, contractGate } from './contract-gate';
 import { mockError, mockMissingIdempotencyKey, mockValidationError } from './errors';
 
 /**
@@ -181,7 +181,19 @@ function recordSalesInvoice(input: {
 }
 
 /** حافظه‌ی کلیدهای idempotency — تکرار همان کلید همان پاسخ را می‌دهد */
-const idempotencyCache = new Map<string, unknown>();
+/**
+ * پاسخ‌های ذخیره‌شده‌ی هر Idempotency-Key. بعضی handlerها پیشوند می‌گذارند (`purchase:<key>`)؛
+ * کلید واقعی آخرین بخش است. ذخیره‌ی پاسخ موفق اثر انگشت درخواست را در دروازه‌ی قرارداد قطعی
+ * می‌کند، تا همان کلید با بدنه‌ی دیگر مثل سرور `409` بگیرد (M-22، #33).
+ */
+class IdempotencyCache extends Map<string, unknown> {
+  override set(cacheKey: string, value: unknown): this {
+    commitIdempotentRequest(cacheKey.split(':').at(-1) ?? cacheKey);
+    return super.set(cacheKey, value);
+  }
+}
+
+const idempotencyCache = new IdempotencyCache();
 
 /**
  * خریدهای دست‌دومی که در همین نشست mock ثبت شده‌اند — فقط برای اینکه
@@ -1174,10 +1186,9 @@ export const handlers = [
   }),
 
   /*
-   * از این‌جا به بعد handlerهای الگودار `/api/parties/:id...` می‌آیند —
-   * عمداً **بعد از** `/api/parties/balance-summary`: MSW به ترتیب تعریف
-   * تطبیق می‌دهد، و `:id` روی رشته‌ی «balance-summary» هم به‌عنوان شناسه
-   * تطبیق پیدا می‌کند. اگر این ترتیب برعکس شود، آن endpoint شکسته می‌شود.
+   * از این‌جا به بعد handlerهای الگودار `/api/parties/:id...` می‌آیند. MSW به ترتیب تعریف
+   * تطبیق می‌دهد، پس هر مسیر ثابت ِ `/api/parties/<کلمه>` باید پیش از این‌ها تعریف شود،
+   * وگرنه `:id` آن کلمه را شناسه می‌گیرد.
    */
 
   /** `GET /parties/:id` — قرارداد نهایی BE-024 (`partySchema`، FE-034). */

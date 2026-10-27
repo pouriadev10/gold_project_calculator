@@ -90,8 +90,8 @@ export const coins = [
 
 // TODO(real-data): از ماژول parties
 // شکل partyRecords دقیقاً partySchema واقعی (@gold/contracts) است.
-// مانده بخشی از آن شکل نیست (BE-056 هنوز نیامده)، پس `mg` فقط در همین
-// فایل برای ساخت balanceSummary نگه داشته می‌شود، نه در پاسخ /api/parties.
+// مانده بخشی از آن شکل نیست، پس `mg` فقط در همین فایل برای ساخت مانده‌ها و صورت‌حساب
+// mock نگه داشته می‌شود، نه در پاسخ /api/parties.
 const NOW = '2026-07-30T09:00:00+00:00';
 
 const parties = [
@@ -436,7 +436,7 @@ export function priceJewelryFromVersion(
  * دو بُعد **مستقل** ریال و طلای خالص — نه یک جفت تبدیل‌شده از هم، دقیقاً
  * مثل `rawBalances` واقعی. فقط شخص اول (حسین مرادی) مانده‌ی ریالی
  * غیرصفر دارد تا هر دو ردیف در UI واقعاً قابل‌آزمون باشند؛ بقیه فقط
- * همان `mg` که `balanceSummary` هم از آن می‌سازد.
+ * همان `mg` ِ مانده‌ی طلایی.
  */
 export const PARTY_RIAL_BALANCE: Record<string, bigint> = {
   'a1000000-0000-4000-8000-000000000001': 45_000_000n,

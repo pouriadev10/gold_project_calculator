@@ -165,6 +165,25 @@ function scenarioResponse(request: Request, route: WriteRoute | undefined): Resp
   }
 }
 
+/* ── Idempotency-Key: همان بدنه یا ۴۰۹ (M-22، #33) ──────────────── */
+
+/**
+ * اثر انگشت درخواستی که با هر کلید در حال پردازش است، و اثر انگشتی که پاسخش ذخیره شده.
+ * سرور (`IdempotencyService`) کلید را با «متد + مسیر + بدنه» ذخیره می‌کند. همان کلید با همان
+ * درخواست replay می‌شود و با درخواست دیگر `409` می‌گیرد. ولی اگر تلاش اول شکست بخورد، claim
+ * rollback می‌شود و همان کلید با بدنه‌ی اصلاح‌شده آزاد است، که فرانت دقیقاً همین کار را می‌کند
+ * (`useIdempotencyKey`). پس اثر انگشت فقط وقتی «قطعی» می‌شود که handler پاسخ موفق را
+ * cache کند: `commitIdempotentRequest`.
+ */
+const inFlightFingerprints = new Map<string, string>();
+const committedFingerprints = new Map<string, string>();
+
+/** handlerهای مسیر هنگام cache کردن پاسخ موفق صدا می‌زنند (`idempotencyCache` در `index.ts`). */
+export function commitIdempotentRequest(key: string): void {
+  const fingerprint = inFlightFingerprints.get(key);
+  if (fingerprint !== undefined) committedFingerprints.set(key, fingerprint);
+}
+
 async function readJson(request: Request): Promise<unknown> {
   const text = await request.clone().text();
   if (text === '') return undefined;
@@ -183,13 +202,25 @@ export const contractGate = http.all('/api/*', async ({ request }) => {
 
   if (route === undefined) return undefined;
   const pathname = new URL(request.url).pathname;
-  if (!isPublicPath(pathname) && !request.headers.get('Idempotency-Key')?.trim()) {
+  const key = request.headers.get('Idempotency-Key')?.trim();
+  if (!isPublicPath(pathname) && !key) {
     return mockMissingIdempotencyKey();
   }
-  if (route.body === null) return undefined;
 
-  const body = await readJson(request);
-  if (typeof body === 'symbol') return mockError('BAD_REQUEST', 'درخواست نامعتبر است');
-  const parsed = route.body.safeParse(body);
-  return parsed.success ? undefined : mockValidationError(parsed.error);
+  const body = route.body === null ? undefined : await readJson(request);
+  if (route.body !== null) {
+    if (typeof body === 'symbol') return mockError('BAD_REQUEST', 'درخواست نامعتبر است');
+    const parsed = route.body.safeParse(body);
+    if (!parsed.success) return mockValidationError(parsed.error);
+  }
+
+  if (key && !isPublicPath(pathname)) {
+    const fingerprint = `${request.method} ${pathname} ${JSON.stringify(body ?? null)}`;
+    const committed = committedFingerprints.get(key);
+    if (committed !== undefined && committed !== fingerprint) {
+      return mockError('CONFLICT', SCENARIO_MESSAGES.conflict);
+    }
+    inFlightFingerprints.set(key, fingerprint);
+  }
+  return undefined;
 });

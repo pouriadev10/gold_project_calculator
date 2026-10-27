@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { queryKeys } from '@/api/query-keys';
 import type { ReactNode } from 'react';
 import type { SalesInvoiceDetail } from '@/api/contracts';
 import { useUnitStore } from '@/stores/unit-store';
@@ -132,6 +133,7 @@ const DETAIL: SalesInvoiceDetail = {
 
 function renderPage() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const invalidate = vi.spyOn(client, 'invalidateQueries');
   const view = render(
     <QueryClientProvider client={client}>
       <SalesInvoiceAmendPage />
@@ -139,6 +141,7 @@ function renderPage() {
   );
   return {
     ...view,
+    invalidate,
     rerenderPage: () =>
       view.rerender(
         <QueryClientProvider client={client}>
@@ -220,7 +223,7 @@ describe('SalesInvoiceAmendPage', () => {
       ledgerTransactionId: 'e1000000-0000-4000-8000-000000000001',
       inventoryMovementIds: [],
     });
-    renderPage();
+    const { invalidate } = renderPage();
     expect(screen.getByText(/۷٫۰۰۰ گرم/)).toBeInTheDocument();
     expect(jewelryAtMock).toHaveBeenCalledWith(itemId, DETAIL.versions[0]!.createdAt);
     await userEvent.click(screen.getByRole('button', { name: 'ثبت اصلاح فاکتور' }));
@@ -249,6 +252,17 @@ describe('SalesInvoiceAmendPage', () => {
       screen.getByText('تغییر ماندهٔ مشتری').parentElement?.querySelector('[data-raw]'),
     ).toHaveAttribute('data-raw', '20000000');
     expect(screen.getByText(/نسخهٔ قبلی و سندهای آن تغییر نکرده‌اند/)).toBeInTheDocument();
+    // M-22: اصلاحیه موجودی، داشبورد، معاملات اخیر و گزارش سود را هم کهنه می‌کند.
+    for (const queryKey of [
+      queryKeys.inventoryBalances.all(),
+      queryKeys.inventoryMovements.all(),
+      queryKeys.jewelryItems.all(),
+      queryKeys.dashboard.all(),
+      queryKeys.transactions.all(),
+      queryKeys.reports.all(),
+    ]) {
+      expect(invalidate).toHaveBeenCalledWith({ queryKey });
+    }
   });
 
   it('does not submit while historical item facts are unavailable', async () => {

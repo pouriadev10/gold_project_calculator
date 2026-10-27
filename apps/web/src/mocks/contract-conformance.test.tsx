@@ -368,6 +368,55 @@ describe('دروازه‌ی قرارداد — middleware و pipe ِ سرور', 
     expect(Object.keys(body.error.fields)).toContain('grossWeightMg');
   });
 
+  it('M-22 (#33): کلید تکراری با همان بدنه replay و با بدنه‌ی دیگر ۴۰۹ است — مثل IdempotencyService ِ سرور', async () => {
+    const post = (key: string, body: unknown) =>
+      globalThis.fetch('/api/parties', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key },
+        body: JSON.stringify(body),
+      });
+    const key = crypto.randomUUID();
+    const original = { type: 'CONSUMER', displayName: 'مشتری کلید تکراری' };
+
+    const first = await post(key, original);
+    expect(first.status).toBe(201);
+    const replay = await post(key, original);
+    expect(replay.status).toBe(201);
+    expect((await replay.json()).id).toBe((await first.json()).id);
+
+    const other = await post(key, { ...original, displayName: 'مشتری دیگر' });
+    expect(other.status).toBe(409);
+    expect(apiErrorSchema.parse(await other.json()).error).toMatchObject({
+      code: 'CONFLICT',
+      message: SCENARIO_MESSAGES.conflict,
+    });
+  });
+
+  it('M-22 (#33): تلاش ناموفق کلید را قفل نمی‌کند — سرور claim را rollback می‌کند و فرانت همان کلید را دوباره می‌فرستد', async () => {
+    const post = (body: unknown) =>
+      globalThis.fetch('/api/purchase/second-hand/gold', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key },
+        body: JSON.stringify(body),
+      });
+    const key = crypto.randomUUID();
+    const valid = {
+      partyId: consumer.id,
+      grossWeightMg: '2000',
+      stoneWeightMg: '0',
+      otherDeductionWeightMg: '0',
+      quoteId: 'c1000000-0000-4000-8000-000000000001', // مظنه‌ی seed ِ mock
+      feeRial: '0',
+      paidRial: '0',
+      effectiveAt: NOW(),
+    };
+
+    const failed = await post({ ...valid, partyId: crypto.randomUUID() });
+    expect(failed.status).toBe(404);
+    const corrected = await post(valid);
+    expect(corrected.status).toBe(201);
+  });
+
   it('مسیر عمومی `/auth` کلید نمی‌خواهد، مثل `PUBLIC_PATH_PREFIXES` ِ سرور', async () => {
     const response = await globalThis.fetch('/api/auth/login', {
       method: 'POST',

@@ -84,6 +84,8 @@ export function useB2cBuybackSubmit(invoiceId: string, isOnline: boolean) {
           queryKeys.parties.all(),
           queryKeys.dashboard.all(),
           queryKeys.transactions.all(),
+          // اثر قیمت مرجوعی در گزارش سود (M-22).
+          queryKeys.reports.all(),
         ].map((queryKey) => client.invalidateQueries({ queryKey })),
       );
     } catch (caught) {

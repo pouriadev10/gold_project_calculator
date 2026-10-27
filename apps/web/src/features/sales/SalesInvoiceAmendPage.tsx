@@ -353,6 +353,16 @@ function AmendmentForm({
         }),
         queryClient.invalidateQueries({ queryKey: queryKeys.salesInvoices.lists() }),
         queryClient.invalidateQueries({ queryKey: queryKeys.parties.all() }),
+        /*
+         * اصلاحیه می‌تواند کالا را عوض کند (حرکت موجودی) و مبلغ را؛ پس داشبورد امروز، موجودی،
+         * «معاملات اخیر» و گزارش سود هم کهنه می‌شوند (M-22).
+         */
+        queryClient.invalidateQueries({ queryKey: queryKeys.inventoryBalances.all() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.inventoryMovements.all() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.jewelryItems.all() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.transactions.all() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.reports.all() }),
       ]);
     } catch (caught: unknown) {
       setError(caught);

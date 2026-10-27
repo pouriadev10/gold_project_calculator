@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { queryKeys } from '@/api/query-keys';
 import { toPersianDigits } from '@gold/core-calc';
 import type { ReactNode } from 'react';
 import type * as Router from '@tanstack/react-router';
@@ -118,8 +119,11 @@ function balance(itemId: string, quantity: string): InventoryBalance {
   return { itemType: 'COIN', itemId, quantity };
 }
 
+let lastClient: QueryClient | undefined;
+
 function renderForm() {
   const client = new QueryClient();
+  lastClient = client;
   return render(
     <QueryClientProvider client={client}>
       <CoinSaleForm />
@@ -215,6 +219,7 @@ describe('CoinSaleForm — فرم فروش سکه (FE-048)', () => {
     });
     const user = userEvent.setup();
     renderForm();
+    const invalidate = vi.spyOn(lastClient!, 'invalidateQueries');
 
     await selectParty(user);
     await selectCoinType(user, BAHAR.title);
@@ -236,6 +241,9 @@ describe('CoinSaleForm — فرم فروش سکه (FE-048)', () => {
     expect(typeof input.count).toBe('number');
 
     await waitFor(() => expect(screen.getByText('فاکتور شماره ۱۴۰۵-۵۰۱ ثبت شد')).toBeInTheDocument());
+    // M-22: «معاملات اخیر» ِ خانه و گزارش سود هم تازه می‌شوند.
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: queryKeys.transactions.all() });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: queryKeys.reports.all() });
   });
 
   it('double tap فقط یک فراخوانی می‌سازد', async () => {
