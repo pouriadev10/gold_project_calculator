@@ -157,6 +157,15 @@ describe('FE-099 — هشدار خروج روی صفحه‌های فرم', () =>
     await expectLeaveGuarded(user, 'تنظیمات عمومی', 'اطلاعات واردشده از بین می‌رود');
   });
 
+  it('M-29 (#43): مظنه‌ی دستی ِ ثبت‌نشده پرسیده می‌شود', async () => {
+    const user = userEvent.setup();
+    renderRoute('/pricing');
+    await screen.findByRole('heading', { level: 1, name: 'مظنه' }, { timeout: 10_000 });
+    await typeNumber(user, 'مظنه مثقال', '412000000');
+
+    await expectLeaveGuarded(user, 'مظنه', 'اطلاعات واردشده از بین می‌رود');
+  });
+
   it('صفحه‌ی فرم بدون هیچ ورودی: خروج بی‌پرسش', async () => {
     const user = userEvent.setup();
     renderRoute('/sales/coins/new');

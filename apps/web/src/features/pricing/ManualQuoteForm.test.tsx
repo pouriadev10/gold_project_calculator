@@ -1,7 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type * as Queries from '@/api/queries';
 import { toPersianDigits } from '@gold/core-calc';
 import { ApiError } from '@/api/api-error';
 import { useKeypadStore } from '@/components/keypad/keypad-store';
@@ -16,6 +17,12 @@ import { ManualQuoteForm } from './ManualQuoteForm';
  * گفت‌وگوی تأیید، idempotency و نمایش نتیجه/خطا.
  */
 const createManualPriceQuoteMock = vi.fn();
+const latestQuoteMock = vi.fn();
+vi.mock('@/api/queries', async (importOriginal) => ({
+  ...(await importOriginal<typeof Queries>()),
+  useLatestPriceQuote: (...args: unknown[]) => latestQuoteMock(...args),
+}));
+
 vi.mock('@/api/pricing', () => ({
   createManualPriceQuote: (...args: unknown[]) => createManualPriceQuoteMock(...args),
 }));
@@ -73,6 +80,8 @@ beforeEach(() => {
   useKeypadStore.setState({ isOpen: false, fields: [], activeId: null, buffers: {} });
   useToastStore.setState({ toasts: [] });
   createManualPriceQuoteMock.mockReset();
+  latestQuoteMock.mockReset();
+  latestQuoteMock.mockReturnValue({ data: undefined });
 });
 
 afterEach(() => {
@@ -203,3 +212,34 @@ describe('ManualQuoteForm — خطای سرور', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 });
+
+describe('ManualQuoteForm — مقایسه با مظنه‌ی فعلی در تأیید (M-29)', () => {
+  it('مظنه‌ی فعلی و تفاوت علامت‌دار را کنار عدد تازه نشان می‌دهد — صفر اضافه پیش از ثبت دیده می‌شود', async () => {
+    latestQuoteMock.mockReturnValue({ data: { ...QUOTE_RESPONSE, amountRial: 41_200_000n } });
+    mockDesktopViewport();
+    const user = userEvent.setup();
+    renderForm();
+    await typeAmount(user, '412000000');
+    await tap(user, 'ثبت مظنه');
+
+    const dialog = await screen.findByRole('dialog');
+    const current = within(dialog).getByText('مظنه‌ی فعلی').parentElement!;
+    expect(current.querySelector('[data-raw]')).toHaveAttribute('data-raw', '41200000');
+    const change = within(dialog).getByText('تفاوت با مظنه‌ی فعلی').parentElement!;
+    expect(change.querySelector('[data-raw]')).toHaveAttribute('data-raw', '370800000');
+  });
+
+  it('بی‌مظنه‌ی قبلی، فقط عدد تازه را نشان می‌دهد', async () => {
+    latestQuoteMock.mockReturnValue({ data: null });
+    mockDesktopViewport();
+    const user = userEvent.setup();
+    renderForm();
+    await typeAmount(user, '48000000');
+    await tap(user, 'ثبت مظنه');
+
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).queryByText('مظنه‌ی فعلی')).not.toBeInTheDocument();
+    expect(within(dialog).queryByText('تفاوت با مظنه‌ی فعلی')).not.toBeInTheDocument();
+  });
+});
+

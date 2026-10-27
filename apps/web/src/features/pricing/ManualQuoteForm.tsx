@@ -4,10 +4,12 @@ import { Loader2 } from 'lucide-react';
 import { formatRial } from '@gold/core-calc';
 import { priceQuoteAmountRialSchema, type PriceQuote } from '@/api/contracts';
 import { createManualPriceQuote } from '@/api/pricing';
+import { useLatestPriceQuote } from '@/api/queries';
 import { queryKeys } from '@/api/query-keys';
 import { RateDisplay } from '@/components/common/AmountDisplay';
 import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
 import { OfflineSubmitHint } from '@/components/common/OfflineSubmitHint';
+import { UnsavedChangesGuard } from '@/components/common/UnsavedChangesGuard';
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -45,6 +47,8 @@ export function ManualQuoteForm() {
   const [submitError, setSubmitError] = useState<unknown>(null);
   const [lastRegistered, setLastRegistered] = useState<PriceQuote | null>(null);
   const queryClient = useQueryClient();
+  // مظنه‌ی فعلی — فقط برای مقایسه در گفت‌وگوی تأیید (M-29)
+  const { data: currentQuote } = useLatestPriceQuote('MAZNEH');
 
   const { submit, isSubmitting, reset, offline } = useIdempotentSubmit((key: string, value: bigint) =>
     createManualPriceQuote(value, key),
@@ -131,6 +135,28 @@ export function ManualQuoteForm() {
             <RateDisplay value={amount} size="lg" />
           </div>
 
+          {/*
+           * M-29: این عدد پایه‌ی هر فاکتور بعدی است و صفر اضافه یا کم پرهزینه‌ترین اشتباه است.
+           * مظنه‌ی فعلی و تفاوت علامت‌دار کنارش، تا اشتباه پیش از ثبت دیده شود — بی‌آستانه‌ی ثابت.
+           */}
+          {currentQuote ? (
+            <dl className="space-y-2 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-muted-foreground">مظنه‌ی فعلی</dt>
+                <dd>
+                  <RateDisplay value={currentQuote.amountRial} size="sm" />
+                </dd>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-muted-foreground">تفاوت با مظنه‌ی فعلی</dt>
+                <dd className="flex items-baseline gap-0.5">
+                  {amount > currentQuote.amountRial ? <span aria-hidden="true">+</span> : null}
+                  <RateDisplay value={amount - currentQuote.amountRial} size="sm" />
+                </dd>
+              </div>
+            </dl>
+          ) : null}
+
           <ResponsiveDialogFooter>
             <Button
               type="button"
@@ -147,6 +173,9 @@ export function ManualQuoteForm() {
           </ResponsiveDialogFooter>
         </ResponsiveDialogContent>
       </ResponsiveDialog>
+
+      {/* M-29 (#43): مظنه‌ی تایپ‌شده‌ی ثبت‌نشده با ترک صفحه بی‌پرسش گم نمی‌شود. */}
+      <UnsavedChangesGuard when={amount !== 0n && lastRegistered === null} submitting={isSubmitting} />
 
       <NumericKeypad />
     </div>
