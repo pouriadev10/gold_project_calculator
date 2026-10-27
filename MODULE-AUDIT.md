@@ -129,7 +129,7 @@
 ### [x] M-20 · مالیات — `tax`
 - **نکات بررسی:** فقط اسکلت خالی (فاز ۵) — هیچ منطقی نباید داشته باشد
 
-### [ ] M-21 · ریشه‌ی اپلیکیشن بک‌اند — `app.module.ts` · `main.ts` · `tenant-initialization.module.ts` · `apps/api/test/support`
+### [x] M-21 · ریشه‌ی اپلیکیشن بک‌اند — `app.module.ts` · `main.ts` · `tenant-initialization.module.ts` · `apps/api/test/support`
 - **نکات بررسی:** ثبت همه‌ی ماژول‌ها · ترتیب middlewareها · ابزار تست e2e
 
 ---
@@ -872,4 +872,25 @@
 #### ایرادهای رفع‌شده
 
 ایرادی نیست.
+
+### M-21 · ریشه‌ی اپلیکیشن بک‌اند — بررسی‌شده (۱۴۰۵/۰۸/۰۵)
+
+**روش:** خواندن `app.module.ts`، `main.ts`، `tenant-initialization.module.ts`، `app.controller.ts` و ابزار تست e2e (`test/support`، `test/setup-env.ts`، `vitest.config.e2e.mts`).
+
+#### درست بود
+
+- **ثبت همه‌ی ماژول‌ها:** هر ماژول زیرساخت و دامنه (به‌اضافه‌ی `TaxModule` ِ خالی) در `AppModule` است. `test/app-structure.e2e-spec.ts` با فهرستی صریح، نه مشتق از خود `AppModule`، تضمین می‌کند ماژول تازه‌ای جا نماند. فیلتر سراسری خطا (`ApiExceptionFilter`) با `APP_FILTER` ثبت شده.
+- **ترتیب middleware:** زمینه‌ی درخواست و مستأجر از `RequestContextModule` و `TenantModule` می‌آیند، پیش از احراز هویت و idempotency. این در M-06 تا M-08 با جزئیات آزموده شد.
+- **مقداردهی اولیه‌ی مستأجر:** `TenantInitializationModule` تنها ریشه‌ی ترکیب است. `TenantModule` فقط به درگاه `TENANT_INITIALIZER` وابسته است، و هر دامنه مالک seed ِ خودش است. ترتیب درست است: تنظیمات، بعد ابعاد، بعد حساب‌ها، بعد انواع سکه (که بُعد و حساب موجودی‌اش را همگام می‌کند). همه در همان تراکنش ساخت مستأجر انجام می‌شود.
+- **راه‌اندازی:** env و اتصال دیتابیس پیش از Nest بررسی می‌شوند و خطای خوانا برای انسان می‌دهند. `abortOnError: false` و `bufferLogs` تا نصب logger ِ JSON. `/health` بی‌وابستگی است.
+- **ابزار تست:** `setup-env` فقط با `??=` مقدار می‌گذارد، پس محیط واقعی بازنویسی نمی‌شود. `LogCapture` خط خام log را نگه می‌دارد تا آزمون «داده‌ی حساس log نشود» روی متن واقعی باشد. هر spec مستأجر خودش را می‌سازد و پاک می‌کند.
+
+#### ایرادهای رفع‌شده
+
+ایرادی نیست.
+
+#### نکته‌ها برای M-39 (استقرار)
+
+- **`enableShutdownHooks()` نیست.** با `docker stop` (SIGTERM)، Fastify درخواست‌های در جریان را تمام نمی‌کند و pool ِ دیتابیس مرتب بسته نمی‌شود. داده خراب نمی‌شود، چون تراکنش ناتمام rollback می‌شود و کلاینت با همان Idempotency-Key دوباره می‌فرستد. ولی خاموش شدن نرم بهتر است.
+- **`FastifyAdapter` بدون `trustProxy` ساخته می‌شود.** اگر در استقرار پشت reverse proxy قرار بگیرد، IP ِ ثبت‌شده در audit و log برای همه‌ی درخواست‌ها IP ِ proxy می‌شود. فعلاً proxy ِ production در `docker-compose.yml` تعریف نشده.
 
