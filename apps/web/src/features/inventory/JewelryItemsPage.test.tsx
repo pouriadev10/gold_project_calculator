@@ -3,7 +3,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type * as Queries from '@/api/queries';
-import type { JewelryItemVersion } from '@/api/contracts';
+import type { JewelryItemVersion, RoleCode, SessionResponse } from '@/api/contracts';
+import { useSessionStore } from '@/stores/session-store';
 import JewelryItemsPage from './JewelryItemsPage';
 
 /**
@@ -62,6 +63,18 @@ function mockDesktopViewport() {
   );
 }
 
+function signIn(role: RoleCode): void {
+  const session: SessionResponse = {
+    accessToken: 'access',
+    refreshToken: 'refresh',
+    expiresInSeconds: 900,
+    user: { id: 'c1000000-0000-4000-8000-000000000002', email: 'user@example.com', displayName: 'کاربر' },
+    tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه', timezone: 'Asia/Tehran' },
+    role,
+  };
+  useSessionStore.setState({ session });
+}
+
 function renderPage() {
   const client = new QueryClient();
   return render(
@@ -73,6 +86,7 @@ function renderPage() {
 
 beforeEach(() => {
   mockDesktopViewport();
+  signIn('OWNER');
   useJewelryItemsMock.mockReset();
   useJewelryItemsMock.mockReturnValue({
     data: itemsPage([item()]),
@@ -171,3 +185,21 @@ describe('JewelryItemsPage — افزودن کالا', () => {
     expect(screen.getByLabelText('کد کالا')).toBeInTheDocument();
   });
 });
+
+describe('JewelryItemsPage — نقش (M-23)', () => {
+  it('صندوقدار دکمه‌ی «کالای جدید» و ویرایش را نمی‌بیند — سرور هر دو را برای او ۴۰۳ می‌کند', () => {
+    signIn('CASHIER');
+    renderPage();
+    expect(screen.getByText('دستبند ۱۸ عیار')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'کالای جدید' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^ویرایش / })).not.toBeInTheDocument();
+  });
+
+  it.each(['OWNER', 'MANAGER'] as const)('%s هر دو را می‌بیند', (role) => {
+    signIn(role);
+    renderPage();
+    expect(screen.getByRole('button', { name: 'کالای جدید' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'ویرایش دستبند ۱۸ عیار' })).toBeInTheDocument();
+  });
+});
+

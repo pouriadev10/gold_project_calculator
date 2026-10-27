@@ -90,7 +90,8 @@ interface JewelryItemListProps {
   isError: boolean;
   onRetry: () => void;
   onOffsetChange: (offset: number) => void;
-  onEdit: (item: JewelryItemVersion) => void;
+  /** نبودنش یعنی کاربر اجازه‌ی ویرایش ندارد و دکمه‌ی ویرایش رندر نمی‌شود. */
+  onEdit?: ((item: JewelryItemVersion) => void) | undefined;
 }
 
 /**
@@ -165,7 +166,7 @@ export const JewelryItemList = memo(function JewelryItemList({
                     <StatusBadge active={item.active} />
                   </TableCell>
                   <TableCell>
-                    <EditButton item={item} onEdit={onEdit} />
+                    {onEdit ? <EditButton item={item} onEdit={onEdit} /> : null}
                   </TableCell>
                 </TableRow>
               ))}
@@ -191,7 +192,7 @@ export const JewelryItemList = memo(function JewelryItemList({
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
                   <StatusBadge active={item.active} />
-                  <EditButton item={item} onEdit={onEdit} />
+                  {onEdit ? <EditButton item={item} onEdit={onEdit} /> : null}
                 </div>
               </CardContent>
             </Card>

@@ -47,3 +47,11 @@ export const COIN_TYPE_EDIT_ROLES: readonly RoleCode[] = ['OWNER', 'MANAGER'];
  * (`price-feed.controller.ts`، FE-082). وضعیت فید برای هر سه نقش خواندنی است.
  */
 export const PRICE_FEED_REFRESH_ROLES: readonly RoleCode[] = ['OWNER', 'MANAGER'];
+
+/**
+ * `@Roles('OWNER', 'MANAGER')` روی `POST`، `PATCH` و `POST …/deactivate` ِ
+ * `/inventory/jewelry-items` (`jewelry-items.controller.ts`، BE-026). فهرست و جست‌وجو برای هر سه
+ * نقش باز است. پیش از M-23 صندوقدار دکمه‌ی «کالای جدید» و ویرایش را می‌دید و پس از پر کردن کل
+ * فرم ۴۰۳ می‌گرفت.
+ */
+export const JEWELRY_ITEM_EDIT_ROLES: readonly RoleCode[] = ['OWNER', 'MANAGER'];

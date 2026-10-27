@@ -10,6 +10,8 @@ import { Select } from '@/components/ui/select';
 import { KaratInput } from '@/components/keypad/KaratInput';
 import { NumericKeypad } from '@/components/keypad/NumericKeypad';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useHasRole } from '@/hooks/useHasRole';
+import { JEWELRY_ITEM_EDIT_ROLES } from '@/lib/permissions';
 import { JewelryItemFormDialog } from './JewelryItemFormDialog';
 import { JewelryItemList, type JewelryItemPage } from './JewelryItemList';
 
@@ -45,6 +47,7 @@ export default function JewelryItemsPage() {
   const [karatFilter, setKaratFilter] = useState(0n);
   const [offset, setOffset] = useState(0);
   const [createOpen, setCreateOpen] = useState(false);
+  const canEdit = useHasRole(JEWELRY_ITEM_EDIT_ROLES);
   const [editingItem, setEditingItem] = useState<JewelryItemVersion | null>(null);
   const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS).trim();
 
@@ -137,17 +140,19 @@ export default function JewelryItemsPage() {
           isError={isError}
           onRetry={retry}
           onOffsetChange={setOffset}
-          onEdit={setEditingItem}
+          onEdit={canEdit ? setEditingItem : undefined}
         />
       </div>
 
-      {/* منطقه‌ی شست — همان الگوی PartiesPage.tsx */}
-      <div className="fixed inset-x-0 bottom-above-nav z-20 border-t border-border bg-background/95 px-4 py-3 backdrop-blur-sm lg:static lg:border-0 lg:bg-transparent lg:px-4 lg:pb-4">
-        <Button type="button" size="action" onClick={() => setCreateOpen(true)}>
-          <Plus className="size-5" aria-hidden="true" />
-          کالای جدید
-        </Button>
-      </div>
+      {/* منطقه‌ی شست — همان الگوی PartiesPage.tsx؛ فقط برای نقش‌هایی که سرور اجازه می‌دهد (M-23). */}
+      {canEdit ? (
+        <div className="fixed inset-x-0 bottom-above-nav z-20 border-t border-border bg-background/95 px-4 py-3 backdrop-blur-sm lg:static lg:border-0 lg:bg-transparent lg:px-4 lg:pb-4">
+          <Button type="button" size="action" onClick={() => setCreateOpen(true)}>
+            <Plus className="size-5" aria-hidden="true" />
+            کالای جدید
+          </Button>
+        </div>
+      ) : null}
 
       <JewelryItemFormDialog open={createOpen} onOpenChange={setCreateOpen} />
 
