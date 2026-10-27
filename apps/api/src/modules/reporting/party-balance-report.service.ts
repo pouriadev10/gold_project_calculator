@@ -5,7 +5,7 @@ import {
   dualFromRial,
   toSafeNumber,
 } from '@gold/core-calc';
-import { and, asc, eq, ilike } from 'drizzle-orm';
+import { and, asc, eq, ilike, sql } from 'drizzle-orm';
 import { likeContainsPattern, normalizeTextForSearch } from '../../shared/validation';
 import { DRIZZLE } from '../../platform/database/database.module';
 import {
@@ -119,6 +119,11 @@ export class PartyBalanceReportService {
     tenantId: string,
     search: string | undefined,
   ): Promise<readonly PartyBalanceAccumulator[]> {
+    /*
+     * جمع در خود دیتابیس، به‌ازای شخص و بُعد (M-19) — همان #47-الف ِ M-12 برای فهرست بدهکاران و
+     * بستانکاران: پیش‌تر هر ردیف دفتر کل همه‌ی اشخاص در هر درخواست به برنامه می‌آمد. جمع به‌صورت
+     * متن خوانده می‌شود، پس bigint بی‌سرریز و بی‌گرد می‌ماند.
+     */
     const rows = await transaction
       .select({
         partyId: parties.id,
@@ -127,7 +132,7 @@ export class PartyBalanceReportService {
         partyType: parties.type,
         partyStatus: parties.status,
         partyMobile: parties.mobile,
-        quantity: ledgerEntries.quantity,
+        quantity: sql<string>`sum(${ledgerEntries.quantity})::text`,
         dimensionKind: assetDimensions.kind,
         coinTypeId: coinTypes.id,
         coinCode: coinTypes.code,
@@ -166,6 +171,17 @@ export class PartyBalanceReportService {
             : ilike(parties.normalizedName, likeContainsPattern(normalizeTextForSearch(search))),
         ),
       )
+      .groupBy(
+        parties.id,
+        parties.displayName,
+        parties.normalizedName,
+        parties.type,
+        parties.status,
+        parties.mobile,
+        assetDimensions.kind,
+        coinTypes.id,
+        coinTypes.code,
+      )
       .orderBy(asc(parties.normalizedName), asc(parties.id));
 
     const balancesByPartyId = new Map<string, PartyBalanceAccumulator>();
@@ -184,13 +200,14 @@ export class PartyBalanceReportService {
         coinsById: new Map(),
       };
       balancesByPartyId.set(row.partyId, balance);
+      const quantity = BigInt(row.quantity);
 
       switch (row.dimensionKind) {
         case 'RIAL':
-          balance.rial += row.quantity;
+          balance.rial += quantity;
           break;
         case 'GOLD':
-          balance.pureGoldMg += row.quantity;
+          balance.pureGoldMg += quantity;
           break;
         case 'COIN': {
           if (row.coinTypeId === null || row.coinCode === null) {
@@ -201,7 +218,7 @@ export class PartyBalanceReportService {
             code: row.coinCode,
             count: 0n,
           };
-          coin.count += row.quantity;
+          coin.count += quantity;
           balance.coinsById.set(row.coinTypeId, coin);
           break;
         }

@@ -16,10 +16,12 @@ import {
   ledgerTransactions,
 } from '../../platform/database/schema';
 import { withTenantTransaction } from '../../platform/database/tenant-transaction';
+import { tenantDayBounds } from '../../platform/tenant/tenant-calendar';
 import { ReportingDisplayService } from './reporting-display.service';
 import type { Database } from '../../platform/database/connect';
 import type { LedgerTransactionSourceType } from '../../platform/database/schema';
 import type { TenantTransaction } from '../../platform/database/tenant-transaction';
+import type { TenantDayBounds } from '../../platform/tenant/tenant-calendar';
 import type { Dashboard, DashboardQuery } from '@gold/contracts';
 
 const ACCOUNT_KEYS = {
@@ -33,18 +35,7 @@ interface RawAmount {
   readonly pureGoldMg: bigint;
 }
 
-interface DayBounds {
-  readonly start: Date;
-  readonly end: Date;
-}
-
-function utcDayBounds(asOf: Date): DayBounds {
-  const start = new Date(asOf);
-  start.setUTCHours(0, 0, 0, 0);
-  const end = new Date(start);
-  end.setUTCDate(end.getUTCDate() + 1);
-  return { start, end };
-}
+type DayBounds = TenantDayBounds;
 
 function negate(amount: bigint): bigint {
   return -amount;
@@ -64,7 +55,8 @@ export class DashboardService {
   async getDashboard(tenantId: string, query: DashboardQuery): Promise<Dashboard> {
     return withTenantTransaction(this.db, tenantId, async (transaction) => {
       const asOf = new Date();
-      const day = utcDayBounds(asOf);
+      // روز تقویمی ِ مستأجر، نه روز UTC (M-19، #1).
+      const day = await tenantDayBounds(transaction, asOf);
       const currentMazneh = await this.display.getLatestMaznehInTransaction(transaction, tenantId);
       const [salesRial, purchasesRial, receiptsRial, paymentsRial, invoiceCount, inventory] =
         await Promise.all([

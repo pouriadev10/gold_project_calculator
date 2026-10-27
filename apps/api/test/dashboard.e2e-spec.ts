@@ -368,6 +368,43 @@ describe('reporting dashboard (BE-059)', () => {
     );
   });
 
+  it('M-19: «امروز» روز تقویمی مستأجر است، نه روز UTC (#1)', async () => {
+    const localTime = (instant: string, timeZone: string) =>
+      new Intl.DateTimeFormat('en-GB', { timeZone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(
+        new Date(instant),
+      );
+    const tenantUtc = { id: '', slug: `dashboard-utc-${randomUUID().slice(0, 12)}` };
+    tenantUtc.id = (
+      await app.get(TenantService).create({ name: 'Dashboard UTC', slug: tenantUtc.slug, timezone: 'UTC' })
+    ).id;
+    try {
+      const ownerUtc = await makeMember(tenantUtc);
+      for (const [tenant, owner, timeZone] of [
+        [tenantA, ownerA, 'Asia/Tehran'],
+        [tenantUtc, ownerUtc, 'UTC'],
+      ] as const) {
+        const response = await adapter.getInstance().inject({
+          method: 'GET',
+          url: '/reporting/dashboard?displayUnit=GOLD',
+          headers: headers(owner, tenant),
+        });
+        expect(response.statusCode).toBe(200);
+        const { asOf, dayStartsAt, dayEndsAt } = response.json<Dashboard>();
+        // نیمه‌شب به وقت همان مستأجر، یک روز کامل، و «اکنون» داخلش.
+        expect({ timeZone, start: localTime(dayStartsAt, timeZone), end: localTime(dayEndsAt, timeZone) }).toEqual({
+          timeZone,
+          start: '00:00',
+          end: '00:00',
+        });
+        expect(new Date(dayEndsAt).getTime() - new Date(dayStartsAt).getTime()).toBe(24 * 60 * 60 * 1000);
+        expect(new Date(dayStartsAt).getTime()).toBeLessThanOrEqual(new Date(asOf).getTime());
+        expect(new Date(asOf).getTime()).toBeLessThan(new Date(dayEndsAt).getTime());
+      }
+    } finally {
+      await db.delete(tenants).where(eq(tenants.id, tenantUtc.id));
+    }
+  });
+
   it('validates the unit parameter and changes only financial presentation', async () => {
     const [gold, rial, invalid] = await Promise.all([
       adapter.getInstance().inject({

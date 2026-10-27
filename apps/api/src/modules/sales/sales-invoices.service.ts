@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { AuditService } from '../../platform/audit/audit.service';
 import { DRIZZLE } from '../../platform/database/database.module';
 import {
@@ -9,6 +9,7 @@ import {
   priceQuotes,
 } from '../../platform/database/schema';
 import { withTenantTransaction } from '../../platform/database/tenant-transaction';
+import { currentTenantTimeZone } from '../../platform/tenant/tenant-calendar';
 import { PartiesService, PartyNotFoundError } from '../parties/parties.service';
 import { DocumentCountersService, jalaliYearPeriodKey } from './document-counters.service';
 import {
@@ -100,24 +101,6 @@ function assertFinalizeInput(input: FinalizeSalesInvoiceInput): void {
       );
     }
   }
-}
-
-/**
- * منطقه‌ی زمانی مستأجرِ همین تراکنش — مرز سال شماره‌گذاری (D-02).
- *
- * نقش `gold_app` به جدول سراسری `tenants` دسترسی ندارد؛ تابع دیتابیسی
- * `current_tenant_timezone()` (مهاجرت 0037) فقط timezone ِ مستأجری را می‌دهد که
- * RLS برایش تنظیم شده.
- */
-async function currentTenantTimeZone(transaction: TenantTransaction): Promise<string> {
-  const result = await transaction.execute<{ timezone: string | null }>(
-    sql`SELECT current_tenant_timezone() AS timezone`,
-  );
-  const timeZone = result.rows[0]?.timezone;
-  if (typeof timeZone !== 'string' || timeZone === '') {
-    throw new Error('Tenant time zone is not available inside the tenant transaction');
-  }
-  return timeZone;
 }
 
 /**
