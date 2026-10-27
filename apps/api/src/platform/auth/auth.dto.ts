@@ -24,8 +24,11 @@ export const loginSchema = z.object({
   /**
    * کاربر می‌تواند عضو چند مستأجر باشد، پس ورود باید بگوید کدام.
    * slug گرفته می‌شود نه UUID، چون چیزی است که کاربر می‌شناسد.
+   *
+   * کوچک می‌شود (M-27): slug فقط با حروف کوچک ساخته می‌شود (`createTenantSchema`)، ولی کیبورد
+   * گوشی حرف اول را بزرگ می‌کند و «Demo» با ۴۰۱ ِ «اطلاعات نادرست» رد می‌شد.
    */
-  tenantSlug: z.string().trim().min(1, 'شناسه‌ی مستأجر الزامی است'),
+  tenantSlug: z.string().trim().min(1, 'شناسه‌ی مستأجر الزامی است').toLowerCase(),
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;

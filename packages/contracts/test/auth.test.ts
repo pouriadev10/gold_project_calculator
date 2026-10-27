@@ -106,3 +106,11 @@ describe('refreshSchema', () => {
     expect(refreshSchema.safeParse({ refreshToken: '' }).success).toBe(false);
   });
 });
+
+describe('loginSchema — شناسه‌ی فروشگاه (M-27)', () => {
+  it('slug را کوچک و بی‌فاصله می‌کند، چون slug همیشه با حروف کوچک ساخته می‌شود', () => {
+    expect(
+      loginSchema.parse({ email: 'owner@example.com', password: 'secret-pass', tenantSlug: '  Demo-Shop ' }).tenantSlug,
+    ).toBe('demo-shop');
+  });
+});

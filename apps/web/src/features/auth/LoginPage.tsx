@@ -18,10 +18,9 @@ import { useSessionStore } from '@/stores/session-store';
 /**
  * صفحه‌ی ورود — FE-026.
  *
- * ذخیره‌ی نشست و تصمیم «کجا و چطور» توکن نگه داشته شود عمداً حداقلی است
- * (`session-store.ts`، بدون persist) — همان‌طور که مسیر guard و منطق
- * تمدید هنوز نیستند، چون آن‌ها کار FE-027/FE-028 هستند. این صفحه فقط
- * باید endpoint واقعی را درست صدا بزند و پس از موفقیت مسیر را عوض کند.
+ * نشست در `session-store.ts` (با persist، FE-027) و محافظ مسیرها در `route-guards.ts` (FE-028)
+ * است. این صفحه endpoint واقعی را صدا می‌زند، داده‌ی مستأجر یا کاربر قبلی را پاک می‌کند
+ * (`claimTenantData`، FE-101) و پس از موفقیت به داشبورد می‌رود.
  */
 
 function loginErrorMessage(error: unknown): string {

@@ -31,7 +31,8 @@ export const loginSchema = z.object({
   email: loginEmailSchema,
   password: z.string().min(1, 'رمز عبور الزامی است').max(MAX_PASSWORD_LENGTH),
   /** کاربر می‌تواند عضو چند مستأجر باشد؛ slug گرفته می‌شود چون چیزی است که کاربر می‌شناسد. */
-  tenantSlug: z.string().trim().min(1, 'شناسه‌ی مستأجر الزامی است'),
+  /** کوچک می‌شود — slug همیشه با حروف کوچک ساخته می‌شود (M-27، همان `auth.dto.ts` ِ سرور). */
+  tenantSlug: z.string().trim().min(1, 'شناسه‌ی مستأجر الزامی است').toLowerCase(),
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 

@@ -158,6 +158,13 @@ describe('احراز هویت (نیازمند PostgreSQL واقعی)', () => {
       expect(response.statusCode).toBe(200);
     });
 
+    it('M-27: شناسه‌ی فروشگاه با حرف بزرگ و فاصله هم کار می‌کند — slug همیشه کوچک است', async () => {
+      // کیبورد گوشی حرف اول را بزرگ می‌کند؛ پیش‌تر «Demo» با ۴۰۱ ِ «اطلاعات ورود نادرست» رد می‌شد.
+      const response = await login(member.email, PASSWORD, `  ${tenantActive.slug.toUpperCase()} `);
+
+      expect(response.statusCode).toBe(200);
+    });
+
     it('توکن تمدید فقط به‌صورت هش ذخیره می‌شود', async () => {
       const body = (await login(member.email, PASSWORD, tenantActive.slug)).json<SessionBody>();
 
