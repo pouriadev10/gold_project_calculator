@@ -43,12 +43,18 @@ export const mixedSettlementLineSchema = z.discriminatedUnion('type', [
 ]);
 
 /**
+ * سقف ردیف‌های یک تسویه‌ی ترکیبی — مرز فنی API، نه عدد صنفی (M-18). پیش‌تر بی‌سقف بود و یک
+ * درخواست می‌توانست هزاران ردیف قیمت‌گذاری، قفل و posting بخواهد. یک تسویه‌ی واقعی چند ردیف دارد.
+ */
+export const MAX_MIXED_SETTLEMENT_LINES = 50;
+
+/**
  * Every line belongs to one atomic settlement. Money and weight remain JSON
  * strings; only the countable `COIN` position is an integer.
  */
 export const createMixedSettlementSchema = z
   .object({
-    lines: z.array(mixedSettlementLineSchema).min(1),
+    lines: z.array(mixedSettlementLineSchema).min(1).max(MAX_MIXED_SETTLEMENT_LINES),
     effectiveAt: isoDateTimeSchema,
   })
   .strict();
