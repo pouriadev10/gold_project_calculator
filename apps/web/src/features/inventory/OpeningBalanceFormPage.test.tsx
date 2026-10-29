@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { formatCoinCount, toPersianDigits } from '@gold/core-calc';
 import type * as Queries from '@/api/queries';
 import type * as OpeningBalancesApi from '@/api/opening-balances';
+import { queryKeys } from '@/api/query-keys';
 import type { CoinTypeVersion, JewelryItemVersion, OpeningBalance } from '@/api/contracts';
 import OpeningBalanceFormPage from './OpeningBalanceFormPage';
 
@@ -79,8 +80,7 @@ function openingBalanceResult(): OpeningBalance {
   };
 }
 
-function renderPage() {
-  const client = new QueryClient();
+function renderPage(client = new QueryClient()) {
   return render(
     <QueryClientProvider client={client}>
       <OpeningBalanceFormPage />
@@ -235,6 +235,30 @@ describe('OpeningBalanceFormPage — نتیجه‌ی ثبت', () => {
     expect(await screen.findByRole('status')).toHaveTextContent('با موفقیت ثبت شد');
     expect(screen.getByLabelText('وزن آبشده (طلای خالص ۱۰۰۰)')).toHaveAttribute('data-value', '0');
     expect(screen.getByRole('button', { name: 'مرور و ثبت موجودی افتتاحیه' })).toBeDisabled();
+  });
+
+  it('M-31: ثبت موفق مانده‌ها، داشبورد، آخرین حرکات و تراکنش‌ها را تازه می‌کند', async () => {
+    createOpeningBalanceMock.mockResolvedValue(openingBalanceResult());
+    const client = new QueryClient();
+    const invalidate = vi.spyOn(client, 'invalidateQueries');
+    const user = userEvent.setup();
+    renderPage(client);
+
+    await typeDigits(user, 'وزن آبشده (طلای خالص ۱۰۰۰)', '5');
+    await user.click(screen.getByRole('button', { name: 'مرور و ثبت موجودی افتتاحیه' }));
+    await user.click(screen.getByRole('button', { name: 'تأیید و ثبت' }));
+    await screen.findByRole('status');
+
+    // سند افتتاحیه هم موجودی را حرکت می‌دهد و هم یک تراکنش دفتر کل می‌سازد
+    const invalidated = invalidate.mock.calls.map(([filters]) => filters?.queryKey);
+    expect(invalidated).toEqual(
+      expect.arrayContaining([
+        queryKeys.inventoryBalances.all(),
+        queryKeys.inventoryMovements.all(),
+        queryKeys.dashboard.all(),
+        queryKeys.transactions.all(),
+      ]),
+    );
   });
 
   it('شکست ثبت، هیچ وضعیت موفقی نشان نمی‌دهد و فرم را دست‌نخورده نگه می‌دارد', async () => {

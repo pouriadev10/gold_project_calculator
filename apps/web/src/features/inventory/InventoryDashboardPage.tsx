@@ -73,7 +73,13 @@ export default function InventoryDashboardPage() {
     ].sort((a, b) => a.count - b.count);
   }, [jewelryStock, coinStock]);
 
-  const jewelryPieceTotal = jewelryStock?.reduce((sum, item) => sum + item.count, 0);
+  /*
+   * M-31: شمار نوع از `total` ِ سرور (کاتالوگ فعال، نه فقط ۲۰۰ ردیف صفحه‌ی اول) و جمع قطعه از همه‌ی
+   * مانده‌های زیورآلات — قطعه‌ی کالای غیرفعال یا بیرون از صفحه‌ی اول هم در صندوق است. فهرست
+   * کم‌موجود همچنان فقط روی کاتالوگ فعال است: کالای غیرفعال قرار نیست دوباره تأمین شود.
+   */
+  const jewelryTypeCount = jewelryQuery.data?.total;
+  const jewelryPieceTotal = jewelryBalanceQuery.data?.reduce((sum, b) => sum + BigInt(b.quantity), 0n);
   /*
    * FE-105 (بخش ۲-۲): جمع تعداد انواع مختلف سکه («۳ عدد» برای یک تمام و دو ربع) آن‌ها را هم‌ارز
    * فرض می‌کند؛ هر نوع بُعد مستقل خودش است. این کارت فقط شمار انواع را می‌گوید و موجودی هر نوع
@@ -100,9 +106,9 @@ export default function InventoryDashboardPage() {
                 </span>
                 <div className="min-w-0">
                   <p className="text-xs text-muted-foreground">مصنوعات</p>
-                  {jewelryStock ? (
+                  {jewelryTypeCount !== undefined && jewelryPieceTotal !== undefined ? (
                     <p className="text-lg font-bold tabular-nums">
-                      {formatCoinCount(jewelryStock.length)} نوع · {formatCoinCount(jewelryPieceTotal ?? 0)} عدد
+                      {formatCoinCount(jewelryTypeCount)} نوع · {formatCoinCount(toSafeNumber(jewelryPieceTotal))} عدد
                     </p>
                   ) : (
                     <Skeleton className="h-6 w-24" />

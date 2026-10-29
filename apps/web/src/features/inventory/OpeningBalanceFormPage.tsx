@@ -17,6 +17,7 @@ import { ErrorState } from '@/components/common/ErrorState';
 import { PageHeader } from '@/components/common/PageHeader';
 import { OfflineSubmitHint } from '@/components/common/OfflineSubmitHint';
 import { PENDING_SUBMIT_ACTION, PendingSubmitNotice } from '@/components/common/PendingSubmitNotice';
+import { UnsavedChangesGuard } from '@/components/common/UnsavedChangesGuard';
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -60,6 +61,7 @@ import { JewelryLineSelector, type SelectedJewelryLine } from './JewelryLineSele
  */
 
 const DESCRIPTION_MAX = 2_000;
+const DEFAULT_DESCRIPTION = 'موجودی افتتاحیه';
 
 function buildLines(
   jewelryLines: readonly SelectedJewelryLine[],
@@ -92,7 +94,7 @@ export default function OpeningBalanceFormPage() {
   const [jewelryLines, setJewelryLines] = useState<readonly SelectedJewelryLine[]>([]);
   const [meltedGoldMg, setMeltedGoldMg] = useState(0n);
   const [coinCounts, setCoinCounts] = useState<Record<string, bigint>>({});
-  const [description, setDescription] = useState('موجودی افتتاحیه');
+  const [description, setDescription] = useState(DEFAULT_DESCRIPTION);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [submitError, setSubmitError] = useState<unknown>(null);
   const [lastRegistered, setLastRegistered] = useState<OpeningBalance | null>(null);
@@ -113,6 +115,8 @@ export default function OpeningBalanceFormPage() {
   const trimmedDescription = description.trim();
   const descriptionValid = trimmedDescription.length > 0 && trimmedDescription.length <= DESCRIPTION_MAX;
   const canSubmit = lines.length > 0 && descriptionValid;
+  // M-31 (#43): چند قلم و چند نوع سکه‌ی شمرده‌شده با یک ضربه روی ناوبری نباید بی‌پرسش گم شوند
+  const unsaved = lines.length > 0 || jewelryLines.length > 0 || trimmedDescription !== DEFAULT_DESCRIPTION || uncertain;
 
   const jewelryPieceCount = jewelryLines.reduce((sum, l) => sum + (l.quantity > 0n ? l.quantity : 0n), 0n);
   /*
@@ -135,7 +139,16 @@ export default function OpeningBalanceFormPage() {
       const created = await submit(input);
       if (!created) return; // ضربه‌ی دوم حین ارسال قبلی — بی‌اثر، نه خطا
 
-      await queryClient.invalidateQueries({ queryKey: queryKeys.inventoryBalances.all() });
+      // M-31: سند افتتاحیه هم موجودی را حرکت می‌دهد و هم یک تراکنش دفتر کل می‌سازد؛ داشبوردها نباید
+      // تا پایان staleTime عدد پیش از افتتاحیه را نشان دهند
+      await Promise.allSettled(
+        [
+          queryKeys.inventoryBalances.all(),
+          queryKeys.inventoryMovements.all(),
+          queryKeys.dashboard.all(),
+          queryKeys.transactions.all(),
+        ].map((queryKey) => queryClient.invalidateQueries({ queryKey })),
+      );
       toast.success('موجودی افتتاحیه ثبت شد', created.description);
       setLastRegistered(created);
       setConfirmOpen(false);
@@ -143,7 +156,7 @@ export default function OpeningBalanceFormPage() {
       setJewelryLines([]);
       setMeltedGoldMg(0n);
       setCoinCounts({});
-      setDescription('موجودی افتتاحیه');
+      setDescription(DEFAULT_DESCRIPTION);
     } catch (error) {
       // گفت‌وگو بسته می‌شود ولی فرم دست‌نخورده می‌ماند — کاربر نباید ورودی‌های
       // دقیق (چند قلم زیورآلات، چند نوع سکه) را دوباره از صفر بسازد
@@ -304,6 +317,7 @@ export default function OpeningBalanceFormPage() {
         </ResponsiveDialogContent>
       </ResponsiveDialog>
 
+      <UnsavedChangesGuard when={unsaved} submitting={isSubmitting} />
       <NumericKeypad />
     </div>
   );

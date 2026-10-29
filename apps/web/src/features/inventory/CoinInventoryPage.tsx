@@ -16,6 +16,9 @@ import { CoinInventoryList, type CoinInventoryRow } from './CoinInventoryList';
  * هیچ حرکتی نداشته اصلاً در پاسخ balances نیست — نه اینکه صفر باشد — پس
  * ادغام اینجا صریحاً برای هر کاتالوگ‌آیتم مانده‌ی نیامده را صفر می‌گیرد؛
  * دقیقاً همان چیزی که «صفر ... به‌صورت واضح نمایش داده شود» می‌خواهد.
+ *
+ * M-31: نوع غیرفعال از انتخاب در سند تازه کنار می‌رود، ولی سکه‌ای که هنوز در صندوق است دارایی
+ * واقعی است؛ تا مانده‌اش صفر نشده با نشان «غیرفعال» در فهرست می‌ماند.
  */
 
 export default function CoinInventoryPage() {
@@ -33,11 +36,11 @@ export default function CoinInventoryPage() {
       (balancesQuery.data ?? []).map((balance) => [balance.itemId, toSafeNumber(BigInt(balance.quantity))]),
     );
     return coinTypesQuery.data
-      .filter((coinType) => coinType.active)
       .map((coinType) => ({
         coinType,
         count: balanceByCoinTypeId.get(coinType.coinTypeId) ?? 0,
-      }));
+      }))
+      .filter((row) => row.coinType.active || row.count !== 0);
   }, [coinTypesQuery.data, balancesQuery.data]);
 
   const retry = () => {

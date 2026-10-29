@@ -141,7 +141,7 @@ beforeEach(() => {
 
   useDashboardMock.mockReturnValue({ data: dashboard(), isLoading: false, isError: false, refetch: vi.fn() });
   useJewelryItemsMock.mockReturnValue({
-    data: { items: [jewelryItem({ jewelryItemId: 'i1', title: 'دستبند ۱۸ عیار' })] },
+    data: { items: [jewelryItem({ jewelryItemId: 'i1', title: 'دستبند ۱۸ عیار' })], total: 1, limit: 200, offset: 0 },
     isLoading: false,
     isError: false,
     refetch: vi.fn(),
@@ -165,6 +165,28 @@ describe('InventoryDashboardPage — مصنوعات و انواع سکه', () =>
   it('تعداد نوع و مجموع قطعه‌ی زیورآلات را از ادغام کاتالوگ+مانده می‌سازد', () => {
     renderPage();
     expect(screen.getByText('۱ نوع · ۵ عدد')).toBeInTheDocument();
+  });
+
+  it('M-31: شمار نوع از total ِ سرور و جمع قطعه از همه‌ی مانده‌هاست — نه فقط ۲۰۰ کالای فعال صفحه‌ی اول', () => {
+    // کاتالوگ ۲۵۰ کالای فعال دارد و فقط صفحه‌ی اول آمده؛ i-later بیرون از آن صفحه است و i-retired غیرفعال
+    useJewelryItemsMock.mockReturnValue({
+      data: { items: [jewelryItem({ jewelryItemId: 'i1', title: 'دستبند ۱۸ عیار' })], total: 250, limit: 200, offset: 0 },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+    useInventoryBalancesMock.mockReturnValue({
+      data: [
+        { itemType: 'JEWELRY', itemId: 'i1', quantity: '5' },
+        { itemType: 'JEWELRY', itemId: 'i-later', quantity: '7' },
+        { itemType: 'JEWELRY', itemId: 'i-retired', quantity: '2' },
+      ],
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+    renderPage();
+    expect(screen.getByText('۲۵۰ نوع · ۱۴ عدد')).toBeInTheDocument();
   });
 
   it('کارت سکه فقط شمار انواع را می‌گوید، نه جمع تعداد انواع مختلف (FE-105، بخش ۲-۲)', () => {
@@ -203,6 +225,9 @@ describe('InventoryDashboardPage — اقلام کم‌موجود', () => {
           jewelryItem({ jewelryItemId: 'i1', title: 'زیاد‌موجود' }),
           jewelryItem({ jewelryItemId: 'i2', title: 'خیلی‌کم‌موجود' }),
         ],
+        total: 2,
+        limit: 200,
+        offset: 0,
       },
       isLoading: false,
       isError: false,

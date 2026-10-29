@@ -166,6 +166,16 @@ describe('FE-099 — هشدار خروج روی صفحه‌های فرم', () =>
     await expectLeaveGuarded(user, 'مظنه', 'اطلاعات واردشده از بین می‌رود');
   });
 
+  it('M-31 (#43): موجودی افتتاحیه‌ی ثبت‌نشده پرسیده می‌شود', async () => {
+    const user = userEvent.setup();
+    renderRoute('/inventory/opening-balance');
+    await screen.findByRole('heading', { level: 1, name: 'ثبت موجودی افتتاحیه' }, { timeout: 10_000 });
+    await screen.findByLabelText('نیم سکه', {}, { timeout: 10_000 });
+    await typeNumber(user, 'نیم سکه', '3');
+
+    await expectLeaveGuarded(user, 'ثبت موجودی افتتاحیه', 'اطلاعات واردشده از بین می‌رود');
+  });
+
   it('صفحه‌ی فرم بدون هیچ ورودی: خروج بی‌پرسش', async () => {
     const user = userEvent.setup();
     renderRoute('/sales/coins/new');

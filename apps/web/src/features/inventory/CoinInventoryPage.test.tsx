@@ -165,6 +165,25 @@ describe('CoinInventoryPage — هر نوع سکه مستقل', () => {
     expect(countCell(rows[2]!)).toHaveTextContent(formatCoinCount(0));
   });
 
+  it('M-31: نوع سکه‌ی غیرفعالی که هنوز موجودی دارد پنهان نمی‌شود؛ غیرفعال بی‌موجودی پنهان می‌ماند', () => {
+    const RETIRED: CoinTypeVersion = { ...NIM, id: 'v-retired', coinTypeId: 'c-retired', code: 'RETIRED', title: 'سکه طرح قدیم', active: false };
+    const EMPTY_RETIRED: CoinTypeVersion = { ...NIM, id: 'v-gone', coinTypeId: 'c-gone', code: 'GONE', title: 'سکه کنارگذاشته', active: false };
+    useCoinTypesMock.mockReturnValue({ data: [BAHAR, RETIRED, EMPTY_RETIRED], isLoading: false, isError: false, refetch: vi.fn() });
+    useInventoryBalancesMock.mockReturnValue({
+      data: [balance(BAHAR.coinTypeId, '3'), balance(RETIRED.coinTypeId, '4'), balance(EMPTY_RETIRED.coinTypeId, '0')],
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+    renderPage();
+
+    const retiredRow = screen.getByText('سکه طرح قدیم').closest('tr')!;
+    expect(within(retiredRow).getAllByRole('cell')[1]).toHaveTextContent(formatCoinCount(4));
+    expect(within(retiredRow).getByText('غیرفعال')).toBeInTheDocument();
+    expect(screen.queryByText('سکه کنارگذاشته')).not.toBeInTheDocument();
+    expect(within(screen.getByText('تمام بهار آزادی').closest('tr')!).queryByText('غیرفعال')).not.toBeInTheDocument();
+  });
+
   it('ارزش ذاتی هر نوع را با فرمول واقعی core-calc محاسبه و نمایش می‌دهد', () => {
     renderPage();
 

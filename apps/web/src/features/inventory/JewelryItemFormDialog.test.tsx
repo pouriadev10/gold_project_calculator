@@ -311,11 +311,30 @@ describe('JewelryItemFormDialog — حالت ویرایش (با item)', () => {
     expect(createJewelryItemMock).not.toHaveBeenCalled();
   });
 
+  it('M-31: بدون هیچ تغییری «ذخیره» غیرفعال است — نسخه‌ی تکراری ساخته نمی‌شود؛ برگرداندن تغییر هم دوباره غیرفعالش می‌کند', async () => {
+    const user = setupUser();
+    renderDialog({ item: EXISTING_ITEM });
+
+    const save = screen.getByRole('button', { name: 'ذخیره تغییرات' });
+    expect(save).toBeDisabled();
+
+    const titleInput = screen.getByLabelText('عنوان');
+    await user.type(titleInput, ' نو');
+    expect(save).toBeEnabled();
+
+    // فاصله‌ی انتهایی هم تغییر نیست؛ عنوان بریده‌شده با نسخه‌ی فعلی یکی است
+    await user.clear(titleInput);
+    await user.type(titleInput, 'دستبند ۱۸ عیار ');
+    expect(save).toBeDisabled();
+    expect(updateJewelryItemMock).not.toHaveBeenCalled();
+  });
+
   it('شکست ویرایش، پیام خطا را نگه می‌دارد', async () => {
     updateJewelryItemMock.mockRejectedValue(new ApiError(500, 'INTERNAL_ERROR', 'خطا'));
     const user = setupUser();
     renderDialog({ item: EXISTING_ITEM });
 
+    await user.type(screen.getByLabelText('عنوان'), ' نو');
     await user.click(screen.getByRole('button', { name: 'ذخیره تغییرات' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('خطا در انجام عملیات');

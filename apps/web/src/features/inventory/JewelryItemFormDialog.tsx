@@ -104,6 +104,16 @@ export function JewelryItemFormDialog({ open, onOpenChange, item }: JewelryItemF
 
   const trimmedCode = code.trim();
   const trimmedTitle = title.trim();
+  // M-31: هر ذخیره یک نسخه‌ی تازه می‌سازد؛ ذخیره‌ی بدون تغییر فقط نسخه‌ی تکراری به تاریخچه اضافه می‌کرد
+  const unchanged =
+    item !== undefined &&
+    trimmedTitle === item.title &&
+    grossWeightMg === BigInt(item.grossWeightMg) &&
+    karat === BigInt(item.karat) &&
+    stoneWeightMg === BigInt(item.stoneWeightMg) &&
+    otherDeductionWeightMg === BigInt(item.otherDeductionWeightMg) &&
+    wageType === item.wageType &&
+    wageValue === BigInt(item.wageValue);
 
   const validation = isEdit
     ? updateJewelryItemSchema.safeParse({
@@ -175,7 +185,7 @@ export function JewelryItemFormDialog({ open, onOpenChange, item }: JewelryItemF
 
   const onSubmit = async () => {
     setSubmitError(null);
-    if (!validation.success || deductionError !== undefined) return;
+    if (!validation.success || deductionError !== undefined || unchanged) return;
     try {
       const result = await submit(undefined);
       if (!result) return; // ضربه‌ی دوم حین ارسال قبلی — بی‌اثر، نه خطا
@@ -306,7 +316,7 @@ export function JewelryItemFormDialog({ open, onOpenChange, item }: JewelryItemF
           </Button>
           <Button
             type="button"
-            disabled={isSubmitting || !validation.success || deductionError !== undefined}
+            disabled={isSubmitting || !validation.success || deductionError !== undefined || unchanged}
             onClick={() => void onSubmit()}
           >
             {isSubmitting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}

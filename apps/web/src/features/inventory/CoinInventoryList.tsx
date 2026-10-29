@@ -12,6 +12,7 @@ import { AmountDisplay } from '@/components/common/AmountDisplay';
 import { CardSkeleton } from '@/components/common/CardSkeleton';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorState } from '@/components/common/ErrorState';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { MoneyInput } from '@/components/keypad/MoneyInput';
@@ -56,6 +57,10 @@ interface CoinInventoryListProps {
   rate1000: bigint | undefined;
   marketPrices: Readonly<Record<string, bigint>>;
   onMarketPriceChange: (coinTypeId: string, value: bigint) => void;
+}
+
+function InactiveBadge({ active }: { active: boolean }) {
+  return active ? null : <Badge variant="secondary">غیرفعال</Badge>;
 }
 
 function IntrinsicValueCell({ coin, rate1000 }: { coin: CoinType; rate1000: bigint | undefined }) {
@@ -170,7 +175,12 @@ export function CoinInventoryList({
               const marketPrice = marketPrices[coinType.coinTypeId] ?? 0n;
               return (
                 <TableRow key={coinType.coinTypeId}>
-                  <TableCell className="font-medium">{coinType.title}</TableCell>
+                  <TableCell className="font-medium">
+                    <span className="flex items-center gap-2">
+                      {coinType.title}
+                      <InactiveBadge active={coinType.active} />
+                    </span>
+                  </TableCell>
                   <TableCell className="tabular-nums">
                     <span className={count < 0 ? 'text-debit' : undefined}>{formatCoinCount(count)}</span>
                   </TableCell>
@@ -206,7 +216,10 @@ export function CoinInventoryList({
           <Card key={coinType.coinTypeId}>
             <CardContent className="space-y-3 pt-6">
               <div className="flex items-center justify-between gap-3">
-                <p className="font-medium">{coinType.title}</p>
+                <p className="flex items-center gap-2 font-medium">
+                  {coinType.title}
+                  <InactiveBadge active={coinType.active} />
+                </p>
                 <span className={`tabular-nums text-sm ${count < 0 ? 'text-debit' : ''}`}>
                   {formatCoinCount(count)} عدد
                 </span>
