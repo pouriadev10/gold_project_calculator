@@ -417,6 +417,35 @@ describe('دروازه‌ی قرارداد — middleware و pipe ِ سرور', 
     expect(corrected.status).toBe(201);
   });
 
+  it('M-37: رد قاعده‌ی کسب‌وکار ۴۲۲ BUSINESS_RULE_VIOLATION است، مثل BusinessRuleError ِ سرور — نه ۴۰۰', async () => {
+    const post = (path: string, body: unknown) =>
+      globalThis.fetch(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() },
+        body: JSON.stringify(body),
+      });
+    // CoinSalePaidRialExceedsPayableError: پرداخت بیش از مبلغ فروش سکه
+    const coinSale = await post('/api/sales/invoices/coins', {
+      partyId: consumer.id,
+      coinTypeId: coinType.coinTypeId,
+      count: 1,
+      marketUnitPriceRial: '1000',
+      paidRial: '2000',
+      quoteId: 'c1000000-0000-4000-8000-000000000001',
+      effectiveAt: NOW(),
+    });
+    // MixedSettlementInsufficientCreditError: بیش از هر اعتبار پرداختنی که آزمون‌های قبلی ساخته باشند
+    const mixed = await post(`/api/parties/${consumer.id}/settlements/mixed`, {
+      lines: [{ type: 'CREDIT', amountRial: '999999999999999' }],
+      effectiveAt: NOW(),
+    });
+
+    for (const response of [coinSale, mixed]) {
+      expect(response.status).toBe(422);
+      expect(apiErrorSchema.parse(await response.json()).error.code).toBe('BUSINESS_RULE_VIOLATION');
+    }
+  });
+
   it('مسیر عمومی `/auth` کلید نمی‌خواهد، مثل `PUBLIC_PATH_PREFIXES` ِ سرور', async () => {
     const response = await globalThis.fetch('/api/auth/login', {
       method: 'POST',
@@ -490,8 +519,10 @@ describe('mock مسیر یا کدی نمی‌سازد که سرور ندارد',
     expect([...mock].filter((route) => !server.has(route)).sort()).toEqual([...PENDING_BACKEND_ROUTES].sort());
   });
 
-  it('کدهای خطای mock زیرمجموعه‌ی کدهای `api-exception.filter.ts` سرورند', () => {
-    const filter = readFileSync(join(API_SRC, 'platform/error-contract/api-exception.filter.ts'), 'utf8');
+  it('کدهای خطای mock زیرمجموعه‌ی کدهای `api-exception.filter.ts` و `business-rule.error.ts` ِ سرورند', () => {
+    const filter = ['api-exception.filter.ts', 'business-rule.error.ts']
+      .map((file) => readFileSync(join(API_SRC, 'platform/error-contract', file), 'utf8'))
+      .join('\n');
     const serverCodes = new Set([...filter.matchAll(/'([A-Z][A-Z0-9_]+)'/gu)].map(([, code]) => code));
     expect(Object.keys(MOCK_ERROR_STATUS).filter((code) => !serverCodes.has(code))).toEqual([]);
   });

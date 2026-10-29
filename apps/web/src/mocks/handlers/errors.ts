@@ -18,6 +18,8 @@ export const MOCK_ERROR_STATUS = {
   FORBIDDEN: 403,
   NOT_FOUND: 404,
   CONFLICT: 409,
+  /** M-37: `BusinessRuleError` ِ سرور (از M-09) — رد قاعده‌ی کسب‌وکار، نه خطای فرم. */
+  BUSINESS_RULE_VIOLATION: 422,
   INTERNAL_ERROR: 500,
 } as const satisfies Record<string, number>;
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * نگهبان باندل production — FE-093: «mock مالی به production bundle وارد نشود».
+ * نگهبان باندل production — FE-093: «mock مالی به production bundle وارد نشود»، و M-37: صفحه‌های توسعه هم نه.
  *
  * ESLint (`MOCKS_STAY_DEV_ONLY_PATTERNS`) import ایستای mock را در کد برنامه می‌گیرد؛ این
  * اسکریپت خود خروجی بیلد را می‌گردد، چون فقط خروجی واقعی ثابت می‌کند tree-shaking شاخه‌ی
@@ -40,6 +40,10 @@ function markers() {
     { text: '__goldMocks', why: 'سوییچ سناریوی توسعه' },
     { text: 'gold.mockScenario', why: 'سوییچ سناریوی توسعه' },
     { text: 'password123', why: 'رمز کاربر دمو' },
+    // M-37: صفحه‌های توسعه (`devRoutes` در router.tsx) هم فقط پشت `import.meta.env.DEV` هستند
+    { text: '/_dev/', why: 'مسیر صفحه‌ی توسعه' },
+    { text: 'KeypadHarness', why: 'صفحه‌ی توسعه‌ی کیپد' },
+    { text: 'PartySelectorHarness', why: 'صفحه‌ی توسعه‌ی انتخابگر شخص' },
   ];
 }
 

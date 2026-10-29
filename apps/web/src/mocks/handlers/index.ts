@@ -592,7 +592,7 @@ async function registerCoinSale(request: Request) {
 
   // آینه‌ی CoinSalePaidRialExceedsPayableError واقعی — برخلاف نسیه‌ی زیورآلات، اینجا رد می‌شود نه پذیرفته
   if (paidRial > payableRial) {
-    return mockError('BAD_REQUEST', 'مبلغ پرداختی نمی‌تواند از مبلغ قابل‌پرداخت بیشتر باشد');
+    return mockError('BUSINESS_RULE_VIOLATION', 'مبلغ پرداختی از مبلغ فاکتور بیشتر است');
   }
   const receivableRial = payableRial - paidRial;
   postPartyRial(body.partyId, receivableRial);
@@ -1581,7 +1581,7 @@ export const handlers = [
     const payableRial = PARTY_PAYABLE_RIAL[partyId] ?? 0n;
     const availableCreditRial = payableRial < 0n ? -payableRial : 0n;
     if (creditAppliedRial > availableCreditRial) {
-      return mockError('BAD_REQUEST', 'مانده‌ی اعتباری شخص برای این ردیف کافی نیست');
+      return mockError('BUSINESS_RULE_VIOLATION', 'اعتبار ریالی این شخص برای این ردیف کافی نیست');
     }
 
     // گذر دوم — همه معتبرند، حالا موجودی/مانده جابه‌جا می‌شود. اعتبار از پرداختنی به دریافتنی
@@ -2242,7 +2242,7 @@ export const handlers = [
       line = { itemId: fixture.coinTypeId, title: fixture.title, quantity: String(coinItem.count), pureWeightMg: null, karat: fixture.karat, payableRial: coinPositionValue(coinItem.count, rial(BigInt(coinItem.marketUnitPriceRial))) };
     }
     const paid = BigInt(body.item.paidRial);
-    if (paid > line.payableRial) return mockError('BAD_REQUEST', 'مبلغ پرداختی نمی‌تواند از مبلغ قابل‌پرداخت بیشتر باشد');
+    if (paid > line.payableRial) return mockError('BUSINESS_RULE_VIOLATION', 'مبلغ پرداختی از مبلغ اصلاح‌شده‌ی فاکتور بیشتر است');
     const receivable = line.payableRial - paid;
     const version = detail.currentVersion + 1;
     // نسخه‌ی تازه جایگزین اثر نسخه‌ی قبلی می‌شود: طلب قبلی از شخص قبلی برمی‌گردد، طلب تازه روی شخص تازه می‌نشیند
