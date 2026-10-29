@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { toPersianDigits } from '@gold/core-calc';
 import type * as Queries from '@/api/queries';
 import type { CoinTypeVersion, PartyBalances, PriceQuote } from '@/api/contracts';
+import { MAX_MIXED_SETTLEMENT_LINES } from '@/api/contracts';
 import { NumericKeypad } from '@/components/keypad/NumericKeypad';
 import { useKeypadStore } from '@/components/keypad/keypad-store';
 import { MixedSettlementForm } from './MixedSettlementForm';
@@ -61,12 +62,14 @@ function priceQuote(): PriceQuote {
   };
 }
 
-function balances(rial: string): PartyBalances {
+/** `rial` مانده‌ی خالص شخص است؛ `payableRial` فقط حساب پرداختنی (منفی یعنی مغازه به شخص بدهکار است). */
+function balances(rial: string, payableRial = '0'): PartyBalances {
   return {
     partyId: TEST_PARTY_ID,
     calculatedAt: new Date().toISOString(),
     defaultDisplayUnit: 'GOLD',
     rawBalances: { rial, pureGoldMg: '0', coins: [] },
+    payableRial,
     convertedView: null,
   };
 }
@@ -124,7 +127,7 @@ describe('MixedSettlementForm — تسویه‌ی ترکیبی (FE-054)', () => 
 
   it('مبلغ ردیف اعتباری بیشتر از مانده، خطای همان ردیف را نشان می‌دهد', async () => {
     // شخص ۲۰ میلیون بستانکار است (رقم منفی) — سقف ردیف اعتباری همین است
-    usePartyBalancesMock.mockReturnValue({ data: balances('-20000000'), isLoading: false, isError: false });
+    usePartyBalancesMock.mockReturnValue({ data: balances('-20000000', '-20000000'), isLoading: false, isError: false });
     const user = userEvent.setup();
     renderForm();
 
@@ -135,6 +138,55 @@ describe('MixedSettlementForm — تسویه‌ی ترکیبی (FE-054)', () => 
     expect(screen.getByText('بیشتر از مانده‌ی اعتباری موجود شخص است.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'ثبت تسویه‌ی ترکیبی' })).toBeDisabled();
   });
+
+  it('M-33: طلب و بدهی هم‌زمان — اعتبار حساب پرداختنی روی طلب نشانده می‌شود، هرچند مانده‌ی خالص مثبت است', async () => {
+    // شخص ۱۰ میلیون بدهکار فاکتور است و مغازه ۳ میلیون از خرید دست‌دوم به او بدهکار؛ خالص ۷ میلیون
+    usePartyBalancesMock.mockReturnValue({ data: balances('7000000', '-3000000'), isLoading: false, isError: false });
+    const user = userEvent.setup();
+    renderForm();
+
+    const addCredit = screen.getByRole('button', { name: '+ مانده اعتباری' });
+    expect(addCredit).toBeEnabled();
+    await user.click(addCredit);
+    await user.click(screen.getByLabelText('مبلغ'));
+    await typeDigits(user, '3000000');
+
+    expect(screen.queryByText(/بیشتر از مانده‌ی اعتباری/)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'ثبت تسویه‌ی ترکیبی' })).toBeEnabled();
+  });
+
+  it('M-33: بستانکاریِ ناشی از پرداخت اضافه اعتبار پرداختنی نیست — سرور آن را نمی‌پذیرد، فرم هم نه', () => {
+    usePartyBalancesMock.mockReturnValue({ data: balances('-2000000', '0'), isLoading: false, isError: false });
+    renderForm();
+    expect(screen.getByRole('button', { name: '+ مانده اعتباری' })).toBeDisabled();
+  });
+
+  it('M-33: سقف اعتبار روی مجموع ردیف‌های اعتباری است، نه هر ردیف جدا', async () => {
+    usePartyBalancesMock.mockReturnValue({ data: balances('-5000000', '-5000000'), isLoading: false, isError: false });
+    const user = userEvent.setup();
+    renderForm();
+
+    await user.click(screen.getByRole('button', { name: '+ مانده اعتباری' }));
+    await user.click(screen.getAllByLabelText('مبلغ')[0]!);
+    await typeDigits(user, '3000000');
+    await user.click(screen.getByRole('button', { name: '+ مانده اعتباری' }));
+    await user.click(screen.getAllByLabelText('مبلغ')[1]!);
+    await typeDigits(user, '3000000');
+
+    expect(screen.getAllByText('مجموع ردیف‌های اعتباری بیشتر از مانده‌ی اعتباری موجود شخص است.').length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'ثبت تسویه‌ی ترکیبی' })).toBeDisabled();
+  });
+
+  it('M-33: با رسیدن به سقف ردیف‌های قرارداد، افزودن ردیف غیرفعال می‌شود', async () => {
+    const user = userEvent.setup();
+    renderForm();
+    const addRial = screen.getByRole('button', { name: '+ ریال' });
+    for (let i = 0; i < MAX_MIXED_SETTLEMENT_LINES; i += 1) await user.click(addRial);
+
+    expect(addRial).toBeDisabled();
+    expect(screen.getByRole('button', { name: '+ طلا' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '+ سکه' })).toBeDisabled();
+  }, 30000);
 
   it('ریال + طلا + سکه را در یک درخواست با یک Idempotency-Key ثبت می‌کند', async () => {
     createMixedSettlementMock.mockResolvedValue({

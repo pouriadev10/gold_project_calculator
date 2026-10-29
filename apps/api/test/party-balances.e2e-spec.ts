@@ -301,6 +301,8 @@ describe('party multi-asset balances (BE-056)', () => {
           expect.objectContaining({ count: -2 }),
         ]),
       },
+      // M-33: the unpaid purchase stays visible as payable credit (70M receivable − 25M payable = 45M net)
+      payableRial: '-25000000',
       convertedView: expect.objectContaining({
         displayUnit: 'GOLD',
         referenceMazneh: expect.objectContaining({ id: referenceQuoteId }),
@@ -334,6 +336,7 @@ describe('party multi-asset balances (BE-056)', () => {
       pureGoldMg: '0',
       coins: [],
     });
+    expect(historical.json<PartyBalances>().payableRial).toBe('0');
     expect(historical.json<PartyBalances>().convertedView).toBeNull();
     expect(foreign.statusCode).toBe(404);
   });

@@ -121,6 +121,7 @@ export {
   createGoldSettlementSchema,
   createCoinSettlementSchema,
   createMixedSettlementSchema,
+  MAX_MIXED_SETTLEMENT_LINES,
   salesInvoiceVersionHistorySchema,
   type CreateJewelryCashSaleInput,
   type CreateJewelryCreditSaleInput,

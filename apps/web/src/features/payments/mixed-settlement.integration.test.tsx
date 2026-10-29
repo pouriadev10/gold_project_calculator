@@ -165,6 +165,7 @@ const settlementServer = [
         calculatedAt: new Date().toISOString(),
         defaultDisplayUnit: 'GOLD',
         rawBalances: { rial: partyRialBalance.toString(), pureGoldMg: '0', coins: [] },
+        payableRial: '0',
         convertedView: null,
       }),
     ),

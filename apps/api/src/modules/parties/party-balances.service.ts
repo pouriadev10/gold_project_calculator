@@ -105,7 +105,7 @@ export class PartyBalancesService {
       }
 
       const accounts = await transaction
-        .select({ id: ledgerAccounts.id })
+        .select({ id: ledgerAccounts.id, accountType: ledgerAccounts.accountType })
         .from(ledgerAccounts)
         .where(and(eq(ledgerAccounts.tenantId, tenantId), eq(ledgerAccounts.partyId, partyId)));
       const balances = await Promise.all(
@@ -123,6 +123,10 @@ export class PartyBalancesService {
         tenantId,
         balances,
       );
+      // The party's payable account is its only LIABILITY account; CREDIT lines draw on it alone.
+      const payableRial = balances
+        .filter((_, index) => accounts[index]?.accountType === 'LIABILITY')
+        .reduce((total, balance) => total + addOptionalBalance(balance, 'rial'), 0n);
       const convertedView =
         input.referenceQuoteId === undefined
           ? null
@@ -138,6 +142,7 @@ export class PartyBalancesService {
         calculatedAt: input.at.toISOString(),
         defaultDisplayUnit: 'GOLD',
         rawBalances,
+        payableRial: payableRial.toString(),
         convertedView,
       };
     });

@@ -89,6 +89,7 @@ function balances(overrides: Partial<PartyBalances> = {}): PartyBalances {
     calculatedAt: new Date().toISOString(),
     defaultDisplayUnit: 'GOLD',
     rawBalances: { rial: '0', pureGoldMg: '412500', coins: [] },
+    payableRial: '0',
     convertedView: {
       displayUnit: 'GOLD',
       referenceMazneh: {

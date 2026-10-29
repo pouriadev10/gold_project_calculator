@@ -1896,6 +1896,7 @@
                       }
                     ]
                   },
+                  "payableRial": "125000000",
                   "convertedView": {
                     "displayUnit": "GOLD",
                     "referenceMazneh": {
@@ -8639,6 +8640,11 @@
             ],
             "additionalProperties": false
           },
+          "payableRial": {
+            "type": "string",
+            "maxLength": 20,
+            "pattern": "^(0|-?[1-9][0-9]{0,18})$"
+          },
           "convertedView": {
             "type": "object",
             "properties": {
@@ -8711,6 +8717,7 @@
           "calculatedAt",
           "defaultDisplayUnit",
           "rawBalances",
+          "payableRial",
           "convertedView"
         ],
         "additionalProperties": false

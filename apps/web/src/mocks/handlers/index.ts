@@ -52,6 +52,7 @@ import {
   MOCK_INVOICE_PERIOD,
   MOCK_PROFIT_RATE_BPS,
   MOCK_TAX_RATE_BPS,
+  PARTY_PAYABLE_RIAL,
   PARTY_RIAL_BALANCE,
   partyBalanceReportFor,
   partyBalancesFor,
@@ -359,6 +360,13 @@ function partyNotFound() {
 function postPartyRial(partyId: string, deltaRial: bigint): void {
   if (deltaRial === 0n) return;
   PARTY_RIAL_BALANCE[partyId] = (PARTY_RIAL_BALANCE[partyId] ?? 0n) + deltaRial;
+}
+
+/** باقی‌مانده‌ی پرداخت‌نشده‌ی خرید روی حساب پرداختنی شخص می‌نشیند (و در مانده‌ی خالص هم) — M-33. */
+function postPartyPayableRial(partyId: string, deltaRial: bigint): void {
+  if (deltaRial === 0n) return;
+  postPartyRial(partyId, deltaRial);
+  PARTY_PAYABLE_RIAL[partyId] = (PARTY_PAYABLE_RIAL[partyId] ?? 0n) + deltaRial;
 }
 
 async function registerJewelrySale(request: Request, mode: 'CASH' | 'CREDIT') {
@@ -875,7 +883,7 @@ export const handlers = [
         payableRial: (calc.finalAmountRial - BigInt(body.paidRial)).toString(),
       };
       mockSecondHandPurchaseIds.add(result.secondHandPurchaseId);
-      postPartyRial(body.partyId, -BigInt(result.payableRial));
+      postPartyPayableRial(body.partyId, -BigInt(result.payableRial));
       idempotencyCache.set(cacheKey, result);
       return HttpResponse.json(result, { status: 201 });
     } catch {
@@ -919,7 +927,7 @@ export const handlers = [
       intrinsicValueRial: intrinsic.toString(), bubbleRial: coinBubble?.toString() ?? null,
     };
     mockSecondHandPurchaseIds.add(result.secondHandPurchaseId);
-    postPartyRial(body.partyId, -(purchaseAmount - paid));
+    postPartyPayableRial(body.partyId, -(purchaseAmount - paid));
     const existingBalance = COIN_BALANCE_ROWS.find((row) => row.itemId === body.coinTypeId);
     if (existingBalance) existingBalance.quantity = (BigInt(existingBalance.quantity) + BigInt(body.count)).toString();
     else (COIN_BALANCE_ROWS as { itemType: 'COIN'; itemId: string; quantity: string }[]).push({ itemType: 'COIN', itemId: body.coinTypeId, quantity: body.count.toString() });
@@ -1569,15 +1577,17 @@ export const handlers = [
       });
     }
 
-    // آینه‌ی MixedSettlementInsufficientCreditError واقعی
-    const currentBalance = PARTY_RIAL_BALANCE[partyId] ?? 0n;
-    const availableCreditRial = currentBalance < 0n ? -currentBalance : 0n;
+    // آینه‌ی MixedSettlementInsufficientCreditError واقعی: اعتبار فقط از حساب پرداختنی (M-33)
+    const payableRial = PARTY_PAYABLE_RIAL[partyId] ?? 0n;
+    const availableCreditRial = payableRial < 0n ? -payableRial : 0n;
     if (creditAppliedRial > availableCreditRial) {
       return mockError('BAD_REQUEST', 'مانده‌ی اعتباری شخص برای این ردیف کافی نیست');
     }
 
-    // گذر دوم — همه معتبرند، حالا موجودی/مانده جابه‌جا می‌شود
-    PARTY_RIAL_BALANCE[partyId] = currentBalance - totalSettledRial;
+    // گذر دوم — همه معتبرند، حالا موجودی/مانده جابه‌جا می‌شود. اعتبار از پرداختنی به دریافتنی
+    // منتقل می‌شود و مانده‌ی خالص را عوض نمی‌کند؛ بقیه‌ی ردیف‌ها طلب را کم می‌کنند.
+    PARTY_RIAL_BALANCE[partyId] = (PARTY_RIAL_BALANCE[partyId] ?? 0n) - (totalSettledRial - creditAppliedRial);
+    PARTY_PAYABLE_RIAL[partyId] = payableRial + creditAppliedRial;
     for (const [coinTypeId, delta] of coinDeltas) {
       const existingBalance = COIN_BALANCE_ROWS.find((row) => row.itemId === coinTypeId);
       if (existingBalance) {
@@ -2191,7 +2201,7 @@ export const handlers = [
         breakdown,
       };
       mockSecondHandPurchaseIds.add(result.secondHandPurchaseId);
-      postPartyRial(original.detail.party.id, -(today.finalAmountRial - paid));
+      postPartyPayableRial(original.detail.party.id, -(today.finalAmountRial - paid));
       idempotencyCache.set(cacheKey, result);
       return HttpResponse.json(result, { status: 201 });
     } catch {

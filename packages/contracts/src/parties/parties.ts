@@ -121,6 +121,12 @@ export const partyBalancesSchema = z.object({
   calculatedAt: isoDateTimeSchema,
   defaultDisplayUnit: z.literal('GOLD'),
   rawBalances: partyRawBalancesSchema,
+  /**
+   * Rial on the party's payable account alone (signed; negative means the shop owes the party).
+   * `rawBalances.rial` nets it against the receivable, but a mixed settlement's CREDIT line can
+   * apply only this payable credit, so the settlement form needs it apart (M-33).
+   */
+  payableRial: bigIntStringSchema,
   convertedView: partyGoldDisplaySchema.nullable(),
 });
 

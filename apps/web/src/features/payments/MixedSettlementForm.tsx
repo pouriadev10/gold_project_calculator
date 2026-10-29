@@ -2,7 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { X } from 'lucide-react';
 import { bullionPrice, coinPositionValue, formatCount, formatRial, grossMg, karat as toKarat, rial, toSafeNumber } from '@gold/core-calc';
-import { createMixedSettlementSchema, type CreateMixedSettlementInput, type MixedSettlement } from '@/api/contracts';
+import {
+  createMixedSettlementSchema,
+  MAX_MIXED_SETTLEMENT_LINES,
+  type CreateMixedSettlementInput,
+  type MixedSettlement,
+} from '@/api/contracts';
 import { createMixedSettlement } from '@/api/settlements';
 import { useCoinTypes, usePartyBalances } from '@/api/queries';
 import { queryKeys } from '@/api/query-keys';
@@ -32,12 +37,13 @@ import { toast } from '@/stores/toast-store';
  *
  * **چهارمین نوع ردیف («مانده اعتباری») همان `CREDIT` واقعی است** —
  * `createMixedSettlementSchema` یک ردیف `CREDIT` دارد که «اعتبار ریالی
- * موجود شخص» را روی طلبش اعمال می‌کند. سقف واقعی‌اش (`availableCreditRial`
- * در `MixedSettlementsService`) از حساب پرداختنی شخص می‌آید که هیچ GET
- * جداگانه‌ای ندارد؛ اینجا از `rawBalances.rial` منفی (`GET
- * /parties/:id/balances`، که خودش receivable و payable را ترکیب‌شده
- * برمی‌گرداند) به‌عنوان تقریب معتبر استفاده شده — پیش‌نمایش کلاینت است،
- * سرور مرجع نهایی می‌ماند.
+ * موجود شخص» را روی طلبش اعمال می‌کند. سقفش (`availableCreditRial` در
+ * `MixedSettlementsService`) فقط حساب پرداختنی شخص است. M-33: پیش‌تر از `rawBalances.rial` ِ
+ * خالص تقریب زده می‌شد، که درست همان حالت اصلی این ردیف را پنهان می‌کرد: شخصی که هم بدهکار
+ * فاکتور است و هم از خرید دست‌دوم طلب دارد مانده‌ی خالص مثبت دارد و فرم اعتبارش را صفر می‌دید؛
+ * و بستانکاری ناشی از پرداخت اضافه (روی دریافتنی) اعتبار حساب می‌شد که سرور آن را رد می‌کند.
+ * حالا `payableRial` ِ همان پاسخ مانده سقف است و طلب ناخالص = خالص − پرداختنی. سقف روی مجموع
+ * ردیف‌های اعتباری سنجیده می‌شود، مثل سرور.
  *
  * **یک مظنه‌ی قفل‌شده برای کل فرم**، نه هر ردیف جدا — این یک معامله‌ی
  * واحد در یک لحظه است (همان استدلال «submit اتمیک»)؛ فقط وقتی حداقل یک
@@ -90,14 +96,15 @@ function previewOf(line: MixedLine, rate1000: bigint | undefined): bigint | unde
   }
 }
 
-/** پیام خطای همان ردیف، یا `null` اگر معتبر است. */
-function lineError(line: MixedLine, availableCreditRial: bigint): string | null {
+/** پیام خطای همان ردیف، یا `null` اگر معتبر است. `creditUsedRial` مجموع همه‌ی ردیف‌های اعتباری است. */
+function lineError(line: MixedLine, availableCreditRial: bigint, creditUsedRial: bigint): string | null {
   switch (line.type) {
     case 'RIAL':
       return line.amountRial > 0n ? null : 'مبلغ باید بزرگ‌تر از صفر باشد.';
     case 'CREDIT':
       if (line.amountRial <= 0n) return 'مبلغ باید بزرگ‌تر از صفر باشد.';
       if (line.amountRial > availableCreditRial) return 'بیشتر از مانده‌ی اعتباری موجود شخص است.';
+      if (creditUsedRial > availableCreditRial) return 'مجموع ردیف‌های اعتباری بیشتر از مانده‌ی اعتباری موجود شخص است.';
       return null;
     case 'GOLD':
       if (line.grossWeightMg <= 0n) return 'وزن باید بزرگ‌تر از صفر باشد.';
@@ -192,15 +199,23 @@ export function MixedSettlementForm({ partyId, onSuccess, onUnsavedChange }: Mix
    * مظنه‌ی جاری می‌کند. وقتی ردیف طلا/سکه هست، مظنه قفل است و هر دو یکی‌اند.
    */
   const displayRate1000 = rate1000 ?? mazneh.data?.gram1000;
-  const receivableRial = balancesQuery.data ? BigInt(balancesQuery.data.rawBalances.rial) : undefined;
+  // M-33: مانده‌ی خالص = دریافتنی + پرداختنی؛ ردیف اعتباری فقط پرداختنی را روی دریافتنی می‌نشاند
+  const payableRial = balancesQuery.data ? BigInt(balancesQuery.data.payableRial) : undefined;
+  const receivableRial =
+    balancesQuery.data && payableRial !== undefined ? BigInt(balancesQuery.data.rawBalances.rial) - payableRial : undefined;
   const debtRial = receivableRial !== undefined && receivableRial > 0n ? receivableRial : 0n;
-  const availableCreditRial = receivableRial !== undefined && receivableRial < 0n ? -receivableRial : 0n;
+  const availableCreditRial = payableRial !== undefined && payableRial < 0n ? -payableRial : 0n;
+  const creditUsedRial = lines.reduce(
+    (sum, line) => (line.type === 'CREDIT' && line.amountRial > 0n ? sum + line.amountRial : sum),
+    0n,
+  );
+  const atLineLimit = lines.length >= MAX_MIXED_SETTLEMENT_LINES;
 
   const previews = lines.map((line) => previewOf(line, rate1000));
   const totalCoverage = previews.reduce((sum: bigint | undefined, p) => (sum === undefined || p === undefined ? undefined : sum + p), 0n);
   const remainingRial = totalCoverage !== undefined ? debtRial - totalCoverage : undefined;
 
-  const errors = lines.map((line) => lineError(line, availableCreditRial));
+  const errors = lines.map((line) => lineError(line, availableCreditRial, creditUsedRial));
   const hasQuoteGap = needsQuote && lockedQuote === null;
   const reason: string | null = offline
     ? OFFLINE_SUBMIT_MESSAGE
@@ -323,20 +338,20 @@ export function MixedSettlementForm({ partyId, onSuccess, onUnsavedChange }: Mix
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <Button type="button" variant="outline" size="sm" disabled={locked} onClick={() => addLine('RIAL')}>
+          <Button type="button" variant="outline" size="sm" disabled={locked || atLineLimit} onClick={() => addLine('RIAL')}>
             + ریال
           </Button>
-          <Button type="button" variant="outline" size="sm" disabled={locked} onClick={() => addLine('GOLD')}>
+          <Button type="button" variant="outline" size="sm" disabled={locked || atLineLimit} onClick={() => addLine('GOLD')}>
             + طلا
           </Button>
-          <Button type="button" variant="outline" size="sm" disabled={locked} onClick={() => addLine('COIN')}>
+          <Button type="button" variant="outline" size="sm" disabled={locked || atLineLimit} onClick={() => addLine('COIN')}>
             + سکه
           </Button>
           <Button
             type="button"
             variant="outline"
             size="sm"
-            disabled={availableCreditRial <= 0n || locked}
+            disabled={availableCreditRial <= 0n || locked || atLineLimit}
             onClick={() => addLine('CREDIT')}
           >
             + مانده اعتباری

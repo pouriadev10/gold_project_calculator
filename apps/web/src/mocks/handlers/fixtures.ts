@@ -442,6 +442,12 @@ export const PARTY_RIAL_BALANCE: Record<string, bigint> = {
   'a1000000-0000-4000-8000-000000000001': 45_000_000n,
 };
 
+/**
+ * سهم حساب پرداختنی از همان مانده‌ی ریالی (منفی = فروشگاه به شخص بدهکار است) — M-33. `PARTY_RIAL_BALANCE`
+ * خالص دو حساب است؛ ردیف «اعتبار» تسویه‌ی ترکیبی فقط همین پرداختنی را خرج می‌کند، مثل سرور.
+ */
+export const PARTY_PAYABLE_RIAL: Record<string, bigint> = {};
+
 /** کد ملی-مانند نیست، شناسه‌ی نوع سکه — باید UUID باشد (`coinTypeId: uuidSchema`). */
 const COIN_TYPE = {
   BAHAR: { id: 'd1000000-0000-4000-8000-000000000001', code: 'تمام بهار آزادی' },
@@ -537,6 +543,7 @@ export function partyBalancesFor(
     calculatedAt: new Date().toISOString(),
     defaultDisplayUnit: 'GOLD' as const,
     rawBalances: { rial: rial.toString(), pureGoldMg: pureGoldMg.toString(), coins },
+    payableRial: (PARTY_PAYABLE_RIAL[party.id] ?? 0n).toString(),
     convertedView,
   };
 }

@@ -36,6 +36,7 @@ function balances(rial: string): PartyBalances {
     calculatedAt: new Date().toISOString(),
     defaultDisplayUnit: 'GOLD',
     rawBalances: { rial, pureGoldMg: '0', coins: [] },
+    payableRial: '0',
     convertedView: null,
   };
 }
