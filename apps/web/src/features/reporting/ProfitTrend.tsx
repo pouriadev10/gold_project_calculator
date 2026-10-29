@@ -66,7 +66,8 @@ export function ProfitTrend({ range, timeZone }: { range: JalaliDateRange; timeZ
         {plan ? (
           <p className="text-xs text-muted-foreground">
             {GRANULARITY_LABEL[plan.granularity]} · {formatCount(plan.buckets.length)} دوره
-            {range.from === null && range.to === null ? ' · شش ماه اخیر' : ''}. هر ستون سه منشأ سود
+            {range.from === null && range.to === null ? ' · شش ماه اخیر' : ''}
+            {plan.truncated ? ` · فقط ${formatCount(plan.buckets.length)} ماه آخر بازه` : ''}. هر ستون سه منشأ سود
             را جدا نشان می‌دهد و خط، سود کل همان دوره است.
           </p>
         ) : null}

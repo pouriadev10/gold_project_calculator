@@ -37,6 +37,8 @@ export interface TrendBucket {
 export interface TrendPlan {
   readonly granularity: TrendGranularity;
   readonly buckets: readonly TrendBucket[];
+  /** فقط ۱۲ ماه آخر بازه نشان داده می‌شود (M-36)؛ جمع بالای صفحه کل بازه است. */
+  readonly truncated: boolean;
 }
 
 const DAILY_MAX_DAYS = 7;
@@ -88,7 +90,7 @@ export function planProfitTrend(range: JalaliDateRange, today: JalaliDate): Tren
       const day = addJalaliDays(from, index);
       return { from: day, to: day, label: dayLabel(day) };
     });
-    return { granularity: 'day', buckets };
+    return { granularity: 'day', buckets, truncated: false };
   }
 
   if (spanDays <= WEEKLY_MAX_DAYS) {
@@ -100,7 +102,7 @@ export function planProfitTrend(range: JalaliDateRange, today: JalaliDate): Tren
       buckets.push({ from: start, to: end, label: dayLabel(start) });
       start = addJalaliDays(end, 1);
     }
-    return { granularity: 'week', buckets };
+    return { granularity: 'week', buckets, truncated: false };
   }
 
   const buckets: TrendBucket[] = [];
@@ -113,7 +115,11 @@ export function planProfitTrend(range: JalaliDateRange, today: JalaliDate): Tren
     });
     cursor = shiftMonth(cursor.year, cursor.month, 1);
   }
-  return { granularity: 'month', buckets: buckets.slice(-MAX_MONTH_BUCKETS) };
+  return {
+    granularity: 'month',
+    buckets: buckets.slice(-MAX_MONTH_BUCKETS),
+    truncated: buckets.length > MAX_MONTH_BUCKETS,
+  };
 }
 
 export interface TrendSeries {

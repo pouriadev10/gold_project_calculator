@@ -47,6 +47,9 @@ describe('planProfitTrend', () => {
     expect(plan?.buckets.at(-1)).toEqual({ from: d(1405, 7, 1), to: d(1405, 7, 10), label: 'مهر ۰۵' });
     // اسفند غیرکبیسه‌ی ۱۴۰۴ تا ۲۹ است.
     expect(plan?.buckets.find((bucket) => bucket.from.month === 12)?.to).toEqual(d(1404, 12, 29));
+    // M-36: بریدن صریح است تا صفحه بگوید روند همه‌ی بازه‌ی جمع بالا را نشان نمی‌دهد
+    expect(plan?.truncated).toBe(true);
+    expect(planProfitTrend({ from: d(1405, 1, 1), to: d(1405, 7, 10) }, TODAY)?.truncated).toBe(false);
   });
 
   it('بدون بازه، شش ماه شمسی اخیر تا پایان ماه جاری', () => {

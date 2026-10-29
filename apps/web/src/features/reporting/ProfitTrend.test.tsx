@@ -107,6 +107,11 @@ describe('ProfitTrend — FE-076', () => {
     expect(screen.getByText(/ماهانه · ۶ دوره · شش ماه اخیر/)).toBeInTheDocument();
   });
 
+  it('M-36: says the trend covers only the last 12 months when the range is longer', () => {
+    render(<ProfitTrend range={{ from: { year: 1403, month: 1, day: 1 }, to: { year: 1405, month: 6, day: 31 } }} timeZone={TEHRAN} />);
+    expect(screen.getByText(/ماهانه · ۱۲ دوره · فقط ۱۲ ماه آخر بازه/)).toBeInTheDocument();
+  });
+
   it('shows loading, error with retry, and an all-zero message instead of an empty chart', async () => {
     useLedgerProfitTrendMock.mockReturnValue({ data: undefined, isLoading: true, isError: false, refetch: vi.fn() });
     const { rerender } = render(<ProfitTrend range={MONTH} timeZone={TEHRAN} />);
