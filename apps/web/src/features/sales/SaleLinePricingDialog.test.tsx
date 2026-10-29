@@ -124,6 +124,15 @@ describe('SaleLinePricingDialog — مقدار اولیه', () => {
   });
 });
 
+describe('SaleLinePricingDialog — M-34: تغییرها به فاکتور نمی‌رسند', () => {
+  it('صریح می‌گوید فاکتور با مشخصات کالا و نرخ‌های فروشگاه صادر می‌شود و این فیلدها فقط پیش‌نمایش‌اند', () => {
+    renderDialog();
+    const note = screen.getByRole('note');
+    expect(note).toHaveTextContent('فقط پیش‌نمایش را عوض می‌کند');
+    expect(note).toHaveTextContent('مشخصات ثبت‌شده‌ی کالا');
+  });
+});
+
 describe('SaleLinePricingDialog — نوع اجرت', () => {
   it('سوییچ به درصدی، مقدار قبلی را صفر می‌کند (مقیاس قبلی برای نوع تازه بی‌معناست)', async () => {
     const user = setupUser();

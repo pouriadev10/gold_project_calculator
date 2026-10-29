@@ -123,6 +123,15 @@ function SaleLinePricingForm({ initialPricing, onSave, onCancel }: SaleLinePrici
   return (
     <>
       <div className="space-y-4">
+        {/*
+          M-34: درخواست فروش فقط کالا، مشتری، مظنه و زمان را می‌فرستد و سرور با نسخه‌ی کاتالوگ و
+          تنظیمات مستأجر قیمت می‌گذارد. تا تصمیم D-17، کاربر نباید با تغییر این فیلدها قیمتی به
+          مشتری بگوید که فاکتور نمی‌زند.
+        */}
+        <p role="note" className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-xs leading-5">
+          فاکتور با مشخصات ثبت‌شده‌ی کالا و نرخ سود و مالیات تنظیمات فروشگاه صادر می‌شود. تغییر این فیلدها
+          فقط پیش‌نمایش را عوض می‌کند و به فاکتور نمی‌رسد.
+        </p>
         <WeightInput label="وزن ناخالص" value={grossWeightMg} onChange={setGrossWeightMg} />
         <KaratInput label="عیار" value={karatValue} onChange={setKaratValue} />
         <WeightInput label="وزن نگین" value={stoneWeightMg} onChange={setStoneWeightMg} />
@@ -250,7 +259,7 @@ export function SaleLinePricingDialog({ open, onOpenChange, line, onSave }: Sale
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>{line ? `ویرایش قیمت — ${line.title}` : 'ویرایش قیمت'}</ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
-            وزن، عیار، کسورات، اجرت، سود و مالیات این ردیف را تنظیم کنید — پیش‌نمایش زیر بلافاصله به‌روز می‌شود.
+            مشخصات قیمت این ردیف و پیش‌نمایش مبلغ آن.
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
 

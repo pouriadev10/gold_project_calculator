@@ -389,7 +389,7 @@ describe('FE-097 — اصلاح فاکتور از صفحه‌ی فاکتور ت�
     const v1 = screen.getByText(`نسخه ${formatCount(1)}`).closest('li')!;
     expect(within(v2).getByText('جاری')).toBeInTheDocument();
     expect(within(v1).getByText('قبلی')).toBeInTheDocument();
-    expect(within(v2).getByText('اصلاح وزن')).toBeInTheDocument();
+    expect(within(v2).getByText('اشتباه وزن')).toBeInTheDocument();
     expect(within(v1).getByText('صدور اولیه')).toBeInTheDocument();
     await within(v2).findByText(`${formatGram(EXPECTED.pureWeightMg - BigInt(BEFORE.pureWeightMg!))} گرم`, {}, { timeout: 10_000 });
     expect(screen.getByText('اصلاح‌شده')).toBeInTheDocument();

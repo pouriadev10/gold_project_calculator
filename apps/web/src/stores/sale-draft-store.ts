@@ -13,12 +13,14 @@ import type { PartySelection } from './recent-parties-store';
  * یک فروش واقعی است — نباید روزها بعد در تب دیگری سر و کله‌اش پیدا شود.
  * بستن تب/مرورگر یعنی پاک‌شدن، دقیقاً همان معنای «session».
  *
- * فقط مظنه (قفل‌شونده)، مشتری و اقلام اینجا state واقعی دارند. پرداخت
- * shape خودش را در تسک اختصاصی خودش می‌گیرد (FE-050) — طراحی زودهنگام
- * شکلش اینجا حدس‌زدن بدون داده است.
+ * مظنه (قفل‌شونده)، مشتری، اقلام و مبلغ پرداخت (`paidRial`، روی «مرور») state واقعی دارند.
+ *
+ * M-34 (#29): مرحله‌ی «پرداخت» بین «اقلام» و «مرور» فقط جانگه‌دار «هنوز ساخته نشده» بود. API فروش
+ * فقط نقدی یا نسیه با مبلغ پرداختی دارد و آن مبلغ از FE-047 کنار جمع کل در «مرور» پرسیده می‌شود،
+ * پس مرحله برداشته شد. پیش‌نویسی که روی آن ذخیره شده بود با `migrate` روی «مرور» باز می‌شود.
  */
 
-export const SALE_STEPS = ['QUOTE', 'PARTY', 'ITEMS', 'PAYMENT', 'REVIEW'] as const;
+export const SALE_STEPS = ['QUOTE', 'PARTY', 'ITEMS', 'REVIEW'] as const;
 export type SaleStep = (typeof SALE_STEPS)[number];
 
 /**
@@ -177,6 +179,14 @@ export const useSaleDraftStore = create<SaleDraftState>()(
     {
       name: SALE_DRAFT_STORAGE_KEY,
       storage: createJSONStorage(() => sessionStorage),
+      version: 1,
+      migrate: (persisted, version) => {
+        // نسخه‌ی ۰ مرحله‌ی «پرداخت» داشت؛ همان داده یک قدم جلوتر، روی «مرور»
+        const state = persisted as Omit<SaleDraftState, 'step'> & { readonly step: string };
+        const known = SALE_STEPS.find((step) => step === state.step);
+        const step: SaleStep = known ?? (version < 1 && state.step === 'PAYMENT' ? 'REVIEW' : 'QUOTE');
+        return { ...state, step };
+      },
     },
   ),
 );

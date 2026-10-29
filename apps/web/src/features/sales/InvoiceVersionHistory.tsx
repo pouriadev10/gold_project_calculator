@@ -9,18 +9,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { formatJalaliDateTime } from '@/lib/date';
+import { amendmentReasonLabel } from './amendment-reasons';
 
 type InvoiceVersion = SalesInvoiceVersionHistory['versions'][number];
 type InvoiceAmendment = SalesInvoiceAmendmentHistory['amendments'][number];
-
-const REASON_LABEL: Readonly<Record<string, string>> = {
-  WEIGHT_ERROR: 'اصلاح وزن',
-  KARAT_ERROR: 'اصلاح عیار',
-  WAGE_ERROR: 'اصلاح اجرت',
-  PARTY_ERROR: 'اصلاح مشتری',
-  PAYMENT_ERROR: 'اصلاح پرداخت',
-  OTHER: 'سایر',
-};
 
 function VersionDetails({ version, rate1000 }: { version: InvoiceVersion; rate1000: bigint }) {
   return (
@@ -212,7 +204,7 @@ export function InvoiceVersionHistory({
                   <p className="mt-2 text-sm">
                     {version.reason === null
                       ? 'صدور اولیه'
-                      : (REASON_LABEL[version.reason] ?? version.reason)}
+                      : amendmentReasonLabel(version.reason)}
                   </p>
                   {version.reasonDetail ? (
                     <p className="mt-1 text-xs leading-5 text-muted-foreground">

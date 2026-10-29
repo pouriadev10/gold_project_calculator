@@ -1,9 +1,8 @@
-import { AlertTriangle, Construction, Loader2 } from 'lucide-react';
+import { AlertTriangle, Loader2 } from 'lucide-react';
 import { PartySelector } from '@/components/common/PartySelector';
 import { ApiErrorNotice } from '@/components/common/ApiErrorNotice';
 import { PageHeader } from '@/components/common/PageHeader';
 import { UnsavedChangesGuard } from '@/components/common/UnsavedChangesGuard';
-import { EmptyState } from '@/components/common/EmptyState';
 import { UnitToggle } from '@/components/common/UnitToggle';
 import { OfflineSubmitHint } from '@/components/common/OfflineSubmitHint';
 import { PENDING_SUBMIT_ACTION, PendingSubmitNotice } from '@/components/common/PendingSubmitNotice';
@@ -59,14 +58,10 @@ import { SaleKindTabs } from './SaleKindTabs';
  * کند، draft از دست نمی‌رود و هرگز خودکار ثبت نمی‌شود.
  */
 
-const STEP_PLACEHOLDER: Record<Extract<SaleStep, 'PAYMENT'>, string> = {
-  PAYMENT: 'ثبت روش پرداخت در تسک بعد اضافه می‌شود.',
-};
-
 /**
  * مرحله‌هایی که عدد مالی دارند — FE-103، قاعده‌ی ۲-۴ CLAUDE.md. «اقلام» قیمت هر ردیف را نشان
  * می‌دهد، پس کلید واحد همان‌جا هم لازم است، نه فقط در «مرور». «مظنه» فقط نرخ دارد (`RateDisplay`،
- * ذاتاً ریالی) و «مشتری» و «پرداخت» عدد مالی ندارند.
+ * ذاتاً ریالی) و «مشتری» عدد مالی ندارد.
  */
 const STEPS_WITH_AMOUNTS: ReadonlySet<SaleStep> = new Set<SaleStep>(['ITEMS', 'REVIEW']);
 
@@ -134,17 +129,10 @@ export default function SaleWizardPage() {
         {step === 'QUOTE' ? <MaznehBar isOnline={isOnline} embedded /> : null}
         {step === 'PARTY' ? <PartySelector label="مشتری" value={party} onChange={setParty} /> : null}
         {step === 'ITEMS' ? <JewelryItemSelector items={items} onChange={setItems} /> : null}
-        {step === 'PAYMENT' ? (
-          <EmptyState icon={Construction} title="این بخش هنوز ساخته نشده است" description={STEP_PLACEHOLDER.PAYMENT} />
-        ) : null}
         {step === 'REVIEW' ? (
           <>
             <SaleSummary />
-            {/*
-              «چقدر الان پرداخت می‌شود» — FE-047. اینجا و نه در مرحله‌ی
-              «پرداخت»، چون آن مرحله روش پرداخت را می‌پرسد (FE-050) و هنوز
-              ساخته نشده؛ مبلغ باید کنار جمع کلی باشد که به آن مربوط است.
-            */}
+            {/* «چقدر الان پرداخت می‌شود» — FE-047؛ کنار جمع کلی که به آن مربوط است. */}
             <SalePaymentInput
               previewPayableRial={preparation.ok ? preparation.plan.previewPayableRial : undefined}
               disabled={locked}

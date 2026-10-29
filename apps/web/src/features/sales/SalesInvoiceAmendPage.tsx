@@ -49,18 +49,11 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useFinancialSubmit } from '@/hooks/useFinancialSubmit';
 import { isolateBidi } from '@/lib/bidi';
 import type { PartySelection } from '@/stores/recent-parties-store';
+// M-34 (#38): همان واژه‌هایی که تاریخچه‌ی نسخه‌ها نشان می‌دهد
+import { AMENDMENT_REASON_OPTIONS as REASONS, type InvoiceAmendmentReason } from './amendment-reasons';
 
-const REASONS: readonly { value: InvoiceAmendmentReason; label: string }[] = [
-  { value: 'WEIGHT_ERROR', label: 'اشتباه وزن' },
-  { value: 'KARAT_ERROR', label: 'اشتباه عیار' },
-  { value: 'WAGE_ERROR', label: 'اشتباه اجرت' },
-  { value: 'PARTY_ERROR', label: 'اشتباه مشتری' },
-  { value: 'PAYMENT_ERROR', label: 'اشتباه پرداخت' },
-  { value: 'OTHER', label: 'سایر' },
-];
 
 type Version = SalesInvoiceDetail['versions'][number];
-type InvoiceAmendmentReason = AmendSalesInvoiceInput['reason'];
 
 function FinancialRow({
   label,

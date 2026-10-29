@@ -206,7 +206,7 @@ async function next(user: User) {
 }
 
 /**
- * مسیر کاربر از صفحه‌ی خالی تا «مرور و ثبت»: مظنه → مشتری → کالا (+ قیمت‌گذاری) → پرداخت → مرور.
+ * مسیر کاربر از صفحه‌ی خالی تا «مرور و ثبت»: مظنه → مشتری → کالا (+ قیمت‌گذاری) → مرور (مبلغ پرداخت همین‌جاست).
  * در هر مرحله همان چیزی را می‌سنجد که آن مرحله باید از سرور یا موتور محاسبه آورده باشد.
  */
 async function walkToReview(user: User) {
@@ -250,11 +250,9 @@ async function walkToReview(user: User) {
   await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   await next(user);
 
-  // ۵. پرداخت — مرحله‌ی روش پرداخت هنوز جانگه‌دار است؛ مبلغ پرداخت روی «مرور» پرسیده می‌شود.
-  expect(screen.getByText('مرحله ۴ از ۵ — پرداخت')).toBeInTheDocument();
-  await next(user);
-
-  expect(screen.getByText('مرحله ۵ از ۵ — مرور و ثبت')).toBeInTheDocument();
+  // ۵. مرور — M-34 (#29): مرحله‌ی جانگه‌دار «پرداخت» نیست؛ مبلغ پرداخت همین‌جا پرسیده می‌شود.
+  expect(screen.getByText('مرحله ۴ از ۴ — مرور و ثبت')).toBeInTheDocument();
+  expect(screen.queryByText('این بخش هنوز ساخته نشده است')).not.toBeInTheDocument();
   // مظنه‌ی قفل‌شده‌ی همین فاکتور و پیش‌نمایش جمع کل
   expect(rawAmount('مظنه‌ی ثبت‌شده برای این فاکتور').raw).toBe(MAZNEH_RIAL.toString());
   expect(rawAmount('مبلغ نهایی')).toEqual({ raw: EXPECTED_PREVIEW.payableRial.toString(), unit: 'rial' });

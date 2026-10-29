@@ -294,7 +294,7 @@ describe('SalesInvoiceDetailPage — snapshot و نسخه جاری', () => {
 
     const history = screen.getByText('تاریخچه نسخه‌ها').closest('div')?.parentElement;
     expect(history).not.toBeNull();
-    expect(within(history!).getByText('اصلاح اجرت')).toBeInTheDocument();
+    expect(within(history!).getByText('اشتباه اجرت')).toBeInTheDocument();
     expect(within(history!).getByText('صدور اولیه')).toBeInTheDocument();
     expect(within(history!).getByText('جاری')).toBeInTheDocument();
     expect(within(history!).getByText('قبلی')).toBeInTheDocument();

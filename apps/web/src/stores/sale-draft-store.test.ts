@@ -73,9 +73,30 @@ describe('useSaleDraftStore — پیمایش مراحل', () => {
 
   it('رفت‌وبرگشت مراحل، اقلام انتخاب‌شده را از بین نمی‌برد', () => {
     useSaleDraftStore.getState().setItems([ITEM]);
-    useSaleDraftStore.getState().goToStep('PAYMENT');
+    useSaleDraftStore.getState().goToStep('REVIEW');
     useSaleDraftStore.getState().goToStep('ITEMS');
 
+    expect(useSaleDraftStore.getState().items).toEqual([ITEM]);
+  });
+});
+
+describe('useSaleDraftStore — مرحله‌ی جانگه‌دار «پرداخت» (M-34، #29)', () => {
+  it('جادوگر چهار مرحله دارد و «اقلام» مستقیم به «مرور» می‌رود', () => {
+    expect(SALE_STEPS).toEqual(['QUOTE', 'PARTY', 'ITEMS', 'REVIEW']);
+    useSaleDraftStore.getState().goToStep('ITEMS');
+    useSaleDraftStore.getState().next();
+    expect(useSaleDraftStore.getState().step).toBe('REVIEW');
+  });
+
+  it('پیش‌نویس ذخیره‌شده روی مرحله‌ی قدیمی «پرداخت» با همان داده روی «مرور» باز می‌شود', async () => {
+    sessionStorage.setItem(
+      SALE_DRAFT_STORAGE_KEY,
+      JSON.stringify({ state: { step: 'PAYMENT', party: PARTY, items: [ITEM], lockedMazneh: null, paidRial: null }, version: 0 }),
+    );
+    await useSaleDraftStore.persist.rehydrate();
+
+    expect(useSaleDraftStore.getState().step).toBe('REVIEW');
+    expect(useSaleDraftStore.getState().party).toEqual(PARTY);
     expect(useSaleDraftStore.getState().items).toEqual([ITEM]);
   });
 });

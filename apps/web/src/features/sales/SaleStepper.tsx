@@ -15,7 +15,6 @@ const STEP_LABEL: Record<SaleStep, string> = {
   QUOTE: 'مظنه',
   PARTY: 'مشتری',
   ITEMS: 'اقلام',
-  PAYMENT: 'پرداخت',
   REVIEW: 'مرور و ثبت',
 };
 

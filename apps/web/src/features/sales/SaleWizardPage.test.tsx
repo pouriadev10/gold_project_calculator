@@ -268,7 +268,7 @@ async function goToItemsStep(user: ReturnType<typeof userEvent.setup>) {
 describe('SaleWizardPage — شروع و پیشرفت مراحل', () => {
   it('با مرحله‌ی «مظنه» شروع می‌شود و نشانگر پیشرفت آن را نشان می‌دهد', () => {
     renderPage();
-    expect(screen.getByText('مرحله ۱ از ۵ — مظنه')).toBeInTheDocument();
+    expect(screen.getByText('مرحله ۱ از ۴ — مظنه')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'قبلی' })).toBeDisabled();
   });
 
@@ -277,7 +277,7 @@ describe('SaleWizardPage — شروع و پیشرفت مراحل', () => {
     renderPage();
 
     await user.click(screen.getByRole('button', { name: 'بعدی' }));
-    expect(screen.getByText('مرحله ۲ از ۵ — مشتری')).toBeInTheDocument();
+    expect(screen.getByText('مرحله ۲ از ۴ — مشتری')).toBeInTheDocument();
     expect(screen.getByLabelText('مشتری')).toBeInTheDocument();
   });
 
@@ -309,7 +309,7 @@ describe('SaleWizardPage — مرحله‌ی مشتری', () => {
     expect(screen.getByRole('button', { name: 'بعدی' })).not.toBeDisabled();
 
     await user.click(screen.getByRole('button', { name: 'بعدی' })); // اقلام
-    expect(screen.getByText('مرحله ۳ از ۵ — اقلام')).toBeInTheDocument();
+    expect(screen.getByText('مرحله ۳ از ۴ — اقلام')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'افزودن کالا' })).toBeInTheDocument();
   });
 });
@@ -385,7 +385,7 @@ describe('SaleWizardPage — رفت‌وبرگشت مراحل داده را از
     await user.click(screen.getByRole('button', { name: 'بعدی' })); // اقلام
     await user.click(screen.getByRole('button', { name: 'قبلی' })); // برگشت به مشتری
 
-    expect(screen.getByText('مرحله ۲ از ۵ — مشتری')).toBeInTheDocument();
+    expect(screen.getByText('مرحله ۲ از ۴ — مشتری')).toBeInTheDocument();
     expect(screen.getByLabelText('مشتری')).toHaveTextContent('حسین مرادی');
   });
 });
@@ -627,7 +627,7 @@ describe('SaleWizardPage — ثبت فروش (FE-045)', () => {
     await waitFor(() => expect(screen.getByText('رسید فروش')).toBeInTheDocument());
     await user.click(screen.getByRole('button', { name: 'فروش جدید' }));
 
-    expect(screen.getByText('مرحله ۱ از ۵ — مظنه')).toBeInTheDocument();
+    expect(screen.getByText('مرحله ۱ از ۴ — مظنه')).toBeInTheDocument();
     expect(screen.queryByText('رسید فروش')).not.toBeInTheDocument();
   });
 });
