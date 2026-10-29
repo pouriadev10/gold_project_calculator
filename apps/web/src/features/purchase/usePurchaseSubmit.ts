@@ -1,10 +1,10 @@
 import { useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { createSecondHandGoldPurchaseSchema, type SecondHandGoldPurchase } from '@gold/contracts';
-import { ApiError } from '@/api/api-error';
 import { newIdempotencyKey } from '@/api/client';
 import { createSecondHandGoldPurchase } from '@/api/purchase';
 import { queryKeys } from '@/api/query-keys';
+import { isDefinitiveRejection } from '@/hooks/useFinancialSubmit';
 import { usePurchaseDraftStore } from '@/stores/purchase-draft-store';
 
 /**
@@ -52,8 +52,9 @@ export function usePurchaseSubmit(quoteId: string | undefined, isOnline: boolean
       ].map((queryKey) => client.invalidateQueries({ queryKey })));
     } catch (caught) {
       setError(caught);
-      // These responses explicitly reject the operation. Timeouts/5xx/409 remain uncertain.
-      if (caught instanceof ApiError && [400, 401, 403, 404, 422].includes(caught.status)) {
+      // M-35: همان مرز همه‌ی فرم‌های مالی (FE-100) — هر ۴xx جز ۴۰۸ و ۴۲۹ یعنی سرور rollback کرده.
+      // با بدنه‌ی سنجاق‌شده ۴۰۹ ِ Idempotency رخ نمی‌دهد، پس ۴۰۹ رد کسب‌وکار است و تکرارش بی‌پایان بود.
+      if (isDefinitiveRejection(caught)) {
         draft.setAttempt(null);
       }
     } finally {

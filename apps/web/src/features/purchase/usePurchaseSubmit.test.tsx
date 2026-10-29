@@ -71,6 +71,24 @@ describe('purchase submission through API client', () => {
     expect(second.result.current.receipt).toEqual(result);
   });
 
+  it('M-35: a business 409 is a definitive rejection like every other financial form — the draft unlocks', async () => {
+    const conflict = { error: { code: 'CONFLICT', message: 'این تغییر هم‌زمان با تغییر دیگری انجام شد', fields: {}, requestId: 'r1' } };
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(conflict), { status: 409 }));
+    const hook = setup();
+    await act(() => hook.result.current.submit());
+    expect(hook.result.current.error).toBeTruthy();
+    // پیش‌تر 409 «نامعلوم» می‌ماند و تلاش سنجاق‌شده تا ابد همان 409 را تکرار می‌کرد
+    expect(hook.result.current.attempt).toBeNull();
+    expect(usePurchaseDraftStore.getState().attempt).toBeNull();
+  });
+
+  it('M-35: 408 and 429 stay uncertain — the same request is retried, not a new one', async () => {
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({ error: { code: 'RATE_LIMITED', message: 'x', fields: {}, requestId: 'r2' } }), { status: 429 }));
+    const hook = setup();
+    await act(() => hook.result.current.submit());
+    expect(hook.result.current.attempt).not.toBeNull();
+  });
+
   it('keeps a rejected draft editable and submits corrected data', async () => {
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({ message: 'invalid payment', code: 'BAD_REQUEST' }), { status: 400 }));
     const hook = setup();
