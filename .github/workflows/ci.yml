@@ -12,9 +12,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # نسخه از `packageManager` ِ package.json خوانده می‌شود؛ action-setup@v4 با دو مشخصه‌ی متفاوت
+      # (`version: 11` در برابر `pnpm@11.18.0`) پیش از نصب متوقف می‌شود (M-38).
       - uses: pnpm/action-setup@v4
-        with:
-          version: 11
 
       - uses: actions/setup-node@v4
         with:
@@ -29,7 +29,16 @@ jobs:
       - name: قواعد lint — گرد کردن، جهت، رنگ خام
         run: pnpm lint
 
-      - name: تست‌ها + پوشش ۱۰۰٪ core-calc
+      # M-38: محک خودِ قواعد ممنوعیت فرانت (اگر overrideی قاعده‌ای را خاموش کند، lint بی‌صدا سبز می‌ماند)
+      # و وابستگی دوری — همان دو مرحله‌ی `pnpm gate:frontend`؛ همتای بک‌اندشان در backend-gate است.
+      - name: محک ممنوعیت‌های فرانت
+        run: node scripts/check-frontend-bans.mjs
+
+      - name: وابستگی دوری وب
+        run: pnpm --filter @gold/web check:circular
+
+      # پوشش ۱۰۰٪ core-calc در backend-gate اجرا می‌شود (`pnpm --filter @gold/core-calc coverage`).
+      - name: تست‌ها
         run: pnpm test
 
       # بیلد وب دروازه‌ی بودجه را خودش اجرا می‌کند (FE-087): بسته‌ی اولیه بالای ۲۰۰KB
@@ -85,9 +94,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # نسخه از `packageManager` ِ package.json خوانده می‌شود؛ action-setup@v4 با دو مشخصه‌ی متفاوت
+      # (`version: 11` در برابر `pnpm@11.18.0`) پیش از نصب متوقف می‌شود (M-38).
       - uses: pnpm/action-setup@v4
-        with:
-          version: 11
 
       - uses: actions/setup-node@v4
         with:

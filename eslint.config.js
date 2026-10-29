@@ -176,6 +176,8 @@ export default tseslint.config(
       '**/coverage/**',
       '**/dev-dist/**',
       '**/.claude/**',
+      // M-38 (#52): اسکیل‌های vendor ِ عامل‌ها (مثل `.claude/`)؛ کد برنامه نیستند و قواعد مالی بر آن‌ها نیست
+      '**/.agents/**',
       '**/design-system/**',
       // سرویس‌ورکر تولیدشده‌ی msw — فایل vendor است، ما نگهش نمی‌داریم
       '**/public/mockServiceWorker.js',
