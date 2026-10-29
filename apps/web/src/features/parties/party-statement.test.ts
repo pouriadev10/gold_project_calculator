@@ -126,6 +126,13 @@ describe('labels', () => {
     expect(dimensionLabel({ ...COIN, coinCode: null })).toBe('سکه COIN-BAHAR');
   });
 
+  it('M-32: names a coin by its Persian title when the coin types are known, falling back to its code', () => {
+    const titles = new Map([[COIN.coinTypeId!, 'تمام بهار آزادی']]);
+    expect(dimensionLabel(COIN, titles)).toBe('تمام بهار آزادی');
+    expect(dimensionLabel({ ...COIN, coinTypeId: 'c9000000-0000-4000-8000-000000000009' }, titles)).toBe('سکه BAHAR');
+    expect(dimensionLabel(RIAL, titles)).toBe('ریال');
+  });
+
   it('only converts rial and pure gold', () => {
     expect(convertibleUnit(RIAL)).toBe('rial');
     expect(convertibleUnit(GOLD)).toBe('gold');

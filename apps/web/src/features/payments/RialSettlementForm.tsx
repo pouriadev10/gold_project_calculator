@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { dualFromRial, formatRial } from '@gold/core-calc';
 import { createRialSettlementSchema, type CreateRialSettlementInput, type RialSettlement } from '@/api/contracts';
@@ -51,9 +51,11 @@ import { toast } from '@/stores/toast-store';
 export interface RialSettlementFormProps {
   readonly partyId: string;
   readonly onSuccess?: (settlement: RialSettlement) => void;
+  /** M-32 (#43): ورودی ثبت‌نشده یا ارسال در راه هست — صفحه‌ی میزبان پیش از برداشتن فرم می‌پرسد. */
+  readonly onUnsavedChange?: (unsaved: boolean) => void;
 }
 
-export function RialSettlementForm({ partyId, onSuccess }: RialSettlementFormProps) {
+export function RialSettlementForm({ partyId, onSuccess, onUnsavedChange }: RialSettlementFormProps) {
   const balancesQuery = usePartyBalances(partyId, {});
   const mazneh = useMazneh();
   const queryClient = useQueryClient();
@@ -122,6 +124,10 @@ export function RialSettlementForm({ partyId, onSuccess }: RialSettlementFormPro
     }
   }
 
+  // M-32 (#43): پس از ثبت موفق پنل نتیجه جای فرم را می‌گیرد و چیزی برای از دست دادن نمی‌ماند
+  const unsaved = !result && (amountRial > 0n || uncertain);
+  useEffect(() => onUnsavedChange?.(unsaved || isSubmitting), [onUnsavedChange, unsaved, isSubmitting]);
+
   if (result) {
     return (
       <Card>
@@ -149,7 +155,7 @@ export function RialSettlementForm({ partyId, onSuccess }: RialSettlementFormPro
   return (
     <Card>
       {/* FE-099: مبلغ واردشده و ثبت‌نشده با ترک صفحه از بین می‌رود — هشدار پیش از آن */}
-      <UnsavedChangesGuard when={amountRial > 0n || uncertain} submitting={isSubmitting} />
+      <UnsavedChangesGuard when={unsaved} submitting={isSubmitting} />
       <CardHeader>
         <CardTitle className="text-sm">پرداخت ریالی</CardTitle>
       </CardHeader>

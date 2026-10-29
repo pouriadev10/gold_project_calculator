@@ -133,6 +133,35 @@ describe('FE-099 — هشدار خروج روی صفحه‌های فرم', () =>
     await expectLeaveGuarded(user, heading, 'اطلاعات واردشده از بین می‌رود');
   });
 
+  it('M-32 (#43): تعویض روش تسویه با مبلغ واردشده پرسیده می‌شود؛ «ماندن» مبلغ را نگه می‌دارد', async () => {
+    const user = userEvent.setup();
+    renderRoute(`/parties/${PARTY.id}/settlements/new`);
+    await screen.findByRole('heading', { level: 1, name: `ثبت تسویه — ${PARTY.displayName}` }, { timeout: 10_000 });
+    const methods = () => screen.getByRole('radiogroup', { name: 'روش پرداخت' });
+
+    // فرم خالی: تعویض بی‌پرسش
+    await user.click(within(methods()).getByRole('radio', { name: /ریال/ }));
+    await user.click(within(methods()).getByRole('radio', { name: /طلا/ }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    await user.click(within(methods()).getByRole('radio', { name: /ریال/ }));
+    await typeNumber(user, 'مبلغ', '1000000');
+    await user.click(within(methods()).getByRole('radio', { name: /طلا/ }));
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveTextContent('روش پرداخت عوض شود؟');
+
+    await user.click(within(dialog).getByRole('button', { name: 'ماندن در همین روش' }));
+    await waitFor(() => expect(screen.queryByText('روش پرداخت عوض شود؟')).not.toBeInTheDocument());
+    expect(screen.getByLabelText('مبلغ')).toHaveAttribute('data-value', '1000000');
+    expect(within(methods()).getByRole('radio', { name: /ریال/ })).toHaveAttribute('aria-checked', 'true');
+
+    await user.click(within(methods()).getByRole('radio', { name: /طلا/ }));
+    await user.click(await screen.findByRole('button', { name: 'تعویض روش' }));
+    await waitFor(() => expect(within(methods()).getByRole('radio', { name: /طلا/ })).toHaveAttribute('aria-checked', 'true'));
+    expect(screen.queryByLabelText('مبلغ')).not.toBeInTheDocument();
+    expect(api.writes()).toHaveLength(0);
+  });
+
   it('تسویه: پس از ثبت موفق نگهبان کنار می‌رود و خروج بی‌پرسش است', async () => {
     const user = userEvent.setup();
     renderRoute(`/parties/${PARTY.id}/settlements/new`);

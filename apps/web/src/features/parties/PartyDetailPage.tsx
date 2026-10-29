@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from '@tanstack/react-router';
-import { ChevronLeft, ChevronRight, Eye, EyeOff, Landmark, Loader2, Pencil, ReceiptText } from 'lucide-react';
+import { AlertTriangle, ChevronLeft, ChevronRight, Eye, EyeOff, Landmark, Loader2, Pencil, ReceiptText } from 'lucide-react';
 import { dualFromPure, dualFromRial, formatCoinCount, toPersianDigits } from '@gold/core-calc';
 import type { DualAmount } from '@gold/core-calc';
 import { deactivateParty } from '@/api/parties';
@@ -295,6 +295,15 @@ function RecentActivityCard({ partyId }: { partyId: string }) {
                 <li key={entry.ledgerTransactionId + entry.dimension.id} className="flex items-center justify-between gap-3 py-2">
                   <div className="min-w-0 space-y-0.5">
                     <p className="truncate text-sm font-medium">{SOURCE_LABEL[entry.source.type]}</p>
+                    {/* M-32: «۲ عدد» بدون نام سکه نمی‌گوید کدام سکه؛ ریال و طلا را واحدشان معرفی می‌کند */}
+                    {entry.dimension.kind === 'COIN' && entry.dimension.coinTypeId !== null ? (
+                      <p className="truncate text-xs">
+                        <CoinName
+                          coinTypeId={entry.dimension.coinTypeId}
+                          code={entry.dimension.coinCode ?? entry.dimension.code}
+                        />
+                      </p>
+                    ) : null}
                     <p className="text-xs text-muted-foreground">
                       {formatJalaliDateTime(new Date(entry.effectiveAt))}
                     </p>
@@ -323,6 +332,15 @@ function DeactivateSection({ party }: { party: Party }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const { submit, isSubmitting, reset } = useIdempotentSubmit((key: string) => deactivateParty(party.id, key));
+  /*
+   * M-32: شخص غیرفعال هیچ سند تازه‌ای نمی‌پذیرد (تسویه، اصلاح فاکتور؛ D-08) و فعال‌سازی مجدد هم
+   * نیست، پس مانده‌ی باز پس از غیرفعال‌سازی دیگر بسته نمی‌شود. مانده‌ی خام فقط با باز شدن گفت‌وگو
+   * خوانده می‌شود؛ هر بُعد جدا سنجیده می‌شود، سکه هم.
+   */
+  const balancesQuery = usePartyBalances(party.id, {}, confirmOpen);
+  const raw = balancesQuery.data?.rawBalances;
+  const hasOpenBalance =
+    raw !== undefined && (raw.rial !== '0' || raw.pureGoldMg !== '0' || raw.coins.some((coin) => coin.count !== 0));
 
   if (party.status === 'INACTIVE') return null;
 
@@ -356,6 +374,19 @@ function DeactivateSection({ party }: { party: Party }) {
               (فعال‌سازی مجدد) در حال حاضر ندارد.
             </ResponsiveDialogDescription>
           </ResponsiveDialogHeader>
+
+          {hasOpenBalance ? (
+            <div
+              role="alert"
+              className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+            >
+              <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+              <p>
+                این شخص هنوز مانده‌ی باز دارد. پس از غیرفعال‌سازی، تسویه یا اصلاح فاکتوری برایش ثبت نمی‌شود و
+                این مانده دیگر بسته نمی‌شود. اگر ممکن است، اول مانده را تسویه کنید.
+              </p>
+            </div>
+          ) : null}
 
           {error ? <ApiErrorNotice error={error} /> : null}
 

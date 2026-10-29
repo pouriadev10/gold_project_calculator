@@ -7,6 +7,7 @@ import { useParty, usePartyStatement } from '@/api/queries';
 import type { PartyStatementQuery, PartyStatementSourceType } from '@/api/contracts';
 import { RateDisplay } from '@/components/common/AmountDisplay';
 import { CardSkeleton } from '@/components/common/CardSkeleton';
+import { useCoinTitles } from '@/components/common/CoinName';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorState } from '@/components/common/ErrorState';
 import { JalaliDateRangeFilter } from '@/components/common/JalaliDateRangeFilter';
@@ -109,6 +110,7 @@ function RunningBalance({ entry }: { entry: PartyStatementEntry }) {
 }
 
 function StatementCard({ entry }: { entry: PartyStatementEntry }) {
+  const coinTitles = useCoinTitles();
   const quantity = BigInt(entry.quantity);
   const rate = lockedStatementRate(entry);
   return (
@@ -116,7 +118,7 @@ function StatementCard({ entry }: { entry: PartyStatementEntry }) {
       <CardContent className="space-y-3 pt-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="font-semibold">{SOURCE_LABEL[entry.source.type]}</p>
-          <Badge variant="outline">{dimensionLabel(entry.dimension)}</Badge>
+          <Badge variant="outline">{dimensionLabel(entry.dimension, coinTitles)}</Badge>
         </div>
         <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 text-sm">
           <dt className="text-muted-foreground">تاریخ</dt>
@@ -146,6 +148,7 @@ function StatementCard({ entry }: { entry: PartyStatementEntry }) {
 }
 
 function StatementTable({ items }: { items: PartyStatementEntry[] }) {
+  const coinTitles = useCoinTitles();
   return (
     <div className="overflow-x-auto rounded-lg border border-border">
       <Table>
@@ -170,7 +173,7 @@ function StatementTable({ items }: { items: PartyStatementEntry[] }) {
                   {formatJalaliDateTime(new Date(entry.effectiveAt))}
                 </TableCell>
                 <TableCell>{SOURCE_LABEL[entry.source.type]}</TableCell>
-                <TableCell>{dimensionLabel(entry.dimension)}</TableCell>
+                <TableCell>{dimensionLabel(entry.dimension, coinTitles)}</TableCell>
                 <TableCell>
                   <RawQuantity dimension={entry.dimension} value={quantity} signed />
                   <LockedEquivalent dimension={entry.dimension} value={quantity} rate={rate} />
@@ -335,6 +338,7 @@ const DIMENSION_SOURCE_QUERY: PartyStatementQuery = { limit: 1, offset: 0 };
 export default function PartyStatementPage() {
   const { partyId } = useParams({ from: '/app-shell/parties/$partyId/statement' });
   const party = useParty(partyId);
+  const coinTitles = useCoinTitles();
 
   const [dateRange, setDateRange] = useState<JalaliDateRange>(EMPTY_JALALI_RANGE);
   const timeZone = useTenantTimeZone();
@@ -453,7 +457,7 @@ export default function PartyStatementPage() {
                 <option value="">همه‌ی بُعدها</option>
                 {dimensionOptions.map((option) => (
                   <option key={option.id} value={option.id}>
-                    {dimensionLabel(option)}
+                    {dimensionLabel(option, coinTitles)}
                   </option>
                 ))}
               </Select>

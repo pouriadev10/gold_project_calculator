@@ -25,11 +25,13 @@ const RATE_1000 = gramRate1000(MAZNEH);
 const useQueryMocks = {
   useParty: vi.fn(),
   usePartyStatement: vi.fn(),
+  useCoinTypes: vi.fn(),
 };
 vi.mock('@/api/queries', async (importOriginal) => ({
   ...(await importOriginal<typeof Queries>()),
   useParty: (...args: unknown[]) => useQueryMocks.useParty(...args),
   usePartyStatement: (...args: unknown[]) => useQueryMocks.usePartyStatement(...args),
+  useCoinTypes: () => useQueryMocks.useCoinTypes(),
 }));
 
 const getPartyStatementPdfMock = vi.fn();
@@ -190,6 +192,9 @@ function stubViewport(desktop: boolean) {
 
 beforeEach(() => {
   useUnitStore.setState({ unit: 'gold' });
+  // تا فهرست انواع سکه نرسیده، کد سکه نمایش داده می‌شود (M-32)
+  useQueryMocks.useCoinTypes.mockReset();
+  useQueryMocks.useCoinTypes.mockReturnValue({ data: undefined });
   resultsResponse = result(statement());
   dimensionResponse = result(statement(ITEMS.slice(0, 1), { limit: DIMENSION_SOURCE_LIMIT }));
   useQueryMocks.useParty.mockReset();
@@ -285,6 +290,16 @@ describe('PartyStatementPage — FE-070', () => {
     expect(coin.getAllByText('عدد')).toHaveLength(2);
     expect(cards[2]!.querySelector('[data-unit]')).toBeNull();
     expect(coin.queryByText(/معادل/)).not.toBeInTheDocument();
+  });
+
+  it('M-32: names coin rows and the dimension filter by the coin’s Persian title, not its code', () => {
+    useQueryMocks.useCoinTypes.mockReturnValue({ data: [{ coinTypeId: COIN.coinTypeId, title: 'تمام بهار آزادی' }] });
+    render(<PartyStatementPage />);
+
+    const coin = within(screen.getAllByRole('listitem')[2]!);
+    expect(coin.getByText('تمام بهار آزادی')).toBeInTheDocument();
+    expect(coin.queryByText('سکه BAHAR')).not.toBeInTheDocument();
+    expect(within(screen.getByLabelText('بُعد')).getByRole('option', { name: 'تمام بهار آزادی' })).toBeInTheDocument();
   });
 
   it('converts with the document’s locked rate when the unit toggles, and never invents one', async () => {

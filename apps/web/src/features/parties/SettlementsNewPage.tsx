@@ -6,7 +6,16 @@ import { AmountDisplay } from '@/components/common/AmountDisplay';
 import { CardSkeleton } from '@/components/common/CardSkeleton';
 import { ErrorState } from '@/components/common/ErrorState';
 import { PageHeader } from '@/components/common/PageHeader';
+import {
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/common/ResponsiveDialog';
 import { UnitToggle } from '@/components/common/UnitToggle';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { NumericKeypad } from '@/components/keypad/NumericKeypad';
 import { useMazneh } from '@/features/home/useMazneh';
@@ -43,6 +52,10 @@ import { RialSettlementForm } from '@/features/payments/RialSettlementForm';
  * **«تأیید نهایی»** دکمه‌ی ثبت خودِ هر فرم است — هر چهارتا از قبل کامل و
  * خودکفا هستند (شامل idempotency و پنل موفقیت)؛ یک لایه‌ی تأیید دوم روی
  * آن‌ها فقط منطق ثبت را تکراری می‌کرد.
+ *
+ * **تعویض روش فرم فعلی را برمی‌دارد** (M-32، مسئله‌ی #43). این ناوبری نیست و `UnsavedChangesGuard`
+ * فرم آن را نمی‌بیند، پس هر فرم با `onUnsavedChange` خبر می‌دهد که ورودی ثبت‌نشده یا ارسال در راه
+ * دارد و صفحه پیش از تعویض می‌پرسد. فرم خالی بی‌پرسش عوض می‌شود.
  */
 
 const SETTLEMENT_METHODS: readonly PaymentMethod[] = ['RIAL', 'GOLD', 'COIN', 'COMBINED'];
@@ -53,6 +66,23 @@ export default function SettlementsNewPage() {
   const balancesQuery = usePartyBalances(partyId, {});
   const mazneh = useMazneh();
   const [method, setMethod] = useState<PaymentMethod | null>(null);
+  const [formUnsaved, setFormUnsaved] = useState(false);
+  const [pendingMethod, setPendingMethod] = useState<PaymentMethod | null>(null);
+
+  const changeMethod = (next: PaymentMethod) => {
+    if (next === method) return;
+    if (formUnsaved) {
+      setPendingMethod(next);
+      return;
+    }
+    setMethod(next);
+  };
+  const confirmChange = () => {
+    if (pendingMethod === null) return;
+    setFormUnsaved(false);
+    setMethod(pendingMethod);
+    setPendingMethod(null);
+  };
 
   const rate1000 = mazneh.data?.gram1000;
   const receivableRial = balancesQuery.data ? BigInt(balancesQuery.data.rawBalances.rial) : undefined;
@@ -83,13 +113,37 @@ export default function SettlementsNewPage() {
           </CardContent>
         </Card>
 
-        <PaymentMethodSelector value={method} onChange={setMethod} methods={SETTLEMENT_METHODS} />
+        <PaymentMethodSelector value={method} onChange={changeMethod} methods={SETTLEMENT_METHODS} />
 
-        {method === 'RIAL' ? <RialSettlementForm partyId={partyId} /> : null}
-        {method === 'GOLD' ? <GoldSettlementForm partyId={partyId} /> : null}
-        {method === 'COIN' ? <CoinSettlementForm partyId={partyId} /> : null}
-        {method === 'COMBINED' ? <MixedSettlementForm partyId={partyId} /> : null}
+        {method === 'RIAL' ? <RialSettlementForm partyId={partyId} onUnsavedChange={setFormUnsaved} /> : null}
+        {method === 'GOLD' ? <GoldSettlementForm partyId={partyId} onUnsavedChange={setFormUnsaved} /> : null}
+        {method === 'COIN' ? <CoinSettlementForm partyId={partyId} onUnsavedChange={setFormUnsaved} /> : null}
+        {method === 'COMBINED' ? <MixedSettlementForm partyId={partyId} onUnsavedChange={setFormUnsaved} /> : null}
       </div>
+
+      <ResponsiveDialog
+        open={pendingMethod !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingMethod(null);
+        }}
+      >
+        <ResponsiveDialogContent>
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>روش پرداخت عوض شود؟</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>
+              هنوز هیچ سندی ثبت نشده است. با تعویض روش، اطلاعات واردشده در فرم فعلی از بین می‌رود.
+            </ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
+          <ResponsiveDialogFooter>
+            <Button type="button" variant="outline" onClick={() => setPendingMethod(null)}>
+              ماندن در همین روش
+            </Button>
+            <Button type="button" variant="destructive" onClick={confirmChange}>
+              تعویض روش
+            </Button>
+          </ResponsiveDialogFooter>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
 
       <NumericKeypad />
     </div>

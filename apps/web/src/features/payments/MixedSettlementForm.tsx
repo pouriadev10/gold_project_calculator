@@ -140,9 +140,11 @@ function toRequestLine(line: MixedLine, quoteId: string | null): CreateMixedSett
 export interface MixedSettlementFormProps {
   readonly partyId: string;
   readonly onSuccess?: (settlement: MixedSettlement) => void;
+  /** M-32 (#43): ورودی ثبت‌نشده یا ارسال در راه هست — صفحه‌ی میزبان پیش از برداشتن فرم می‌پرسد. */
+  readonly onUnsavedChange?: (unsaved: boolean) => void;
 }
 
-export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormProps) {
+export function MixedSettlementForm({ partyId, onSuccess, onUnsavedChange }: MixedSettlementFormProps) {
   const coinTypesQuery = useCoinTypes();
   const balancesQuery = usePartyBalances(partyId, {});
   const mazneh = useMazneh();
@@ -281,6 +283,10 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
     }
   }
 
+  // M-32 (#43): پس از ثبت موفق پنل نتیجه جای فرم را می‌گیرد و چیزی برای از دست دادن نمی‌ماند
+  const unsaved = !result && (lines.length > 0 || uncertain);
+  useEffect(() => onUnsavedChange?.(unsaved || isSubmitting), [onUnsavedChange, unsaved, isSubmitting]);
+
   if (result) {
     return (
       <Card>
@@ -311,7 +317,7 @@ export function MixedSettlementForm({ partyId, onSuccess }: MixedSettlementFormP
   return (
     <Card>
       {/* FE-099: مبلغ واردشده و ثبت‌نشده با ترک صفحه از بین می‌رود — هشدار پیش از آن */}
-      <UnsavedChangesGuard when={lines.length > 0 || uncertain} submitting={isSubmitting} />
+      <UnsavedChangesGuard when={unsaved} submitting={isSubmitting} />
       <CardHeader>
         <CardTitle className="text-sm">تسویه‌ی ترکیبی</CardTitle>
       </CardHeader>

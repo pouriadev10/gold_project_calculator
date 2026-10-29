@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   bubble,
@@ -62,10 +62,12 @@ import { formatCoinsGrossWeight, toCoinType } from '@/lib/coin-type';
 export interface CoinSettlementFormProps {
   readonly partyId: string;
   readonly onSuccess?: (settlement: CoinSettlement) => void;
+  /** M-32 (#43): ورودی ثبت‌نشده یا ارسال در راه هست — صفحه‌ی میزبان پیش از برداشتن فرم می‌پرسد. */
+  readonly onUnsavedChange?: (unsaved: boolean) => void;
 }
 
 
-export function CoinSettlementForm({ partyId, onSuccess }: CoinSettlementFormProps) {
+export function CoinSettlementForm({ partyId, onSuccess, onUnsavedChange }: CoinSettlementFormProps) {
   const coinTypesQuery = useCoinTypes();
   const balancesQuery = usePartyBalances(partyId, {});
   const mazneh = useMazneh();
@@ -177,6 +179,10 @@ export function CoinSettlementForm({ partyId, onSuccess }: CoinSettlementFormPro
     }
   }
 
+  // M-32 (#43): پس از ثبت موفق پنل نتیجه جای فرم را می‌گیرد و چیزی برای از دست دادن نمی‌ماند
+  const unsaved = !result && (coinTypeId !== null || count > 0n || marketUnitPriceRial > 0n || uncertain);
+  useEffect(() => onUnsavedChange?.(unsaved || isSubmitting), [onUnsavedChange, unsaved, isSubmitting]);
+
   if (result) {
     return (
       <Card>
@@ -200,7 +206,7 @@ export function CoinSettlementForm({ partyId, onSuccess }: CoinSettlementFormPro
     <Card>
       {/* FE-099: مبلغ واردشده و ثبت‌نشده با ترک صفحه از بین می‌رود — هشدار پیش از آن */}
       <UnsavedChangesGuard
-        when={coinTypeId !== null || count > 0n || marketUnitPriceRial > 0n || uncertain}
+        when={unsaved}
         submitting={isSubmitting}
       />
       <CardHeader>

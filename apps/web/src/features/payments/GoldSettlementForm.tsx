@@ -56,9 +56,11 @@ import { toast } from '@/stores/toast-store';
 export interface GoldSettlementFormProps {
   readonly partyId: string;
   readonly onSuccess?: (settlement: GoldSettlement) => void;
+  /** M-32 (#43): ورودی ثبت‌نشده یا ارسال در راه هست — صفحه‌ی میزبان پیش از برداشتن فرم می‌پرسد. */
+  readonly onUnsavedChange?: (unsaved: boolean) => void;
 }
 
-export function GoldSettlementForm({ partyId, onSuccess }: GoldSettlementFormProps) {
+export function GoldSettlementForm({ partyId, onSuccess, onUnsavedChange }: GoldSettlementFormProps) {
   const balancesQuery = usePartyBalances(partyId, {});
   const mazneh = useMazneh();
   const queryClient = useQueryClient();
@@ -148,6 +150,10 @@ export function GoldSettlementForm({ partyId, onSuccess }: GoldSettlementFormPro
     }
   }
 
+  // M-32 (#43): پس از ثبت موفق پنل نتیجه جای فرم را می‌گیرد و چیزی برای از دست دادن نمی‌ماند
+  const unsaved = !result && (grossWeightMg > 0n || karatValue > 0n || uncertain);
+  useEffect(() => onUnsavedChange?.(unsaved || isSubmitting), [onUnsavedChange, unsaved, isSubmitting]);
+
   if (result) {
     return (
       <Card>
@@ -178,7 +184,7 @@ export function GoldSettlementForm({ partyId, onSuccess }: GoldSettlementFormPro
   return (
     <Card>
       {/* FE-099: مبلغ واردشده و ثبت‌نشده با ترک صفحه از بین می‌رود — هشدار پیش از آن */}
-      <UnsavedChangesGuard when={grossWeightMg > 0n || karatValue > 0n || uncertain} submitting={isSubmitting} />
+      <UnsavedChangesGuard when={unsaved} submitting={isSubmitting} />
       <CardHeader>
         <CardTitle className="text-sm">پرداخت با طلا</CardTitle>
       </CardHeader>

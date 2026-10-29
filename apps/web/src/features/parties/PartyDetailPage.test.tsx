@@ -28,6 +28,7 @@ const useQueryMocks = {
   usePartyBalances: vi.fn(),
   usePartyStatement: vi.fn(),
   useLatestPriceQuote: vi.fn(),
+  useCoinTypes: vi.fn(),
 };
 vi.mock('@/api/queries', async (importOriginal) => ({
   ...(await importOriginal<typeof Queries>()),
@@ -35,6 +36,7 @@ vi.mock('@/api/queries', async (importOriginal) => ({
   usePartyBalances: (...args: unknown[]) => useQueryMocks.usePartyBalances(...args),
   usePartyStatement: (...args: unknown[]) => useQueryMocks.usePartyStatement(...args),
   useLatestPriceQuote: (...args: unknown[]) => useQueryMocks.useLatestPriceQuote(...args),
+  useCoinTypes: () => useQueryMocks.useCoinTypes(),
 }));
 
 const deactivatePartyMock = vi.fn();
@@ -150,6 +152,8 @@ beforeEach(() => {
   useQueryMocks.usePartyStatement.mockReset();
   useQueryMocks.useLatestPriceQuote.mockReset();
   deactivatePartyMock.mockReset();
+  useQueryMocks.useCoinTypes.mockReset();
+  useQueryMocks.useCoinTypes.mockReturnValue({ data: undefined });
 
   useQueryMocks.useParty.mockReturnValue({ data: party(), isLoading: false, isError: false, refetch: vi.fn() });
   useQueryMocks.usePartyBalances.mockReturnValue({ ...idleQuery, data: balances() });
@@ -348,6 +352,31 @@ describe('PartyDetailPage — آخرین معاملات', () => {
     expect(screen.getByText('معامله‌ای ثبت نشده')).toBeInTheDocument();
   });
 
+  it('M-32: ردیف سکه نام همان نوع سکه را دارد — «۲ عدد» بدون نام سکه مبهم است', () => {
+    useQueryMocks.useCoinTypes.mockReturnValue({
+      data: [{ coinTypeId: 'c3000000-0000-4000-8000-000000000001', title: 'ربع سکه' }],
+    });
+    useQueryMocks.usePartyStatement.mockReturnValue({
+      ...idleQuery,
+      data: statement([
+        {
+          ledgerTransactionId: 'e1',
+          source: { type: 'SALES_INVOICE', id: 'f1' },
+          effectiveAt: new Date().toISOString(),
+          description: 'Coin sale',
+          dimension: { id: 'd9', code: 'COIN-ROB', kind: 'COIN', coinTypeId: 'c3000000-0000-4000-8000-000000000001', coinCode: 'ROB' },
+          quantity: '2',
+          runningBalance: '2',
+          documentRateSnapshots: [],
+        },
+      ]),
+    });
+    renderPage();
+
+    const row = screen.getByText('فاکتور فروش', { selector: '.truncate' }).closest('li')!;
+    expect(row).toHaveTextContent('ربع سکه');
+  });
+
   it('نوع سند و مقدار را بر اساس بُعد فرمت می‌کند', () => {
     useQueryMocks.usePartyStatement.mockReturnValue({
       ...idleQuery,
@@ -404,6 +433,32 @@ describe('PartyDetailPage — غیرفعال‌سازی', () => {
     expect(deactivatePartyMock).toHaveBeenCalledWith(TEST_PARTY_ID, expect.any(String));
   });
 
+  it('M-32: شخص با مانده‌ی باز — گفت‌وگو هشدار می‌دهد که پس از غیرفعال‌سازی تسویه ممکن نیست', async () => {
+    // پیش‌فرض fixture: ۴۱۲٫۵ میلی‌گرم طلای باز
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: 'غیرفعال‌سازی' }));
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('این شخص هنوز مانده‌ی باز دارد');
+  });
+
+  it('M-32: فقط یک سکه‌ی باز هم مانده است؛ همه‌ی ابعاد صفر — بی‌هشدار', async () => {
+    const user = userEvent.setup();
+    const coinOnly = balances({ rawBalances: { rial: '0', pureGoldMg: '0', coins: [{ coinTypeId: 'd1000000-0000-4000-8000-000000000001', code: 'BAHAR', count: -1 }] } });
+    useQueryMocks.usePartyBalances.mockReturnValue({ ...idleQuery, data: coinOnly });
+    const { unmount } = renderPage();
+    await user.click(screen.getByRole('button', { name: 'غیرفعال‌سازی' }));
+    expect(within(await screen.findByRole('dialog')).getByRole('alert')).toHaveTextContent('مانده‌ی باز');
+    unmount();
+
+    const settled = balances({ rawBalances: { rial: '0', pureGoldMg: '0', coins: [{ coinTypeId: 'd1000000-0000-4000-8000-000000000001', code: 'BAHAR', count: 0 }] } });
+    useQueryMocks.usePartyBalances.mockReturnValue({ ...idleQuery, data: settled });
+    renderPage();
+    await user.click(screen.getByRole('button', { name: 'غیرفعال‌سازی' }));
+    expect(within(await screen.findByRole('dialog')).queryByRole('alert')).not.toBeInTheDocument();
+  });
+
   it('شکست غیرفعال‌سازی: خطا داخل گفت‌وگو می‌ماند و گفت‌وگو بسته نمی‌شود', async () => {
     deactivatePartyMock.mockRejectedValue(new ApiError(500, 'INTERNAL_ERROR', 'خطا'));
     const user = userEvent.setup();
@@ -412,7 +467,10 @@ describe('PartyDetailPage — غیرفعال‌سازی', () => {
     await user.click(screen.getByRole('button', { name: 'غیرفعال‌سازی' }));
     await user.click(screen.getByRole('button', { name: 'غیرفعال شود' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('خطا در انجام عملیات');
+    // هشدار مانده‌ی باز (M-32) هم alert است؛ خطای سرور کنار آن می‌آید
+    await waitFor(() =>
+      expect(screen.getAllByRole('alert').some((alert) => alert.textContent?.includes('خطا در انجام عملیات'))).toBe(true),
+    );
     expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 });

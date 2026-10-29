@@ -33,8 +33,14 @@ export function debtorCreditorLabel(raw: bigint): string {
   return 'تسویه';
 }
 
-/** نام نمایشی بُعد دفترکل؛ هر نوع سکه بُعد جدای خودش است و با کدش نام می‌گیرد. */
-export function dimensionLabel(dimension: PartyStatementDimension): string {
+/**
+ * نام نمایشی بُعد دفترکل؛ هر نوع سکه بُعد جدای خودش است. سکه با عنوان فارسی‌اش (`useCoinTitles`)
+ * نام می‌گیرد و تا رسیدن فهرست انواع، با کدش (M-32، باقی‌مانده‌ی #27).
+ */
+export function dimensionLabel(
+  dimension: PartyStatementDimension,
+  coinTitles?: ReadonlyMap<string, string>,
+): string {
   switch (dimension.kind) {
     case 'RIAL':
       return 'ریال';
@@ -42,8 +48,10 @@ export function dimensionLabel(dimension: PartyStatementDimension): string {
       return 'طلای خالص';
     case 'SILVER':
       return 'نقره';
-    case 'COIN':
-      return `سکه ${dimension.coinCode ?? dimension.code}`;
+    case 'COIN': {
+      const title = dimension.coinTypeId === null ? undefined : coinTitles?.get(dimension.coinTypeId);
+      return title ?? `سکه ${dimension.coinCode ?? dimension.code}`;
+    }
   }
 }
 
