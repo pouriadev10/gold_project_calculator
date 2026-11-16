@@ -166,7 +166,8 @@ export const ROUTE_DOCS: Readonly<Record<string, RouteDoc>> = {
   'POST /auth/login': {
     tag: 'احراز هویت',
     summary: 'ورود با ایمیل، رمز و slug مستأجر',
-    description: 'توکن دسترسی کوتاه‌عمر و توکن تمدید برمی‌گرداند. مستأجر از `tenantSlug` می‌آید، نه از هدر.',
+    description:
+      'توکن دسترسی کوتاه‌عمر و توکن تمدید برمی‌گرداند. مستأجر از `tenantSlug` می‌آید، نه از هدر. در مستأجر معلق فقط OWNER نشست می‌گیرد (`tenant.status` = `SUSPENDED`)، و آن نشست جز خواندن و خروجی کامل داده چیزی نمی‌نویسد؛ نقش‌های دیگر ۴۰۳ می‌گیرند.',
     response: json(sessionResponseSchema),
   },
   'POST /auth/refresh': {
@@ -325,7 +326,7 @@ export const ROUTE_DOCS: Readonly<Record<string, RouteDoc>> = {
   'POST /platform/exports/full': {
     tag: 'سکو',
     summary: 'ساخت خروجی کامل داده‌ی مستأجر',
-    description: 'فقط OWNER. قالب فایل در `docs/tenant-export.md`.',
+    description: 'فقط OWNER. تنها نوشتنی که مستأجر معلق هم مجاز است. قالب فایل در `docs/tenant-export.md`.',
     response: json(tenantExportSchema),
   },
   'GET /platform/exports/:id': {

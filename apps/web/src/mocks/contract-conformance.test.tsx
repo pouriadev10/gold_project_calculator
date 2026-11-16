@@ -15,6 +15,7 @@ import { presentApiError } from '@/api/error-presentation';
 import { createJewelryItem, updateJewelryItem } from '@/api/jewelry-items';
 import { createOpeningBalance } from '@/api/opening-balances';
 import { createParty, deactivateParty, getPartyStatementPdf, updateParty } from '@/api/parties';
+import { createTenantExport, getTenantExportFile } from '@/api/platform';
 import { createManualPriceQuote, refreshPriceFeed } from '@/api/pricing';
 import {
   createB2cBuyback,
@@ -54,7 +55,7 @@ const OWNER_SESSION: SessionResponse = {
   refreshToken: 'contract-refresh',
   expiresInSeconds: 900,
   user: { id: 'c1000000-0000-4000-8000-000000000002', email: 'owner@example.com', displayName: 'مالک نمونه' },
-  tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه', timezone: 'Asia/Tehran' },
+  tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه', timezone: 'Asia/Tehran', status: 'ACTIVE' as const },
   role: 'OWNER',
 };
 
@@ -250,6 +251,8 @@ describe('پاسخ‌های موفق از schema ِ واقعی کلاینت می
     await getSalesInvoicePdf(cash.invoiceId);
     await getSecondHandPurchasePdf(gold.secondHandPurchaseId);
     await getPartyStatementPdf(consumer.id);
+    const tenantExport = await createTenantExport(crypto.randomUUID());
+    await getTenantExportFile(tenantExport.id);
     await deactivateParty(created.id, crypto.randomUUID());
 
     // ── هیچ handler مسیری بدون مصرف‌کننده نماند ──
@@ -502,9 +505,6 @@ const UNUSED_SERVER_ROUTES = [
   'GET /api/health',
   'GET /api/auth/me',
   'POST /api/inventory/jewelry-items/:id/deactivate',
-  // BE-069: خروجی کامل مستأجر — هنوز هیچ صفحه‌ای در فرانت ندارد.
-  'POST /api/platform/exports/full',
-  'GET /api/platform/exports/:id',
   // BE-070: Swagger UI و مستند OpenAPI — برای توسعه‌دهنده، نه برنامه‌ی فرانت.
   'GET /api/docs',
   'GET /api/docs/openapi.json',

@@ -303,10 +303,11 @@ export async function apiGetFile(
   path: string,
   signal?: AbortSignal,
   timeoutMs = 30_000,
+  accept = 'application/pdf',
 ): Promise<DownloadedFile> {
   const response = await requestResponse(
     path,
-    { method: 'GET', headers: { Accept: 'application/pdf' } },
+    { method: 'GET', headers: { Accept: accept } },
     signal,
     timeoutMs,
     {},

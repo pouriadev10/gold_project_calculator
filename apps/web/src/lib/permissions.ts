@@ -55,3 +55,10 @@ export const PRICE_FEED_REFRESH_ROLES: readonly RoleCode[] = ['OWNER', 'MANAGER'
  * فرم ۴۰۳ می‌گرفت.
  */
 export const JEWELRY_ITEM_EDIT_ROLES: readonly RoleCode[] = ['OWNER', 'MANAGER'];
+
+/**
+ * `@Roles('OWNER')` روی `POST /platform/exports/full` و `GET /platform/exports/:id`
+ * (`tenant-exports.controller.ts`، BE-069). خروج انبوه همه‌ی داده تصمیم مالک است؛ مالک مستأجر
+ * معلق هم وارد می‌شود تا همین را بگیرد (D-03).
+ */
+export const TENANT_EXPORT_ROLES: readonly RoleCode[] = ['OWNER'];

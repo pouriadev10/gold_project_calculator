@@ -55,16 +55,24 @@ export const sessionUserSchema = z.object({
   displayName: z.string(),
 });
 
+/** آینه‌ی `tenantStatusEnum` در `apps/api/src/platform/database/schema/tenants.ts`. */
+export const tenantStatusSchema = z.enum(['ACTIVE', 'SUSPENDED']);
+export type TenantStatus = z.infer<typeof tenantStatusSchema>;
+
 /**
  * `timezone` نام IANA ستون `tenants.timezone` است (FE-071). مرز روزِ
  * فیلترهای تاریخ در فرانت با همین منطقه ساخته می‌شود، نه با منطقه‌ی
  * دستگاه کاربر.
+ *
+ * `status` (D-03): مالک مستأجر معلق هم نشست می‌گیرد، ولی سرور جز خواندن و
+ * خروجی کامل داده هر نوشتنی را رد می‌کند؛ فرانت با این بنر «فقط‌خواندنی» را نشان می‌دهد.
  */
 export const sessionTenantSchema = z.object({
   id: z.string(),
   slug: z.string(),
   name: z.string(),
   timezone: z.string().min(1),
+  status: tenantStatusSchema,
 });
 
 export const sessionResponseSchema = z.object({

@@ -34,6 +34,8 @@ interface TenantFixture {
   id: string;
   slug: string;
   ownerId: string;
+  ownerEmail: string;
+  managerEmail: string;
   ownerToken: string;
   managerToken: string;
   partyId: string;
@@ -65,6 +67,8 @@ describe('خروجی کامل داده‌ی مستأجر (BE-069)', () => {
   let app: NestFastifyApplication;
   const a = {} as TenantFixture;
   const b = {} as TenantFixture;
+  /** D-03: پس از seed معلق می‌شود. */
+  const c = {} as TenantFixture;
 
   function inject(
     method: 'GET' | 'POST',
@@ -114,7 +118,12 @@ describe('خروجی کامل داده‌ی مستأجر (BE-069)', () => {
       await users.setPasswordHash(user.id, await passwords.hash(PASSWORD));
       await memberships.add(fixture.id, { userId: user.id, roleCode: role });
       tokens[role] = await login(user.email, fixture.slug);
-      if (role === 'OWNER') fixture.ownerId = user.id;
+      if (role === 'OWNER') {
+        fixture.ownerId = user.id;
+        fixture.ownerEmail = user.email;
+      } else {
+        fixture.managerEmail = user.email;
+      }
     }
     fixture.ownerToken = tokens['OWNER']!;
     fixture.managerToken = tokens['MANAGER']!;
@@ -181,10 +190,13 @@ describe('خروجی کامل داده‌ی مستأجر (BE-069)', () => {
 
     await seedTenant(a, 'a');
     await seedTenant(b, 'b');
+    await seedTenant(c, 'c');
+    // endpoint تغییر وضعیت نداریم؛ مستقیم در دیتابیس، مثل `request-context.e2e-spec.ts`.
+    await pool.query(`UPDATE tenants SET status = 'SUSPENDED' WHERE id = $1`, [c.id]);
   });
 
   afterAll(async () => {
-    const ids = [a.id, b.id].filter((id) => id !== undefined);
+    const ids = [a.id, b.id, c.id].filter((id) => id !== undefined);
     if (ids.length > 0) {
       await pool.query('DELETE FROM tenants WHERE id = ANY($1::uuid[])', [ids]);
     }
@@ -377,6 +389,47 @@ describe('خروجی کامل داده‌ی مستأجر (BE-069)', () => {
     expect(download.body).not.toContain(a.id);
     expect(download.body).not.toContain(a.invoiceId);
     expect(download.body).not.toContain(a.nationalId);
+  });
+
+  describe('D-03: مستأجر معلق', () => {
+    async function freshLogin(email: string): Promise<{ statusCode: number; accessToken: string }> {
+      const response = await adapter.getInstance().inject({
+        method: 'POST',
+        url: '/auth/login',
+        payload: { email, password: PASSWORD, tenantSlug: c.slug },
+      });
+      return {
+        statusCode: response.statusCode,
+        accessToken: response.statusCode === 200 ? response.json<{ accessToken: string }>().accessToken : '',
+      };
+    }
+
+    it('مالک پس از تعلیق وارد می‌شود و خروجی کامل را می‌سازد و دانلود می‌کند', async () => {
+      const owner = await freshLogin(c.ownerEmail);
+      expect(owner.statusCode).toBe(200);
+
+      const created = await inject('POST', '/platform/exports/full', c, owner.accessToken);
+      expect(created.statusCode).toBe(201);
+      const download = await inject('GET', `/platform/exports/${created.json<TenantExport>().id}`, c, owner.accessToken);
+
+      expect(download.statusCode).toBe(200);
+      expect(download.body).toContain(c.invoiceId);
+    });
+
+    it('هر نوشتن دیگری همچنان ۴۰۳ است', async () => {
+      const owner = await freshLogin(c.ownerEmail);
+
+      const party = await inject('POST', '/parties', c, owner.accessToken, {
+        type: 'CONSUMER',
+        displayName: 'مشتری پس از تعلیق',
+      });
+
+      expect(party.statusCode).toBe(403);
+    });
+
+    it('مدیر وارد نمی‌شود', async () => {
+      expect((await freshLogin(c.managerEmail)).statusCode).toBe(403);
+    });
   });
 
   it('هر جدول دارای tenant_id یا در خروجی است یا با دلیل کنار گذاشته شده', async () => {

@@ -4,6 +4,7 @@ import { DRIZZLE } from '../database/database.module';
 import { refreshTokens } from '../database/schema';
 import { MembershipService } from '../users/membership.service';
 import { TenantService } from '../tenant/tenant.service';
+import { canOpenSession } from '../tenant/tenant.rules';
 import { UserService } from '../users/user.service';
 import { REFRESH_TOKEN_TTL_SECONDS } from './auth.constants';
 import {
@@ -75,8 +76,9 @@ export class AuthService {
       throw new InvalidCredentialsError();
     }
 
-    // قاعده‌ی BE-011: «tenant غیرفعال نتواند session فعال ایجاد کند».
-    if (tenant.status !== 'ACTIVE') {
+    // قاعده‌ی BE-011: «tenant غیرفعال نتواند session فعال ایجاد کند» — جز مالک، برای خروجی
+    // کامل داده (D-03). نشست او را میان‌افزار مستأجر فقط‌خواندنی نگه می‌دارد.
+    if (!canOpenSession(tenant, role)) {
       throw new TenantSuspendedError();
     }
 
@@ -124,13 +126,14 @@ export class AuthService {
       const user = await this.users.findById(claimed.userId);
       const tenant = await this.tenants.findById(claimed.tenantId);
 
-      if (!user || user.status !== 'ACTIVE' || !tenant || tenant.status !== 'ACTIVE') {
+      if (!user || user.status !== 'ACTIVE' || !tenant) {
         throw new InvalidRefreshTokenError();
       }
 
       const role = await this.memberships.findRole(tenant.id, user.id);
 
-      if (!role) {
+      // همان قاعده‌ی ورود (D-03): در مستأجر معلق فقط مالک تمدید می‌کند.
+      if (!role || !canOpenSession(tenant, role)) {
         throw new InvalidRefreshTokenError();
       }
 

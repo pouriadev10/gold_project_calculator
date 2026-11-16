@@ -31,7 +31,7 @@ const CASHIER: SessionResponse = {
   refreshToken: 'fe100-refresh',
   expiresInSeconds: 900,
   user: { id: 'c1000000-0000-4000-8000-000000000002', email: 'cashier@example.com', displayName: 'صندوق‌دار نمونه' },
-  tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه', timezone: 'Asia/Tehran' },
+  tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه', timezone: 'Asia/Tehran', status: 'ACTIVE' as const },
   role: 'CASHIER',
 };
 const PARTY = partyRecords.find((party) => party.displayName === 'حسین مرادی')!;

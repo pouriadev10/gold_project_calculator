@@ -8,7 +8,7 @@ import {
 } from '@tanstack/react-router';
 import { uuidSchema } from '@gold/contracts';
 import { AppNav } from '@/components/common/AppNav';
-import { AppStatusBanners } from '@/components/common/AppStatusBanners';
+import { AppStatusBanners, SuspendedTenantBanner } from '@/components/common/AppStatusBanners';
 import { NotFoundPage } from '@/components/common/NotFoundPage';
 import { RouteErrorFallback } from '@/components/common/RouteErrorFallback';
 import { PageSkeleton } from '@/components/common/PageSkeleton';
@@ -18,7 +18,7 @@ import { useSessionGuard } from '@/hooks/useSessionGuard';
 import { useTenantScope } from '@/hooks/useTenantScope';
 import { useTheme } from '@/hooks/useTheme';
 import { useUnit } from '@/hooks/useUnit';
-import { OPENING_BALANCE_ROLES, PROFIT_REPORT_ROLES } from '@/lib/permissions';
+import { OPENING_BALANCE_ROLES, PROFIT_REPORT_ROLES, TENANT_EXPORT_ROLES } from '@/lib/permissions';
 
 /**
  * ریشه‌ی بدون پوسته — فقط `<Outlet />`. مسیرهایی که نباید ناوبری برنامه
@@ -61,6 +61,7 @@ function AppShell() {
         محتوا روی مانیتورهای خیلی عریض را می‌گیرد؛ زیر ۱۹۲۰px اصلاً اثر ندارد.
       */}
       <main className="min-w-0 flex-1 pb-nav lg:mx-auto lg:h-dvh lg:max-w-[1920px] lg:overflow-y-auto">
+        <SuspendedTenantBanner />
         {ready ? <Outlet /> : <PageSkeleton />}
       </main>
     </div>
@@ -322,6 +323,14 @@ const coinTypeSettingsRoute = createRoute({
   component: lazyRouteComponent(() => import('@/features/settings/CoinTypeSettingsPage')),
 });
 
+/** خروجی کامل داده‌ی مستأجر — BE-069 / D-03. فقط OWNER، همان `@Roles` ِ سرور. */
+const tenantExportRoute = createRoute({
+  getParentRoute: () => appShellRoute,
+  path: '/settings/export',
+  beforeLoad: requireRole(TENANT_EXPORT_ROLES),
+  component: lazyRouteComponent(() => import('@/features/settings/TenantExportPage')),
+});
+
 const forbiddenRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/forbidden',
@@ -385,6 +394,7 @@ export const routeTree = rootRoute.addChildren([
     settingsRoute,
     generalSettingsRoute,
     coinTypeSettingsRoute,
+    tenantExportRoute,
     forbiddenRoute,
     ...devRoutes,
   ]),

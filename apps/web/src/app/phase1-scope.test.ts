@@ -39,6 +39,8 @@ const PHASE1_ROUTES = [
   '/sales/new',
   '/settings',
   '/settings/coin-types',
+  // D-03: خروجی کامل داده (BE-069 ِ فاز ۱) برای مالک، از جمله مالک مستأجر معلق.
+  '/settings/export',
   '/settings/general',
   '/settlements/new',
 ];

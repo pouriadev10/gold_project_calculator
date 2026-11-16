@@ -24,6 +24,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 import type { AuthSession } from './auth.service';
 import type { LoginInput, RefreshInput } from './auth.dto';
 import type { AccessTokenPayload } from './token.service';
+import type { TenantStatus } from '../database/schema';
 
 /**
  * پاسخ نشست.
@@ -43,6 +44,8 @@ interface SessionResponse {
     readonly slug: string;
     readonly name: string;
     readonly timezone: string;
+    /** D-03: مالک مستأجر معلق هم نشست می‌گیرد؛ فرانت با این بنر «فقط‌خواندنی» نشان می‌دهد. */
+    readonly status: TenantStatus;
   };
   readonly role: string;
 }
@@ -62,6 +65,7 @@ function toSessionResponse(session: AuthSession): SessionResponse {
       slug: session.tenant.slug,
       name: session.tenant.name,
       timezone: session.tenant.timezone,
+      status: session.tenant.status,
     },
     role: session.role,
   };
@@ -121,7 +125,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   async me(@CurrentAuth() auth: AccessTokenPayload | undefined): Promise<{
     user: { id: string; email: string; displayName: string };
-    tenant: { id: string; slug: string; name: string; timezone: string };
+    tenant: { id: string; slug: string; name: string; timezone: string; status: TenantStatus };
     role: string;
   }> {
     // نگهبان تضمینش می‌کند؛ این بررسی فقط نوع را باریک می‌کند.
@@ -150,6 +154,7 @@ export class AuthController {
         slug: described.tenant.slug,
         name: described.tenant.name,
         timezone: described.tenant.timezone,
+        status: described.tenant.status,
       },
       role: described.role,
     };

@@ -69,7 +69,7 @@ const OWNER: SessionResponse = {
     email: 'owner@example.com',
     displayName: 'مالک نمونه',
   },
-  tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه', timezone: 'Asia/Tehran' },
+  tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه', timezone: 'Asia/Tehran', status: 'ACTIVE' as const },
   role: 'OWNER',
 };
 

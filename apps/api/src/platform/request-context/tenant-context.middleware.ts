@@ -9,7 +9,7 @@ import type { NestMiddleware } from '@nestjs/common';
 import type { ServerResponse } from 'node:http';
 import { annotateRequestLog } from '../logging/request-log';
 import { TenantService } from '../tenant/tenant.service';
-import { isTenantWritable } from '../tenant/tenant.rules';
+import { isTenantWritable, isWriteAllowedWhileSuspended } from '../tenant/tenant.rules';
 import {
   InvalidIdempotencyKeyError,
   MissingIdempotencyKeyError,
@@ -63,7 +63,9 @@ export class TenantContextMiddleware implements NestMiddleware {
     _res: ServerResponse,
     next: (error?: unknown) => void,
   ): Promise<void> {
-    if (isPublicPath(resolveRequestPath(req))) {
+    const path = resolveRequestPath(req);
+
+    if (isPublicPath(path)) {
       next();
       return;
     }
@@ -87,11 +89,16 @@ export class TenantContextMiddleware implements NestMiddleware {
     annotateRequestLog({ tenantId: tenant.id }, req);
 
     /*
-     * مستأجر معلق می‌تواند بخواند ولی نمی‌تواند بنویسد — قاعده‌ی BE-007.
-     * منطقش در `tenant.rules.ts` است تا هر مصرف‌کننده‌ای همان یک تعریف را
-     * ببیند، نه نسخه‌ی دست‌ساز خودش.
+     * مستأجر معلق می‌تواند بخواند ولی نمی‌تواند بنویسد — قاعده‌ی BE-007 —
+     * جز ساخت خروجی کامل داده (D-03). منطقش در `tenant.rules.ts` است تا هر
+     * مصرف‌کننده‌ای همان یک تعریف را ببیند، نه نسخه‌ی دست‌ساز خودش.
      */
-    if (WRITE_METHODS.has(req.method ?? '') && !isTenantWritable(tenant)) {
+    const method = req.method ?? '';
+    if (
+      WRITE_METHODS.has(method) &&
+      !isTenantWritable(tenant) &&
+      !isWriteAllowedWhileSuspended(method, path)
+    ) {
       throw new ForbiddenException('مستأجر غیرفعال است و اجازه‌ی عملیات نوشتنی ندارد');
     }
 

@@ -60,18 +60,28 @@ const UNSAFE_FILE_NAME_CHARS = /[\u0000-\u001f\u007f<>:"/\\|?*]+/gu;
 
 /**
  * نام امن برای ذخیره: فقط نام پایه (بدون مسیر)، بدون نویسه‌ی ناامن، با
- * پسوند `.pdf`. اگر چیزی نماند، `fallback` (که خودش هم پاک می‌شود).
+ * پسوند `extension`. اگر چیزی نماند، `fallback` (که خودش هم پاک می‌شود).
  */
-export function safePdfFileName(candidate: string | null | undefined, fallback: string): string {
+export function safeFileName(
+  candidate: string | null | undefined,
+  fallback: string,
+  extension: 'pdf' | 'json',
+): string {
+  const extensionSuffix = new RegExp(`\\.${extension}$`, 'iu');
   const clean = (value: string) =>
     (value.split(/[\\/]/u).at(-1) ?? '')
-      .replace(/\.pdf$/iu, '')
+      .replace(extensionSuffix, '')
       .replace(UNSAFE_FILE_NAME_CHARS, '-')
       .replace(/\s+/gu, ' ')
       .replace(/^[.\s-]+|[.\s-]+$/gu, '');
 
   const base = clean(candidate ?? '') || clean(fallback) || 'document';
-  return `${base}.pdf`;
+  return `${base}.${extension}`;
+}
+
+/** `safeFileName` با پسوند `.pdf`. */
+export function safePdfFileName(candidate: string | null | undefined, fallback: string): string {
+  return safeFileName(candidate, fallback, 'pdf');
 }
 
 function readHeader(blob: Blob, length: number): Promise<Uint8Array> {

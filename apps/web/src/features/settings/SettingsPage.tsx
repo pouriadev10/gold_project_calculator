@@ -1,5 +1,14 @@
 import { Link } from '@tanstack/react-router';
-import { CircleDollarSign, ClipboardList, Coins, LogOut, Palette, SlidersHorizontal, TrendingUp } from 'lucide-react';
+import {
+  CircleDollarSign,
+  ClipboardList,
+  Coins,
+  FileJson,
+  LogOut,
+  Palette,
+  SlidersHorizontal,
+  TrendingUp,
+} from 'lucide-react';
 import { PageHeader } from '@/components/common/PageHeader';
 import { RequireRole } from '@/components/common/RequireRole';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
@@ -7,7 +16,7 @@ import { UnitToggle } from '@/components/common/UnitToggle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useLogout } from '@/hooks/useLogout';
-import { OPENING_BALANCE_ROLES } from '@/lib/permissions';
+import { OPENING_BALANCE_ROLES, TENANT_EXPORT_ROLES } from '@/lib/permissions';
 import { useSessionStore } from '@/stores/session-store';
 
 /**
@@ -128,6 +137,19 @@ export function SettingsPage() {
               </Button>
             </CardContent>
           </Card>
+        </RequireRole>
+
+        <RequireRole roles={TENANT_EXPORT_ROLES}>
+          <SettingRow
+            icon={FileJson}
+            title="خروجی کامل داده"
+            hint="همه‌ی داده‌ی فروشگاه در یک فایل، برای نگهداری مستقل یا انتقال — فقط مالک."
+            control={
+              <Button type="button" variant="outline" asChild>
+                <Link to="/settings/export">مشاهده</Link>
+              </Button>
+            }
+          />
         </RequireRole>
 
         {session ? (

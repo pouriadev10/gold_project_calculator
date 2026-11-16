@@ -27,7 +27,7 @@ function sessionFor(tenant: 'a' | 'b'): SessionResponse {
     refreshToken: `refresh-${tenant}`,
     expiresInSeconds: 900,
     user: { id: `user-${tenant}`, email: `${tenant}@example.com`, displayName: `کاربر ${tenant}` },
-    tenant: { id: `tenant-${tenant}`, slug: `shop-${tenant}`, name: `فروشگاه ${tenant}`, timezone: 'Asia/Tehran' },
+    tenant: { id: `tenant-${tenant}`, slug: `shop-${tenant}`, name: `فروشگاه ${tenant}`, timezone: 'Asia/Tehran', status: 'ACTIVE' as const },
     role: 'OWNER',
   };
 }

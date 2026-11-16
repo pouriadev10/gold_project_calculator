@@ -49,7 +49,7 @@ const OWNER: SessionResponse = {
   refreshToken: 'fe097-refresh',
   expiresInSeconds: 900,
   user: { id: 'c1000000-0000-4000-8000-000000000002', email: 'owner@example.com', displayName: 'مالک نمونه' },
-  tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه', timezone: 'Asia/Tehran' },
+  tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه', timezone: 'Asia/Tehran', status: 'ACTIVE' as const },
   role: 'OWNER',
 };
 

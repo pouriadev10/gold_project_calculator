@@ -68,7 +68,7 @@
           "احراز هویت"
         ],
         "summary": "ورود با ایمیل، رمز و slug مستأجر",
-        "description": "توکن دسترسی کوتاه‌عمر و توکن تمدید برمی‌گرداند. مستأجر از `tenantSlug` می‌آید، نه از هدر.\n\nبدون احراز هویت.",
+        "description": "توکن دسترسی کوتاه‌عمر و توکن تمدید برمی‌گرداند. مستأجر از `tenantSlug` می‌آید، نه از هدر. در مستأجر معلق فقط OWNER نشست می‌گیرد (`tenant.status` = `SUSPENDED`)، و آن نشست جز خواندن و خروجی کامل داده چیزی نمی‌نویسد؛ نقش‌های دیگر ۴۰۳ می‌گیرند.\n\nبدون احراز هویت.",
         "operationId": "AuthController_login",
         "security": [],
         "parameters": [],
@@ -130,7 +130,8 @@
                     "id": "125000000",
                     "slug": "8133000",
                     "name": "علی رضایی",
-                    "timezone": "Asia/Tehran"
+                    "timezone": "Asia/Tehran",
+                    "status": "ACTIVE"
                   },
                   "role": "OWNER"
                 }
@@ -255,13 +256,21 @@
                         "timezone": {
                           "type": "string",
                           "minLength": 1
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "ACTIVE",
+                            "SUSPENDED"
+                          ]
                         }
                       },
                       "required": [
                         "id",
                         "slug",
                         "name",
-                        "timezone"
+                        "timezone",
+                        "status"
                       ],
                       "additionalProperties": false
                     },
@@ -291,7 +300,8 @@
                     "id": "125000000",
                     "slug": "8133000",
                     "name": "علی رضایی",
-                    "timezone": "Asia/Tehran"
+                    "timezone": "Asia/Tehran",
+                    "status": "ACTIVE"
                   },
                   "role": "OWNER"
                 }
@@ -370,7 +380,8 @@
                     "id": "125000000",
                     "slug": "8133000",
                     "name": "علی رضایی",
-                    "timezone": "Asia/Tehran"
+                    "timezone": "Asia/Tehran",
+                    "status": "ACTIVE"
                   },
                   "role": "OWNER"
                 }
@@ -2704,7 +2715,7 @@
           "سکو"
         ],
         "summary": "ساخت خروجی کامل داده‌ی مستأجر",
-        "description": "فقط OWNER. قالب فایل در `docs/tenant-export.md`.\n\nنقش‌های مجاز: `OWNER`.",
+        "description": "فقط OWNER. تنها نوشتنی که مستأجر معلق هم مجاز است. قالب فایل در `docs/tenant-export.md`.\n\nنقش‌های مجاز: `OWNER`.",
         "operationId": "TenantExportsController_create",
         "security": [
           {
@@ -10953,13 +10964,21 @@
               "timezone": {
                 "type": "string",
                 "minLength": 1
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "ACTIVE",
+                  "SUSPENDED"
+                ]
               }
             },
             "required": [
               "id",
               "slug",
               "name",
-              "timezone"
+              "timezone",
+              "status"
             ],
             "additionalProperties": false
           },

@@ -23,7 +23,7 @@ export class InvalidCredentialsError extends Error {
  */
 export class TenantSuspendedError extends Error {
   constructor() {
-    super('این مستأجر معلق است و امکان ورود ندارد');
+    super('این فروشگاه معلق است؛ فقط مالک می‌تواند برای دریافت خروجی داده وارد شود');
     this.name = 'TenantSuspendedError';
   }
 }

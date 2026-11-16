@@ -80,6 +80,8 @@ export const WRITE_ROUTES: readonly WriteRoute[] = [
   { method: 'POST', path: '/api/sales/invoices/:invoiceId/b2c-buyback', body: createB2cBuybackSchema },
   { method: 'POST', path: '/api/purchase/second-hand/gold', body: createSecondHandGoldPurchaseSchema },
   { method: 'POST', path: '/api/purchase/second-hand/coins', body: createSecondHandCoinPurchaseSchema },
+  // BE-069 / D-03: کنترلر بدنه نمی‌خواند.
+  { method: 'POST', path: '/api/platform/exports/full', body: null },
 ];
 
 /** `PUBLIC_PATH_PREFIXES` سرور (`request-path.ts`): بی‌مستأجر، بی‌کلید، بی‌نقش. */

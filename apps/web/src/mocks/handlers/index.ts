@@ -29,6 +29,8 @@ import {
   MAX_PAGE_SIZE,
   priceQuoteHistoryQuerySchema,
   profitReportQuerySchema,
+  TENANT_EXPORT_FORMAT,
+  TENANT_EXPORT_SCHEMA_VERSION,
   updateGeneralSettingSchema,
 } from '@gold/contracts';
 import type { CoinTypeHistory, CoinTypeVersion, SalesInvoiceAmendmentHistory } from '@gold/contracts';
@@ -201,6 +203,8 @@ const idempotencyCache = new IdempotencyCache();
  * `GET /purchase/second-hand/:id/pdf` مثل سرور، سند ناشناخته را ۴۰۴ بدهد.
  */
 const mockSecondHandPurchaseIds = new Set<string>();
+/** BE-069 / D-03: بایت‌های هر خروجی ساخته‌شده در همین نشست، برای `GET /platform/exports/:id`. */
+const mockTenantExports = new Map<string, { readonly content: string; readonly sha256: string }>();
 
 /**
  * تنظیمات عمومی mock (FE-080) — مقدارها همان seed واقعی `INITIAL_TENANT_SETTINGS`.
@@ -331,7 +335,13 @@ function issueSession(key: string, email: keyof typeof DEMO_USERS) {
     refreshToken,
     expiresInSeconds: 900,
     user: { id: demoUser.id, email, displayName: demoUser.displayName },
-    tenant: { id: 'tnt-demo-1', slug: DEMO_TENANT_SLUG, name: 'زرگری نمونه', timezone: 'Asia/Tehran' },
+    tenant: {
+      id: 'tnt-demo-1',
+      slug: DEMO_TENANT_SLUG,
+      name: 'زرگری نمونه',
+      timezone: 'Asia/Tehran',
+      status: 'ACTIVE' as const,
+    },
     role: demoUser.role,
   };
 }
@@ -2068,6 +2078,61 @@ export const handlers = [
       headers: {
         'Content-Type': 'application/pdf',
         'X-File-Name': encodeURIComponent(`invoice-${purchaseId}.pdf`),
+      },
+    });
+  }),
+
+  /**
+   * `POST /platform/exports/full` و `GET /platform/exports/:id` — BE-069 / D-03. فایل همان پوسته‌ی
+   * `tenantExportDocumentSchema` است، فقط با بخش اشخاص؛ `sha256` و `byteSize` از خود همان بایت‌ها.
+   */
+  http.post('/api/platform/exports/full', async ({ request }) => {
+    await delay(WRITE_DELAY_MS);
+    const key = request.headers.get('Idempotency-Key');
+    if (!key) return mockMissingIdempotencyKey();
+    const cached = idempotencyCache.get(key);
+    if (cached) return HttpResponse.json(cached, { status: 201 });
+
+    const id = crypto.randomUUID();
+    const snapshotAt = new Date().toISOString();
+    const content = JSON.stringify({
+      format: TENANT_EXPORT_FORMAT,
+      schemaVersion: TENANT_EXPORT_SCHEMA_VERSION,
+      exportId: id,
+      snapshotAt,
+      requestedBy: null,
+      tenant: { id: crypto.randomUUID(), name: 'زرگری نمونه', slug: DEMO_TENANT_SLUG, status: 'ACTIVE', timezone: 'Asia/Tehran' },
+      sections: { parties: { table: 'parties', rowCount: partyList.length, rows: partyList } },
+    });
+    const bytes = new TextEncoder().encode(content);
+    const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
+    const result = {
+      id,
+      format: TENANT_EXPORT_FORMAT,
+      schemaVersion: TENANT_EXPORT_SCHEMA_VERSION,
+      snapshotAt,
+      createdAt: snapshotAt,
+      requestedBy: null,
+      byteSize: bytes.byteLength,
+      sha256: Array.from(digest, (byte) => byte.toString(16).padStart(2, '0')).join(''),
+      rowCounts: { parties: partyList.length },
+    };
+    mockTenantExports.set(id, { content, sha256: result.sha256 });
+    idempotencyCache.set(key, result);
+    return HttpResponse.json(result, { status: 201 });
+  }),
+
+  http.get('/api/platform/exports/:id', async ({ params }) => {
+    await delay(READ_DELAY_MS);
+    const id = String(params.id);
+    const found = mockTenantExports.get(id);
+    if (!found) return mockError('NOT_FOUND', 'خروجی پیدا نشد');
+    return new HttpResponse(new Blob([found.content], { type: 'application/json' }), {
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        // مثل سرور (`tenant-exports.controller.ts`): نام در `X-File-Name`، بدون Content-Disposition.
+        'X-File-Name': encodeURIComponent(`tenant-export-${DEMO_TENANT_SLUG}-${id.slice(0, 8)}.json`),
+        'X-Content-SHA256': found.sha256,
       },
     });
   }),

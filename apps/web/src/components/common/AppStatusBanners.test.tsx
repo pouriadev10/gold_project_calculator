@@ -1,8 +1,24 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type * as ReactRouter from '@tanstack/react-router';
+import type { ReactNode } from 'react';
 import { useAppUpdateStore } from '@/stores/app-update-store';
-import { AppStatusBanners } from './AppStatusBanners';
+import { useSessionStore } from '@/stores/session-store';
+import { AppStatusBanners, SuspendedTenantBanner } from './AppStatusBanners';
+
+/** `Link` واقعی به `RouterProvider` نیاز دارد — همان جایگزینی `SettingsPage.test.tsx`. */
+vi.mock('@tanstack/react-router', async (importOriginal) => {
+  const actual = await importOriginal<typeof ReactRouter>();
+  return {
+    ...actual,
+    Link: ({ to, children, ...rest }: { to: string; children?: ReactNode }) => (
+      <a href={to} {...rest}>
+        {children}
+      </a>
+    ),
+  };
+});
 
 const applyUpdate = vi.fn();
 vi.mock('@/lib/pwa-update', () => ({
@@ -77,5 +93,46 @@ describe('AppUpdateBanner — FE-090', () => {
       useAppUpdateStore.getState().setWaiting({} as ServiceWorker);
     });
     expect(screen.getByRole('button', { name: 'به‌روزرسانی' })).toBeInTheDocument();
+  });
+});
+
+describe('SuspendedTenantBanner — D-03', () => {
+  const session = (status: 'ACTIVE' | 'SUSPENDED', role: 'OWNER' | 'MANAGER' = 'OWNER') => ({
+    accessToken: 'a',
+    refreshToken: 'r',
+    expiresInSeconds: 900,
+    user: { id: 'u1', email: 'owner@example.com', displayName: 'مالک' },
+    tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه', timezone: 'Asia/Tehran', status },
+    role,
+  });
+
+  afterEach(() => {
+    useSessionStore.setState({ session: null });
+  });
+
+  it('مستأجر معلق: می‌گوید فقط مشاهده و خروجی ممکن است و به صفحه‌ی خروجی می‌برد', () => {
+    useSessionStore.setState({ session: session('SUSPENDED') });
+    render(<SuspendedTenantBanner />);
+
+    expect(screen.getByRole('heading', { name: 'حساب این فروشگاه معلق است' })).toBeInTheDocument();
+    expect(screen.getByText(/هیچ ثبت یا تغییری پذیرفته نمی‌شود/u)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'دریافت خروجی' })).toHaveAttribute('href', '/settings/export');
+  });
+
+  it('برای نقشی جز مالک لینک خروجی ندارد', () => {
+    useSessionStore.setState({ session: session('SUSPENDED', 'MANAGER') });
+    render(<SuspendedTenantBanner />);
+
+    expect(screen.getByRole('heading', { name: 'حساب این فروشگاه معلق است' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'دریافت خروجی' })).not.toBeInTheDocument();
+  });
+
+  it('مستأجر فعال یا بی‌نشست: چیزی نشان نمی‌دهد', () => {
+    const { container, rerender } = render(<SuspendedTenantBanner />);
+    expect(container).toBeEmptyDOMElement();
+
+    useSessionStore.setState({ session: session('ACTIVE') });
+    rerender(<SuspendedTenantBanner />);
+    expect(container).toBeEmptyDOMElement();
   });
 });

@@ -69,7 +69,7 @@ function signIn(role: RoleCode): void {
     refreshToken: 'refresh',
     expiresInSeconds: 900,
     user: { id: 'c1000000-0000-4000-8000-000000000002', email: 'user@example.com', displayName: 'کاربر' },
-    tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه', timezone: 'Asia/Tehran' },
+    tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه', timezone: 'Asia/Tehran', status: 'ACTIVE' as const },
     role,
   };
   useSessionStore.setState({ session });

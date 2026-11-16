@@ -462,3 +462,9 @@ export const mixedSettlementSchema = z.object({
 
 export type MixedSettlementResultLine = z.infer<typeof mixedSettlementResultLineSchema>;
 export type MixedSettlement = z.infer<typeof mixedSettlementSchema>;
+
+/* ══════════════ بازگشت به @gold/contracts — سکو ══════════════ */
+
+/* ── POST /api/platform/exports/full — BE-069 / D-03 ───────── */
+
+export { tenantExportSchema, type TenantExport, type TenantStatus } from '@gold/contracts';

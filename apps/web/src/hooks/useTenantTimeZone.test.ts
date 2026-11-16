@@ -14,7 +14,7 @@ function session(timezone: string): SessionResponse {
     refreshToken: 'r',
     expiresInSeconds: 900,
     user: { id: 'u1', email: 'owner@example.com', displayName: 'مالک' },
-    tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه', timezone },
+    tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه', timezone, status: 'ACTIVE' },
     role: 'OWNER',
   };
 }

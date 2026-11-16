@@ -20,7 +20,7 @@ interface SessionBody {
   refreshToken: string;
   expiresInSeconds: number;
   user: { id: string; email: string; displayName: string };
-  tenant: { id: string; slug: string; name: string; timezone: string };
+  tenant: { id: string; slug: string; name: string; timezone: string; status: string };
   role: string;
 }
 
@@ -43,6 +43,9 @@ describe('احراز هویت (نیازمند PostgreSQL واقعی)', () => {
   let disabledUser = { id: '', email: '' };
   let outsider = { id: '', email: '' };
   let suspendedMember = { id: '', email: '' };
+  let suspendedManager = { id: '', email: '' };
+  /** توکن تمدید مدیری که پیش از تعلیق وارد شده. */
+  let suspendedManagerRefreshToken = '';
 
   /*
    * شاخه‌های صریح‌اند و نه spread شرطی: با `exactOptionalPropertyTypes`،
@@ -103,6 +106,10 @@ describe('احراز هویت (نیازمند PostgreSQL واقعی)', () => {
 
     member = await makeMember(tenantActive.id, 'MANAGER');
     suspendedMember = await makeMember(tenantSuspended.id, 'OWNER');
+    suspendedManager = await makeMember(tenantSuspended.id, 'MANAGER');
+    suspendedManagerRefreshToken = (
+      await login(suspendedManager.email, PASSWORD, tenantSuspended.slug)
+    ).json<SessionBody>().refreshToken;
 
     disabledUser = await makeMember(tenantActive.id, 'CASHIER');
     await db.update(users).set({ status: 'DISABLED' }).where(eq(users.id, disabledUser.id));
@@ -141,6 +148,7 @@ describe('احراز هویت (نیازمند PostgreSQL واقعی)', () => {
       expect(body.tenant.slug).toBe(tenantActive.slug);
       // FE-071: مقدار پیش‌فرض ستون `tenants.timezone`، نه fallback کد.
       expect(body.tenant.timezone).toBe('Asia/Tehran');
+      expect(body.tenant.status).toBe('ACTIVE');
       expect(body.expiresInSeconds).toBeGreaterThan(0);
     });
 
@@ -213,10 +221,49 @@ describe('احراز هویت (نیازمند PostgreSQL واقعی)', () => {
       expect(response.statusCode).toBe(401);
     });
 
-    it('مستأجر معلق نمی‌تواند نشست فعال بسازد', async () => {
-      const response = await login(suspendedMember.email, PASSWORD, tenantSuspended.slug);
+    it('مدیر و صندوقدار مستأجر معلق نمی‌توانند نشست بسازند', async () => {
+      const response = await login(suspendedManager.email, PASSWORD, tenantSuspended.slug);
 
       expect(response.statusCode).toBe(403);
+    });
+  });
+
+  describe('D-03: مالک مستأجر معلق', () => {
+    it('وارد می‌شود و پاسخ وضعیت معلق را می‌گوید', async () => {
+      const response = await login(suspendedMember.email, PASSWORD, tenantSuspended.slug);
+
+      expect(response.statusCode).toBe(200);
+      const body = response.json<SessionBody>();
+      expect(body.role).toBe('OWNER');
+      expect(body.tenant.status).toBe('SUSPENDED');
+    });
+
+    it('نشستش را تمدید می‌کند، ولی مدیری که پیش از تعلیق وارد شده نمی‌تواند', async () => {
+      const owner = (
+        await login(suspendedMember.email, PASSWORD, tenantSuspended.slug)
+      ).json<SessionBody>();
+
+      const ownerRefresh = await request('POST', '/auth/refresh', {
+        payload: { refreshToken: owner.refreshToken },
+      });
+      const managerRefresh = await request('POST', '/auth/refresh', {
+        payload: { refreshToken: suspendedManagerRefreshToken },
+      });
+
+      expect(ownerRefresh.statusCode).toBe(200);
+      expect(ownerRefresh.json<SessionBody>().tenant.status).toBe('SUSPENDED');
+      expect(managerRefresh.statusCode).toBe(401);
+    });
+
+    it('GET /auth/me هم وضعیت معلق را می‌گوید', async () => {
+      const owner = (
+        await login(suspendedMember.email, PASSWORD, tenantSuspended.slug)
+      ).json<SessionBody>();
+
+      const response = await request('GET', '/auth/me', { token: owner.accessToken });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json<{ tenant: { status: string } }>().tenant.status).toBe('SUSPENDED');
     });
   });
 

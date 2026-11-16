@@ -18,7 +18,7 @@ const SESSION: SessionResponse = {
   refreshToken: 'r',
   expiresInSeconds: 900,
   user: { id: 'u1', email: 'u@example.com', displayName: 'کاربر' },
-  tenant: { id: 't1', slug: 'demo', name: 'زرگری', timezone: 'Asia/Tehran' },
+  tenant: { id: 't1', slug: 'demo', name: 'زرگری', timezone: 'Asia/Tehran', status: 'ACTIVE' as const },
   role: 'OWNER',
 };
 const PARTY = { id: 'p1', displayName: 'مشتری', mobile: null, type: 'CONSUMER', status: 'ACTIVE' } as const;

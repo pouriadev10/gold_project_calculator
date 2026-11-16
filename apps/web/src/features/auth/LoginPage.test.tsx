@@ -32,7 +32,7 @@ const VALID_SESSION = {
   refreshToken: 'refresh-xyz789',
   expiresInSeconds: 900,
   user: { id: 'u1', email: 'owner@example.com', displayName: 'مدیر فروشگاه' },
-  tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه', timezone: 'Asia/Tehran' },
+  tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه', timezone: 'Asia/Tehran', status: 'ACTIVE' as const },
   role: 'OWNER',
 };
 
@@ -149,14 +149,14 @@ describe('LoginPage — ورود ناموفق (تمام است وقتی #۲)', (
 
   it('۴۰۳ (مستأجر معلق) پیام دقیق سرور را نشان می‌دهد', async () => {
     loginMock.mockRejectedValue(
-      new ApiError(403, 'FORBIDDEN', 'این مستأجر معلق است و امکان ورود ندارد'),
+      new ApiError(403, 'FORBIDDEN', 'این فروشگاه معلق است؛ فقط مالک می‌تواند برای دریافت خروجی داده وارد شود'),
     );
     const user = userEvent.setup();
     renderLogin();
 
     await fillAndSubmit(user);
 
-    expect(await screen.findByText('این مستأجر معلق است و امکان ورود ندارد')).toBeInTheDocument();
+    expect(await screen.findByText('این فروشگاه معلق است؛ فقط مالک می‌تواند برای دریافت خروجی داده وارد شود')).toBeInTheDocument();
   });
 
   it('خطای شبکه پیام عمومی اتصال را نشان می‌دهد', async () => {

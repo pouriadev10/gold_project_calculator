@@ -11,7 +11,7 @@ const SESSION = {
   refreshToken: 'r-123',
   expiresInSeconds: 900,
   user: { id: 'u1', email: 'owner@example.com', displayName: 'مدیر فروشگاه' },
-  tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه', timezone: 'Asia/Tehran' },
+  tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه', timezone: 'Asia/Tehran', status: 'ACTIVE' as const },
   role: 'OWNER' as const,
 };
 

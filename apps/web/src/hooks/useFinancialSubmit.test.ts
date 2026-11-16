@@ -12,7 +12,7 @@ const SESSION: SessionResponse = {
   refreshToken: 'r',
   expiresInSeconds: 900,
   user: { id: 'u1', email: 'u@example.com', displayName: 'کاربر' },
-  tenant: { id: 't1', slug: 'demo', name: 'زرگری', timezone: 'Asia/Tehran' },
+  tenant: { id: 't1', slug: 'demo', name: 'زرگری', timezone: 'Asia/Tehran', status: 'ACTIVE' as const },
   role: 'CASHIER',
 };
 

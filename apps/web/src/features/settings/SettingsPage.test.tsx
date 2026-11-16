@@ -27,7 +27,7 @@ const SESSION = {
   refreshToken: 'r',
   expiresInSeconds: 900,
   user: { id: 'u1', email: 'owner@example.com', displayName: 'مدیر فروشگاه' },
-  tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه', timezone: 'Asia/Tehran' },
+  tenant: { id: 't1', slug: 'demo', name: 'زرگری نمونه', timezone: 'Asia/Tehran', status: 'ACTIVE' as const },
   role: 'OWNER' as const,
 };
 
@@ -62,5 +62,24 @@ describe('SettingsPage — بخش خروج (FE-027)', () => {
 
     expect(logoutMock).toHaveBeenCalledWith('r');
     expect(useSessionStore.getState().session).toBeNull();
+  });
+});
+
+describe('SettingsPage — خروجی کامل داده (D-03)', () => {
+  it('مالک لینک صفحه‌ی خروجی را می‌بیند', () => {
+    useSessionStore.setState({ session: SESSION });
+    render(<SettingsPage />);
+
+    expect(screen.getByText('خروجی کامل داده')).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'مشاهده' }).map((link) => link.getAttribute('href'))).toContain(
+      '/settings/export',
+    );
+  });
+
+  it('مدیر آن را نمی‌بیند — سرور هم فقط OWNER را می‌پذیرد', () => {
+    useSessionStore.setState({ session: { ...SESSION, role: 'MANAGER' } });
+    render(<SettingsPage />);
+
+    expect(screen.queryByText('خروجی کامل داده')).not.toBeInTheDocument();
   });
 });
