@@ -5,6 +5,13 @@
  * karat is applied. The acquired pure-gold position is then valued at the
  * locked 1000-karat gold rate. No original sale wage participates in this new
  * purchase calculation.
+ *
+ * Valuation basis (decision D-01): the pure weight is rounded to whole
+ * milligrams first and the rial is computed from that same weight, so the
+ * document's rial always equals «recorded mg × locked rate». Gold settlements
+ * (`gold-settlements.service.ts`, the GOLD line of `mixed-settlements.service.ts`)
+ * follow the same rule. A calculator using «gross × 740-karat rate» can differ
+ * by up to about half a milligram's worth; that difference is accepted.
  */
 
 import { articlePureMg } from './article.js';

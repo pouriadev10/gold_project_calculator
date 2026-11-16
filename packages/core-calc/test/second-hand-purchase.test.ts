@@ -22,6 +22,25 @@ describe('calculateSecondHandGoldPurchase', () => {
     });
   });
 
+  it('D-01: rounds pure weight to whole milligrams first, then values the rial from that same weight', () => {
+    // 1001 mg × 740 ÷ 1000 = 740.74 mg pure → 741 mg, exactly what the ledger records.
+    // Valuing the unrounded 740.74 mg would give 22_800_056 (→ 22_800_000); the decision
+    // accepts that difference so the rial matches «recorded mg × locked rate».
+    expect(
+      calculateSecondHandGoldPurchase({
+        ...baseInput,
+        grossWeightMg: 1_001n,
+        deductions: { stone: grossMg(0n), other: grossMg(0n) },
+        feeRial: 0n,
+      }),
+    ).toEqual({
+      pureWeightMg: 741n,
+      goldRatePerGramRial: 30_780_107n,
+      grossPurchaseAmountRial: 22_808_059n,
+      finalAmountRial: 22_808_000n,
+    });
+  });
+
   it('does not use any original-sale wage and rejects invalid current purchase inputs', () => {
     expect(() =>
       calculateSecondHandGoldPurchase({

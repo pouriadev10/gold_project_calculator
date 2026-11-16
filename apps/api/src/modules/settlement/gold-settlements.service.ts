@@ -136,6 +136,8 @@ export class GoldSettlementsService {
     }
 
     const normalizedKarat = karat(input.karat);
+    // D-01: اول وزن خالص به میلی‌گرم صحیح، بعد ریال از همان وزن — ریال سند همیشه برابر
+    // «میلی‌گرم ثبت‌شده در دفتر × نرخ قفل‌شده» است.
     const pureWeightMg = toPureMg(grossMg(input.grossWeightMg), normalizedKarat);
     if (pureWeightMg <= 0n) {
       throw new GoldSettlementPureWeightZeroError();

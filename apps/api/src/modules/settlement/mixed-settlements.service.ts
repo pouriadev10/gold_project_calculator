@@ -543,6 +543,7 @@ export class MixedSettlementsService {
       throw new MixedSettlementQuoteNotFoundError();
     }
 
+    // D-01: اول وزن خالص به میلی‌گرم صحیح، بعد ریال از همان وزن (همان قاعده‌ی تسویه‌ی طلایی).
     const pureWeightMg = toPureMg(grossMg(line.grossWeightMg), karat(line.karat));
     if (pureWeightMg <= 0n) {
       throw new MixedSettlementInvalidInputError(

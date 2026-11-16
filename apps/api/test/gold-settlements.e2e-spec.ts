@@ -321,4 +321,26 @@ describe('gold settlement on a party rial balance (BE-046)', () => {
     expect(after.transactions).toHaveLength(before.transactions.length);
     expect(after.keys).toHaveLength(0);
   });
+
+  it('D-01: وزن خالص اول به میلی‌گرم صحیح گرد می‌شود و ریال از همان وزن حساب می‌شود', async () => {
+    // ۱۰۰۱ میلی‌گرم عیار ۷۴۰ = ۷۴۰٫۷۴ میلی‌گرم خالص → ۷۴۱. نرخ گرم ۱۰۰۰ در مظنه‌ی ۱۰۰ میلیون
+    // ۳۰٬۷۸۰٬۱۰۷ است، پس ۷۴۱ × ۳۰٬۷۸۰٬۱۰۷ ÷ ۱۰۰۰ = ۲۲٬۸۰۸٬۰۵۹. بی گرد کردن میانی ۲۲٬۸۰۰٬۰۵۶ می‌شد.
+    const result = await withTenantTransaction(db, tenant.id, (transaction) =>
+      settlementsService.createInTransaction(transaction, {
+        tenantId: tenant.id,
+        partyId,
+        grossWeightMg: 1_001n,
+        karat: 740,
+        quoteId,
+        effectiveAt,
+        createdBy: actorId,
+      }),
+    );
+
+    expect(result).toMatchObject({
+      pureWeightMg: 741n,
+      goldRatePerGramRial: 30_780_107n,
+      settledRial: 22_808_059n,
+    });
+  });
 });

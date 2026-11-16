@@ -514,4 +514,27 @@ describe('mixed settlement (BE-048)', () => {
     const remaining = await balances.getAccountBalances(tenant.id, payable.id);
     expect(remaining.rial ?? '0').toBe('0');
   });
+
+  it('D-01: ردیف طلا هم اول وزن خالص را به میلی‌گرم صحیح گرد می‌کند و ریال را از همان وزن می‌گیرد', async () => {
+    // همان عددهای تسویه‌ی طلایی: ۱۰۰۱ میلی‌گرم عیار ۷۴۰ → ۷۴۱ میلی‌گرم خالص → ۲۲٬۸۰۸٬۰۵۹ ریال.
+    const result = await withTenantTransaction(db, tenant.id, (transaction) =>
+      settlementService.createInTransaction(transaction, {
+        tenantId: tenant.id,
+        partyId,
+        effectiveAt,
+        createdBy: actorId,
+        lines: [{ type: 'GOLD', grossWeightMg: 1_001n, karat: 740, quoteId: goldQuoteId }],
+      }),
+    );
+
+    expect(result.totalSettledRial).toBe(22_808_059n);
+    expect(result.lines).toEqual([
+      expect.objectContaining({
+        type: 'GOLD',
+        pureWeightMg: 741n,
+        goldRatePerGramRial: 30_780_107n,
+        settledRial: 22_808_059n,
+      }),
+    ]);
+  });
 });
