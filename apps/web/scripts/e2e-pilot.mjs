@@ -464,7 +464,7 @@ const STEPS = [
       await d.click(control(`ویرایش قیمت ${PILOT.jewelryTitle}`), 'ویرایش قیمت');
       await d.click(control('ذخیره'), 'ذخیره');
       await d.waitFor(`!window.__e2e.dialog()`, 'بسته شدن قیمت‌گذاری');
-      await d.click(control('بعدی'), 'بعدی');
+      // M-34 (#29): «اقلام» مستقیم به «مرور و ثبت» می‌رود — مرحله‌ی جانگه‌دار «پرداخت» برداشته شد
       await d.click(control('بعدی'), 'بعدی');
       await d.click(control('پرداخت کامل'), 'پرداخت کامل');
       await d.click(control('ثبت فروش'), 'ثبت فروش');
