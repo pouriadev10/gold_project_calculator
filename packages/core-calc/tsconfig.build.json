@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    /*
+     * M-39: تنها مصرف‌کننده‌ی این خروجی `apps/api` در زمان اجراست که CommonJS است (`node dist/main.js`
+     * و ایمیج Docker). فرانت‌اند و تست‌ها مستقیم از `src/` می‌خوانند (شرط `import` در exports)؛
+     * همان الگوی `packages/contracts`.
+     */
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "verbatimModuleSyntax": false,
+    "noEmit": false,
+    "declaration": false,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "types": []
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "test/**/*"]
+}

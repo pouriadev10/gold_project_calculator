@@ -219,7 +219,7 @@
 - **نکات بررسی:** قاعده‌ی ممنوعیت `Math.round` خارج از `rounding.ts` · ممنوعیت‌های بک/فرانت · gateها · اجرای پوشش core-calc در CI
 - **مسائل شناخته‌شده:** #48 (کرش worker در تست یکپارچگی)، #51 (timeout تست‌های وب زیر بار)، #52 (`pnpm lint` سراسری قرمز)
 
-### [ ] M-39 · استقرار — `docker-compose.yml` · `apps/api/Dockerfile` · پشتیبان‌گیری
+### [x] M-39 · استقرار — `docker-compose.yml` · `apps/api/Dockerfile` · پشتیبان‌گیری
 - **نکات بررسی:** تطابق با `docs/backup-restore.md`
 
 ### [ ] M-40 · مستندات — `docs/` · `README.md` · `TASKS.md` · `FrontTasks.md`
@@ -1323,3 +1323,25 @@
 - **کنتراست رنگ** در jsdom سنجیدنی نیست (axe آن را خاموش دارد). مقدار توکن‌ها در `docs/a11y-audit.md` ثبت است، و آزمون روی دستگاه واقعی همان FE-086 است.
 - **چانک تنبل ECharts** (۱۶۳٫۷KB، #13) بزرگ‌ترین چانک است، ولی در بسته‌ی اولیه نیست.
 
+### M-39 · استقرار — بررسی‌شده (۱۴۰۵/۰۸/۲۵)
+
+**روش:** خواندن `docker-compose.yml`، `apps/api/Dockerfile`، `.dockerignore`، `main.ts` و `docs/backup-restore.md`. سپس بیلد و اجرای واقعی: `node dist/main.js` روی میزبان، ساخت ایمیج Docker، بالا آوردن کانتینر روی `gold_test` و سنجش `/health` و `docker stop`.
+
+#### درست بود
+
+- **compose:** دیتابیس با `--locale=C` و healthcheck، API فقط پس از سالم شدن دیتابیس بالا می‌آید، و مهاجرت پشت profile ِ `tools` است، پس هرگز اثر جانبی `up` نیست. رازهای نمونه در production رد می‌شوند (M-05).
+- **ایمیج:** چندمرحله‌ای، runtime بدون pnpm و corepack، کاربر `node`، و `.dockerignore` نه `node_modules` ِ میزبان را می‌برد نه `.env` را.
+- **پشتیبان‌گیری:** هر فایلی که `docs/backup-restore.md` نام می‌برد هست (`restore-prerequisites.sql`، `verify-restore.mjs`، `migrate.mjs`)، اسکریپت‌ها و `drizzle/` در ایمیج کپی می‌شوند، و `backups/` در `.gitignore` است.
+
+#### ایرادهای رفع‌شده
+
+| # | ایراد | اصلاح |
+|---|---|---|
+| 1 | **API ِ ساخته‌شده اصلاً بالا نمی‌آمد.** `@gold/core-calc` فقط منبع TypeScript صادر می‌کرد، که برای Vite و vitest کافی است. ولی `node dist/main.js` آن را `require` می‌کند و Node با `ERR_MODULE_NOT_FOUND` (`./types.js`) می‌ایستاد. ایمیج Docker حتی `packages/core-calc` را کپی نمی‌کرد. پس `docker compose up` و هر استقرار واقعی از همان خط اول می‌شکست. آزمون‌ها این را نمی‌دیدند، چون همه از منبع می‌خوانند. | core-calc همان بسته‌بندی دوگانه‌ی `contracts` را گرفت: `import` به منبع، `require` به `dist` ِ CommonJS، با `build` و `mark-cjs-output.mjs`. Dockerfile منبع core-calc را برای بیلد و `dist` و `package.json` اش را برای اجرا کپی می‌کند. سنجیده شد: `node dist/main.js` و کانتینر هر دو در ۱ تا ۲ ثانیه `/health` = ۲۰۰ می‌دهند. |
+| 2 | **`docker stop` ده ثانیه صبر می‌کرد و بعد SIGKILL.** node در کانتینر فرایند شماره‌ی ۱ است و بی handler سیگنال SIGTERM را نادیده می‌گیرد. هر درخواست در راه قطع می‌شد و استخر دیتابیس بسته نمی‌شد. | `app.enableShutdownHooks()`: Nest درخواست‌های در راه را تمام می‌کند و `PoolLifecycle` استخر را می‌بندد. روی همان ایمیج، بی آن فراخوانی ۱۰ ثانیه و کد ۱۳۷، و با آن فوری و کد ۰. درستی مالی به آن وابسته نبود (rollback و تکرار با Idempotency-Key)، ولی پاسخ ثبت‌های کامل‌شده دیگر گم نمی‌شود. |
+
+**تأیید:** core-calc ۲۰۴ تست با پوشش ۱۰۰٪، API unit ۳۱۳، API integration **۵۴۱ از ۵۴۱**، web ۱۳۸۵، بیلد وب و نگهبان‌هایش سبز، typecheck و lint ِ سراسری تمیز. ایمیج Docker واقعاً ساخته و اجرا شد.
+
+#### نیازمند تصمیم شما
+
+- **D-18:** چیدمان production. هیچ سرویس یا سندی PWA را سرو نمی‌کند. reverse proxy ای که `/api` را برای API بی‌پیشوند بردارد، و TLS، وجود ندارد. API بدون `trustProxy` است، پس پشت proxy همه‌ی IPهای audit آدرس proxy می‌شوند.

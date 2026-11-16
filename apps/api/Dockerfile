@@ -42,9 +42,12 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 FROM deps AS build
 COPY tsconfig.base.json ./
 COPY packages/contracts packages/contracts
+COPY packages/core-calc packages/core-calc
 COPY apps/api apps/api
-# ترتیب توپولوژیک pnpm اول contracts را می‌سازد، بعد api —
-# چون runtime بک‌اند CommonJS است و از dist پکیج قرارداد می‌خواند.
+# ترتیب توپولوژیک pnpm اول contracts و core-calc را می‌سازد، بعد api —
+# چون runtime بک‌اند CommonJS است و از dist ِ هر دو پکیج می‌خواند. M-39: پیش‌تر core-calc
+# اصلاً در ایمیج نبود و فقط منبع TypeScript داشت، پس `node dist/main.js` با
+# ERR_MODULE_NOT_FOUND بالا نمی‌آمد.
 RUN pnpm --filter "@gold/api..." build
 
 # ── وابستگی‌های production ─────────────────────────────────────────
@@ -69,11 +72,14 @@ COPY --from=prod-deps /repo/packages/contracts/node_modules ./packages/contracts
 
 COPY --from=build /repo/apps/api/dist ./apps/api/dist
 COPY --from=build /repo/packages/contracts/dist ./packages/contracts/dist
+COPY --from=build /repo/packages/core-calc/dist ./packages/core-calc/dist
 
 # package.json‌ها در زمان اجرا هم لازم‌اند: شرط `require` در فیلد exports
-# پکیج قرارداد از همین‌جا خوانده می‌شود.
+# پکیج قرارداد و core-calc از همین‌جا خوانده می‌شود. core-calc وابستگی زمان اجرا ندارد،
+# پس node_modules ِ خودش لازم نیست.
 COPY apps/api/package.json ./apps/api/
 COPY packages/contracts/package.json ./packages/contracts/
+COPY packages/core-calc/package.json ./packages/core-calc/
 COPY apps/api/scripts ./apps/api/scripts
 # فایل‌های مهاجرت SQL — سرویس migrate در docker-compose.yml همین‌ها را
 # می‌خواند. بدون این COPY، migrate.mjs با «meta/_journal.json پیدا نشد»

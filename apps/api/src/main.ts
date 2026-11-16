@@ -41,6 +41,14 @@ async function bootstrap(): Promise<void> {
     bufferLogs: true,
   });
   app.useLogger(app.get(NestPinoLogger));
+  /*
+   * M-39: در کانتینر، node فرایند شماره‌ی ۱ است و بدون handler سیگنال SIGTERM را نادیده می‌گیرد؛
+   * `docker stop` ده ثانیه صبر می‌کرد و بعد SIGKILL، وسط هر درخواست در راه. با این، Nest
+   * پذیرش درخواست تازه را می‌بندد، درخواست‌های در راه را تمام می‌کند و استخر دیتابیس را می‌بندد
+   * (`PoolLifecycle`). درستی مالی به آن وابسته نیست — تراکنش نیمه‌کاره rollback می‌شود و تلاش
+   * نامعلوم با همان Idempotency-Key تکرار می‌شود — ولی پاسخ ثبت‌های کامل‌شده دیگر گم نمی‌شود.
+   */
+  app.enableShutdownHooks();
 
   const appConfig = app.get<AppConfig>(APP_CONFIG);
 
